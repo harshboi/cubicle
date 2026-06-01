@@ -54,7 +54,7 @@ private enum SQLiteBindValue {
     case double(Double)
 }
 
-/// SQLite-backed store for focus, belief, question, Webex, and evidence records.
+/// SQLite-backed DAO for focus, belief, question, Webex, and evidence records.
 final class KnowledgeStore: KnowledgeDAO {
     let configuration: RuntimeConfiguration
     let database: KnowledgeDatabase

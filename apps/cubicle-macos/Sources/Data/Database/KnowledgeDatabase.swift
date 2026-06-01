@@ -1,6 +1,7 @@
 import Foundation
 import SQLite3
 
+/// Filesystem status for the SQLite database and its WAL sidecars.
 struct KnowledgeDatabaseStatus: Equatable {
     var databaseExists: Bool
     var walExists: Bool
@@ -8,23 +9,28 @@ struct KnowledgeDatabaseStatus: Equatable {
     var path: String
 }
 
+/// Owns knowledge database pathing, directory creation, and SQLite handles.
 struct KnowledgeDatabase {
     let configuration: RuntimeConfiguration
     private let fileManager: FileManager
 
+    /// Pins database files to a runtime root and allows filesystem injection in tests.
     init(configuration: RuntimeConfiguration = .current, fileManager: FileManager = .default) {
         self.configuration = configuration
         self.fileManager = fileManager
     }
 
+    /// Directory containing the knowledge graph SQLite files.
     var knowledgeDirectory: URL {
         configuration.runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
     }
 
+    /// Canonical SQLite database file used by all knowledge DAOs.
     var databaseURL: URL {
         knowledgeDirectory.appendingPathComponent("knowledge.db")
     }
 
+    /// Reports local database file presence without opening SQLite.
     func status() -> KnowledgeDatabaseStatus {
         KnowledgeDatabaseStatus(
             databaseExists: fileManager.fileExists(atPath: databaseURL.path),
@@ -34,6 +40,7 @@ struct KnowledgeDatabase {
         )
     }
 
+    /// Executes work inside a short-lived connection with migrations and pragmas applied.
     func withOpenConnection<T>(_ body: (OpaquePointer) throws -> T) throws -> T {
         try ensureKnowledgeDirectory()
         let db = try openDatabase()
