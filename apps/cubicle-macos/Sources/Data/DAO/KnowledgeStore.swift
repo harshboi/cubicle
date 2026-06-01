@@ -91,6 +91,8 @@ final class KnowledgeStore: KnowledgeDAO {
 
     /// Forces schema setup without reading or writing domain records.
     func bootstrap() throws {
+        // Opening a connection is what runs migrations; bootstrap keeps that
+        // side effect explicit at refresh/app-start call sites.
         _ = try withDatabase { _ in true }
     }
 
