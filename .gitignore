@@ -1,0 +1,62 @@
+# macOS / editor noise
+.DS_Store
+*.swp
+*.swo
+
+# SwiftPM / Xcode build products
+.build/
+packages/webex-question-core/.build/
+DerivedData/
+
+# Python caches and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+apps/voicenotes-web/.venv/
+
+# Local runtime data, generated output, and bulky caches
+knowledge/
+output/
+backups/
+.cache/
+.playwright-cli/
+.voicenotes-data/
+*.log
+*.pid
+
+# Local agent/session metadata
+.claude/
+
+# Secrets and local configuration
+.env
+.env.*
+*.env
+!.env.example
+*.pem
+*.key
+*.p12
+*.mobileprovision
+
+# Terraform local state
+.terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan*
+.tfplan-*
+*.tfvars
+*.tfvars.json
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# AWS / deployment generated bundles
+*.zip
+*.tar
+*.tar.gz
+*.tgz

@@ -1,2 +1,171 @@
-# cubicle
-stealth
+# Cubicle Monorepo
+
+Cubicle is a workspace for turning engineering communication into usable execution context: synced conversations, generated questions, focus targets, knowledge views, transcription, and operational tooling.
+
+## Layout
+
+```text
+cubicle/
+  Package.swift                 root SwiftPM workspace manifest
+  apps/
+    cubicle-macos/              SwiftUI macOS app
+    voicenotes-web/             FastAPI VoiceNotes web app
+  packages/
+    webex-question-core/        Swift analytics/question-generation library
+  services/
+    transcription/              FastAPI/WebSocket transcription service
+  infra/
+    aws/transcription/          Terraform and deployment scripts
+  docs/                         product, architecture, research, runbooks
+  scripts/                      build, release, local runtime scripts
+  connectors/                   future external-source connectors
+  tools/                        future internal CLIs
+  tests/                        future cross-system integration tests
+```
+
+## Code Structure DAG
+
+```text
+                         +-----------------------------+
+                         |        Cubicle repo         |
+                         +--------------+--------------+
+                                        |
+       +--------------------------------+--------------------------------+
+       |                                |                                |
++------+-------+                +-------+--------+               +-------+------+
+| apps/        |                | packages/      |               | services/    |
++------+-------+                +-------+--------+               +-------+------+
+       |                                |                                |
+       |                                |                                |
++------v---------------+        +-------v----------------+       +-------v----------------+
+| cubicle-macos        |------->| webex-question-core    |       | transcription          |
+| SwiftUI desktop app  |        | import, analyze, rank  |       | audio -> transcript    |
++------+---------------+        +------------------------+       +-------+----------------+
+       |                                                                 |
+       | runtime WebSocket/API                                           |
+       +---------------------------------------------------------------->|
+       |
+       | local runtime state
+       v
++------+----------------+
+| knowledge/runtime    |
+| outside git checkout |
++----------------------+
+
++----------------------+       +-----------------------+
+| voicenotes-web       |------>| services/transcription|
+| browser review app   |       | shared transcript API |
++----------------------+       +-----------------------+
+
++----------------------+       +-----------------------+
+| infra/aws            |------>| deployable services   |
+| Terraform + scripts  |       | ECS/Lambda/runtime    |
++----------------------+       +-----------------------+
+```
+
+## macOS App Internal DAG
+
+```text
+SwiftUI Views
+  -> AppModel / FocusModels / KnowledgeModels
+    -> Services
+      -> WebexSyncEngine -> WebexAPIClient -> Webex API
+      -> NativeIMessageIngestionService -> local iMessage source
+      -> KnowledgeStore / NativeRuntimeStore -> runtime knowledge files
+      -> QuestionEngine -> WebexQuestionGeneratorCore
+      -> TranscriptionRuntime -> TranscriptionWebSocketClient -> transcription service
+      -> CodexPromptOrchestration -> CodexRunner -> local Codex CLI
+```
+
+## Knowledge Flow DAG
+
+```text
+Webex + iMessage + transcripts
+  -> ingestion/sync services
+  -> normalized messages and threads
+  -> feature extraction + topic/sentiment/network analysis
+  -> generated questions + ranked focus targets
+  -> SwiftUI dashboards, beliefs, jobs, and ask-Codex prompts
+```
+
+## Swift macOS App
+
+Run from source:
+
+```bash
+cd /Users/prabhat/workspace/cubicle
+export GETWEBEXSPACE_RUNTIME_ROOT=/Users/prabhat/Desktop/getwebexspace-data
+swift run Cubicle
+```
+
+Run tests:
+
+```bash
+cd /Users/prabhat/workspace/cubicle
+swift test
+```
+
+Build a local `.app` bundle:
+
+```bash
+cd /Users/prabhat/workspace/cubicle
+bash scripts/build-app.sh
+```
+
+The app bundle is written to:
+
+```text
+.build/app/Cubicle.app
+```
+
+## Transcription Service
+
+Run unit tests without installing FastAPI:
+
+```bash
+cd /Users/prabhat/workspace/cubicle
+PYTHONPATH=services/transcription python3 -m unittest discover services/transcription/tests -v
+```
+
+Run the service locally:
+
+```bash
+cd /Users/prabhat/workspace/cubicle/services/transcription
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+TRANSCRIPTION_SERVICE_TOKEN=dev-token python -m transcription_service.main
+```
+
+## VoiceNotes Web App
+
+```bash
+cd /Users/prabhat/workspace/cubicle/apps/voicenotes-web
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -e ".[dev]"
+python -m uvicorn voicenotes_app.main:app --host 127.0.0.1 --port 8787
+```
+
+Run VoiceNotes tests:
+
+```bash
+cd /Users/prabhat/workspace/cubicle/apps/voicenotes-web
+python -m pytest
+```
+
+## Git Safety
+
+Runtime data and generated artifacts do not belong in this repo:
+
+```text
+knowledge/
+.build/
+.venv/
+.pytest_cache/
+__pycache__/
+*.tfstate*
+*.tfvars*
+.env*
+logs
+```

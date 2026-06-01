@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  cat <<'EOF'
+Usage: deploy-direct-aws-adapter.sh
+
+Deploys the Cubicle app-facing transcription adapter to AWS while using the
+existing private EC2 vLLM runtime.
+
+Common overrides:
+  TRANSCRIPTION_ALLOWED_USERS=person@example.com
+  ALLOW_ANY_SIGNED_TRANSCRIPTION_USER=true
+  PYANNOTE_AUTH_TOKEN_SECRET_NAME=cubicle-transcription/huggingface-token
+  ENABLE_DIARIZATION_WORKER=true
+  DIARIZATION_WORKER_LAUNCH_TYPE=EC2
+  ENABLE_DIARIZATION_WORKER_GPU_CAPACITY=true
+  DIARIZATION_WORKER_GPU_DESIRED_CAPACITY=1
+  VLLM_INSTANCE_ID=i-02b84c39f9912a77a
+  AWS_PROFILE_NAME=strln
+  AWS_REGION_NAME=us-west-2
+EOF
+  exit 0
+fi
+
+AWS_PROFILE_NAME="${AWS_PROFILE_NAME:-strln}"
+AWS_REGION_NAME="${AWS_REGION_NAME:-us-west-2}"
+EXPECTED_ACCOUNT_ID="${EXPECTED_ACCOUNT_ID:-562304353751}"
+VLLM_INSTANCE_ID="${VLLM_INSTANCE_ID:-i-02b84c39f9912a77a}"
+TRANSCRIPTION_ALLOWED_USERS="${TRANSCRIPTION_ALLOWED_USERS:-}"
+ALLOW_ANY_SIGNED_TRANSCRIPTION_USER="${ALLOW_ANY_SIGNED_TRANSCRIPTION_USER:-true}"
+IMAGE_TAG="${IMAGE_TAG:-direct-aws-$(date +%Y%m%d%H%M%S)}"
+
+if [[ -z "$TRANSCRIPTION_ALLOWED_USERS" && "${ALLOW_ANY_SIGNED_TRANSCRIPTION_USER:-false}" != "true" ]]; then
+  echo "TRANSCRIPTION_ALLOWED_USERS is required for direct signed-user transcription auth." >&2
+  echo "Set ALLOW_ANY_SIGNED_TRANSCRIPTION_USER=true only when DynamoDB user/token ledger is authoritative." >&2
+  exit 2
+fi
+
+aws_cli() {
+  aws --profile "$AWS_PROFILE_NAME" --region "$AWS_REGION_NAME" "$@"
+}
+
+ACCOUNT_ID="$(aws_cli sts get-caller-identity --query Account --output text)"
+if [[ "$ACCOUNT_ID" != "$EXPECTED_ACCOUNT_ID" ]]; then
+  echo "Refusing to deploy to AWS account $ACCOUNT_ID; expected $EXPECTED_ACCOUNT_ID." >&2
+  exit 2
+fi
+
+INSTANCE_STATE="$(aws_cli ec2 describe-instances \
+  --instance-ids "$VLLM_INSTANCE_ID" \
+  --query 'Reservations[0].Instances[0].State.Name' \
+  --output text)"
+
+if [[ "$INSTANCE_STATE" != "running" ]]; then
+  echo "vLLM instance $VLLM_INSTANCE_ID is $INSTANCE_STATE, expected running." >&2
+  exit 2
+fi
+
+VLLM_PRIVATE_IP="${VLLM_PRIVATE_IP:-$(aws_cli ec2 describe-instances \
+  --instance-ids "$VLLM_INSTANCE_ID" \
+  --query 'Reservations[0].Instances[0].PrivateIpAddress' \
+  --output text)}"
+
+if [[ -z "$VLLM_PRIVATE_IP" || "$VLLM_PRIVATE_IP" == "None" ]]; then
+  echo "Could not discover private IP for vLLM instance $VLLM_INSTANCE_ID." >&2
+  exit 2
+fi
+
+export AWS_PROFILE_NAME
+export AWS_REGION_NAME
+export EXPECTED_ACCOUNT_ID
+export IMAGE_TAG
+export TRANSCRIPTION_AUTH_MODE="${TRANSCRIPTION_AUTH_MODE:-signed_user_token}"
+export TRANSCRIPTION_ALLOWED_USERS
+export ALLOW_ANY_SIGNED_TRANSCRIPTION_USER
+export ASR_PROVIDER="${ASR_PROVIDER:-voxtral_self_hosted}"
+if [[ "${ENABLE_DIARIZATION_WORKER:-false}" == "true" ]]; then
+  export DIARIZATION_PROVIDER="${DIARIZATION_PROVIDER:-remote_http}"
+  export PYANNOTE_AUTH_TOKEN_SECRET_NAME="${PYANNOTE_AUTH_TOKEN_SECRET_NAME:-cubicle-transcription/huggingface-token}"
+  export DIARIZATION_STOP_TIMEOUT_SECONDS="${DIARIZATION_STOP_TIMEOUT_SECONDS:-180}"
+else
+  export DIARIZATION_PROVIDER="${DIARIZATION_PROVIDER:-mock}"
+  export DIARIZATION_STOP_TIMEOUT_SECONDS="${DIARIZATION_STOP_TIMEOUT_SECONDS:-45}"
+fi
+if [[ "$DIARIZATION_PROVIDER" == "pyannote" ]]; then
+  export PYANNOTE_AUTH_TOKEN_SECRET_NAME="${PYANNOTE_AUTH_TOKEN_SECRET_NAME:-cubicle-transcription/huggingface-token}"
+  export PYANNOTE_DEVICE="${PYANNOTE_DEVICE:-cpu}"
+fi
+export VLLM_BASE_URL="${VLLM_BASE_URL:-http://$VLLM_PRIVATE_IP:8000}"
+export VLLM_REALTIME_URL="${VLLM_REALTIME_URL:-ws://$VLLM_PRIVATE_IP:8000/v1/realtime}"
+export VOXTRAL_REALTIME_URL="${VOXTRAL_REALTIME_URL:-$VLLM_REALTIME_URL}"
+export VOXTRAL_MODEL="${VOXTRAL_MODEL:-mistralai/Voxtral-Mini-4B-Realtime-2602}"
+export VOXTRAL_MODEL_VERSION="${VOXTRAL_MODEL_VERSION:-self-hosted-vllm-2602}"
+export VOXTRAL_FINAL_RESPONSE_TIMEOUT_SECONDS="${VOXTRAL_FINAL_RESPONSE_TIMEOUT_SECONDS:-30}"
+export INCLUDE_VOXTRAL_REALTIME="${INCLUDE_VOXTRAL_REALTIME:-false}"
+if [[ -z "${INCLUDE_DIARIZATION:-}" ]]; then
+  if [[ "$DIARIZATION_PROVIDER" == "pyannote" ]]; then
+    INCLUDE_DIARIZATION=true
+  else
+    INCLUDE_DIARIZATION=false
+  fi
+fi
+export INCLUDE_DIARIZATION
+export INCLUDE_SELF_HOSTED_MODELS="${INCLUDE_SELF_HOSTED_MODELS:-false}"
+export ENABLE_VOXTRAL_RUNTIME="${ENABLE_VOXTRAL_RUNTIME:-false}"
+export ENABLE_GPU_CAPACITY="${ENABLE_GPU_CAPACITY:-true}"
+export ECS_LAUNCH_TYPE="${ECS_LAUNCH_TYPE:-FARGATE}"
+export GPU_DESIRED_CAPACITY="${GPU_DESIRED_CAPACITY:-1}"
+export REQUIRE_GPU="${REQUIRE_GPU:-false}"
+export ENABLE_DIARIZATION_WORKER="${ENABLE_DIARIZATION_WORKER:-false}"
+if [[ "$ENABLE_DIARIZATION_WORKER" == "true" ]]; then
+  export DIARIZATION_WORKER_DESIRED_COUNT="${DIARIZATION_WORKER_DESIRED_COUNT:-1}"
+else
+  export DIARIZATION_WORKER_DESIRED_COUNT="${DIARIZATION_WORKER_DESIRED_COUNT:-0}"
+fi
+export DIARIZATION_WORKER_PROVIDER="${DIARIZATION_WORKER_PROVIDER:-pyannote}"
+export DIARIZATION_WORKER_LAUNCH_TYPE="${DIARIZATION_WORKER_LAUNCH_TYPE:-EC2}"
+if [[ "$ENABLE_DIARIZATION_WORKER" == "true" ]]; then
+  export ENABLE_DIARIZATION_WORKER_GPU_CAPACITY="${ENABLE_DIARIZATION_WORKER_GPU_CAPACITY:-true}"
+else
+  export ENABLE_DIARIZATION_WORKER_GPU_CAPACITY="${ENABLE_DIARIZATION_WORKER_GPU_CAPACITY:-false}"
+fi
+export DIARIZATION_WORKER_GPU_INSTANCE_TYPE="${DIARIZATION_WORKER_GPU_INSTANCE_TYPE:-g5.xlarge}"
+export DIARIZATION_WORKER_GPU_MIN_SIZE="${DIARIZATION_WORKER_GPU_MIN_SIZE:-0}"
+export DIARIZATION_WORKER_GPU_DESIRED_CAPACITY="${DIARIZATION_WORKER_GPU_DESIRED_CAPACITY:-1}"
+export DIARIZATION_WORKER_GPU_MAX_SIZE="${DIARIZATION_WORKER_GPU_MAX_SIZE:-1}"
+export DIARIZATION_WORKER_GPU_COUNT="${DIARIZATION_WORKER_GPU_COUNT:-1}"
+export DIARIZATION_WORKER_PYANNOTE_DEVICE="${DIARIZATION_WORKER_PYANNOTE_DEVICE:-cuda}"
+if [[ "$ENABLE_DIARIZATION_WORKER" == "true" && "$DIARIZATION_WORKER_LAUNCH_TYPE" == "EC2" ]]; then
+  export DIARIZATION_WORKER_PRELOAD_MODEL_WEIGHTS="${DIARIZATION_WORKER_PRELOAD_MODEL_WEIGHTS:-true}"
+  export MODELS_OFFLINE="${MODELS_OFFLINE:-true}"
+else
+  export DIARIZATION_WORKER_PRELOAD_MODEL_WEIGHTS="${DIARIZATION_WORKER_PRELOAD_MODEL_WEIGHTS:-false}"
+  export MODELS_OFFLINE="${MODELS_OFFLINE:-false}"
+fi
+if [[ "$DIARIZATION_WORKER_LAUNCH_TYPE" == "EC2" ]]; then
+  export DIARIZATION_WORKER_ASSIGN_PUBLIC_IP="${DIARIZATION_WORKER_ASSIGN_PUBLIC_IP:-false}"
+else
+  export DIARIZATION_WORKER_ASSIGN_PUBLIC_IP="${DIARIZATION_WORKER_ASSIGN_PUBLIC_IP:-true}"
+fi
+export DIARIZATION_WORKER_TIMEOUT_SECONDS="${DIARIZATION_WORKER_TIMEOUT_SECONDS:-90}"
+
+cat <<EOF
+Deploying direct Cubicle transcription adapter:
+  account:          $ACCOUNT_ID
+  region:           $AWS_REGION_NAME
+  vLLM instance:    $VLLM_INSTANCE_ID
+  vLLM private URL: $VLLM_REALTIME_URL
+  auth mode:        $TRANSCRIPTION_AUTH_MODE
+  allowed users:    $TRANSCRIPTION_ALLOWED_USERS
+  diarization:      $DIARIZATION_PROVIDER
+  vLLM final wait:   ${VOXTRAL_FINAL_RESPONSE_TIMEOUT_SECONDS}s
+  private worker:   $ENABLE_DIARIZATION_WORKER ($DIARIZATION_WORKER_DESIRED_COUNT desired)
+  worker launch:    $DIARIZATION_WORKER_LAUNCH_TYPE
+  worker GPU ASG:   $ENABLE_DIARIZATION_WORKER_GPU_CAPACITY ($DIARIZATION_WORKER_GPU_DESIRED_CAPACITY desired)
+  pyannote device:  ${PYANNOTE_DEVICE:-n/a}
+  worker device:    ${DIARIZATION_WORKER_PYANNOTE_DEVICE:-n/a}
+  ECS launch type:  $ECS_LAUNCH_TYPE
+  diarization wait: ${DIARIZATION_STOP_TIMEOUT_SECONDS}s
+  image tag:        $IMAGE_TAG
+EOF
+
+exec "$SCRIPT_DIR/deploy.sh"

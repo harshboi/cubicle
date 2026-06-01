@@ -1,0 +1,9 @@
+.venv
+.voicenotes-data
+__pycache__
+*.pyc
+.pytest_cache
+.terraform
+terraform.tfstate
+terraform.tfstate.backup
+

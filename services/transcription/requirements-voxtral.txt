@@ -1,0 +1,1 @@
+mistralai[realtime]==2.4.5

@@ -1,0 +1,10 @@
+.venv/
+.voicenotes-data/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
