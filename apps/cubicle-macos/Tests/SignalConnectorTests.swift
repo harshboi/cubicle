@@ -178,6 +178,69 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertTrue(result.failures.isEmpty)
     }
 
+    func testSignalConnectorFactoryBuildsWebexAndIMessageConnectors() throws {
+        let webexClient = StubFactoryWebexClient()
+        let iMessageService = StubIMessageSignalIngestionService(messages: [])
+        let factory = SignalConnectorFactory(
+            webexClient: webexClient,
+            iMessageIngestionService: iMessageService,
+            webexAccountID: "workspace",
+            iMessageAccountID: "local"
+        )
+
+        let connectors = try factory.makeSignalConnectors(ids: [.webex, .iMessage])
+
+        XCTAssertEqual(connectors.map(\.descriptor.id), [.webex, .iMessage])
+        XCTAssertEqual(connectors.map(\.descriptor.displayName), ["Webex", "iMessage"])
+    }
+
+    func testWebexProductServiceListsRoomsAndMembershipsWithoutAppModelCasting() async throws {
+        let webexClient = StubFactoryWebexClient()
+        webexClient.rooms = [
+            makeWebexRoom(id: "room-1", title: "Launch Room", type: "group", lastActivity: "2026-06-01T00:00:00.000Z")
+        ]
+        webexClient.membershipsByRoomID["room-1"] = [
+            makeWebexMembership(id: "membership-1", roomID: "room-1", personEmail: "alex@example.com")
+        ]
+        let service = WebexProductService(client: webexClient)
+
+        let rooms = try await service.listRooms()
+        let memberships = try await service.listMemberships(roomID: "room-1")
+
+        XCTAssertEqual(rooms.map(\.id), ["room-1"])
+        XCTAssertEqual(rooms.map(\.title), ["Launch Room"])
+        XCTAssertEqual(memberships.map(\.personEmail), ["alex@example.com"])
+    }
+
+    func testIMessageProductServiceNormalizesHandlesAndPreviewsMessages() throws {
+        let since = Date(timeIntervalSince1970: 1_715_000_000)
+        let message = IMessageTimelineMessage(
+            id: "imessage-row-1",
+            threadID: "chat-1",
+            threadTitle: "Alex Chen",
+            handle: "+14085550100",
+            sender: "Alex Chen",
+            body: "Can you review the Jira plan?",
+            createdAt: testISO8601.string(from: since.addingTimeInterval(120)),
+            sortDate: since.addingTimeInterval(120),
+            isFromMe: false
+        )
+        let iMessageService = StubIMessageSignalIngestionService(messages: [message])
+        let service = IMessageProductService(ingestionService: iMessageService)
+
+        let normalized = service.normalizedHandle("(408) 555-0100")
+        let preview = try service.previewMessages(
+            matching: ["(408) 555-0100"],
+            displayName: "Alex Chen",
+            since: since,
+            limit: 10
+        )
+
+        XCTAssertEqual(normalized, "+14085550100")
+        XCTAssertEqual(iMessageService.receivedHandles, ["+14085550100"])
+        XCTAssertEqual(preview.map(\.id), ["imessage-row-1"])
+    }
+
     func testSignalKnowledgeWriterPersistsMessageEventsIdempotently() throws {
         let runtimeRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("CubicleSignalWriterTests-\(UUID().uuidString)", isDirectory: true)
@@ -307,6 +370,35 @@ private final class StubSignalWebexClient: WebexClienting {
     }
 }
 
+private final class StubFactoryWebexClient: WebexClienting, WebexProductClienting {
+    var rooms: [WebexRoom] = []
+    var membershipsByRoomID: [String: [WebexMembership]] = [:]
+
+    func rooms() async throws -> [WebexRoom] {
+        rooms
+    }
+
+    func memberships(roomID: String) async throws -> [WebexMembership] {
+        membershipsByRoomID[roomID] ?? []
+    }
+
+    func fetchLatestMessage(roomID: String) async throws -> WebexMessage? {
+        nil
+    }
+
+    func fetchRecentMessages(roomID: String, max: Int) async throws -> [WebexMessage] {
+        []
+    }
+
+    func fetchMessage(messageID: String) async throws -> WebexMessage {
+        throw WebexAPIError.unexpectedResponse(messageID)
+    }
+
+    func fetchDirectMessages(personEmail: String?, personID: String?, max: Int) async throws -> [WebexMessage] {
+        []
+    }
+}
+
 private final class StubSignalConnector: SignalConnector {
     let descriptor: ConnectorDescriptor
     let batch: SignalSyncBatch
@@ -365,6 +457,30 @@ private final class RecordingSignalKnowledgeStore: SignalKnowledgeWritableStore 
             )
         )
     }
+}
+
+private func makeWebexRoom(id: String, title: String, type: String, lastActivity: String) -> WebexRoom {
+    decodeWebexPayload([
+        "id": id,
+        "title": title,
+        "type": type,
+        "lastActivity": lastActivity
+    ])
+}
+
+private func makeWebexMembership(id: String, roomID: String, personEmail: String) -> WebexMembership {
+    decodeWebexPayload([
+        "id": id,
+        "roomId": roomID,
+        "personId": "person-\(id)",
+        "personEmail": personEmail,
+        "personDisplayName": personEmail
+    ])
+}
+
+private func decodeWebexPayload<T: Decodable>(_ payload: [String: Any]) -> T {
+    let data = try! JSONSerialization.data(withJSONObject: payload, options: [])
+    return try! JSONDecoder().decode(T.self, from: data)
 }
 
 private func makeWebexSignalMessage(
