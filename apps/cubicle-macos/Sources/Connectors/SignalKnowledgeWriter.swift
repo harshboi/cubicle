@@ -51,7 +51,9 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
     func write(_ batch: SignalSyncBatch) throws -> SignalWriteSummary {
         try knowledgeStore.bootstrap()
         let updatedAt = Self.iso8601(now())
-        let mappedRecords = mapRecords(for: batch, fallbackUpdatedAt: updatedAt)
+        let mappedRecords = deduplicateDimensionRows(
+            in: mapRecords(for: batch, fallbackUpdatedAt: updatedAt)
+        )
         try knowledgeStore.writeConnectorMessageBatch(
             rooms: mappedRecords.rooms,
             people: mappedRecords.people,
@@ -84,6 +86,33 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
             records.messageEventsProcessed += 1
         }
         return records
+    }
+
+    private func deduplicateDimensionRows(
+        in records: SignalKnowledgeMappedRecords
+    ) -> SignalKnowledgeMappedRecords {
+        var deduplicated = records
+        deduplicated.rooms = lastWriteWins(records.rooms, key: \.id)
+        deduplicated.people = lastWriteWins(records.people, key: \.id)
+        return deduplicated
+    }
+
+    private func lastWriteWins<Record>(
+        _ records: [Record],
+        key: KeyPath<Record, String>
+    ) -> [Record] {
+        var indexesByKey: [String: Int] = [:]
+        var result: [Record] = []
+        for record in records {
+            let recordKey = record[keyPath: key]
+            if let index = indexesByKey[recordKey] {
+                result[index] = record
+            } else {
+                indexesByKey[recordKey] = result.count
+                result.append(record)
+            }
+        }
+        return result
     }
 
     /// Maps supported signal objects into the legacy room/person tables.

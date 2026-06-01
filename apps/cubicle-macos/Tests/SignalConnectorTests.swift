@@ -202,6 +202,46 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertEqual(evidence.first?.source, "webex_message")
     }
 
+    func testSignalKnowledgeWriterPersistsMixedMessageBatchIntoKnowledgeStore() throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleSignalWriterMixedBatch-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let knowledgeStore = KnowledgeStore(configuration: testSignalRuntimeConfiguration(runtimeRoot: runtimeRoot))
+        let writer = SignalKnowledgeWriter(knowledgeStore: knowledgeStore)
+        let occurredAt = Date(timeIntervalSince1970: 1_715_000_240)
+
+        let summary = try writer.write(makeMixedSignalMessageBatch(occurredAt: occurredAt))
+
+        XCTAssertEqual(summary.messageEventsProcessed, 3)
+        XCTAssertEqual(summary.evidenceRecordsWritten, 2)
+
+        let room = try XCTUnwrap(knowledgeStore.loadRoom(roomID: "room-1"))
+        XCTAssertEqual(room.title, "Launch Room")
+
+        let messages = try knowledgeStore.loadMessages(roomID: "room-1", limit: 10)
+        let messagesByID = Dictionary(uniqueKeysWithValues: messages.map { ($0.id, $0) })
+        XCTAssertEqual(Set(messagesByID.keys), [
+            "webex:workspace:message:webex-message-1",
+            "webex:workspace:message:webex-message-2",
+            "webex:workspace:message:webex-message-empty"
+        ])
+        XCTAssertEqual(messagesByID["webex:workspace:message:webex-message-2"]?.body, "Can you review Jira?")
+        XCTAssertEqual(messagesByID["webex:workspace:message:webex-message-empty"]?.body, "")
+
+        let evidence = try knowledgeStore.loadBeliefEvidence(scope: .space, entityKey: "room-1", limit: 10)
+        XCTAssertEqual(Set(evidence.map(\.sourceID)), [
+            "webex:workspace:message:webex-message-1",
+            "webex:workspace:message:webex-message-2"
+        ])
+        XCTAssertFalse(evidence.contains { $0.sourceID == "webex:workspace:message:webex-message-empty" })
+
+        let personMessages = try knowledgeStore.loadMessages(
+            personID: "webex:workspace:person:person-1",
+            limit: 10
+        )
+        XCTAssertEqual(Set(personMessages.map(\.id)), Set(messagesByID.keys))
+    }
+
     func testSignalKnowledgeWriterWritesMappedRowsAsOneConnectorBatch() throws {
         let knowledgeStore = RecordingSignalKnowledgeStore()
         let writer = SignalKnowledgeWriter(
@@ -217,11 +257,8 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertEqual(knowledgeStore.bootstrapCallCount, 1)
         XCTAssertEqual(knowledgeStore.batchWrites.count, 1)
         let batchWrite = try XCTUnwrap(knowledgeStore.batchWrites.first)
-        XCTAssertEqual(batchWrite.rooms.map(\.id), ["room-1", "room-1"])
-        XCTAssertEqual(batchWrite.people.map(\.id), [
-            "webex:workspace:person:person-1",
-            "webex:workspace:person:person-1"
-        ])
+        XCTAssertEqual(batchWrite.rooms.map(\.id), ["room-1"])
+        XCTAssertEqual(batchWrite.people.map(\.id), ["webex:workspace:person:person-1"])
         XCTAssertEqual(batchWrite.messages.map(\.id), ["webex:workspace:message:webex-message-1"])
         XCTAssertEqual(batchWrite.evidence.map(\.source), ["webex_message"])
         XCTAssertEqual(batchWrite.evidence.map(\.sourceID), ["webex:workspace:message:webex-message-1"])
@@ -409,6 +446,66 @@ private func makeSignalMessageBatch(occurredAt: Date) -> SignalSyncBatch {
         checkpoint: nil,
         warnings: [],
         availability: .available
+    )
+}
+
+private func makeMixedSignalMessageBatch(occurredAt: Date) -> SignalSyncBatch {
+    var batch = makeSignalMessageBatch(occurredAt: occurredAt)
+    let roomSourceID = SourceObjectID(connectorID: .webex, accountID: "workspace", kind: "room", externalID: "room-1")
+    let personSourceID = SourceObjectID(connectorID: .webex, accountID: "workspace", kind: "person", externalID: "person-1")
+    batch.events.append(
+        makeSignalMessageEvent(
+            externalID: "webex-message-2",
+            roomSourceID: roomSourceID,
+            personSourceID: personSourceID,
+            occurredAt: occurredAt.addingTimeInterval(60),
+            body: "  Can you review\u{00a0}Jira?  "
+        )
+    )
+    batch.events.append(
+        makeSignalMessageEvent(
+            externalID: "webex-message-empty",
+            roomSourceID: roomSourceID,
+            personSourceID: personSourceID,
+            occurredAt: occurredAt.addingTimeInterval(120),
+            body: " \u{00a0} "
+        )
+    )
+    return batch
+}
+
+private func makeSignalMessageEvent(
+    externalID: String,
+    roomSourceID: SourceObjectID,
+    personSourceID: SourceObjectID,
+    occurredAt: Date,
+    body: String
+) -> SignalEvent {
+    let eventSourceID = SourceEventID(
+        connectorID: .webex,
+        accountID: "workspace",
+        kind: "message",
+        externalID: externalID
+    )
+    let payload = MessageEventPayload(
+        threadID: roomSourceID.globalID,
+        threadSourceID: roomSourceID,
+        threadTitle: "Launch Room",
+        senderID: personSourceID.globalID,
+        senderDisplayName: "alex@example.com",
+        senderEmail: "alex@example.com",
+        body: body,
+        isFromCurrentUser: false
+    )
+    return SignalEvent(
+        id: eventSourceID.globalID,
+        sourceID: eventSourceID,
+        kind: .message,
+        actor: SignalActor(id: personSourceID.globalID, displayName: "alex@example.com", email: "alex@example.com"),
+        occurredAt: occurredAt,
+        objectIDs: [roomSourceID.globalID, personSourceID.globalID],
+        visibility: .authenticatedUser(connectorID: .webex, accountID: "workspace"),
+        payload: .message(payload)
     )
 }
 
