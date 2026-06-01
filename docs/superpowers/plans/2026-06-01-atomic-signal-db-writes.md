@@ -16,12 +16,12 @@
   - Modify `apps/cubicle-macos/Sources/Data/DAO/KnowledgeStore.swift`
     - Add a narrow internal `writeConnectorMessageBatch` method that performs room/person/message/evidence upserts in one SQLite transaction.
   - Modify `apps/cubicle-macos/Tests/QuestionEngineCoreIntegrationTests.swift`
-    - Add rollback test proving failed evidence validation rolls back earlier message/room/person writes.
+    - Add rollback test proving an evidence primary-key failure rolls back earlier message/room/person writes.
 - PR #3:
   - Modify `apps/cubicle-macos/Sources/Connectors/SignalKnowledgeWriter.swift`
     - Collect mapped records from a `SignalSyncBatch`, call `writeConnectorMessageBatch`, and keep summary counts unchanged.
   - Modify `apps/cubicle-macos/Tests/SignalConnectorTests.swift`
-    - Add atomic writer test proving invalid second event rolls back the first event.
+    - Add writer-boundary test proving mapped rows are handed to storage as one connector batch.
   - Modify `README.md`
     - Replace broad DAGs with architecture DAG, runtime call-flow DAG, and filename call-flow DAG.
 
@@ -31,7 +31,7 @@
 - Modify: `apps/cubicle-macos/Sources/Data/DAO/KnowledgeStore.swift`
 - Test: `apps/cubicle-macos/Tests/QuestionEngineCoreIntegrationTests.swift`
 
-- [ ] **Step 1: Write failing rollback test**
+- [x] **Step 1: Write failing rollback test**
 
 Add this test to `QuestionEngineCoreIntegrationTests`:
 
@@ -48,7 +48,10 @@ func testKnowledgeStoreConnectorBatchRollsBackOnEvidenceFailure() throws {
             rooms: [RoomRecord(id: "room-rollback", title: "Rollback Room", updatedAt: now)],
             people: [PersonRecord(id: "person-rollback", displayName: "Rollback Person", email: "rollback@example.com", updatedAt: now)],
             messages: [MessageRecord(id: "message-rollback", roomID: "room-rollback", personID: "person-rollback", body: "Should roll back.", createdAt: now, updatedAt: now)],
-            evidence: [BeliefEvidenceRecord(id: "bad-evidence", source: "test", sourceID: "message-rollback", roomID: "room-rollback", personID: "person-rollback", occurredAt: now, text: "")]
+            evidence: [
+                BeliefEvidenceRecord(id: "duplicate-evidence-id", source: "webex_message", sourceID: "message-rollback", roomID: "room-rollback", personID: "person-rollback", occurredAt: now, text: "First evidence row should be rolled back."),
+                BeliefEvidenceRecord(id: "duplicate-evidence-id", source: "webex_message", sourceID: "message-rollback-conflict", roomID: "room-rollback", personID: "person-rollback", occurredAt: now, text: "Primary key conflict should roll back prior writes.")
+            ]
         )
     )
 
@@ -58,7 +61,7 @@ func testKnowledgeStoreConnectorBatchRollsBackOnEvidenceFailure() throws {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -68,7 +71,7 @@ swift test --filter QuestionEngineCoreIntegrationTests/testKnowledgeStoreConnect
 
 Expected: compile failure because `writeConnectorMessageBatch` does not exist.
 
-- [ ] **Step 3: Implement transaction helper**
+- [x] **Step 3: Implement transaction helper**
 
 Add this method near existing room/person/message/evidence upsert methods in `KnowledgeStore`:
 
@@ -107,7 +110,7 @@ func writeConnectorMessageBatch(
 }
 ```
 
-- [ ] **Step 4: Run focused test**
+- [x] **Step 4: Run focused test**
 
 Run:
 
@@ -117,7 +120,7 @@ swift test --filter QuestionEngineCoreIntegrationTests/testKnowledgeStoreConnect
 
 Expected: pass.
 
-- [ ] **Step 5: Run PR #2 Swift tests**
+- [x] **Step 5: Run PR #2 Swift tests**
 
 Run:
 
@@ -127,7 +130,7 @@ swift test
 
 Expected: all Swift tests pass.
 
-- [ ] **Step 6: Commit PR #2 change**
+- [x] **Step 6: Commit PR #2 change**
 
 ```bash
 git add apps/cubicle-macos/Sources/Data/DAO/KnowledgeStore.swift apps/cubicle-macos/Tests/QuestionEngineCoreIntegrationTests.swift
@@ -140,7 +143,7 @@ git commit -m "Add atomic connector batch write"
 - Modify: `apps/cubicle-macos/Sources/Connectors/SignalKnowledgeWriter.swift`
 - Test: `apps/cubicle-macos/Tests/SignalConnectorTests.swift`
 
-- [ ] **Step 1: Rebase PR #3 onto updated PR #2**
+- [x] **Step 1: Rebase PR #3 onto updated PR #2**
 
 ```bash
 git checkout feat/signal-connectors
@@ -149,59 +152,36 @@ git rebase chore/knowledge-dao-refactor
 
 Expected: clean rebase or only doc comment conflicts.
 
-- [ ] **Step 2: Write failing writer rollback test**
+- [x] **Step 2: Write failing writer boundary test**
 
 Add this test to `SignalConnectorTests`:
 
 ```swift
-func testSignalKnowledgeWriterRollsBackWholeBatchOnInvalidEvidence() throws {
-    let runtimeRoot = FileManager.default.temporaryDirectory
-        .appendingPathComponent("CubicleSignalWriterRollback-\(UUID().uuidString)", isDirectory: true)
-    defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-    let knowledgeStore = KnowledgeStore(configuration: testSignalRuntimeConfiguration(runtimeRoot: runtimeRoot))
+func testSignalKnowledgeWriterWritesMappedRowsAsOneConnectorBatch() throws {
+    let knowledgeStore = RecordingSignalKnowledgeStore()
     let writer = SignalKnowledgeWriter(knowledgeStore: knowledgeStore)
-    let occurredAt = Date(timeIntervalSince1970: 1_715_000_240)
-    var batch = makeSignalMessageBatch(occurredAt: occurredAt)
-    let invalidEvent = SignalEvent(
-        id: "webex:workspace:message:bad-empty",
-        sourceID: SourceEventID(connectorID: .webex, accountID: "workspace", kind: "message", externalID: "bad-empty"),
-        kind: .message,
-        actor: nil,
-        occurredAt: occurredAt.addingTimeInterval(1),
-        objectIDs: [],
-        visibility: .authenticatedUser(connectorID: .webex, accountID: "workspace"),
-        payload: .message(
-            MessageEventPayload(
-                threadID: "webex:workspace:room:room-1",
-                threadSourceID: SourceObjectID(connectorID: .webex, accountID: "workspace", kind: "room", externalID: "room-1"),
-                threadTitle: "Launch Room",
-                senderID: nil,
-                senderDisplayName: "",
-                senderEmail: nil,
-                body: "",
-                isFromCurrentUser: false
-            )
-        )
-    )
-    batch.events.append(invalidEvent)
+    let summary = try writer.write(makeSignalMessageBatch(occurredAt: Date(timeIntervalSince1970: 1_715_000_240)))
 
-    XCTAssertThrowsError(try writer.write(batch))
-    XCTAssertFalse(try knowledgeStore.messageExists(messageID: "webex:workspace:message:webex-message-1"))
-    XCTAssertTrue(try knowledgeStore.loadBeliefEvidence(scope: .space, entityKey: "room-1").isEmpty)
+    XCTAssertEqual(summary.messageEventsProcessed, 1)
+    XCTAssertEqual(summary.evidenceRecordsWritten, 1)
+    XCTAssertEqual(knowledgeStore.bootstrapCallCount, 1)
+    XCTAssertEqual(knowledgeStore.batchWrites.count, 1)
+    XCTAssertEqual(knowledgeStore.batchWrites.first?.messages.count, 1)
+    XCTAssertEqual(knowledgeStore.batchWrites.first?.evidence.count, 1)
 }
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [x] **Step 3: Run test to verify it fails**
 
 Run:
 
 ```bash
-swift test --filter SignalConnectorTests/testSignalKnowledgeWriterRollsBackWholeBatchOnInvalidEvidence
+swift test --filter SignalConnectorTests/testSignalKnowledgeWriterWritesMappedRowsAsOneConnectorBatch
 ```
 
-Expected: failure because the first message persists before the invalid event throws.
+Expected: compile failure because `SignalKnowledgeWritableStore` does not exist and the writer requires concrete `KnowledgeStore`.
 
-- [ ] **Step 4: Refactor writer to collect rows before writing**
+- [x] **Step 4: Refactor writer to collect rows before writing**
 
 Change `SignalKnowledgeWriter.write(_:)` so it:
 
@@ -221,7 +201,7 @@ return SignalWriteSummary(
 
 Add a private mapped-record struct and mapping helpers. Do not write to `KnowledgeStore` while mapping.
 
-- [ ] **Step 5: Run focused writer tests**
+- [x] **Step 5: Run focused writer tests**
 
 Run:
 
@@ -231,7 +211,7 @@ swift test --filter SignalConnectorTests
 
 Expected: all connector tests pass.
 
-- [ ] **Step 6: Run full Swift tests**
+- [x] **Step 6: Run full Swift tests**
 
 Run:
 
@@ -241,7 +221,7 @@ swift test
 
 Expected: all Swift tests pass.
 
-- [ ] **Step 7: Commit PR #3 writer change**
+- [x] **Step 7: Commit PR #3 writer change**
 
 ```bash
 git add apps/cubicle-macos/Sources/Connectors/SignalKnowledgeWriter.swift apps/cubicle-macos/Tests/SignalConnectorTests.swift
@@ -253,7 +233,7 @@ git commit -m "Make signal batch writes atomic"
 **Files:**
 - Modify: `README.md`
 
-- [ ] **Step 1: Replace architecture sections with three DAGs**
+- [x] **Step 1: Replace architecture sections with three DAGs**
 
 Add:
 
@@ -265,7 +245,7 @@ Filename Call Flow DAG
 
 Use current filenames and keep prose brief.
 
-- [ ] **Step 2: Run markdown diff check**
+- [x] **Step 2: Run markdown diff check**
 
 Run:
 
@@ -275,7 +255,7 @@ git diff -- README.md
 
 Expected: README diagrams are accurate, concise, and ASCII-only.
 
-- [ ] **Step 3: Commit README update**
+- [x] **Step 3: Commit README update**
 
 ```bash
 git add README.md docs/superpowers/plans/2026-06-01-atomic-signal-db-writes.md
@@ -287,7 +267,7 @@ git commit -m "Document architecture call flow"
 **Files:**
 - No code changes.
 
-- [ ] **Step 1: Run final checks**
+- [x] **Step 1: Run final checks**
 
 ```bash
 git diff --check
@@ -296,7 +276,7 @@ swift test
 
 Expected: no whitespace errors; all Swift tests pass.
 
-- [ ] **Step 2: Push PR #2 and PR #3**
+- [x] **Step 2: Push PR #2 and PR #3**
 
 ```bash
 git checkout chore/knowledge-dao-refactor
