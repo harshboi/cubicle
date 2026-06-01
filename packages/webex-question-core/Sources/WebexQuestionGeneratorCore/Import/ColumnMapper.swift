@@ -1,5 +1,6 @@
 import Foundation
 
+/// Canonical message fields expected by importers.
 public enum MessageColumn: String, Codable, Sendable, CaseIterable, Hashable {
     case sender
     case timestamp
@@ -12,6 +13,7 @@ public enum MessageColumn: String, Codable, Sendable, CaseIterable, Hashable {
     case senderID
 }
 
+/// Detected/ambiguous/missing column mapping result for a header row.
 public struct ColumnMappingSuggestion: Codable, Sendable, Hashable {
     public var detected: [MessageColumn: String]
     public var ambiguous: [MessageColumn: [String]]

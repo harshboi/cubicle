@@ -1,3 +1,5 @@
+"""VoiceNotes domain models and JSON conversion helpers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -16,6 +18,8 @@ def new_id(prefix: str) -> str:
 
 @dataclass(frozen=True)
 class User:
+    """Authenticated VoiceNotes user identity."""
+
     user_id: str
     email: str
     display_name: str
@@ -43,6 +47,8 @@ class User:
 
 @dataclass
 class TranscriptSegment:
+    """Transcript segment persisted inside a note export."""
+
     segment_id: str
     text: str
     start_time_ms: int | None = None
@@ -86,6 +92,8 @@ class TranscriptSegment:
 
 @dataclass
 class Note:
+    """Voice note metadata plus transcript intelligence fields."""
+
     note_id: str
     user_id: str
     owner_email: str

@@ -1,6 +1,7 @@
 import Foundation
 import OSLog
 
+/// Client errors normalized for sync status and backoff decisions.
 enum WebexSyncClientError: LocalizedError, Equatable {
     case unauthorized
     case forbidden
@@ -33,6 +34,7 @@ enum WebexSyncClientError: LocalizedError, Equatable {
     }
 }
 
+/// Coarse status surfaced in sync results and focus badges.
 enum WebexSyncStatusIndicator: String, Hashable {
     case synced
     case syncing
@@ -41,6 +43,7 @@ enum WebexSyncStatusIndicator: String, Hashable {
     case authRequired
 }
 
+/// External reason for a sync run; force/backoff behavior depends on this.
 enum WebexSyncTriggerReason: String, Hashable {
     case startup
     case scheduled
@@ -50,6 +53,7 @@ enum WebexSyncTriggerReason: String, Hashable {
     case userOpenedConversation
 }
 
+/// Conversation descriptor passed into the adaptive polling engine.
 struct WebexTrackedConversation: Hashable {
     var conversationID: String
     var conversationType: WebexConversationType
@@ -60,6 +64,7 @@ struct WebexTrackedConversation: Hashable {
     var pollingMode: WebexPollingMode
 }
 
+/// Per-conversation sync result before ingestion maps it back to room summaries.
 struct WebexConversationSyncResult: Hashable {
     var conversationID: String
     var roomID: String
@@ -74,6 +79,7 @@ struct WebexConversationSyncResult: Hashable {
     var status: WebexSyncStatusIndicator
 }
 
+/// Testable Webex client facade used by the sync engine.
 protocol WebexClienting {
     func fetchLatestMessage(roomID: String) async throws -> WebexMessage?
     func fetchRecentMessages(roomID: String, max: Int) async throws -> [WebexMessage]
@@ -99,6 +105,7 @@ extension WebexAPIClient: WebexClienting {
     }
 }
 
+/// Actor-backed semaphore limiting concurrent Webex API calls.
 private actor AsyncPermitPool {
     private let maxPermits: Int
     private var availablePermits: Int
@@ -130,10 +137,12 @@ private actor AsyncPermitPool {
     }
 }
 
+/// Serializes sync watermark reads/writes through `KnowledgeStore`.
 actor SyncStateStore {
     private let knowledgeStore: KnowledgeStore
     private let now: () -> Date
 
+    /// Creates a state store with injectable time for deterministic tests.
     init(
         knowledgeStore: KnowledgeStore,
         now: @escaping () -> Date = Date.init
@@ -142,6 +151,7 @@ actor SyncStateStore {
         self.now = now
     }
 
+    /// Loads persisted state or creates a blank watermark for a new conversation.
     func loadOrCreate(for conversation: WebexTrackedConversation) throws -> WebexConversationSyncStateRecord {
         if let existing = try knowledgeStore.loadWebexSyncState(conversationID: conversation.conversationID) {
             return existing
@@ -166,6 +176,7 @@ actor SyncStateStore {
         )
     }
 
+    /// Persists the latest watermark/backoff state.
     func save(_ state: WebexConversationSyncStateRecord) throws {
         try knowledgeStore.upsertWebexSyncState(state)
     }
@@ -189,13 +200,16 @@ actor SyncStateStore {
     }
 }
 
+/// Result of attempting to index one Webex message.
 enum MessageProcessOutcome: Hashable {
     case processed(evidenceIndexed: Int)
     case duplicate
     case ignoredSelf
 }
 
+/// Boundary between sync polling and knowledge-store writes.
 protocol MessageProcessing {
+    /// Indexes a message and returns duplicate/self-message handling status.
     func process(
         message: WebexMessage,
         conversation: WebexTrackedConversation,
@@ -205,12 +219,14 @@ protocol MessageProcessing {
     func messageExists(messageID: String) throws -> Bool
 }
 
+/// Converts Webex messages into room/person/message/evidence records.
 final class MessageProcessor: MessageProcessing {
     private let knowledgeStore: KnowledgeStore
     private let ignoreSelfMessages: Bool
     private let selfPersonID: String?
     private let selfEmail: String?
 
+    /// Configures self-message filtering for the current Webex user.
     init(
         knowledgeStore: KnowledgeStore,
         ignoreSelfMessages: Bool = true,
@@ -223,6 +239,7 @@ final class MessageProcessor: MessageProcessing {
         self.selfEmail = selfEmail?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 
+    /// Idempotently indexes a Webex message and its belief evidence.
     func process(
         message: WebexMessage,
         conversation: WebexTrackedConversation,
@@ -328,7 +345,11 @@ final class MessageProcessor: MessageProcessing {
     }
 }
 
+/// Adaptive polling engine for Webex conversations.
+///
+/// It owns concurrency limits, in-flight de-duping, watermarks, and backoff.
 actor WebexSyncEngine {
+    /// Polling cadence and concurrency knobs.
     struct Configuration: Hashable {
         var maxConcurrentAPIRequests: Int = 3
         var activeIntervalSeconds: TimeInterval = 20
@@ -347,6 +368,7 @@ actor WebexSyncEngine {
     private let logger = Logger(subsystem: "Cubicle", category: "WebexSync")
     private var inFlightByRoomID: [String: Task<WebexConversationSyncResult, Never>] = [:]
 
+    /// Creates an engine with injectable time/randomness for deterministic tests.
     init(
         webexClient: WebexClienting,
         stateStore: SyncStateStore,
@@ -364,6 +386,7 @@ actor WebexSyncEngine {
         self.requestPermits = AsyncPermitPool(maxPermits: max(1, configuration.maxConcurrentAPIRequests))
     }
 
+    /// Syncs conversations concurrently while preserving input order in results.
     func syncConversations(
         _ conversations: [WebexTrackedConversation],
         trigger: WebexSyncTriggerReason
@@ -402,6 +425,7 @@ actor WebexSyncEngine {
         }
     }
 
+    /// Syncs one conversation with in-flight coalescing by room/conversation key.
     func syncConversation(
         _ conversation: WebexTrackedConversation,
         trigger: WebexSyncTriggerReason
@@ -443,6 +467,7 @@ actor WebexSyncEngine {
         return result
     }
 
+    /// Performs watermark checks, catch-up fetch, message processing, and state updates.
     private func performSync(
         _ conversation: WebexTrackedConversation,
         trigger: WebexSyncTriggerReason,
@@ -698,6 +723,7 @@ actor WebexSyncEngine {
         }
     }
 
+    /// Resolves direct-message room IDs lazily and persists the discovered value.
     private func resolveRoomID(
         conversation: WebexTrackedConversation,
         state: inout WebexConversationSyncStateRecord
@@ -731,6 +757,7 @@ actor WebexSyncEngine {
         return roomID
     }
 
+    /// Returns messages newer than the stored ID/timestamp watermark.
     private func unseenMessages(
         from messages: [WebexMessage],
         lastSeenMessageID: String?,
@@ -787,6 +814,7 @@ actor WebexSyncEngine {
         )
     }
 
+    /// Persists failure backoff when state is available and returns a skipped result.
     private func failureResult(
         conversation: WebexTrackedConversation,
         state: WebexConversationSyncStateRecord?,
@@ -856,6 +884,7 @@ actor WebexSyncEngine {
         return SyncStateStore.iso8601(date.addingTimeInterval(jittered(base)))
     }
 
+    /// Computes retry/backoff time for rate limits and transient failures.
     private func nextAllowedForFailure(
         failureCount: Int,
         mappedError: WebexSyncClientError,
@@ -886,6 +915,7 @@ actor WebexSyncEngine {
         return minValue + (maxValue - minValue) * unit
     }
 
+    /// Runs one Webex request under the global sync-engine concurrency limit.
     private func withRequestPermit<T>(_ operation: () async throws -> T) async throws -> T {
         await requestPermits.acquire()
         do {
@@ -930,6 +960,7 @@ actor WebexSyncEngine {
         return Self.iso8601.date(from: value)
     }
 
+    /// Maps transport/API errors to sync statuses and retry behavior.
     static func mapClientError(_ error: Error) -> WebexSyncClientError {
         if let mapped = error as? WebexSyncClientError {
             return mapped

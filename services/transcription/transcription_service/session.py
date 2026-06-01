@@ -1,3 +1,5 @@
+"""Per-connection transcription session runtime and event orchestration."""
+
 from __future__ import annotations
 
 from collections import deque
@@ -27,6 +29,8 @@ from .logging_utils import log_event
 
 
 class BackpressureError(RuntimeError):
+    """Raised when a session receives audio faster than it can process."""
+
     pass
 
 
@@ -34,12 +38,16 @@ logger = logging.getLogger(__name__)
 
 
 class SessionEventSink(Protocol):
+    """Async text sink for encoded transcription events."""
+
     async def send_text(self, payload: str) -> None:
         ...
 
 
 @dataclass
 class TranscriptionSession:
+    """State machine for one live transcription WebSocket session."""
+
     config: StartSessionConfig
     auth_context: AuthContext = field(default_factory=lambda: AuthContext(mode="none"))
     asr_provider: ASRProvider = field(default_factory=MockASRProvider)

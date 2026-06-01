@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Overview pane for transcription settings and live-session status.
 struct TranscriptionOverviewView: View {
     @EnvironmentObject private var model: AppModel
 
@@ -11,6 +12,7 @@ struct TranscriptionOverviewView: View {
     }
 }
 
+/// Main transcription controls and status cards.
 private struct TranscriptionOverviewContent: View {
     @ObservedObject var viewModel: TranscriptionViewModel
     let settings: SystemSettings
@@ -83,6 +85,7 @@ private struct TranscriptionOverviewContent: View {
     }
 }
 
+/// Transcript pane shown beside the main app shell.
 struct TranscriptionRightPaneView: View {
     @EnvironmentObject private var model: AppModel
 
@@ -95,6 +98,7 @@ struct TranscriptionRightPaneView: View {
     }
 }
 
+/// Transcript list and submission panel for the right pane.
 private struct TranscriptionTranscriptContent: View {
     @ObservedObject var model: AppModel
     @ObservedObject var viewModel: TranscriptionViewModel
@@ -141,6 +145,7 @@ private struct TranscriptionTranscriptContent: View {
     }
 }
 
+/// Panel for sending transcript text into the timeline workflow.
 private struct TranscriptionTimelineSubmissionPanel: View {
     @ObservedObject var model: AppModel
     @ObservedObject var viewModel: TranscriptionViewModel
@@ -231,6 +236,7 @@ private struct TranscriptionTimelineSubmissionPanel: View {
     }
 }
 
+/// Status panel for transcription connection and configuration.
 private struct TranscriptionStatusPanel: View {
     @ObservedObject var viewModel: TranscriptionViewModel
     let settings: SystemSettings
@@ -302,6 +308,7 @@ private struct TranscriptionStatusPanel: View {
     }
 }
 
+/// Row for one transcript segment.
 private struct TranscriptSegmentRow: View {
     let segment: TranscriptSegment
     let diarizationEnabled: Bool
@@ -337,6 +344,7 @@ private struct TranscriptSegmentRow: View {
     }
 }
 
+/// Label/value row for transcription diagnostics.
 private struct TranscriptionInfoRow: View {
     let symbolName: String
     let title: String
@@ -365,6 +373,7 @@ private struct TranscriptionInfoRow: View {
     }
 }
 
+/// Lightweight settings-style grouping used outside SettingsView.
 private struct SettingsGroupLike<Content: View>: View {
     let title: String
     @ViewBuilder var content: Content
@@ -382,6 +391,7 @@ private struct SettingsGroupLike<Content: View>: View {
     }
 }
 
+/// Empty state for transcript/status panes.
 private struct TranscriptionEmptyState: View {
     let symbolName: String
     let title: String

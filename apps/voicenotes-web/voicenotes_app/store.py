@@ -1,3 +1,5 @@
+"""Local and AWS note stores for VoiceNotes transcripts."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -13,10 +15,14 @@ from .transcripts import render_markdown, render_text, title_from_segments, tran
 
 
 class NoteNotFound(Exception):
+    """Raised when a note is missing or inaccessible to the caller."""
+
     pass
 
 
 class NoteStore(ABC):
+    """Storage contract shared by local filesystem and AWS-backed stores."""
+
     @abstractmethod
     def create_note(self, note: Note) -> Note:
         raise NotImplementedError
@@ -63,6 +69,8 @@ class NoteStore(ABC):
 
 
 class LocalNoteStore(NoteStore):
+    """Filesystem-backed note store for local development."""
+
     def __init__(self, root: Path) -> None:
         self.root = root
         self.root.mkdir(parents=True, exist_ok=True)
@@ -196,6 +204,8 @@ class LocalNoteStore(NoteStore):
 
 
 class AwsNoteStore(NoteStore):
+    """DynamoDB/S3-backed note store for deployed VoiceNotes."""
+
     def __init__(self, settings: Settings) -> None:
         import boto3
 

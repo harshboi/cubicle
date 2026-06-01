@@ -1,3 +1,5 @@
+"""ASR provider abstractions and local/remote transcription adapters."""
+
 from __future__ import annotations
 
 import asyncio
@@ -23,39 +25,63 @@ logger = logging.getLogger(__name__)
 
 
 class ASRProviderError(RuntimeError):
+    """ASR runtime is unsupported, missing dependencies, or failed."""
+
     pass
 
 
 class ASRProvider(Protocol):
+    """Provider boundary for live audio ingestion and final transcripts."""
+
     def warmup(self) -> None:
+        """Load heavy runtime dependencies before frames arrive."""
+
         ...
 
     def ingest_audio(self, config: StartSessionConfig, audio_frame: bytes) -> list[str]:
+        """Accept one PCM frame and return zero or more encoded events."""
+
         ...
 
     def finalize(self, config: StartSessionConfig) -> list[str]:
+        """Flush provider state and return final encoded events."""
+
         ...
 
     def runtime_status(self) -> dict[str, Any]:
+        """Return operator-safe readiness metadata."""
+
         ...
 
 
 class VoxtralRealtimeStream(Protocol):
+    """Minimal stream contract used by Voxtral ASR providers."""
+
     def start(self) -> None:
+        """Open the realtime stream before audio is sent."""
+
         ...
 
     def send_audio(self, audio_frame: bytes) -> None:
+        """Queue one normalized audio frame for streaming."""
+
         ...
 
     def drain_text_deltas(self) -> list[str]:
+        """Return currently available text deltas without blocking."""
+
         ...
 
     def stop(self) -> None:
+        """Close the stream and surface any background failure."""
+
         ...
 
 
 @dataclass(frozen=True)
 class ASRProviderSettings:
+    """Environment-backed settings for ASR and realtime stream adapters."""
+
     provider: str = "mock"
     voxtral_model: str = "voxtral-mini-transcribe-realtime-2602"
     voxtral_model_version: str = "mistral-realtime-2602"
@@ -83,6 +109,8 @@ class ASRProviderSettings:
 
     @classmethod
     def from_environment(cls) -> "ASRProviderSettings":
+        """Load ASR settings from process environment variables."""
+
         vllm_base_url = _env_first("VLLM_BASE_URL", default="http://127.0.0.1:8000").strip()
         return cls(
             provider=os.environ.get("TRANSCRIPTION_ASR_PROVIDER", "mock").strip().lower(),
@@ -141,11 +169,15 @@ class ASRProviderSettings:
 
 @dataclass
 class ASRProviderFactory:
+    """Creates the configured ASR provider and shares model caches."""
+
     settings: ASRProviderSettings = field(default_factory=ASRProviderSettings.from_environment)
     model_cache: "FasterWhisperModelCache" = field(default_factory=lambda: default_model_cache)
     voxtral_stream_factory: "VoxtralRealtimeStreamFactory | None" = None
 
     def create_provider(self) -> ASRProvider:
+        """Instantiate the provider selected by settings."""
+
         if self.settings.provider == "mock":
             return MockASRProvider()
         if self.settings.provider in {"voxtral", "voxtral_realtime"}:
@@ -163,6 +195,8 @@ class ASRProviderFactory:
         raise ASRProviderError(f"unsupported ASR provider: {self.settings.provider}")
 
     def runtime_status(self) -> dict[str, Any]:
+        """Return provider readiness without mutating session state."""
+
         if self.settings.provider == "mock":
             return MockASRProvider().runtime_status()
         if self.settings.provider in {"voxtral", "voxtral_realtime"}:
@@ -182,6 +216,8 @@ class ASRProviderFactory:
 
 @dataclass
 class MockASRProvider:
+    """Deterministic transcript provider for local development and tests."""
+
     model_name: str = "mock-asr"
     model_version: str = "slice-4"
     _frame_count: int = 0
@@ -189,13 +225,19 @@ class MockASRProvider:
     _warmed: bool = False
 
     def warmup(self) -> None:
+        """Mark the mock provider as initialized."""
+
         self._warmed = True
 
     @property
     def is_warmed(self) -> bool:
+        """Expose warmup state for tests without parsing status JSON."""
+
         return self._warmed
 
     def runtime_status(self) -> dict[str, Any]:
+        """Return stable mock readiness metadata."""
+
         return {
             "provider": "mock",
             "model_name": self.model_name,
@@ -209,6 +251,8 @@ class MockASRProvider:
         }
 
     def ingest_audio(self, config: StartSessionConfig, audio_frame: bytes) -> list[str]:
+        """Emit a synthetic partial transcript after each frame."""
+
         self._frame_count += 1
         self._total_bytes += len(audio_frame)
         text = self._text_for(config, final=False)
@@ -229,6 +273,8 @@ class MockASRProvider:
         ]
 
     def finalize(self, config: StartSessionConfig) -> list[str]:
+        """Emit one synthetic final transcript when audio was received."""
+
         if self._frame_count == 0:
             return []
         text = self._text_for(config, final=True)
@@ -258,22 +304,32 @@ class MockASRProvider:
 
 @dataclass
 class VoxtralRealtimeStreamFactory:
+    """Factory for the managed Mistral realtime stream adapter."""
+
     settings: ASRProviderSettings
 
     def create_stream(self) -> VoxtralRealtimeStream:
+        """Create a managed Mistral Voxtral stream."""
+
         return MistralVoxtralRealtimeStream(self.settings)
 
 
 @dataclass
 class SelfHostedVoxtralRealtimeStreamFactory:
+    """Factory for the self-hosted vLLM realtime stream adapter."""
+
     settings: ASRProviderSettings
 
     def create_stream(self) -> VoxtralRealtimeStream:
+        """Create a VPC-local vLLM Voxtral stream."""
+
         return VLLMVoxtralRealtimeStream(self.settings)
 
 
 @dataclass
 class VoxtralRealtimeASRProvider:
+    """Managed Mistral Voxtral adapter that converts deltas to events."""
+
     settings: ASRProviderSettings = field(default_factory=ASRProviderSettings.from_environment)
     stream_factory: VoxtralRealtimeStreamFactory = field(
         default_factory=lambda: VoxtralRealtimeStreamFactory(ASRProviderSettings.from_environment())
@@ -284,12 +340,16 @@ class VoxtralRealtimeASRProvider:
     _warmed: bool = False
 
     def warmup(self) -> None:
+        """Validate credentials and open the realtime stream."""
+
         self._validate_runtime()
         self._stream = self.stream_factory.create_stream()
         self._stream.start()
         self._warmed = True
 
     def runtime_status(self) -> dict[str, Any]:
+        """Expose managed API readiness and key configuration state."""
+
         dependencies_available = _optional_dependency_available("mistralai")
         api_key_present = bool(self.settings.mistral_api_key and self.settings.mistral_api_key.strip())
         return {
@@ -310,6 +370,8 @@ class VoxtralRealtimeASRProvider:
         }
 
     def ingest_audio(self, config: StartSessionConfig, audio_frame: bytes) -> list[str]:
+        """Forward one frame and return any available partial text."""
+
         if self._stream is None:
             raise ASRProviderError("Voxtral Realtime stream has not started")
         self._audio_bytes += len(audio_frame)
@@ -317,6 +379,8 @@ class VoxtralRealtimeASRProvider:
         return self._events_for_deltas(config, is_final=False)
 
     def finalize(self, config: StartSessionConfig) -> list[str]:
+        """Stop streaming and return the latest final transcript event."""
+
         if self._stream is None:
             return []
         self._stream.stop()
@@ -379,11 +443,15 @@ class VoxtralRealtimeASRProvider:
 
 @dataclass
 class SelfHostedVoxtralRealtimeASRProvider(VoxtralRealtimeASRProvider):
+    """Self-hosted Voxtral adapter for OpenAI Realtime-compatible vLLM."""
+
     stream_factory: SelfHostedVoxtralRealtimeStreamFactory = field(
         default_factory=lambda: SelfHostedVoxtralRealtimeStreamFactory(ASRProviderSettings.from_environment())
     )
 
     def runtime_status(self) -> dict[str, Any]:
+        """Expose vLLM endpoint, auth, and dependency readiness."""
+
         dependencies_available = _optional_dependency_available("websockets")
         endpoint_configured = bool(self.settings.voxtral_realtime_url and self.settings.voxtral_realtime_url.strip())
         return {
@@ -468,6 +536,8 @@ class SelfHostedVoxtralRealtimeASRProvider(VoxtralRealtimeASRProvider):
 
 
 class MistralVoxtralRealtimeStream:
+    """Threaded bridge from sync audio calls to Mistral's async SDK."""
+
     def __init__(self, settings: ASRProviderSettings) -> None:
         self.settings = settings
         self._audio_queue: Queue[bytes | None] = Queue(maxsize=64)
@@ -476,14 +546,20 @@ class MistralVoxtralRealtimeStream:
         self._thread: Thread | None = None
 
     def start(self) -> None:
+        """Start the background async stream runner."""
+
         self._thread = Thread(target=self._run_thread, name="voxtral-realtime-stream", daemon=True)
         self._thread.start()
 
     def send_audio(self, audio_frame: bytes) -> None:
+        """Queue one PCM frame or raise a prior stream failure."""
+
         self._raise_if_failed()
         self._audio_queue.put(audio_frame, timeout=2)
 
     def drain_text_deltas(self) -> list[str]:
+        """Drain available SDK text deltas without blocking the caller."""
+
         self._raise_if_failed()
         deltas: list[str] = []
         while True:
@@ -493,6 +569,8 @@ class MistralVoxtralRealtimeStream:
                 return deltas
 
     def stop(self) -> None:
+        """Signal end-of-audio and wait for final SDK events."""
+
         self._audio_queue.put(None, timeout=2)
         if self._thread is not None:
             join_timeout = self._stop_join_timeout_seconds()
@@ -573,14 +651,20 @@ class VLLMVoxtralRealtimeStream:
         self._final_commit_sent = False
 
     def start(self) -> None:
+        """Start the background websocket runner."""
+
         self._thread = Thread(target=self._run_thread, name="voxtral-vllm-realtime-stream", daemon=True)
         self._thread.start()
 
     def send_audio(self, audio_frame: bytes) -> None:
+        """Queue one PCM frame or raise a prior websocket failure."""
+
         self._raise_if_failed()
         self._audio_queue.put(audio_frame, timeout=2)
 
     def drain_text_deltas(self) -> list[str]:
+        """Drain available realtime deltas without blocking the caller."""
+
         self._raise_if_failed()
         deltas: list[str] = []
         while True:
@@ -590,6 +674,8 @@ class VLLMVoxtralRealtimeStream:
                 return deltas
 
     def stop(self) -> None:
+        """Signal final commit and wait for completion or timeout."""
+
         self._audio_queue.put(None, timeout=2)
         if self._thread is not None:
             join_timeout = self._stop_join_timeout_seconds()
@@ -891,10 +977,14 @@ class VLLMVoxtralRealtimeStream:
 
 
 class FasterWhisperModelCache:
+    """Process cache for faster-whisper models keyed by runtime settings."""
+
     def __init__(self) -> None:
         self._models: dict[tuple[str, str, str, int], Any] = {}
 
     def load_model(self, settings: ASRProviderSettings) -> Any:
+        """Load or reuse a faster-whisper model for the active settings."""
+
         cache_key = (settings.model_name, settings.device, settings.compute_type, settings.cpu_threads)
         model = self._models.get(cache_key)
         if model is not None:
@@ -922,6 +1012,8 @@ default_model_cache = FasterWhisperModelCache()
 
 @dataclass
 class FasterWhisperASRProvider:
+    """Batch-style faster-whisper adapter behind the live ASR interface."""
+
     settings: ASRProviderSettings = field(default_factory=ASRProviderSettings.from_environment)
     model_cache: FasterWhisperModelCache = field(default_factory=lambda: default_model_cache)
     _audio_buffer: bytearray = field(default_factory=bytearray)
@@ -929,15 +1021,21 @@ class FasterWhisperASRProvider:
     _warmed: bool = False
 
     def warmup(self) -> None:
+        """Validate GPU policy and load the faster-whisper model."""
+
         self._validate_runtime()
         self.model_cache.load_model(self.settings)
         self._warmed = True
 
     @property
     def sample_rate(self) -> int:
+        """Server ASR sample rate expected by the wire protocol."""
+
         return 16_000
 
     def runtime_status(self) -> dict[str, Any]:
+        """Expose dependency, GPU, and model-cache readiness."""
+
         gpu_available = detect_gpu_available()
         dependencies_available = _optional_dependency_available("faster_whisper")
         gpu_ready = self.settings.device != "cuda" or gpu_available or not self.settings.require_gpu
@@ -956,6 +1054,8 @@ class FasterWhisperASRProvider:
         }
 
     def ingest_audio(self, config: StartSessionConfig, audio_frame: bytes) -> list[str]:
+        """Buffer PCM and periodically emit partial transcripts."""
+
         self._audio_buffer.extend(audio_frame)
         if self._buffer_duration_ms() < self.settings.partial_min_audio_ms:
             return []
@@ -981,6 +1081,8 @@ class FasterWhisperASRProvider:
         ]
 
     def finalize(self, config: StartSessionConfig) -> list[str]:
+        """Transcribe the buffered audio and emit one final event."""
+
         if not self._audio_buffer:
             return []
         text, confidence = self._transcribe_buffer(config, final=True)

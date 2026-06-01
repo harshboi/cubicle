@@ -1,5 +1,6 @@
 import Foundation
 
+/// Runtime-store failures that should surface as actionable setup/cache problems.
 enum NativeRuntimeStoreError: LocalizedError {
     case missingSnapshot(URL)
     case invalidNativeCacheManifest(URL)
@@ -14,6 +15,7 @@ enum NativeRuntimeStoreError: LocalizedError {
     }
 }
 
+/// Local focus-cache rebuild result used by refresh orchestration and job UI.
 struct FocusRefreshOutcome: Equatable {
     var kind: FocusKind
     var focusDays: Int
@@ -25,6 +27,7 @@ struct FocusRefreshOutcome: Equatable {
     var clusterCount: Int
 }
 
+/// Exact-analysis cache state for a focus scope at the current evidence bucket.
 enum FocusAnalysisCacheAvailability: String, Equatable {
     case exactCache = "exact_cache"
     case needsRefresh = "needs_refresh"
@@ -32,6 +35,7 @@ enum FocusAnalysisCacheAvailability: String, Equatable {
     case invalidManifest = "invalid_manifest"
 }
 
+/// Cache identity report for deciding whether a Codex-backed analysis can be reused.
 struct FocusAnalysisCacheStatus: Equatable {
     var kind: FocusKind
     var focusDays: Int
@@ -44,11 +48,13 @@ struct FocusAnalysisCacheStatus: Equatable {
     var messageIDsHash: String?
     var outputSnapshotPath: String?
 
+    /// True only when source evidence, model settings, prompt version, and bucket all match.
     var canUseExactCache: Bool {
         availability == .exactCache
     }
 }
 
+/// Filesystem counts for the native Codex run/queue directories.
 struct CodexJobRefreshOutcome: Equatable {
     var runsDirectoryExists: Bool
     var queueDirectoryExists: Bool
@@ -56,6 +62,7 @@ struct CodexJobRefreshOutcome: Equatable {
     var queuedPromptCount: Int
 }
 
+/// Sidecar metadata that makes local focus caches reusable without decoding large snapshots first.
 private struct NativeFocusCacheManifest: Codable {
     var kind: String
     var focusDays: Int
@@ -205,11 +212,16 @@ private struct NativeFocusCacheManifest: Codable {
     }
 }
 
+/// Cheap filesystem fingerprint used before falling back to content signatures.
 private struct FocusSourceSnapshotFingerprint: Equatable {
     var fileSizeBytes: Int64
     var modifiedAtEpoch: TimeInterval
 }
 
+/// Owns native runtime files under `runtimeRoot/knowledge`.
+///
+/// This is the boundary between raw source snapshots, display-ready focus caches,
+/// and cache manifests consumed by refresh orchestration.
 final class NativeRuntimeStore {
     let configuration: RuntimeConfiguration
     let configStore: ConfigStore
@@ -226,6 +238,7 @@ final class NativeRuntimeStore {
     private static let personFocusCacheReuseVersion = 13
     private static let spaceFocusCacheReuseVersion = 12
 
+    /// Creates a store bound to one runtime root and config source.
     init(configuration: RuntimeConfiguration = .current) {
         self.configuration = configuration
         self.configStore = ConfigStore(configuration: configuration)
@@ -234,16 +247,19 @@ final class NativeRuntimeStore {
         self.encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     }
 
+    /// Live user-facing snapshot path for the configured focus window.
     func snapshotURL(kind: FocusKind) -> URL {
         snapshotURL(kind: kind, focusDays: configuredFocusDays(kind: kind))
     }
 
+    /// User-facing snapshot path for a specific focus window.
     func snapshotURL(kind: FocusKind, focusDays: Int) -> URL {
         configuration.runtimeRoot
             .appendingPathComponent("knowledge", isDirectory: true)
             .appendingPathComponent(kind.snapshotFilename(days: focusDays))
     }
 
+    /// Native display-ready cache path for a specific focus window.
     func nativeSnapshotURL(kind: FocusKind, focusDays: Int) -> URL {
         configuration.runtimeRoot
             .appendingPathComponent("knowledge", isDirectory: true)
@@ -251,6 +267,7 @@ final class NativeRuntimeStore {
             .appendingPathComponent("\(kind.rawValue)_focus_cache_\(focusDays)d.native.json")
     }
 
+    /// Legacy/latest manifest path kept for compatibility with older cache writers.
     func nativeManifestURL(kind: FocusKind) -> URL {
         configuration.runtimeRoot
             .appendingPathComponent("knowledge", isDirectory: true)
@@ -258,6 +275,7 @@ final class NativeRuntimeStore {
             .appendingPathComponent("\(kind.rawValue)_focus_cache_manifest.json")
     }
 
+    /// Window-scoped manifest path used for exact cache reuse.
     func nativeManifestURL(kind: FocusKind, focusDays: Int) -> URL {
         configuration.runtimeRoot
             .appendingPathComponent("knowledge", isDirectory: true)
@@ -265,6 +283,7 @@ final class NativeRuntimeStore {
             .appendingPathComponent("\(kind.rawValue)_focus_cache_\(focusDays)d.manifest.json")
     }
 
+    /// Checks whether Codex analysis output matches current evidence and settings.
     func focusAnalysisCacheStatus(
         kind: FocusKind,
         focusDays: Int,
@@ -347,6 +366,7 @@ final class NativeRuntimeStore {
         }
     }
 
+    /// Loads an exact analysis cache only when the manifest proves it is current.
     func loadExactFocusAnalysisCache(
         kind: FocusKind,
         focusDays: Int,
@@ -366,6 +386,7 @@ final class NativeRuntimeStore {
         return try loadFocusCache(kind: kind, sourceURL: URL(fileURLWithPath: outputSnapshotPath))
     }
 
+    /// Loads the best display-ready focus cache for the configured focus window.
     func loadFocusCache(kind: FocusKind) throws -> FocusCache {
         let sourceURL = try resolvedSnapshotURL(kind: kind)
         let sourceFocusDays = focusDaysFromSnapshotURL(sourceURL) ?? configuredFocusDays(kind: kind)
@@ -447,12 +468,14 @@ final class NativeRuntimeStore {
         )
     }
 
+    /// Writes the user-facing snapshot before native cache regeneration.
     func saveFocusCache(_ cache: FocusCache, kind: FocusKind) throws {
         try ensureKnowledgeDirectory()
         let data = try encoder.encode(cache)
         try data.write(to: snapshotURL(kind: kind), options: [.atomic])
     }
 
+    /// Rebuilds or reuses the native cache from the best available source snapshot.
     func refreshFocusCache(kind: FocusKind, forceRebuild: Bool = false) throws -> FocusRefreshOutcome {
         try refreshFocusCache(
             kind: kind,
@@ -461,6 +484,7 @@ final class NativeRuntimeStore {
         )
     }
 
+    /// Rebuilds or reuses the native cache from an explicit source snapshot.
     func refreshFocusCache(
         kind: FocusKind,
         sourceURL: URL,
@@ -597,6 +621,7 @@ final class NativeRuntimeStore {
         )
     }
 
+    /// Counts run and queue directories without mutating job state.
     func refreshCodexJobs() -> CodexJobRefreshOutcome {
         let knowledgeURL = configuration.runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         let runsURL = knowledgeURL.appendingPathComponent("runs", isDirectory: true)
@@ -634,14 +659,17 @@ final class NativeRuntimeStore {
         )
     }
 
+    /// Person-focus convenience wrapper for refresh orchestration.
     func refreshPersonFocusCache(forceRebuild: Bool = false) throws -> FocusRefreshOutcome {
         try refreshFocusCache(kind: .person, forceRebuild: forceRebuild)
     }
 
+    /// Space-focus convenience wrapper for refresh orchestration.
     func refreshSpaceFocusCache(forceRebuild: Bool = false) throws -> FocusRefreshOutcome {
         try refreshFocusCache(kind: .space, forceRebuild: forceRebuild)
     }
 
+    /// Reports runtime file presence for Settings diagnostics.
     func runtimeStatus() -> RuntimeStatus {
         let knowledgeURL = configuration.runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         let nativeURL = knowledgeURL.appendingPathComponent("native", isDirectory: true)
@@ -744,6 +772,7 @@ final class NativeRuntimeStore {
         return days
     }
 
+    /// Converts raw snapshots into UI-ready detail payloads while preserving useful Codex sections.
     private func displayReadyCache(
         _ cache: FocusCache,
         kind: FocusKind,
@@ -776,6 +805,7 @@ final class NativeRuntimeStore {
         )
     }
 
+    /// Finds the richest compatible prior cache for carrying forward generated detail sections.
     private func bestEnrichmentCache(
         kind: FocusKind,
         excluding sourceURL: URL? = nil,
@@ -864,6 +894,7 @@ final class NativeRuntimeStore {
         return score
     }
 
+    /// Merges new raw evidence with prior generated summaries when evidence has not advanced.
     private func mergeFreshItem(_ freshItem: FocusItem, with previousItem: FocusItem?, kind: FocusKind) -> FocusItem {
         if let previousItem,
            shouldPreferPreviousNonEmptyItem(freshItem: freshItem, previousItem: previousItem, kind: kind) {
@@ -1329,6 +1360,7 @@ final class NativeRuntimeStore {
         }
     }
 
+    /// Resolves source snapshots with live native output preferred over older JSON exports.
     private func resolvedSnapshotURL(kind: FocusKind) throws -> URL {
         let preferred = snapshotURL(kind: kind)
         let nativeLiveSnapshot = liveSnapshotURL(kind: kind)
@@ -1395,6 +1427,7 @@ final class NativeRuntimeStore {
         throw NativeRuntimeStoreError.missingSnapshot(sourceSnapshot)
     }
 
+    /// Falls back when a live snapshot is only a sparse shell around zero evidence.
     private func fallbackForSparseLiveSnapshot(_ liveSnapshot: URL, kind: FocusKind) -> URL? {
         if let liveSizeBytes = fileSizeBytes(for: liveSnapshot),
            liveSizeBytes > Self.sparseLiveSnapshotInspectionMaxBytes {
@@ -1557,6 +1590,7 @@ final class NativeRuntimeStore {
         }
     }
 
+    /// Creates the cache identity record used by exact reuse and analysis freshness checks.
     private func makeManifest(
         kind: FocusKind,
         focusDays: Int,
@@ -1619,6 +1653,7 @@ final class NativeRuntimeStore {
         )
     }
 
+    /// Stable cache ID for the tuple of evidence, prompt, model, reasoning, and time bucket.
     private func analysisCacheID(
         kind: FocusKind,
         focusDays: Int,
@@ -1646,6 +1681,7 @@ final class NativeRuntimeStore {
         return "\(kind.rawValue)-\(focusDays)d-\(analysisBucket)-\(FocusStableHash.hex(payload))"
     }
 
+    /// Guards exact reuse against stale evidence, prompt drift, model changes, and missing output.
     private func exactAnalysisManifestMatches(
         _ manifest: NativeFocusCacheManifest,
         kind: FocusKind,

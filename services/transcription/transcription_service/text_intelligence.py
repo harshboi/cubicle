@@ -1,3 +1,5 @@
+"""OpenAI-compatible translation and transcript-summary provider adapters."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -11,11 +13,17 @@ from urllib import request as urllib_request
 
 
 class TextIntelligenceProviderError(RuntimeError):
+    """Translation or transcript-summary provider is unavailable or invalid."""
+
     pass
 
 
 class TextIntelligenceProvider(Protocol):
+    """Provider boundary for post-transcription language intelligence."""
+
     def warmup(self) -> None:
+        """Fail fast when required runtime dependencies are not ready."""
+
         ...
 
     def translate_line(
@@ -25,20 +33,30 @@ class TextIntelligenceProvider(Protocol):
         target_line: str,
         target_language: str,
     ) -> dict[str, Any]:
+        """Translate one transcript line using nearby context only."""
+
         ...
 
     def summarize_transcript(self, *, lines: list[str]) -> dict[str, Any]:
+        """Return summary JSON fields consumed by VoiceNotes."""
+
         ...
 
     def answer_transcript_question(self, *, lines: list[str], question: str) -> dict[str, Any]:
+        """Answer from transcript text without external retrieval."""
+
         ...
 
     def runtime_status(self) -> dict[str, Any]:
+        """Return provider readiness metadata safe for status endpoints."""
+
         ...
 
 
 @dataclass(frozen=True)
 class TextIntelligenceSettings:
+    """Environment-backed settings for the text-intelligence provider."""
+
     provider: str = "mock"
     model: str = "Qwen/Qwen2.5-7B-Instruct"
     vllm_base_url: str = "http://127.0.0.1:8000"
@@ -50,6 +68,8 @@ class TextIntelligenceSettings:
 
     @classmethod
     def from_environment(cls) -> "TextIntelligenceSettings":
+        """Load text-intelligence settings from process environment variables."""
+
         return cls(
             provider=os.environ.get("TEXT_INTELLIGENCE_PROVIDER", "mock").strip().lower(),
             model=os.environ.get("TEXT_INTELLIGENCE_MODEL", cls.model).strip() or cls.model,
@@ -71,9 +91,13 @@ class TextIntelligenceSettings:
 
 @dataclass
 class TextIntelligenceProviderFactory:
+    """Creates the configured translation/summary provider."""
+
     settings: TextIntelligenceSettings = field(default_factory=TextIntelligenceSettings.from_environment)
 
     def create_provider(self) -> TextIntelligenceProvider:
+        """Instantiate the provider selected by settings."""
+
         if self.settings.provider == "mock":
             return MockTextIntelligenceProvider(settings=self.settings)
         if self.settings.provider in {"vllm", "openai_compatible"}:
@@ -81,6 +105,8 @@ class TextIntelligenceProviderFactory:
         raise TextIntelligenceProviderError(f"unsupported text intelligence provider: {self.settings.provider}")
 
     def runtime_status(self) -> dict[str, Any]:
+        """Return provider status without throwing on bad config."""
+
         try:
             return self.create_provider().runtime_status()
         except TextIntelligenceProviderError as exc:
@@ -89,9 +115,13 @@ class TextIntelligenceProviderFactory:
 
 @dataclass
 class MockTextIntelligenceProvider:
+    """Deterministic no-network provider for local development and tests."""
+
     settings: TextIntelligenceSettings = field(default_factory=TextIntelligenceSettings.from_environment)
 
     def warmup(self) -> None:
+        """Mock provider has no runtime dependency to initialize."""
+
         return None
 
     def translate_line(
@@ -101,6 +131,8 @@ class MockTextIntelligenceProvider:
         target_line: str,
         target_language: str,
     ) -> dict[str, Any]:
+        """Echo the target line while preserving response shape."""
+
         return {
             "text": target_line.strip(),
             "model": self.settings.model,
@@ -108,6 +140,8 @@ class MockTextIntelligenceProvider:
         }
 
     def summarize_transcript(self, *, lines: list[str]) -> dict[str, Any]:
+        """Produce stable placeholder summary fields from transcript text."""
+
         first_line = lines[0].strip() if lines else ""
         return {
             "summary": first_line[:180] if first_line else "",
@@ -119,9 +153,13 @@ class MockTextIntelligenceProvider:
         }
 
     def answer_transcript_question(self, *, lines: list[str], question: str) -> dict[str, Any]:
+        """Return the service's safe unknown-answer sentinel."""
+
         return {"answer": "Not found in transcript.", "model": self.settings.model}
 
     def runtime_status(self) -> dict[str, Any]:
+        """Report mock readiness without touching external services."""
+
         return {
             "provider": "mock",
             "model": self.settings.model,
@@ -132,9 +170,13 @@ class MockTextIntelligenceProvider:
 
 @dataclass
 class OpenAICompatibleTextIntelligenceProvider:
+    """OpenAI-compatible chat-completions adapter for vLLM-style runtimes."""
+
     settings: TextIntelligenceSettings = field(default_factory=TextIntelligenceSettings.from_environment)
 
     def warmup(self) -> None:
+        """Probe runtime health through the status path."""
+
         self.runtime_status()
 
     def translate_line(
@@ -144,6 +186,8 @@ class OpenAICompatibleTextIntelligenceProvider:
         target_line: str,
         target_language: str,
     ) -> dict[str, Any]:
+        """Request one strict line translation from the configured model."""
+
         content = self._chat_completion(
             system=(
                 "You translate transcript lines to English. Use context only to resolve meaning. "
@@ -161,6 +205,8 @@ class OpenAICompatibleTextIntelligenceProvider:
         }
 
     def summarize_transcript(self, *, lines: list[str]) -> dict[str, Any]:
+        """Request strict JSON summary fields from the configured model."""
+
         content = self._chat_completion(
             system=(
                 "You summarize transcripts. Return strict JSON with keys: summary, action_items, "
@@ -181,6 +227,8 @@ class OpenAICompatibleTextIntelligenceProvider:
         }
 
     def answer_transcript_question(self, *, lines: list[str], question: str) -> dict[str, Any]:
+        """Ask the model to answer only from provided transcript lines."""
+
         content = self._chat_completion(
             system=(
                 "Answer only from the transcript. If the answer is not present, say exactly: "
@@ -193,6 +241,8 @@ class OpenAICompatibleTextIntelligenceProvider:
         return {"answer": content.strip() or "Not found in transcript.", "model": self.settings.model}
 
     def runtime_status(self) -> dict[str, Any]:
+        """Probe health and model listing endpoints with short timeouts."""
+
         endpoint = self.settings.vllm_base_url.rstrip("/")
         ready = False
         error: str | None = None

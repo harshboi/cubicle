@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Landing dashboard that summarizes focus freshness and top items.
 struct DashboardView: View {
     @EnvironmentObject private var model: AppModel
 
@@ -56,6 +57,7 @@ struct DashboardView: View {
     }
 }
 
+/// Horizontal preview strip for one focus kind.
 private struct DashboardStrip: View {
     @EnvironmentObject private var model: AppModel
     let title: String
@@ -107,6 +109,7 @@ private struct DashboardStrip: View {
     }
 }
 
+/// Reusable metric tile for overview and settings surfaces.
 struct MetricCard: View {
     let title: String
     let value: String
@@ -138,6 +141,7 @@ struct MetricCard: View {
     }
 }
 
+/// Standard section title/subtitle row.
 struct SectionHeader: View {
     let title: String
     let subtitle: String

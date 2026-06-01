@@ -1,5 +1,6 @@
 import Foundation
 
+/// Dataset-level counts and coverage for one analysis run.
 public struct DatasetSummary: Codable, Sendable, Hashable {
     public var messageCount: Int
     public var threadCount: Int
@@ -22,6 +23,7 @@ public struct DatasetSummary: Codable, Sendable, Hashable {
     }
 }
 
+/// Per-topic volume, delay, and unresolved-question metric.
 public struct TopicMetric: Identifiable, Codable, Sendable, Hashable {
     public var id: String { topic }
     public var topic: String
@@ -39,6 +41,7 @@ public struct TopicMetric: Identifiable, Codable, Sendable, Hashable {
     }
 }
 
+/// Per-user activity and response metric.
 public struct UserMetric: Identifiable, Codable, Sendable, Hashable {
     public var id: String { user }
     public var user: String
@@ -56,6 +59,7 @@ public struct UserMetric: Identifiable, Codable, Sendable, Hashable {
     }
 }
 
+/// Per-space activity metric.
 public struct SpaceMetric: Identifiable, Codable, Sendable, Hashable {
     public var id: String { space }
     public var space: String
@@ -71,6 +75,7 @@ public struct SpaceMetric: Identifiable, Codable, Sendable, Hashable {
     }
 }
 
+/// Thread that crosses an outlier threshold for a computed metric.
 public struct OutlierThread: Identifiable, Codable, Sendable, Hashable {
     public var id: String { threadID }
     public var threadID: String
@@ -88,6 +93,7 @@ public struct OutlierThread: Identifiable, Codable, Sendable, Hashable {
     }
 }
 
+/// Count for one hour/day activity bucket.
 public struct ActivityBucket: Identifiable, Codable, Sendable, Hashable {
     public var id: Int { bucket }
     public var bucket: Int
@@ -99,6 +105,7 @@ public struct ActivityBucket: Identifiable, Codable, Sendable, Hashable {
     }
 }
 
+/// High-vs-low cohort contrast over one thread metric.
 public struct ContrastFinding: Identifiable, Codable, Sendable, Hashable {
     public let id: UUID
     public var name: String
@@ -123,6 +130,7 @@ public struct ContrastFinding: Identifiable, Codable, Sendable, Hashable {
     }
 }
 
+/// Pairwise metric correlation with sample size.
 public struct CorrelationFinding: Identifiable, Codable, Sendable, Hashable {
     public let id: UUID
     public var xMetric: String
@@ -139,6 +147,7 @@ public struct CorrelationFinding: Identifiable, Codable, Sendable, Hashable {
     }
 }
 
+/// Mention/reply/interaction metric for one participant.
 public struct NetworkParticipantMetric: Identifiable, Codable, Sendable, Hashable {
     public var id: String { user }
     public var user: String
@@ -156,6 +165,7 @@ public struct NetworkParticipantMetric: Identifiable, Codable, Sendable, Hashabl
     }
 }
 
+/// Network-level participant ranking and centralization signals.
 public struct NetworkSummary: Codable, Sendable, Hashable {
     public var mostMentionedUsers: [NetworkParticipantMetric]
     public var mostRepliedToUsers: [NetworkParticipantMetric]

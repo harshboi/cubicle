@@ -1,3 +1,5 @@
+"""VoiceNotes translation and transcript-summary client boundary."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -9,11 +11,15 @@ from .settings import Settings
 
 
 class TextIntelligenceError(RuntimeError):
+    """Text-intelligence provider failure."""
+
     pass
 
 
 @dataclass(frozen=True)
 class TranslationResult:
+    """Translated line result returned to the recording proxy."""
+
     segment_id: str
     source_text: str
     text: str
@@ -24,6 +30,8 @@ class TranslationResult:
 
 @dataclass(frozen=True)
 class TranscriptSummaryResult:
+    """Structured transcript-summary result persisted on a note."""
+
     summary: str | None = None
     action_items: list[dict[str, Any]] = field(default_factory=list)
     decisions: list[str] = field(default_factory=list)
@@ -33,6 +41,8 @@ class TranscriptSummaryResult:
 
 
 class TextIntelligenceClient(Protocol):
+    """Async boundary for translation and transcript summarization."""
+
     async def translate_line(
         self,
         *,
@@ -54,6 +64,8 @@ class TextIntelligenceClient(Protocol):
 
 @dataclass
 class HTTPTextIntelligenceClient:
+    """HTTP client for an OpenAI-compatible text-intelligence worker."""
+
     base_url: str
     auth_token: str = ""
     model: str = "Qwen/Qwen2.5-7B-Instruct"

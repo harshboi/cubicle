@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Mint a signed transcription user token for local/manual testing."""
+
 from __future__ import annotations
 
 import argparse

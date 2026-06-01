@@ -1,3 +1,5 @@
+"""HTML admin console, token issuance, usage lookup, and VoiceNotes user ops."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -63,6 +65,8 @@ VOICENOTES_TEMP_PASSWORD_SYMBOLS = "!@#%*-_+="
 
 @dataclass(frozen=True)
 class AdminSettings:
+    """Environment-backed settings for admin auth, storage, and VoiceNotes ops."""
+
     enabled: bool = False
     admin_token: str | None = None
     session_secret: str | None = None
@@ -95,6 +99,8 @@ class AdminSettings:
 
     @classmethod
     def from_environment(cls) -> "AdminSettings":
+        """Load admin-console settings from process environment variables."""
+
         enabled = _env_bool("TRANSCRIPTION_ADMIN_ENABLED", default=False)
         region_name = (
             os.environ.get("TRANSCRIPTION_ADMIN_REGION")
@@ -183,6 +189,8 @@ class AdminSettings:
         return settings
 
     def validate_enabled(self) -> None:
+        """Fail fast when enabled admin mode lacks required secrets."""
+
         if not self.session_secret:
             raise RuntimeError(
                 "TRANSCRIPTION_ADMIN_SESSION_SECRET or TRANSCRIPTION_ADMIN_SESSION_SECRET_FILE is required"
@@ -193,6 +201,8 @@ class AdminSettings:
             )
 
     def create_store(self) -> AdminStore:
+        """Create the configured admin persistence backend."""
+
         if self.store_backend in {"memory", "inmemory", "local"}:
             return InMemoryAdminStore()
         if self.store_backend != "dynamodb":
@@ -213,6 +223,8 @@ class AdminSettings:
         )
 
     def runtime_status(self) -> dict[str, Any]:
+        """Expose admin config presence without returning secrets."""
+
         return {
             "enabled": self.enabled,
             "store_backend": self.store_backend,
@@ -234,6 +246,8 @@ class AdminSettings:
 
 @dataclass(frozen=True)
 class AdminSession:
+    """Authenticated admin identity plus CSRF state for cookie sessions."""
+
     auth_type: str
     csrf_token: str | None = None
     admin_subject: str | None = None
@@ -241,11 +255,15 @@ class AdminSession:
 
     @property
     def is_cookie(self) -> bool:
+        """Whether this session is protected by CSRF validation."""
+
         return self.auth_type == "cookie"
 
 
 @dataclass(frozen=True)
 class VoiceNotesCognitoUser:
+    """Cognito user summary rendered in the admin VoiceNotes user view."""
+
     username: str
     email: str
     display_name: str | None
@@ -260,6 +278,8 @@ def create_admin_router(
     settings: AdminSettings | None = None,
     store: AdminStore | None = None,
 ):
+    """Create admin routes after validating FastAPI deps and enabled settings."""
+
     if APIRouter is None or HTMLResponse is None or JSONResponse is None or RedirectResponse is None:
         raise RuntimeError("FastAPI runtime dependencies are not installed")
     settings = settings or AdminSettings.from_environment()

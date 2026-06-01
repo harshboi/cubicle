@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Ask-Codex composer and scope picker for ad hoc workspace questions.
 struct AskCodexComposerView: View {
     @EnvironmentObject private var model: AppModel
     @State private var isContextPreviewExpanded = false
@@ -173,6 +174,7 @@ struct AskCodexComposerView: View {
     }
 }
 
+/// Result pane for the latest Ask-Codex answer and target responses.
 struct AskCodexResultView: View {
     @EnvironmentObject private var model: AppModel
 
@@ -252,6 +254,7 @@ struct AskCodexResultView: View {
     }()
 }
 
+/// Per-target response card shown when a scoped query fans out.
 private struct AskCodexTargetResponseCard: View {
     let title: String
     let scopeTitle: String
@@ -276,6 +279,7 @@ private struct AskCodexTargetResponseCard: View {
     }
 }
 
+/// Compact status/warning card for Ask-Codex states.
 private struct AskCodexStatusCard: View {
     let title: String
     let message: String

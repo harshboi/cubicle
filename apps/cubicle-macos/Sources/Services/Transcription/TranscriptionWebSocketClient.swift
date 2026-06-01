@@ -1,9 +1,11 @@
 import Foundation
 
+/// Audio upload capability for an active transcription session.
 protocol TranscriptionAudioStreamingClient: AnyObject {
     func sendAudioChunk(_ data: Data) async throws
 }
 
+/// Transport facade used to test WebSocket protocol handling without URLSession.
 protocol TranscriptionWebSocketTransport: AnyObject {
     func connect(to url: URL, headers: [String: String]) async throws
     func send(_ message: TranscriptionWebSocketMessage) async throws
@@ -11,10 +13,12 @@ protocol TranscriptionWebSocketTransport: AnyObject {
     func close() async
 }
 
+/// URLSession-backed WebSocket transport for production transcription sessions.
 final class URLSessionTranscriptionWebSocketTransport: TranscriptionWebSocketTransport {
     private let session: URLSession
     private var task: URLSessionWebSocketTask?
 
+    /// Allows tests to inject a custom URLSession.
     init(session: URLSession = URLSession(configuration: .ephemeral)) {
         self.session = session
     }
@@ -62,6 +66,7 @@ final class URLSessionTranscriptionWebSocketTransport: TranscriptionWebSocketTra
     }
 }
 
+/// Transcription client that owns WebSocket session lifecycle and event streaming.
 final class TranscriptionWebSocketClient: TranscriptionClient, TranscriptionAudioStreamingClient {
     private let codec: TranscriptionProtocolCodec
     private let transportFactory: () -> TranscriptionWebSocketTransport
@@ -69,6 +74,7 @@ final class TranscriptionWebSocketClient: TranscriptionClient, TranscriptionAudi
     private var receiveTask: Task<Void, Never>?
     private var activeSessionID: String?
 
+    /// Creates a client with injectable codec and transport factory.
     init(
         codec: TranscriptionProtocolCodec = TranscriptionProtocolCodec(),
         transportFactory: @escaping () -> TranscriptionWebSocketTransport = {
@@ -79,6 +85,7 @@ final class TranscriptionWebSocketClient: TranscriptionClient, TranscriptionAudi
         self.transportFactory = transportFactory
     }
 
+    /// Opens the socket, confirms `session_started`, then streams backend events.
     func startSession(config: TranscriptionSessionConfig) async throws -> AsyncStream<TranscriptionServerEvent> {
         guard config.transcriptionEnabled else {
             return AsyncStream { continuation in
@@ -133,6 +140,7 @@ final class TranscriptionWebSocketClient: TranscriptionClient, TranscriptionAudi
         }
     }
 
+    /// Sends one encoded audio frame over the active socket.
     func sendAudioChunk(_ data: Data) async throws {
         guard let transport else {
             throw TranscriptionProtocolError.notConnected
@@ -140,6 +148,7 @@ final class TranscriptionWebSocketClient: TranscriptionClient, TranscriptionAudi
         try await transport.send(.data(codec.encodeAudioChunk(data)))
     }
 
+    /// Sends stop, drains final events briefly, and closes the socket.
     func stopSession() async {
         let taskToDrain = receiveTask
         if let transport, let activeSessionID {

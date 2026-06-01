@@ -1,3 +1,5 @@
+"""FastAPI worker that exposes diarization over an internal HTTP boundary."""
+
 from __future__ import annotations
 
 import asyncio

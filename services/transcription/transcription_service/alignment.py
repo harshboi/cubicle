@@ -1,3 +1,5 @@
+"""Transcript timing and speaker-turn alignment helpers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -6,6 +8,8 @@ from typing import Any, Iterable
 
 @dataclass(frozen=True)
 class TranscriptTiming:
+    """Final transcript span passed into speaker assignment."""
+
     segment_id: str
     start_time_ms: int
     end_time_ms: int | None
@@ -13,6 +17,8 @@ class TranscriptTiming:
 
 @dataclass(frozen=True)
 class SpeakerAssignment:
+    """Best speaker overlap for a transcript segment."""
+
     segment_id: str
     speaker_id: str
     start_time_ms: int
@@ -25,6 +31,8 @@ def assign_speakers_to_segments(
     segments: Iterable[TranscriptTiming],
     speaker_turns: Iterable[Any],
 ) -> list[SpeakerAssignment]:
+    """Assign each transcript segment to the highest-overlap diarization turn."""
+
     assignments: list[SpeakerAssignment] = []
     turns = sorted(speaker_turns, key=lambda turn: (int(turn.start_time_ms), int(turn.end_time_ms)))
     for segment in segments:

@@ -1,5 +1,6 @@
 import Foundation
 
+/// Lightweight template for deterministic generated-question text.
 public struct QuestionTemplate: Codable, Sendable, Hashable {
     public var category: QuestionCategory
     public var template: String

@@ -1,7 +1,9 @@
 import Foundation
 import CryptoKit
 
+/// Codex job artifact locations and lifecycle status.
 struct CodexPromptJob: Identifiable, Hashable {
+    /// Persisted status for a Codex prompt job.
     enum Status: String {
         case pending
         case running
@@ -20,6 +22,7 @@ struct CodexPromptJob: Identifiable, Hashable {
     var createdAt: Date
 }
 
+/// Retry and timeout policy for Codex process execution.
 struct CodexRunPolicy: Hashable {
     var timeoutSeconds: TimeInterval?
     var maxAttempts: Int
@@ -32,6 +35,7 @@ struct CodexRunPolicy: Hashable {
     )
 }
 
+/// Complete request for one Codex process run.
 struct CodexRunRequest: Hashable {
     var prompt: String
     var job: CodexPromptJob
@@ -39,6 +43,7 @@ struct CodexRunRequest: Hashable {
     var policy: CodexRunPolicy
 }
 
+/// Metadata for one Codex attempt.
 struct CodexAttemptMetadata: Codable, Hashable {
     var attempt: Int
     var startedAt: String
@@ -49,6 +54,7 @@ struct CodexAttemptMetadata: Codable, Hashable {
     var error: String?
 }
 
+/// Metadata persisted alongside prompt/output/log artifacts.
 struct CodexRunArtifactMetadata: Codable, Hashable {
     var jobID: String
     var title: String
@@ -67,20 +73,24 @@ struct CodexRunArtifactMetadata: Codable, Hashable {
     var error: String?
 }
 
+/// Codex output plus persisted artifact metadata.
 struct CodexRunResult: Hashable {
     var output: String
     var metadata: CodexRunArtifactMetadata
 }
 
+/// One-shot termination continuation guard for Process callbacks.
 private final class CodexProcessTerminationWaiter: @unchecked Sendable {
     private let lock = NSLock()
     private var didResume = false
     private var continuation: CheckedContinuation<Int32, Error>?
 
+    /// Captures the continuation waiting for process termination.
     init(continuation: CheckedContinuation<Int32, Error>) {
         self.continuation = continuation
     }
 
+    /// Resumes termination wait exactly once.
     func resume(_ result: Result<Int32, Error>) {
         lock.lock()
         guard !didResume, let continuation else {
@@ -95,6 +105,7 @@ private final class CodexProcessTerminationWaiter: @unchecked Sendable {
     }
 }
 
+/// Process, timeout, and artifact failures from Codex execution.
 enum CodexRunnerError: LocalizedError {
     case codexFailed(Int32)
     case outputMissing(URL)
@@ -121,13 +132,16 @@ enum CodexRunnerError: LocalizedError {
     }
 }
 
+/// Runs Codex as a local process and writes private prompt/output artifacts.
 final class CodexRunner {
     let configuration: RuntimeConfiguration
 
+    /// Binds the runner to a runtime configuration.
     init(configuration: RuntimeConfiguration = .current) {
         self.configuration = configuration
     }
 
+    /// Convenience wrapper returning only output text.
     func run(prompt: String, job: CodexPromptJob, workingDirectory: URL) async throws -> String {
         let request = CodexRunRequest(
             prompt: prompt,
@@ -138,6 +152,7 @@ final class CodexRunner {
         return try await run(request: request).output
     }
 
+    /// Runs Codex with retry policy and returns output plus artifact metadata.
     func run(request: CodexRunRequest) async throws -> CodexRunResult {
         let normalizedMaxAttempts = max(1, request.policy.maxAttempts)
         let startedAt = Date()
@@ -260,6 +275,7 @@ final class CodexRunner {
         )
     }
 
+    /// Executes one process attempt and validates output artifact creation.
     private func executeAttempt(request: CodexRunRequest, attempt: Int) async throws -> CodexAttemptMetadata {
         let attemptStartedAt = Date()
         let attemptLogURL = attemptLogURL(for: request.job, attempt: attempt)
@@ -334,6 +350,7 @@ final class CodexRunner {
         )
     }
 
+    /// Waits for process exit with optional timeout termination.
     private func waitForTermination(
         process: Process,
         timeoutSeconds: TimeInterval?
@@ -362,6 +379,7 @@ final class CodexRunner {
         }
     }
 
+    /// Creates artifact directories and restricts directory permissions.
     private func ensureArtifactDirectories(for job: CodexPromptJob) throws {
         try FileManager.default.createDirectory(at: job.promptURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try FileManager.default.createDirectory(at: job.outputURL.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -373,6 +391,7 @@ final class CodexRunner {
         try setPrivateDirectoryPermissions(metadataURL(for: job).deletingLastPathComponent())
     }
 
+    /// Copies the successful attempt log to the canonical job log path.
     private func promoteAttemptLog(_ sourceURL: URL, to destinationURL: URL) throws {
         if sourceURL.path == destinationURL.path {
             return
@@ -383,6 +402,7 @@ final class CodexRunner {
         try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
     }
 
+    /// Builds failure metadata after retries are exhausted.
     private func failureMetadata(
         request: CodexRunRequest,
         startedAt: Date,
@@ -411,6 +431,7 @@ final class CodexRunner {
         )
     }
 
+    /// Persists metadata with private file permissions.
     private func persistMetadata(_ metadata: CodexRunArtifactMetadata, at url: URL) throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -419,6 +440,7 @@ final class CodexRunner {
         try setPrivateFilePermissions(url)
     }
 
+    /// Writes prompt/output-adjacent text with private file permissions.
     private func writePrivateUTF8(_ value: String, to url: URL) throws {
         guard let data = value.data(using: .utf8) else {
             try value.write(to: url, atomically: true, encoding: .utf8)
@@ -443,6 +465,7 @@ final class CodexRunner {
         )
     }
 
+    /// Resolves explicit metadata URL or default output-neighbor path.
     private func metadataURL(for job: CodexPromptJob) -> URL {
         if let metadataURL = job.metadataURL {
             return metadataURL
@@ -450,6 +473,7 @@ final class CodexRunner {
         return job.outputURL.deletingLastPathComponent().appendingPathComponent("\(job.id)-metadata.json")
     }
 
+    /// Per-attempt log path, preserving the canonical first-attempt path.
     private func attemptLogURL(for job: CodexPromptJob, attempt: Int) -> URL {
         if attempt <= 1 {
             return job.logURL
@@ -457,6 +481,7 @@ final class CodexRunner {
         return job.logURL.deletingLastPathComponent().appendingPathComponent("\(job.id)-attempt-\(attempt).log")
     }
 
+    /// Arguments for stdin-fed Codex execution.
     private func codexExecArguments(codexExecutable: String, settings: SystemSettings, outputURL: URL) -> [String] {
         [
             codexExecutable,
@@ -474,6 +499,7 @@ final class CodexRunner {
         ]
     }
 
+    /// Rejects unsafe wrappers and returns executable fallback.
     private func validatedCodexExecutable() throws -> String {
         let executable = configuration.codexExecutable.trimmingCharacters(in: .whitespacesAndNewlines)
         if Self.isUnsafeCodexExecutablePath(executable) {
@@ -482,6 +508,7 @@ final class CodexRunner {
         return executable.isEmpty ? "codex" : executable
     }
 
+    /// Blocks computer-use wrappers that can expose prompts through process args.
     private static func isUnsafeCodexExecutablePath(_ path: String) -> Bool {
         let normalized = path.lowercased()
         let unsafeMarkers = [

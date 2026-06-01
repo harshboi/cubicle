@@ -1,3 +1,5 @@
+"""Authentication, session, local user, and Cognito/OIDC helpers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -24,23 +26,31 @@ logger = logging.getLogger("voicenotes.auth")
 
 
 class AuthError(Exception):
+    """Authentication failure safe to surface as a rejected login/session."""
+
     pass
 
 
 @dataclass(frozen=True)
 class _AccessDecision:
+    """Cached Cognito access verdict with an expiry timestamp."""
+
     allowed: bool
     expires_at: float
 
 
 @dataclass(frozen=True)
 class LocalCredential:
+    """Configured local credential entry parsed from environment."""
+
     email: str
     password_or_hash: str
     display_name: str
 
 
 class LocalUserDirectory:
+    """Local email/password directory for development or small deployments."""
+
     def __init__(self, users_config: str, allowed_domains: tuple[str, ...] = ()) -> None:
         self._users = self._parse(users_config)
         self._allowed_domains = allowed_domains
@@ -78,6 +88,8 @@ class LocalUserDirectory:
 
 
 class SessionCodec:
+    """HMAC session cookie codec with embedded expiry and user identity."""
+
     def __init__(self, secret: str, ttl_seconds: int) -> None:
         if not secret:
             raise ValueError("session secret must be configured")
@@ -126,6 +138,8 @@ class SessionCodec:
 
 
 class CognitoUserAccessValidator:
+    """Checks that an OIDC-authenticated user still exists and is confirmed."""
+
     def __init__(self, settings: Settings, cognito_client: Any | None = None) -> None:
         self._settings = settings
         self._client = cognito_client
@@ -228,6 +242,8 @@ class CognitoUserAccessValidator:
 
 
 class OIDCClient:
+    """Minimal OIDC authorization/token/logout client for the web app."""
+
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
 

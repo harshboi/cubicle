@@ -1,5 +1,6 @@
 import Foundation
 
+/// Importer boundary for file formats that produce normalized messages.
 protocol ChatImporting: Sendable {
     func importMessages(from url: URL) async throws -> [Message]
 }

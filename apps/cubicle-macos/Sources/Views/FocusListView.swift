@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Master list for either Person Focus or Space Focus items.
 struct FocusListView: View {
     @EnvironmentObject private var model: AppModel
     let kind: FocusKind
@@ -113,6 +114,7 @@ struct FocusListView: View {
     }
 }
 
+/// Empty-state card for missing focus data.
 private struct EmptyStateCard: View {
     let title: String
     let message: String
@@ -136,6 +138,7 @@ private struct EmptyStateCard: View {
     }
 }
 
+/// Row summary for a focus item in the master list.
 private struct FocusRow: View {
     let item: FocusItem
     let kind: FocusKind
@@ -190,6 +193,7 @@ private struct FocusRow: View {
     }
 }
 
+/// Small colored metadata badge used across focus views.
 struct Badge: View {
     let text: String
     let color: Color

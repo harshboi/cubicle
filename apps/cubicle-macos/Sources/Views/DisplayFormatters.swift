@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 
+/// Shared display/date/link formatting helpers for SwiftUI views.
 enum DisplayFormatters {
     static func latestMessageLabel(_ rawValue: String) -> String {
         guard !rawValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {

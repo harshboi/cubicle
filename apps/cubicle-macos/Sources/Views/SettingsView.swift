@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Settings surface for runtime paths, sync, Codex, transcription, and maintenance.
 struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
     @State private var pendingConfirmation: SystemSettingsAction?
@@ -469,6 +470,7 @@ struct SettingsView: View {
     }
 }
 
+/// Runtime diagnostics for local files, OAuth, and database state.
 struct RuntimeInspectorView: View {
     @EnvironmentObject private var model: AppModel
 
@@ -544,6 +546,7 @@ struct RuntimeInspectorView: View {
     }
 }
 
+/// Visual group used to organize settings rows.
 private struct SettingsGroup<Content: View>: View {
     let title: String
     @ViewBuilder var content: Content
@@ -561,6 +564,7 @@ private struct SettingsGroup<Content: View>: View {
     }
 }
 
+/// Settings row with a single action button.
 private struct SettingsActionRow: View {
     let title: String
     let subtitle: String
@@ -587,6 +591,7 @@ private struct SettingsActionRow: View {
     }
 }
 
+/// OAuth provider connection row.
 private struct OAuthSettingsRow: View {
     let provider: OAuthProviderKind
     let status: OAuthProviderStatus
@@ -629,6 +634,7 @@ private struct OAuthSettingsRow: View {
     }
 }
 
+/// Settings row for boolean feature flags.
 private struct SettingsToggleRow: View {
     let title: String
     let subtitle: String
@@ -643,6 +649,7 @@ private struct SettingsToggleRow: View {
     }
 }
 
+/// Settings row for bounded option sets.
 private struct SettingsPickerRow<Option: Hashable>: View {
     let title: String
     let subtitle: String
@@ -665,6 +672,7 @@ private struct SettingsPickerRow<Option: Hashable>: View {
     }
 }
 
+/// Settings row for editable string values.
 private struct SettingsTextFieldRow: View {
     let title: String
     let subtitle: String
@@ -682,6 +690,7 @@ private struct SettingsTextFieldRow: View {
     }
 }
 
+/// Sensitive token editor for transcription auth.
 private struct TranscriptionAuthTokenRow: View {
     @Binding var token: String
     let configured: Bool
@@ -766,6 +775,7 @@ private struct TranscriptionAuthTokenRow: View {
     }
 }
 
+/// Settings row for bounded integer values.
 private struct SettingsStepperRow: View {
     let title: String
     let subtitle: String
@@ -800,6 +810,7 @@ private struct SettingsStepperRow: View {
     }
 }
 
+/// Settings row for read-only diagnostics.
 private struct SettingsReadOnlyRow: View {
     let title: String
     let value: String
@@ -818,6 +829,7 @@ private struct SettingsReadOnlyRow: View {
     }
 }
 
+/// Status row describing transcription configuration completeness.
 private struct TranscriptionSettingsStatusRow: View {
     @ObservedObject var viewModel: TranscriptionViewModel
 
@@ -830,6 +842,7 @@ private struct TranscriptionSettingsStatusRow: View {
     }
 }
 
+/// Base layout for icon, text, and trailing control settings rows.
 private struct SettingsBaseRow<Trailing: View>: View {
     let symbolName: String
     let title: String
@@ -862,6 +875,7 @@ private struct SettingsBaseRow<Trailing: View>: View {
     }
 }
 
+/// Inline settings status/error banner.
 private struct SettingsBanner: View {
     let text: String
     let symbolName: String
@@ -881,6 +895,7 @@ private struct SettingsBanner: View {
     }
 }
 
+/// Runtime metric displayed in the settings inspector.
 private struct SettingsMetric: Identifiable {
     var title: String
     var value: String
@@ -890,6 +905,7 @@ private struct SettingsMetric: Identifiable {
     var id: String { title }
 }
 
+/// Grid of runtime metrics.
 private struct SettingsMetricGrid: View {
     let metrics: [SettingsMetric]
 
@@ -915,6 +931,7 @@ private struct SettingsMetricGrid: View {
     }
 }
 
+/// Presentation metadata for OAuth providers.
 private extension OAuthProviderKind {
     var settingsSymbolName: String {
         switch self {
@@ -926,6 +943,7 @@ private extension OAuthProviderKind {
     }
 }
 
+/// Presentation metadata for OAuth provider health.
 private extension OAuthProviderStatus {
     var settingsStatusText: String {
         switch healthState {
@@ -978,6 +996,7 @@ private extension OAuthProviderStatus {
     }
 }
 
+/// Shared settings timestamp formatters.
 private enum SettingsDateFormatter {
     static func string(from date: Date) -> String {
         formatter.string(from: date)
@@ -1002,6 +1021,7 @@ private enum SettingsDateFormatter {
     }()
 }
 
+/// Presentation metadata for maintenance actions.
 private extension SystemSettingsAction {
     var displayTitle: String {
         switch self {
@@ -1015,6 +1035,7 @@ private extension SystemSettingsAction {
     }
 }
 
+/// Generic placeholder view for empty split-view panes.
 struct PlaceholderView: View {
     let title: String
     let symbolName: String

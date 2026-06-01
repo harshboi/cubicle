@@ -1,5 +1,6 @@
 import Foundation
 
+/// Stored cluster summary for a focus target/topic pair.
 struct FocusClusterRecord: Identifiable, Hashable {
     var id: String
     var focusKind: String
@@ -14,6 +15,7 @@ struct FocusClusterRecord: Identifiable, Hashable {
     var updatedAt: String
 }
 
+/// Stored topic insight generated from focus evidence.
 struct TopicRecord: Identifiable, Hashable {
     var id: String
     var focusKind: String
@@ -29,6 +31,7 @@ struct TopicRecord: Identifiable, Hashable {
     var updatedAt: String
 }
 
+/// Belief row, including both manual assertions and generated candidates.
 struct BeliefRecord: Identifiable, Hashable {
     var id: String
     var scope: String
@@ -46,6 +49,7 @@ struct BeliefRecord: Identifiable, Hashable {
     var lastEvidenceAt: String = ""
 }
 
+/// Rollup counts for one belief scope/entity in the UI.
 struct BeliefSetSummary: Identifiable, Hashable {
     var scope: KnowledgeBeliefScope
     var entityKey: String
@@ -54,11 +58,13 @@ struct BeliefSetSummary: Identifiable, Hashable {
     var manualCount: Int
     var updatedAt: String
 
+    /// Stable UI key across manual/automatic belief refreshes.
     var id: String {
         "\(scope.rawValue):\(entityKey)"
     }
 }
 
+/// Scope partition used by beliefs and reconciliation state.
 enum KnowledgeBeliefScope: String, CaseIterable, Codable, Hashable {
     case global
     case person
@@ -67,12 +73,14 @@ enum KnowledgeBeliefScope: String, CaseIterable, Codable, Hashable {
     static let globalEntityKey = "__global__"
 }
 
+/// Conversation/space row projected into the knowledge store.
 struct RoomRecord: Identifiable, Hashable {
     var id: String
     var title: String
     var updatedAt: String
 }
 
+/// Person row projected into the knowledge store.
 struct PersonRecord: Identifiable, Hashable {
     var id: String
     var displayName: String
@@ -80,6 +88,7 @@ struct PersonRecord: Identifiable, Hashable {
     var updatedAt: String
 }
 
+/// Message row projected into the knowledge store.
 struct MessageRecord: Identifiable, Hashable {
     var id: String
     var roomID: String
@@ -89,11 +98,13 @@ struct MessageRecord: Identifiable, Hashable {
     var updatedAt: String
 }
 
+/// Webex conversation category used by sync state and polling policy.
 enum WebexConversationType: String, CaseIterable, Codable, Hashable {
     case space
     case direct
 }
 
+/// Polling cadence bucket for tracked Webex conversations.
 enum WebexPollingMode: String, CaseIterable, Codable, Hashable {
     case active
     case recent
@@ -102,6 +113,7 @@ enum WebexPollingMode: String, CaseIterable, Codable, Hashable {
     case disabled
 }
 
+/// Persisted cursor/backoff state for one Webex conversation.
 struct WebexConversationSyncStateRecord: Hashable {
     var conversationID: String
     var conversationType: WebexConversationType
@@ -120,6 +132,7 @@ struct WebexConversationSyncStateRecord: Hashable {
     var updatedAt: String
 }
 
+/// File attachment row tied to a room/message.
 struct FileRecord: Identifiable, Hashable {
     var id: String
     var messageID: String?
@@ -130,6 +143,7 @@ struct FileRecord: Identifiable, Hashable {
     var updatedAt: String
 }
 
+/// Text evidence row consumed by belief and question synthesis.
 struct BeliefEvidenceRecord: Identifiable, Hashable {
     var id: String
     var source: String
@@ -140,6 +154,7 @@ struct BeliefEvidenceRecord: Identifiable, Hashable {
     var text: String
 }
 
+/// Last reconciliation checkpoint for a belief scope/entity.
 struct BeliefReconciliationStateRecord: Hashable {
     var scope: String
     var entityKey: String
@@ -148,12 +163,14 @@ struct BeliefReconciliationStateRecord: Hashable {
     var updatedAt: String
 }
 
+/// Scope a generated question is about.
 enum QuestionScopeType: String, CaseIterable, Codable, Hashable, Identifiable {
     case person
     case space
 
     var id: String { rawValue }
 
+    /// Display label used in question lists and filters.
     var title: String {
         switch self {
         case .person: return "Person"
@@ -162,6 +179,7 @@ enum QuestionScopeType: String, CaseIterable, Codable, Hashable, Identifiable {
     }
 }
 
+/// Lifecycle state for a generated question candidate.
 enum QuestionStatus: String, CaseIterable, Codable, Hashable, Identifiable {
     case candidate
     case surfaced
@@ -171,6 +189,7 @@ enum QuestionStatus: String, CaseIterable, Codable, Hashable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Display label used in status controls.
     var title: String {
         switch self {
         case .candidate: return "Candidate"
@@ -182,6 +201,7 @@ enum QuestionStatus: String, CaseIterable, Codable, Hashable, Identifiable {
     }
 }
 
+/// Evidence pointer shown under a generated question.
 struct QuestionEvidenceRef: Identifiable, Codable, Hashable {
     var sourceType: String
     var sourceID: String
@@ -189,6 +209,7 @@ struct QuestionEvidenceRef: Identifiable, Codable, Hashable {
     var label: String
     var preview: String
 
+    /// Stable key for evidence arrays that may omit createdAt.
     var id: String {
         [
             sourceType,
@@ -198,6 +219,7 @@ struct QuestionEvidenceRef: Identifiable, Codable, Hashable {
     }
 }
 
+/// Generated question plus ranking, provenance, and lifecycle fields.
 struct QuestionCandidate: Identifiable, Codable, Hashable {
     var id: String
     var scopeType: QuestionScopeType

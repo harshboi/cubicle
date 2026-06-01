@@ -2,13 +2,16 @@ import CryptoKit
 import Foundation
 import WebexQuestionGeneratorCore
 
+/// Optional AI synthesis step layered after deterministic seed generation.
 protocol QuestionCandidateSynthesizing: AnyObject {
+    /// Converts local seed questions into product-ready candidates.
     func synthesizeQuestionCandidates(
         from candidates: [QuestionCandidate],
         now: Date
     ) async throws -> [QuestionCandidate]
 }
 
+/// Refresh summary persisted back to scheduler/UI after question regeneration.
 struct QuestionRefreshOutcome: Hashable {
     var generatedCount: Int
     var persistedCount: Int
@@ -22,6 +25,7 @@ struct QuestionRefreshOutcome: Hashable {
     }
 }
 
+/// Builds, filters, persists, and mutates question candidates for focus scopes.
 final class QuestionCandidateService {
     private let knowledgeStore: KnowledgeStore
     private let questionSynthesizer: QuestionCandidateSynthesizing?
@@ -31,11 +35,13 @@ final class QuestionCandidateService {
         return formatter
     }()
 
+    /// Creates a question service with optional Codex synthesis.
     init(knowledgeStore: KnowledgeStore, questionSynthesizer: QuestionCandidateSynthesizing? = nil) {
         self.knowledgeStore = knowledgeStore
         self.questionSynthesizer = questionSynthesizer
     }
 
+    /// Regenerates active candidates from current space/person focus caches.
     func refreshQuestionCandidates(spaceCache: FocusCache, personCache: FocusCache) async throws -> QuestionRefreshOutcome {
         try knowledgeStore.bootstrap()
         let now = Date()
@@ -66,34 +72,40 @@ final class QuestionCandidateService {
         )
     }
 
+    /// Lists persisted questions for the inbox-style UI.
     func listQuestionCandidates(limit: Int = 100, status: QuestionStatus? = nil) throws -> [QuestionCandidate] {
         try knowledgeStore.bootstrap()
         return try knowledgeStore.listQuestionCandidates(limit: limit, status: status)
     }
 
+    /// Loads one persisted candidate by stable ID.
     func questionCandidate(id: String) throws -> QuestionCandidate? {
         try knowledgeStore.bootstrap()
         return try knowledgeStore.questionCandidate(id: id)
     }
 
     @discardableResult
+    /// Updates status while preserving question identity and evidence.
     func updateQuestionStatus(id: String, status: QuestionStatus, expiresAt: Date? = nil) throws -> Bool {
         try knowledgeStore.bootstrap()
         return try knowledgeStore.updateQuestionStatus(id: id, status: status, expiresAt: expiresAt)
     }
 
     @discardableResult
+    /// Marks a candidate dismissed without deleting historical context.
     func dismissQuestion(id: String) throws -> Bool {
         try knowledgeStore.bootstrap()
         return try knowledgeStore.dismissQuestion(id: id)
     }
 
     @discardableResult
+    /// Hides a candidate until the supplied expiration.
     func snoozeQuestion(id: String, until: Date) throws -> Bool {
         try knowledgeStore.bootstrap()
         return try knowledgeStore.snoozeQuestion(id: id, until: until)
     }
 
+    /// Runs optional AI synthesis and drops the whole AI batch on failure.
     private func synthesizeQuestionCandidates(
         from candidates: [QuestionCandidate],
         now: Date
@@ -338,6 +350,7 @@ final class QuestionCandidateService {
         )
     }
 
+    /// Adapts focus detail lines into WebexQuestionGeneratorCore messages.
     private func makeCoreCandidates(
         item: FocusItem,
         kind: FocusKind,
@@ -436,6 +449,7 @@ final class QuestionCandidateService {
         )
     }
 
+    /// Parses focus cache display lines back into normalized local message events.
     private func extractCoreMessages(item: FocusItem, kind: FocusKind) -> [CoreFocusMessage] {
         let roomTitle = item.firstDetailLine(prefix: "Space Name:").isEmpty
             ? item.title
@@ -581,6 +595,7 @@ final class QuestionCandidateService {
         return selected.map(\.evidence)
     }
 
+    /// Blocks generic analytics questions that do not map to Cubicle's action surface.
     static func isPublishableCoreQuestionForCubicle(_ question: GeneratedQuestion) -> Bool {
         switch question.category {
         case .comparative, .descriptive, .predictive:
@@ -603,6 +618,7 @@ final class QuestionCandidateService {
         )
     }
 
+    /// Applies the same publication gate to AI-synthesized candidates.
     static func isPublishableCandidateForCubicle(_ candidate: QuestionCandidate) -> Bool {
         isPublishableQuestionTextForCubicle(
             questionText: candidate.questionText,
@@ -611,6 +627,7 @@ final class QuestionCandidateService {
         )
     }
 
+    /// Publication gate for questions that should be actionable by engineers.
     static func isPublishableQuestionTextForCubicle(
         questionText: String,
         whyNow: String,
@@ -742,6 +759,7 @@ final class QuestionCandidateService {
         }
     }
 
+    /// Extracts Codex-authored questions from generated focus detail sections.
     private func codexQuestionDrafts(item: FocusItem, kind: FocusKind) -> [QuestionDraft] {
         let drafts: [QuestionDraft]
         switch kind {
@@ -1015,6 +1033,7 @@ final class QuestionCandidateService {
         return parts.joined(separator: " ")
     }
 
+    /// Keeps the highest-priority version for each stable question ID.
     private func dedupe(_ candidates: [QuestionCandidate]) -> [QuestionCandidate] {
         var byID: [String: QuestionCandidate] = [:]
         for candidate in candidates {
@@ -1120,6 +1139,7 @@ final class QuestionCandidateService {
     }()
 }
 
+/// Internal seed before evidence, status, and persistence metadata are attached.
 private struct QuestionDraft {
     var questionType: String
     var questionText: String
@@ -1128,6 +1148,7 @@ private struct QuestionDraft {
     var drivers: [String]
 }
 
+/// Heuristic flags from focus text used when no generated question section exists.
 private struct QuestionSignals {
     var openLoop: Bool
     var decision: Bool
@@ -1136,6 +1157,7 @@ private struct QuestionSignals {
     var relationship: Bool
 }
 
+/// Message plus evidence wrapper for the local Webex question generator.
 private struct CoreFocusMessage {
     var sourceID: String
     var threadID: String
@@ -1144,6 +1166,7 @@ private struct CoreFocusMessage {
     var evidence: QuestionEvidenceRef
 }
 
+/// Parsed display-line fields before conversion into core message types.
 private struct ParsedCoreMessageLine {
     var sourceType: String
     var timestamp: String

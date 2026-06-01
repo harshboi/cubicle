@@ -2,11 +2,13 @@ import AVFoundation
 import Combine
 import Foundation
 
+/// Session-level transcription client boundary used by the view model.
 protocol TranscriptionClient: AnyObject {
     func startSession(config: TranscriptionSessionConfig) async throws -> AsyncStream<TranscriptionServerEvent>
     func stopSession() async
 }
 
+/// Audio-level telemetry surfaced for capture diagnostics.
 struct AudioCaptureTelemetry: Equatable, Sendable {
     var preGainPeakLevel: Double
     var preGainRMSLevel: Double
@@ -27,6 +29,7 @@ struct AudioCaptureTelemetry: Equatable, Sendable {
     )
 }
 
+/// Microphone capture boundary that streams PCM frames to a transcription client.
 protocol AudioCaptureService: AnyObject {
     func startCapture(
         config: TranscriptionSessionConfig,
@@ -37,6 +40,7 @@ protocol AudioCaptureService: AnyObject {
     func stopCapture() async
 }
 
+/// Test/default capture service that records calls without touching hardware.
 final class NoopAudioCaptureService: AudioCaptureService {
     private(set) var startCallCount = 0
     private(set) var stopCallCount = 0
@@ -62,6 +66,7 @@ final class NoopAudioCaptureService: AudioCaptureService {
     }
 }
 
+/// Microphone setup/conversion failures.
 enum AudioCaptureServiceError: LocalizedError {
     case unsupportedAudioContract
     case microphonePermissionDenied
@@ -82,6 +87,7 @@ enum AudioCaptureServiceError: LocalizedError {
     }
 }
 
+/// AVFoundation microphone capture that outputs 16 kHz mono PCM16 chunks.
 final class MicrophoneAudioCaptureService: AudioCaptureService {
     private let engine = AVAudioEngine()
     private let inputBus: AVAudioNodeBus = 0
@@ -92,12 +98,14 @@ final class MicrophoneAudioCaptureService: AudioCaptureService {
     private var converter: AVAudioConverter?
     private var outputFormat: AVAudioFormat?
 
+    /// Configures adaptive gain bounds for captured microphone samples.
     init(maximumMicrophoneGain: Double = 18.0, targetPeakSample: Double = 28_000) {
         self.maximumAllowedMicrophoneGain = 32.0
         self.microphoneGainMultiplier = min(max(maximumMicrophoneGain, 1.0), maximumAllowedMicrophoneGain)
         self.targetPeakSample = min(max(targetPeakSample, 4_000), Double(Int16.max))
     }
 
+    /// Starts microphone capture and async-delivers PCM chunks to the caller.
     func startCapture(
         config: TranscriptionSessionConfig,
         microphoneGainMultiplier: Double,
@@ -317,11 +325,13 @@ final class MicrophoneAudioCaptureService: AudioCaptureService {
     }
 }
 
+/// PCM chunk plus computed audio telemetry.
 private struct CapturedAudioChunk {
     var data: Data
     var telemetry: AudioCaptureTelemetry
 }
 
+/// Peak/RMS metrics for a PCM chunk before or after gain.
 private struct AudioLevels {
     var peakSample: Int
     var peakLevel: Double
@@ -329,6 +339,7 @@ private struct AudioLevels {
     var sampleCount: Int
 }
 
+/// Scripted transcription client used by previews/tests and default runtime wiring.
 final class MockTranscriptionClient: TranscriptionClient {
     private(set) var startCallCount = 0
     private(set) var stopCallCount = 0
@@ -423,6 +434,7 @@ final class MockTranscriptionClient: TranscriptionClient {
     }
 }
 
+/// UI runtime for live transcription state, capture, reconnect, and transcript aggregation.
 @MainActor
 final class TranscriptionViewModel: ObservableObject {
     @Published private(set) var status: TranscriptionConnectionStatus = .disabled
@@ -451,6 +463,7 @@ final class TranscriptionViewModel: ObservableObject {
     private var sawSessionStoppedEvent = false
     private var hasStartedSession = false
 
+    /// Creates a runtime with injectable client/capture services.
     init(
         client: TranscriptionClient = MockTranscriptionClient(),
         audioCaptureService: AudioCaptureService = NoopAudioCaptureService(),
@@ -514,6 +527,7 @@ final class TranscriptionViewModel: ObservableObject {
         return "Audio: \(audioChunksSent) frames, \(kilobytes) KB; in rms \(inputRMSPercent)% peak \(inputPeakPercent)%; out rms \(outputRMSPercent)% peak \(outputPeakPercent)%; gain \(gainText)x; clip \(lastAudioTelemetry.clippedSampleCount)"
     }
 
+    /// Applies settings without starting or stopping the current session.
     func apply(settings: SystemSettings) {
         self.settings = settings
         let microphoneGainMultiplier = Double(settings.transcriptionMicrophoneGain)

@@ -1,3 +1,5 @@
+"""Signed-token authentication for transcription users."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,6 +16,8 @@ from .user_registry import UserRegistry, UserRegistryError, UserRegistrySettings
 
 
 class AuthError(PermissionError):
+    """Authentication or authorization failure for a transcription request."""
+
     pass
 
 
@@ -37,6 +41,8 @@ def _base64url_decode(value: str) -> bytes:
 
 @dataclass(frozen=True)
 class AuthContext:
+    """Authenticated user context attached to a transcription session."""
+
     mode: str
     user_id: str | None = None
     email: str | None = None
@@ -50,6 +56,8 @@ class AuthContext:
 
 @dataclass(frozen=True)
 class TokenAuthenticator:
+    """Validates shared tokens and signed per-user transcription tokens."""
+
     expected_token: str | None = None
     auth_mode: str = "shared_token"
     signing_secret: str | None = None

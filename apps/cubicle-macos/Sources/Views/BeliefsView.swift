@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Belief workspace for manual belief editing and automatic-belief review.
 struct BeliefsView: View {
     @EnvironmentObject private var model: AppModel
     @State private var draftStatement: String = ""
@@ -577,6 +578,7 @@ struct BeliefsView: View {
     }
 }
 
+/// Editor mode for creating or updating manual beliefs.
 private enum BeliefActionMode: String, CaseIterable, Identifiable {
     case view
     case browse
@@ -612,6 +614,7 @@ private enum BeliefActionMode: String, CaseIterable, Identifiable {
     }
 }
 
+/// Scope filter for browsing persisted beliefs.
 private enum BeliefBrowseScope: String, CaseIterable, Identifiable {
     case all
     case person
@@ -631,6 +634,7 @@ private enum BeliefBrowseScope: String, CaseIterable, Identifiable {
     }
 }
 
+/// Summary row for one belief scope bucket.
 private struct BeliefSetSummaryRow: View {
     let summary: BeliefSetSummary
 
@@ -677,6 +681,7 @@ private struct BeliefSetSummaryRow: View {
     }
 }
 
+/// Detail view for automatic beliefs associated with a selected focus item.
 struct AutomaticBeliefsDetailView: View {
     @EnvironmentObject private var model: AppModel
 
@@ -695,6 +700,7 @@ struct AutomaticBeliefsDetailView: View {
     }
 }
 
+/// Sidebar inspector for the selected belief.
 struct BeliefInspectorView: View {
     var body: some View {
         ScrollView {
@@ -711,6 +717,7 @@ struct BeliefInspectorView: View {
     }
 }
 
+/// Card listing automatic beliefs for one focus context.
 private struct AutomaticBeliefsCard: View {
     @EnvironmentObject private var model: AppModel
 
@@ -740,6 +747,7 @@ private struct AutomaticBeliefsCard: View {
     }
 }
 
+/// Detailed card for one belief and its evidence links.
 private struct BeliefInspectorCard: View {
     @EnvironmentObject private var model: AppModel
 
@@ -800,6 +808,7 @@ private struct BeliefInspectorCard: View {
     }
 }
 
+/// Label/value metadata row for belief cards.
 private struct BeliefMetaRow: View {
     let label: String
     let value: String
@@ -818,6 +827,7 @@ private struct BeliefMetaRow: View {
     }
 }
 
+/// Row summary for belief lists.
 private struct BeliefRow: View {
     let belief: BeliefRecord
     let isSelected: Bool
@@ -861,6 +871,7 @@ private struct BeliefRow: View {
     }
 }
 
+/// Empty/error/status card for belief surfaces.
 private struct BeliefStatusCard: View {
     let title: String
     let message: String

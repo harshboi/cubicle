@@ -1,6 +1,7 @@
 import Foundation
 import WebexQuestionGeneratorCore
 
+/// CLI smoke test for running the Webex question generator on a local export.
 @main
 struct WebexQGSmoke {
     static func main() async throws {

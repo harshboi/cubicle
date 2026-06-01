@@ -1,3 +1,5 @@
+"""FastAPI worker for translation and transcript-summary requests."""
+
 from __future__ import annotations
 
 import asyncio

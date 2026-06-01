@@ -4,6 +4,7 @@ import Darwin
 import Foundation
 import Security
 
+/// OAuth authorization and token-exchange failures surfaced to Settings.
 enum OAuthServiceError: LocalizedError {
     case missingConfiguration(String)
     case invalidRedirectURI(String)
@@ -30,16 +31,19 @@ enum OAuthServiceError: LocalizedError {
     }
 }
 
+/// Result of a successful provider authorization.
 struct OAuthAuthorizationOutcome: Equatable {
     var provider: OAuthProviderKind
     var tokenFile: URL
 }
 
+/// Browser-based OAuth coordinator for configured providers.
 final class OAuthService {
     private let configuration: RuntimeConfiguration
     private let configStore: ConfigStore
     private let urlSession: URLSession
 
+    /// Injects runtime/config stores for provider settings and token persistence.
     init(
         configuration: RuntimeConfiguration = .current,
         configStore: ConfigStore? = nil,
@@ -50,6 +54,7 @@ final class OAuthService {
         self.urlSession = urlSession
     }
 
+    /// Runs PKCE OAuth and saves the returned token payload.
     func authorize(provider: OAuthProviderKind) async throws -> OAuthAuthorizationOutcome {
         let providerConfig = try OAuthProviderConfiguration(provider: provider, configStore: configStore)
         let verifier = Self.randomOAuthToken(byteCount: 72)
@@ -99,6 +104,7 @@ final class OAuthService {
     }
 
     @discardableResult
+    /// Deletes locally persisted OAuth token files.
     func revoke(provider: OAuthProviderKind) throws -> [URL] {
         try configStore.deleteOAuthTokenFiles(provider: provider)
     }
@@ -247,6 +253,7 @@ final class OAuthService {
     }
 }
 
+/// Fully resolved OAuth app settings for one provider.
 private struct OAuthProviderConfiguration {
     var provider: OAuthProviderKind
     var clientID: String
@@ -257,6 +264,7 @@ private struct OAuthProviderConfiguration {
     var tokenURL: URL
     var timeoutSeconds: Int
 
+    /// Reads provider settings from config/env and applies provider defaults.
     init(provider: OAuthProviderKind, configStore: ConfigStore) throws {
         let environment = ProcessInfo.processInfo.environment
         let appSettings = try configStore.oauthAppSettings(provider: provider)
@@ -357,6 +365,7 @@ private struct OAuthProviderConfiguration {
     }
 }
 
+/// Loopback HTTP listener for OAuth redirect callbacks.
 private final class OAuthCallbackServer: @unchecked Sendable {
     private let socketFD: Int32
     private let queue = DispatchQueue(label: "local.cubicle.oauth.callback")
@@ -368,6 +377,7 @@ private final class OAuthCallbackServer: @unchecked Sendable {
     private var continuation: CheckedContinuation<String, Error>?
     private var completed = false
 
+    /// Binds the local redirect socket for the expected provider/state.
     init(redirectURI: URL, expectedState: String, providerName: String) throws {
         guard let portValue = redirectURI.port,
               portValue > 0,
@@ -383,6 +393,7 @@ private final class OAuthCallbackServer: @unchecked Sendable {
         socketFD = try Self.makeLoopbackSocket(host: host, portValue: portValue)
     }
 
+    /// Waits for the browser redirect and returns the authorization code.
     func waitForCode() async throws -> String {
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
@@ -396,6 +407,7 @@ private final class OAuthCallbackServer: @unchecked Sendable {
         }
     }
 
+    /// Stops the listener and fails any pending wait.
     func cancel() {
         complete(.failure(CancellationError()))
     }

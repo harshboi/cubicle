@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Top-level app shell that coordinates sidebar, split views, and toolbar actions.
 struct RootView: View {
     @EnvironmentObject private var model: AppModel
 
@@ -126,6 +127,7 @@ struct RootView: View {
     }
 }
 
+/// Toolbar control for live microphone gain while transcription is active.
 private struct MicGainToolbarControl: View {
     @Binding var gain: Int
 
@@ -167,6 +169,7 @@ private struct MicGainToolbarControl: View {
     }
 }
 
+/// Bottom status bar for refresh progress and Codex activity.
 private struct RefreshProgressStatusBar: View {
     let progress: RefreshProgressState
     let codexActivityMessage: String?

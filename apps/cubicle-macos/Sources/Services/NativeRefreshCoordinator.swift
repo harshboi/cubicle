@@ -1,6 +1,7 @@
 import CryptoKit
 import Foundation
 
+/// Refresh jobs exposed to the scheduler, CLI, and Jobs view.
 enum RefreshScope: String, CaseIterable, Identifiable {
     case webexSync
     case beliefMaintenance
@@ -29,12 +30,14 @@ enum RefreshScope: String, CaseIterable, Identifiable {
     }
 }
 
+/// Cadence metadata for one refresh scope.
 struct RefreshPlan: Hashable {
     var scope: RefreshScope
     var cadenceSeconds: Int
     var description: String
 }
 
+/// Final user-visible result for one refresh run.
 struct RefreshExecutionResult: Hashable {
     var scope: RefreshScope
     var summary: String
@@ -42,11 +45,13 @@ struct RefreshExecutionResult: Hashable {
     var reusedCache: Bool?
 }
 
+/// Lightweight progress event emitted while a scope is running.
 struct RefreshExecutionProgress: Hashable {
     var scope: RefreshScope
     var message: String
 }
 
+/// Refresh strategy selected by manual actions, scheduler ticks, and CLI runs.
 enum RefreshExecutionMode: String, Hashable {
     case full
     case incremental
@@ -56,11 +61,15 @@ enum RefreshExecutionMode: String, Hashable {
     case codexOnly
 }
 
+/// Internal result for focus refreshes that may invoke Codex enrichment.
 private struct FocusCodexRefreshOutcome {
     var summary: String
     var reusedCache: Bool
 }
 
+/// Orchestrates ingestion, local cache rebuilds, Codex enrichment, questions, and beliefs.
+///
+/// The app and CLI call this class instead of coordinating stores/services directly.
 final class NativeRefreshCoordinator {
     let configuration: RuntimeConfiguration
     let configStore: ConfigStore
@@ -72,6 +81,7 @@ final class NativeRefreshCoordinator {
     let codexOrchestrationService: CodexPromptOrchestrationService
     let questionService: QuestionCandidateService
 
+    /// Wires runtime services for a single runtime root.
     init(configuration: RuntimeConfiguration = .current) {
         self.configuration = configuration
         self.configStore = ConfigStore(configuration: configuration)
@@ -95,6 +105,7 @@ final class NativeRefreshCoordinator {
         )
     }
 
+    /// Builds scheduler plans from current user settings.
     func defaultPlans() -> [RefreshPlan] {
         let settings = configStore.loadSystemSettings()
         let focusQuestionCadence = min(
@@ -111,6 +122,7 @@ final class NativeRefreshCoordinator {
         ]
     }
 
+    /// Refreshes the Webex lookup map unless sync is disabled globally.
     func refreshWebexMapFile() async throws -> WebexMapRefreshOutcome {
         guard configStore.loadSystemSettings().webexSyncEnabled else {
             return WebexMapRefreshOutcome(
@@ -124,6 +136,7 @@ final class NativeRefreshCoordinator {
         return try await webexIngestionService.refreshMapFile()
     }
 
+    /// Executes one refresh scope with the requested cache/network strategy.
     func refresh(
         _ scope: RefreshScope,
         mode: RefreshExecutionMode = .full,
@@ -238,12 +251,14 @@ final class NativeRefreshCoordinator {
         }
     }
 
+    /// Per-item cluster title enrichment result; failures stay isolated to their seed.
     private struct ClusterTitleEnrichmentOutcome {
         var seeds: [FocusClusterSeed]
         var generatedCount: Int
         var errors: [String]
     }
 
+    /// Rebuilds person focus and optionally enriches clusters with titles/summaries.
     private func runPersonFocusWithCodex(
         forceLocalRebuild: Bool,
         skipIfCacheReused: Bool,
@@ -373,6 +388,7 @@ final class NativeRefreshCoordinator {
         return FocusCodexRefreshOutcome(summary: summary, reusedCache: false)
     }
 
+    /// Rebuilds space focus and optionally enriches clusters, summaries, and exec questions.
     private func runSpaceFocusWithCodex(
         forceLocalRebuild: Bool,
         skipIfCacheReused: Bool,
@@ -555,6 +571,7 @@ final class NativeRefreshCoordinator {
         return FocusCodexRefreshOutcome(summary: summary, reusedCache: false)
     }
 
+    /// Adds Codex titles to the first few local cluster seeds without blocking fallback output.
     private func enrichClusterTitles(
         kind: FocusKind,
         item: FocusItem,
@@ -672,6 +689,7 @@ final class NativeRefreshCoordinator {
         return title
     }
 
+    /// Runs gated belief reconciliation for configured targets with indexed evidence.
     private func runBeliefMaintenance() async throws -> String {
         guard configStore.loadSystemSettings().codexFeatureEnabled(.beliefs) else {
             return "Belief maintenance skipped: Codex belief analysis is disabled in Settings."
@@ -745,6 +763,7 @@ final class NativeRefreshCoordinator {
         return "Belief maintenance evaluated \(batch.outcomes.count) target(s), triggered \(batch.triggeredCount), skipped \(batch.skippedCount), persisted \(persistedBeliefs) belief(s)."
     }
 
+    /// Enables Codex question synthesis only when the feature flag is active.
     private func questionServiceForCurrentSettings() -> QuestionCandidateService {
         let synthesizer: QuestionCandidateSynthesizing? = configStore
             .loadSystemSettings()
