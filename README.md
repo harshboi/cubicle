@@ -135,6 +135,52 @@ AppModel.swift
 AppModel is the macOS app controller: it loads runtime state, holds UI-facing data, coordinates refresh/Codex/DB services, and publishes everything the SwiftUI screens render.
 ```
 
+## Local Services DAG
+
+```text
+apps/cubicle-macos/Sources/Services
+  |
+  +-- Runtime / Config
+  |     |
+  |     +-- * RuntimeConfiguration.swift         -> env/runtime root/Webex/Codex config
+  |     +-- * ConfigStore.swift                  -> settings, targets, OAuth config, Ask Codex history
+  |     +-- * NativeRuntimeStore.swift           -> focus cache files, snapshots, manifests, Codex job files
+  |
+  +-- Knowledge / Questions
+  |     |
+  |     +-- * KnowledgeStore.swift               -> SQLite backbone for messages, evidence, beliefs, questions
+  |     +-- * QuestionEngine.swift               -> turns focus/evidence context into question candidates
+  |
+  +-- Refresh / Ingestion
+  |     |
+  |     +-- * NativeRefreshCoordinator.swift     -> main refresh pipeline coordinator
+  |     +-- * NativeWebexIngestionService.swift  -> production Webex ingestion orchestration
+  |     +-- WebexAPIClient.swift                 -> low-level Webex HTTP client
+  |     +-- * WebexSyncEngine.swift              -> Webex cursors, polling, backoff, message processing
+  |     +-- NativeIMessageIngestionService.swift -> local iMessage timeline ingestion
+  |
+  +-- Codex
+  |     |
+  |     +-- * CodexPromptOrchestration.swift     -> builds Codex prompts/context for summaries/questions/beliefs
+  |     +-- CodexRunner.swift                    -> runs local Codex CLI and records artifacts
+  |
+  +-- OAuth
+  |     |
+  |     +-- OAuthService.swift                   -> browser OAuth flow and token persistence
+  |     +-- OAuthKeychainStore.swift             -> keychain helper for OAuth secrets
+  |
+  +-- Transcription
+        |
+        +-- Transcription/TranscriptionModels.swift          -> transcript/session data shapes
+        +-- Transcription/TranscriptionProtocol.swift        -> client-server protocol encoding/decoding
+        +-- Transcription/TranscriptionRuntime.swift         -> session state, audio capture, transcript aggregation
+        +-- Transcription/TranscriptionWebSocketClient.swift -> WebSocket client for transcription service
+```
+
+```text
+* = important for understanding the product core
+```
+
 ## Knowledge Flow DAG
 
 ```text

@@ -35,6 +35,8 @@ Answer
   -> ASCII DAGs / line diagrams
   -> file maps
   -> call-flow trees
+  -> important nodes starred with *
+  -> one-line summaries inline on the same row
   -> minimal prose
   -> concrete filenames
 ```
@@ -69,6 +71,7 @@ Explain by paths, not paragraphs.
 
 This is the preferred explanation style because it is easier for the user to consume.
 Use it before prose when explaining code structure.
+A picture is worth a thousand words: make the structure visual first, then add terse labels.
 
 ```text
 Component As Hub
@@ -87,6 +90,29 @@ Component As Hub
  ScreenA.swift            Store.swift                  ModelA.swift
  ScreenB.swift            Config.swift                 ModelB.swift
  ScreenC.swift            Coordinator.swift            ModelC.swift
+```
+
+For file/component maps, star important nodes and put summaries on the side.
+
+```text
+Component File Map
+  |
+  +-- Runtime / Config
+  |     |
+  |     +-- * RuntimeConfiguration.swift -> env/runtime root/API config
+  |     +-- * ConfigStore.swift          -> settings, targets, token config, history
+  |     +-- * NativeRuntimeStore.swift   -> local cache files, snapshots, manifests
+  |
+  +-- Knowledge
+  |     |
+  |     +-- * KnowledgeStore.swift       -> SQLite backbone for product context
+  |     +-- QuestionEngine.swift         -> turns evidence into candidate questions
+  |
+  +-- Optional / Lower Priority
+        |
+        +-- TranscriptionRuntime.swift   -> live transcript session state
+
+* = important for the product core
 ```
 
 Use named diagrams for different angles on the same system.
