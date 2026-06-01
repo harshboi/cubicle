@@ -1,5 +1,6 @@
 import Foundation
 
+/// Signal adapter for the local macOS Messages database.
 final class IMessageSignalConnector: SignalConnector {
     let descriptor = ConnectorDescriptor(
         id: .iMessage,
@@ -10,6 +11,7 @@ final class IMessageSignalConnector: SignalConnector {
     private let ingestionService: NativeIMessageIngesting
     private let accountID: String
 
+    /// Injects the database reader so tests avoid touching chat.db/TCC.
     init(
         ingestionService: NativeIMessageIngesting = NativeIMessageIngestionService(),
         accountID: String = "local"
@@ -18,6 +20,7 @@ final class IMessageSignalConnector: SignalConnector {
         self.accountID = accountID
     }
 
+    /// Converts matching iMessage rows into thread objects and message events.
     func sync(
         request: SignalSyncRequest,
         checkpoint: ConnectorCheckpoint?
@@ -81,6 +84,7 @@ final class IMessageSignalConnector: SignalConnector {
         )
     }
 
+    /// Builds the normalized thread/event pair for one Messages row.
     private func makeMessageSignal(
         _ message: IMessageTimelineMessage,
         fallbackTitle: String
@@ -151,6 +155,7 @@ final class IMessageSignalConnector: SignalConnector {
         return (threadObject, event)
     }
 
+    /// Distinguishes partial local-db failures from a clean empty sync.
     private func availability(hasSignals: Bool, warnings: [ConnectorWarning]) -> ConnectorAvailability {
         guard !warnings.isEmpty else { return .available }
         return hasSignals ? .partial : .unavailable

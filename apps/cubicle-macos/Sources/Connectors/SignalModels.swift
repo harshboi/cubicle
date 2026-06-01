@@ -1,5 +1,6 @@
 import Foundation
 
+/// Stable connector namespace used in IDs, routing, and visibility.
 struct ConnectorID: RawRepresentable, Hashable, Codable, ExpressibleByStringLiteral {
     var rawValue: String
 
@@ -15,6 +16,7 @@ struct ConnectorID: RawRepresentable, Hashable, Codable, ExpressibleByStringLite
     static let iMessage = ConnectorID(rawValue: "imessage")
 }
 
+/// Declared connector behavior that callers can schedule or surface.
 enum ConnectorCapability: String, Hashable, Codable {
     case messages
     case content
@@ -22,12 +24,14 @@ enum ConnectorCapability: String, Hashable, Codable {
     case mapRefresh
 }
 
+/// Connector identity plus capabilities, independent of a live account.
 struct ConnectorDescriptor: Hashable {
     var id: ConnectorID
     var displayName: String
     var capabilities: Set<ConnectorCapability>
 }
 
+/// Product-level entity shape a target or object represents.
 enum SignalEntityKind: String, Hashable, Codable {
     case person
     case space
@@ -37,6 +41,7 @@ enum SignalEntityKind: String, Hashable, Codable {
     case unknown
 }
 
+/// Connector-specific lookup key type, intentionally open-ended.
 struct ConnectorSelectorKind: RawRepresentable, Hashable, Codable, ExpressibleByStringLiteral {
     var rawValue: String
 
@@ -60,11 +65,13 @@ struct ConnectorSelectorKind: RawRepresentable, Hashable, Codable, ExpressibleBy
     static let repository = ConnectorSelectorKind(rawValue: "repository")
 }
 
+/// One lookup key for one connector.
 struct ConnectorSelector: Hashable {
     var connectorID: ConnectorID
     var kind: ConnectorSelectorKind
     var value: String
 
+    /// Normalizes user/config values before routing uses them.
     init(connectorID: ConnectorID, kind: ConnectorSelectorKind, value: String) {
         self.connectorID = connectorID
         self.kind = kind
@@ -72,12 +79,14 @@ struct ConnectorSelector: Hashable {
     }
 }
 
+/// User-configured focus target after connector-specific selectors are attached.
 struct SignalTarget: Identifiable, Hashable {
     var id: String
     var label: String
     var entityKind: SignalEntityKind
     var selectors: [ConnectorSelector]
 
+    /// Preserves caller-owned identity while accepting precomputed selectors.
     init(id: String, label: String, entityKind: SignalEntityKind, selectors: [ConnectorSelector]) {
         self.id = id
         self.label = label
@@ -85,6 +94,7 @@ struct SignalTarget: Identifiable, Hashable {
         self.selectors = selectors
     }
 
+    /// Translates persisted focus-target config into connector selectors.
     init(configTarget: ConfigTarget) {
         var selectors: [ConnectorSelector] = []
         let roomID = configTarget.roomID.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -113,6 +123,7 @@ struct SignalTarget: Identifiable, Hashable {
         )
     }
 
+    /// Returns selectors for a connector, optionally narrowed to one selector kind.
     func selectors(for connectorID: ConnectorID, kind: ConnectorSelectorKind? = nil) -> [ConnectorSelector] {
         selectors.filter { selector in
             selector.connectorID == connectorID && (kind == nil || selector.kind == kind)
@@ -121,6 +132,7 @@ struct SignalTarget: Identifiable, Hashable {
 }
 
 extension SignalEntityKind {
+    /// Maps legacy config kinds into the signal model vocabulary.
     init(configTargetKind: ConfigTarget.Kind) {
         switch configTargetKind {
         case .person:
@@ -133,9 +145,11 @@ extension SignalEntityKind {
     }
 }
 
+/// Expands targets into the connectors that have enough selectors to act.
 struct TargetRouter {
     var connectorIDs: [ConnectorID]
 
+    /// Groups shared targets by connector without duplicating selector logic in callers.
     func targetsByConnector(_ targets: [SignalTarget]) -> [ConnectorID: [SignalTarget]] {
         var routed = Dictionary(uniqueKeysWithValues: connectorIDs.map { ($0, [SignalTarget]()) })
         for target in targets {
@@ -149,11 +163,13 @@ struct TargetRouter {
     }
 }
 
+/// Sync scope requested by schedulers or manual refresh.
 enum SignalSyncMode: String, Hashable, Codable {
     case full
     case incremental
 }
 
+/// Connector-agnostic input for one signal sync run.
 struct SignalSyncRequest: Hashable {
     var runID: UUID
     var mode: SignalSyncMode
@@ -162,6 +178,7 @@ struct SignalSyncRequest: Hashable {
     var since: Date?
     var limit: Int
 
+    /// Creates a sync request with a generated run ID unless callers provide one.
     init(
         runID: UUID = UUID(),
         mode: SignalSyncMode,
@@ -179,6 +196,7 @@ struct SignalSyncRequest: Hashable {
     }
 }
 
+/// Connector-owned cursor payload for incremental syncs.
 struct ConnectorCheckpoint: Hashable {
     var connectorID: ConnectorID
     var accountID: String
@@ -186,12 +204,14 @@ struct ConnectorCheckpoint: Hashable {
     var payload: [String: String]
 }
 
+/// Recoverable connector issue attached to a target when possible.
 struct ConnectorWarning: Hashable {
     var connectorID: ConnectorID
     var targetID: String?
     var message: String
 }
 
+/// Availability state for one connector batch.
 enum ConnectorAvailability: String, Hashable, Codable {
     case available
     case unavailable
@@ -201,6 +221,7 @@ enum ConnectorAvailability: String, Hashable, Codable {
     case partial
 }
 
+/// Normalized output from one connector account for one request.
 struct SignalSyncBatch: Hashable {
     var connectorID: ConnectorID
     var accountID: String
@@ -212,6 +233,7 @@ struct SignalSyncBatch: Hashable {
     var warnings: [ConnectorWarning]
     var availability: ConnectorAvailability
 
+    /// Returns an empty batch without forcing each adapter to spell out all arrays.
     static func empty(
         connectorID: ConnectorID,
         accountID: String,
@@ -232,6 +254,7 @@ struct SignalSyncBatch: Hashable {
     }
 }
 
+/// Globally unique signal ID after connector/account namespacing.
 struct GlobalSignalID: RawRepresentable, Hashable, Codable, ExpressibleByStringLiteral {
     var rawValue: String
 
@@ -244,12 +267,14 @@ struct GlobalSignalID: RawRepresentable, Hashable, Codable, ExpressibleByStringL
     }
 }
 
+/// Connector-native ID plus enough namespace to become globally stable.
 struct SourceSignalID: Hashable, Codable {
     var connectorID: ConnectorID
     var accountID: String
     var kind: String
     var externalID: String
 
+    /// Namespaced ID used for cross-connector persistence and de-duplication.
     var globalID: GlobalSignalID {
         GlobalSignalID(rawValue: [
             connectorID.rawValue,
@@ -271,6 +296,7 @@ struct SourceSignalID: Hashable, Codable {
 typealias SourceObjectID = SourceSignalID
 typealias SourceEventID = SourceSignalID
 
+/// Normalized object classes emitted by connectors.
 enum SignalObjectKind: String, Hashable, Codable {
     case person
     case space
@@ -283,10 +309,12 @@ enum SignalObjectKind: String, Hashable, Codable {
     case project
 }
 
+/// Normalized event classes emitted by connectors.
 enum SignalEventKind: String, Hashable, Codable {
     case message
 }
 
+/// Long-lived entity observed from a connector.
 struct SignalObject: Hashable {
     var id: GlobalSignalID
     var sourceID: SourceObjectID
@@ -299,12 +327,14 @@ struct SignalObject: Hashable {
     var properties: SignalProperties
 }
 
+/// Actor metadata carried by events without requiring a persisted person row.
 struct SignalActor: Hashable {
     var id: GlobalSignalID?
     var displayName: String
     var email: String?
 }
 
+/// Time-ordered connector event with normalized payload.
 struct SignalEvent: Hashable {
     var id: GlobalSignalID
     var sourceID: SourceEventID
@@ -316,10 +346,12 @@ struct SignalEvent: Hashable {
     var payload: SignalEventPayload
 }
 
+/// Payload union for event-specific fields.
 enum SignalEventPayload: Hashable {
     case message(MessageEventPayload)
 }
 
+/// Message-specific event fields shared by chat-like connectors.
 struct MessageEventPayload: Hashable {
     var threadID: GlobalSignalID
     var threadSourceID: SourceObjectID
@@ -331,6 +363,7 @@ struct MessageEventPayload: Hashable {
     var isFromCurrentUser: Bool
 }
 
+/// Relationship inferred or observed from connector data.
 struct SignalRelation: Hashable {
     var id: GlobalSignalID
     var kind: String
@@ -342,6 +375,7 @@ struct SignalRelation: Hashable {
     var visibility: SignalVisibility
 }
 
+/// Confidence bucket for inferred relationships.
 enum SignalConfidence: String, Hashable, Codable {
     case direct
     case inferredHigh
@@ -349,6 +383,7 @@ enum SignalConfidence: String, Hashable, Codable {
     case inferredLow
 }
 
+/// Text payload slice associated with a signal object.
 struct SignalContentChunk: Hashable {
     var id: GlobalSignalID
     var objectID: GlobalSignalID
@@ -360,6 +395,7 @@ struct SignalContentChunk: Hashable {
     var visibility: SignalVisibility
 }
 
+/// Access scope attached to objects, events, relations, and content chunks.
 struct SignalVisibility: Hashable {
     var source: ConnectorID
     var accountID: String
@@ -375,6 +411,7 @@ struct SignalVisibility: Hashable {
         principals: []
     )
 
+    /// Visibility for connector accounts authenticated in the current app session.
     static func authenticatedUser(connectorID: ConnectorID, accountID: String) -> SignalVisibility {
         SignalVisibility(
             source: connectorID,
@@ -385,6 +422,7 @@ struct SignalVisibility: Hashable {
     }
 }
 
+/// Typed scalar bag for connector-specific properties.
 enum SignalPropertyValue: Hashable {
     case string(String)
     case number(Double)

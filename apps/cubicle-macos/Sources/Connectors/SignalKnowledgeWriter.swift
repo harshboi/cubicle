@@ -1,18 +1,23 @@
 import Foundation
 
+/// Counts the legacy knowledge rows touched by one signal batch write.
 struct SignalWriteSummary: Hashable {
     var messageEventsProcessed: Int
     var evidenceRecordsWritten: Int
 }
 
+/// Persistence boundary for normalized connector output.
 protocol SignalKnowledgeWriting {
+    /// Writes a connector batch into the current knowledge store schema.
     func write(_ batch: SignalSyncBatch) throws -> SignalWriteSummary
 }
 
+/// Bridges normalized signal batches into the existing knowledge tables.
 final class SignalKnowledgeWriter: SignalKnowledgeWriting {
     private let knowledgeStore: KnowledgeStore
     private let now: () -> Date
 
+    /// Injects storage and time so idempotency tests can use deterministic rows.
     init(
         knowledgeStore: KnowledgeStore,
         now: @escaping () -> Date = Date.init
@@ -21,6 +26,7 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
         self.now = now
     }
 
+    /// Persists supported objects/events and returns counts for sync reporting.
     func write(_ batch: SignalSyncBatch) throws -> SignalWriteSummary {
         try knowledgeStore.bootstrap()
         let updatedAt = Self.iso8601(now())
@@ -46,6 +52,7 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
         )
     }
 
+    /// Maps supported signal objects into the legacy room/person tables.
     private func writeObjects(
         _ objects: [SignalObject],
         fallbackUpdatedAt: String
@@ -78,6 +85,7 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
         }
     }
 
+    /// Writes one message event and returns whether it produced belief evidence.
     @discardableResult
     private func writeMessageEvent(
         _ event: SignalEvent,

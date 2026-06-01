@@ -1,5 +1,6 @@
 import Foundation
 
+/// Signal adapter for Webex room and direct-message conversations.
 final class WebexSignalConnector: SignalConnector {
     let descriptor = ConnectorDescriptor(
         id: .webex,
@@ -10,11 +11,13 @@ final class WebexSignalConnector: SignalConnector {
     private let webexClient: WebexClienting
     private let accountID: String
 
+    /// Shares the Webex client protocol with the existing sync engine.
     init(webexClient: WebexClienting, accountID: String = "default") {
         self.webexClient = webexClient
         self.accountID = accountID
     }
 
+    /// Converts configured Webex selectors into normalized message events.
     func sync(
         request: SignalSyncRequest,
         checkpoint: ConnectorCheckpoint?
@@ -82,6 +85,7 @@ final class WebexSignalConnector: SignalConnector {
         )
     }
 
+    /// Adds converted Webex messages while de-duping objects/events within a batch.
     private func appendSignals(
         from messages: [WebexMessage],
         target: SignalTarget,
@@ -102,6 +106,7 @@ final class WebexSignalConnector: SignalConnector {
         }
     }
 
+    /// Builds normalized room/person objects plus the message event.
     private func makeMessageSignal(
         _ message: WebexMessage,
         target: SignalTarget,
@@ -182,11 +187,13 @@ final class WebexSignalConnector: SignalConnector {
         value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Distinguishes partial Webex failures from a clean empty sync.
     private func availability(hasSignals: Bool, warnings: [ConnectorWarning]) -> ConnectorAvailability {
         guard !warnings.isEmpty else { return .available }
         return hasSignals ? .partial : .unavailable
     }
 
+    /// Accepts both fractional and non-fractional Webex timestamps.
     private static func parseDate(_ value: String) -> Date? {
         if let date = iso8601WithFractionalSeconds.date(from: value) {
             return date

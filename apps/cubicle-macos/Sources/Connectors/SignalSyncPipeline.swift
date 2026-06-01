@@ -1,25 +1,30 @@
 import Foundation
 
+/// Per-connector failure captured without aborting the whole sync run.
 struct SignalSyncFailure: Hashable {
     var connectorID: ConnectorID
     var message: String
 }
 
+/// Connector batches, DAO write summaries, and recoverable connector failures.
 struct SignalSyncPipelineResult: Hashable {
     var batches: [SignalSyncBatch]
     var writeSummaries: [ConnectorID: SignalWriteSummary]
     var failures: [SignalSyncFailure]
 }
 
+/// Routes targets to connectors and persists each connector's signal batch.
 final class SignalSyncPipeline {
     private let connectors: [SignalConnector]
     private let writer: SignalKnowledgeWriting
 
+    /// Keeps connector execution injectable so tests and future schedulers share one path.
     init(connectors: [SignalConnector], writer: SignalKnowledgeWriting) {
         self.connectors = connectors
         self.writer = writer
     }
 
+    /// Runs connectors independently; failures stay attached to their source.
     func sync(
         request: SignalSyncRequest,
         checkpoints: [ConnectorID: ConnectorCheckpoint] = [:]
