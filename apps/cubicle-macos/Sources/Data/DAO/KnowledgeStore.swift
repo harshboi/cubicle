@@ -38,13 +38,6 @@ enum KnowledgeStoreError: LocalizedError {
     }
 }
 
-struct KnowledgeDatabaseStatus: Equatable {
-    var databaseExists: Bool
-    var walExists: Bool
-    var shmExists: Bool
-    var path: String
-}
-
 private enum BeliefManualFilter {
     case all
     case manualOnly
@@ -58,9 +51,9 @@ private enum SQLiteBindValue {
     case double(Double)
 }
 
-final class KnowledgeStore {
+final class KnowledgeStore: KnowledgeDAO {
     let configuration: RuntimeConfiguration
-    private let fileManager = FileManager.default
+    let database: KnowledgeDatabase
     private let jsonEncoder = JSONEncoder()
     private let jsonDecoder = JSONDecoder()
     private let timestampFormatter: ISO8601DateFormatter = {
@@ -71,25 +64,21 @@ final class KnowledgeStore {
 
     init(configuration: RuntimeConfiguration = .current) {
         self.configuration = configuration
+        self.database = KnowledgeDatabase(configuration: configuration)
         self.jsonEncoder.dateEncodingStrategy = .iso8601
         self.jsonDecoder.dateDecodingStrategy = .iso8601
     }
 
     var knowledgeDirectory: URL {
-        configuration.runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
+        database.knowledgeDirectory
     }
 
     var databaseURL: URL {
-        knowledgeDirectory.appendingPathComponent("knowledge.db")
+        database.databaseURL
     }
 
     func status() -> KnowledgeDatabaseStatus {
-        KnowledgeDatabaseStatus(
-            databaseExists: fileManager.fileExists(atPath: databaseURL.path),
-            walExists: fileManager.fileExists(atPath: databaseURL.path + "-wal"),
-            shmExists: fileManager.fileExists(atPath: databaseURL.path + "-shm"),
-            path: databaseURL.path
-        )
+        database.status()
     }
 
     func bootstrap() throws {
@@ -2026,38 +2015,14 @@ final class KnowledgeStore {
     }
 
     private func withDatabase<T>(_ body: (OpaquePointer) throws -> T) throws -> T {
-        try ensureKnowledgeDirectory()
-        let db = try openDatabase()
-        defer { sqlite3_close(db) }
-        try execute(sql: "PRAGMA foreign_keys = ON;", db: db)
-        try execute(sql: "PRAGMA journal_mode = WAL;", db: db)
-        try applyPendingMigrations(db: db)
-        try ensureCoreSchemaCompatibility(db: db)
-        try ensureTopicSchemaCompatibility(db: db)
-        try ensureBeliefSchemaCompatibility(db: db)
-        try ensureBeliefEvidenceSchemaCompatibility(db: db)
-        return try body(db)
-    }
-
-    private func ensureKnowledgeDirectory() throws {
-        try fileManager.createDirectory(at: knowledgeDirectory, withIntermediateDirectories: true)
-    }
-
-    private func openDatabase() throws -> OpaquePointer {
-        var db: OpaquePointer?
-        let flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX
-        if sqlite3_open_v2(databaseURL.path, &db, flags, nil) != SQLITE_OK {
-            let message = db.flatMap { String(cString: sqlite3_errmsg($0)) } ?? "unknown SQLite error"
-            if let db {
-                sqlite3_close(db)
-            }
-            throw KnowledgeStoreError.sqliteOpenFailed(path: databaseURL.path, message: message)
+        try database.withOpenConnection { db in
+            try applyPendingMigrations(db: db)
+            try ensureCoreSchemaCompatibility(db: db)
+            try ensureTopicSchemaCompatibility(db: db)
+            try ensureBeliefSchemaCompatibility(db: db)
+            try ensureBeliefEvidenceSchemaCompatibility(db: db)
+            return try body(db)
         }
-        guard let db else {
-            throw KnowledgeStoreError.sqliteOpenFailed(path: databaseURL.path, message: "nil SQLite pointer")
-        }
-        sqlite3_busy_timeout(db, 5000)
-        return db
     }
 
     private func applyPendingMigrations(db: OpaquePointer) throws {
