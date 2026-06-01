@@ -22,6 +22,8 @@ final class IMessageSignalConnector: SignalConnector {
         request: SignalSyncRequest,
         checkpoint: ConnectorCheckpoint?
     ) async throws -> SignalSyncBatch {
+        // chat.db has no remote cursor contract; request.since is the replay
+        // boundary until we add a local checkpoint payload.
         _ = checkpoint
         let since = request.since ?? Date.distantPast
         var objects: [SignalObject] = []
@@ -54,6 +56,8 @@ final class IMessageSignalConnector: SignalConnector {
                     }
                 }
             } catch {
+                // TCC/db-denied reads should degrade this source only; Webex
+                // and other connectors can still produce a useful batch.
                 warnings.append(
                     ConnectorWarning(
                         connectorID: .iMessage,

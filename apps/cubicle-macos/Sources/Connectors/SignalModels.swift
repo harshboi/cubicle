@@ -92,6 +92,8 @@ struct SignalTarget: Identifiable, Hashable {
             selectors.append(ConnectorSelector(connectorID: .webex, kind: .roomID, value: roomID))
         }
 
+        // Roomless person targets still need Webex email lookup; room-backed
+        // targets keep it only as identity metadata.
         let email = configTarget.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if !email.isEmpty {
             selectors.append(ConnectorSelector(connectorID: .webex, kind: .email, value: email))
@@ -137,6 +139,8 @@ struct TargetRouter {
     func targetsByConnector(_ targets: [SignalTarget]) -> [ConnectorID: [SignalTarget]] {
         var routed = Dictionary(uniqueKeysWithValues: connectorIDs.map { ($0, [SignalTarget]()) })
         for target in targets {
+            // A shared person target can route to Webex and iMessage; an absent
+            // selector is the opt-out signal for that connector.
             for connectorID in connectorIDs where !target.selectors(for: connectorID).isEmpty {
                 routed[connectorID, default: []].append(target)
             }
@@ -362,6 +366,8 @@ struct SignalVisibility: Hashable {
     var scope: String
     var principals: [String]
 
+    // Local Messages rows inherit macOS-user visibility, not any Webex/OAuth
+    // account scope that may be active in the same app session.
     static let localUserOnly = SignalVisibility(
         source: .iMessage,
         accountID: "local",

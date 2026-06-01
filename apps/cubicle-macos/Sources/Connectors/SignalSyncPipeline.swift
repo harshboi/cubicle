@@ -47,6 +47,8 @@ final class SignalSyncPipeline {
                 batches.append(batch)
                 writeSummaries[connectorID] = summary
             } catch {
+                // One dead source should not block fresh evidence from another;
+                // callers decide how to surface partial refresh state.
                 failures.append(
                     SignalSyncFailure(
                         connectorID: connectorID,

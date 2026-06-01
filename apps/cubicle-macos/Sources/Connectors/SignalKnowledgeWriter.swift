@@ -71,6 +71,8 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
                     )
                 )
             case .document, .file, .issue, .pullRequest, .project:
+                // No generic object tables yet; keep these in the batch until
+                // raw signal persistence lands.
                 continue
             }
         }
@@ -125,6 +127,8 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
         }
 
         let evidenceSource = "\(batch.connectorID.rawValue)_message"
+        // Existing belief filters group by source kind; event.id carries the
+        // globally-scoped uniqueness.
         try knowledgeStore.upsertBeliefEvidence(
             BeliefEvidenceRecord(
                 id: "\(evidenceSource)-\(event.id.rawValue)",

@@ -19,6 +19,8 @@ final class WebexSignalConnector: SignalConnector {
         request: SignalSyncRequest,
         checkpoint: ConnectorCheckpoint?
     ) async throws -> SignalSyncBatch {
+        // Production Webex cursor/backoff still lives in WebexSyncEngine; this
+        // adapter is the signal-shape bridge for the new substrate.
         _ = checkpoint
         var objects: [SignalObject] = []
         var events: [SignalEvent] = []
