@@ -118,6 +118,66 @@ GetWebexSpaceMacApp.swift
     -> Views/*
 ```
 
+## AppModel Summary Diagram
+
+```text
+AppModel.swift
+  -> owns app state and coordinates local services so SwiftUI screens can show current work context.
+
+  |
+  +-- Startup
+  |     -> loads settings, runtime status, DB, focus caches, questions, and background refresh.
+  |     |
+  |     +-- init()
+  |     +-- startProgram()
+  |     +-- loadAll()
+  |
+  +-- UI State
+  |     -> tracks selected screen, selected focus item, loading state, errors, and draft settings.
+  |     |
+  |     +-- selectedSection
+  |     +-- selectedFocusKind
+  |     +-- selectedItemIDByKind
+  |     +-- isLoading / errorMessage
+  |
+  +-- UI Data
+  |     -> feeds dashboard tiles, focus lists, question views, beliefs, and Ask Codex history.
+  |     |
+  |     +-- spaceCache
+  |     +-- personCache
+  |     +-- questionCandidates
+  |     +-- manualBeliefs
+  |     +-- automaticBeliefs
+  |     +-- askCodexQueryHistory
+  |
+  +-- Refresh
+  |     -> runs manual, startup, page-priority, and background refresh pipelines.
+  |     |
+  |     +-- refreshNow()
+  |     +-- refreshSelectedPageNow()
+  |     +-- runRefreshCycle()
+  |     +-- reloadAfterRefresh()
+  |
+  +-- Local Services
+  |     -> bridges UI actions to files, SQLite, connectors, Codex, OAuth, and transcription.
+        |
+        +-- NativeRuntimeStore
+        +-- ConfigStore
+        +-- KnowledgeStore
+        +-- NativeRefreshCoordinator
+        +-- QuestionCandidateService
+        +-- CodexPromptOrchestrationService
+        +-- CodexRunner
+        +-- OAuthService
+        +-- TranscriptionViewModel
+```
+
+One-line summary:
+
+```text
+AppModel is the macOS app controller: it loads runtime state, holds UI-facing data, coordinates refresh/Codex/DB services, and publishes everything the SwiftUI screens render.
+```
+
 ## Commenting Rubric
 
 Trust the reader.
@@ -218,4 +278,3 @@ TDD
 ```
 
 Use call-flow DAGs in PR descriptions when changing architecture.
-
