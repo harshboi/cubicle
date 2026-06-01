@@ -84,6 +84,8 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
         fallbackUpdatedAt: String
     ) throws -> Bool {
         let createdAt = Self.iso8601(event.occurredAt)
+        // Existing focus views key rooms by native thread/room ID; message and
+        // evidence IDs stay globally scoped to avoid cross-connector collisions.
         let roomID = payload.threadSourceID.externalID
         let roomTitle = normalizedText(payload.threadTitle, fallback: roomID)
         try knowledgeStore.upsertRoom(

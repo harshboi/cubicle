@@ -256,6 +256,8 @@ struct SourceSignalID: Hashable, Codable {
     }
 
     private static func stableComponent(_ value: String) -> String {
+        // Global IDs use ':' as their delimiter; source IDs can contain it
+        // already (for example synthetic direct-message thread IDs).
         value
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: ":", with: "%3A")

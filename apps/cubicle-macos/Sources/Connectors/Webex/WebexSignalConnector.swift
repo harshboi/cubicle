@@ -48,6 +48,8 @@ final class WebexSignalConnector: SignalConnector {
             }
 
             for email in emails where roomIDs.isEmpty {
+                // Prefer configured room IDs when present; direct lookup is only
+                // for email-only targets and can duplicate the same conversation.
                 do {
                     let messages = try await webexClient.fetchDirectMessages(personEmail: email, personID: nil, max: request.limit)
                     appendSignals(
