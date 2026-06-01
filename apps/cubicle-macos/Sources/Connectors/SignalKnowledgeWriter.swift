@@ -12,14 +12,35 @@ protocol SignalKnowledgeWriting {
     func write(_ batch: SignalSyncBatch) throws -> SignalWriteSummary
 }
 
+/// Storage calls needed by the signal writer.
+protocol SignalKnowledgeWritableStore {
+    func bootstrap() throws
+    func writeConnectorMessageBatch(
+        rooms: [RoomRecord],
+        people: [PersonRecord],
+        messages: [MessageRecord],
+        evidence: [BeliefEvidenceRecord]
+    ) throws
+}
+
+extension KnowledgeStore: SignalKnowledgeWritableStore {}
+
+private struct SignalKnowledgeMappedRecords {
+    var rooms: [RoomRecord] = []
+    var people: [PersonRecord] = []
+    var messages: [MessageRecord] = []
+    var evidence: [BeliefEvidenceRecord] = []
+    var messageEventsProcessed = 0
+}
+
 /// Bridges normalized signal batches into the existing knowledge tables.
 final class SignalKnowledgeWriter: SignalKnowledgeWriting {
-    private let knowledgeStore: KnowledgeStore
+    private let knowledgeStore: SignalKnowledgeWritableStore
     private let now: () -> Date
 
     /// Injects storage and time so idempotency tests can use deterministic rows.
     init(
-        knowledgeStore: KnowledgeStore,
+        knowledgeStore: SignalKnowledgeWritableStore,
         now: @escaping () -> Date = Date.init
     ) {
         self.knowledgeStore = knowledgeStore
@@ -30,38 +51,52 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
     func write(_ batch: SignalSyncBatch) throws -> SignalWriteSummary {
         try knowledgeStore.bootstrap()
         let updatedAt = Self.iso8601(now())
-        try writeObjects(batch.objects, fallbackUpdatedAt: updatedAt)
-
-        var messageEventsProcessed = 0
-        var evidenceRecordsWritten = 0
-        for event in batch.events {
-            guard case .message(let payload) = event.payload else { continue }
-            let wroteEvidence = try writeMessageEvent(
-                event,
-                payload: payload,
-                batch: batch,
-                fallbackUpdatedAt: updatedAt
-            )
-            messageEventsProcessed += 1
-            evidenceRecordsWritten += wroteEvidence ? 1 : 0
-        }
+        let mappedRecords = mapRecords(for: batch, fallbackUpdatedAt: updatedAt)
+        try knowledgeStore.writeConnectorMessageBatch(
+            rooms: mappedRecords.rooms,
+            people: mappedRecords.people,
+            messages: mappedRecords.messages,
+            evidence: mappedRecords.evidence
+        )
 
         return SignalWriteSummary(
-            messageEventsProcessed: messageEventsProcessed,
-            evidenceRecordsWritten: evidenceRecordsWritten
+            messageEventsProcessed: mappedRecords.messageEventsProcessed,
+            evidenceRecordsWritten: mappedRecords.evidence.count
         )
     }
 
-    /// Maps supported signal objects into the legacy room/person tables.
-    private func writeObjects(
-        _ objects: [SignalObject],
+    /// Maps a signal batch into legacy knowledge rows without touching storage.
+    private func mapRecords(
+        for batch: SignalSyncBatch,
         fallbackUpdatedAt: String
-    ) throws {
+    ) -> SignalKnowledgeMappedRecords {
+        var records = SignalKnowledgeMappedRecords()
+        appendObjects(batch.objects, fallbackUpdatedAt: fallbackUpdatedAt, to: &records)
+        for event in batch.events {
+            guard case .message(let payload) = event.payload else { continue }
+            appendMessageEvent(
+                event,
+                payload: payload,
+                batch: batch,
+                fallbackUpdatedAt: fallbackUpdatedAt,
+                to: &records
+            )
+            records.messageEventsProcessed += 1
+        }
+        return records
+    }
+
+    /// Maps supported signal objects into the legacy room/person tables.
+    private func appendObjects(
+        _ objects: [SignalObject],
+        fallbackUpdatedAt: String,
+        to records: inout SignalKnowledgeMappedRecords
+    ) {
         for object in objects {
             let updatedAt = object.updatedAt.map(Self.iso8601) ?? fallbackUpdatedAt
             switch object.kind {
             case .person:
-                try knowledgeStore.upsertPerson(
+                records.people.append(
                     PersonRecord(
                         id: object.id.rawValue,
                         displayName: normalizedText(object.title, fallback: object.id.rawValue),
@@ -70,7 +105,7 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
                     )
                 )
             case .space, .thread, .channel:
-                try knowledgeStore.upsertRoom(
+                records.rooms.append(
                     RoomRecord(
                         id: object.sourceID.externalID,
                         title: normalizedText(object.title, fallback: object.sourceID.externalID),
@@ -85,20 +120,20 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
         }
     }
 
-    /// Writes one message event and returns whether it produced belief evidence.
-    @discardableResult
-    private func writeMessageEvent(
+    /// Maps one message event into room/person/message/evidence rows.
+    private func appendMessageEvent(
         _ event: SignalEvent,
         payload: MessageEventPayload,
         batch: SignalSyncBatch,
-        fallbackUpdatedAt: String
-    ) throws -> Bool {
+        fallbackUpdatedAt: String,
+        to records: inout SignalKnowledgeMappedRecords
+    ) {
         let createdAt = Self.iso8601(event.occurredAt)
         // Existing focus views key rooms by native thread/room ID; message and
         // evidence IDs stay globally scoped to avoid cross-connector collisions.
         let roomID = payload.threadSourceID.externalID
         let roomTitle = normalizedText(payload.threadTitle, fallback: roomID)
-        try knowledgeStore.upsertRoom(
+        records.rooms.append(
             RoomRecord(
                 id: roomID,
                 title: roomTitle,
@@ -108,7 +143,7 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
 
         let personID = payload.senderID?.rawValue
         if let personID, !personID.isEmpty {
-            try knowledgeStore.upsertPerson(
+            records.people.append(
                 PersonRecord(
                     id: personID,
                     displayName: normalizedText(payload.senderDisplayName, fallback: personID),
@@ -119,7 +154,7 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
         }
 
         let body = normalizedMessageText(payload.body)
-        try knowledgeStore.upsertMessage(
+        records.messages.append(
             MessageRecord(
                 id: event.id.rawValue,
                 roomID: roomID,
@@ -131,13 +166,13 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
         )
 
         guard !body.isEmpty else {
-            return false
+            return
         }
 
         let evidenceSource = "\(batch.connectorID.rawValue)_message"
         // Existing belief filters group by source kind; event.id carries the
         // globally-scoped uniqueness.
-        try knowledgeStore.upsertBeliefEvidence(
+        records.evidence.append(
             BeliefEvidenceRecord(
                 id: "\(evidenceSource)-\(event.id.rawValue)",
                 source: evidenceSource,
@@ -148,7 +183,6 @@ final class SignalKnowledgeWriter: SignalKnowledgeWriting {
                 text: body
             )
         )
-        return true
     }
 
     private func normalizedText(_ value: String, fallback: String) -> String {

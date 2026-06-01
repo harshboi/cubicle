@@ -201,6 +201,31 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertEqual(evidence.count, 1)
         XCTAssertEqual(evidence.first?.source, "webex_message")
     }
+
+    func testSignalKnowledgeWriterWritesMappedRowsAsOneConnectorBatch() throws {
+        let knowledgeStore = RecordingSignalKnowledgeStore()
+        let writer = SignalKnowledgeWriter(
+            knowledgeStore: knowledgeStore,
+            now: { Date(timeIntervalSince1970: 1_715_000_360) }
+        )
+        let occurredAt = Date(timeIntervalSince1970: 1_715_000_240)
+
+        let summary = try writer.write(makeSignalMessageBatch(occurredAt: occurredAt))
+
+        XCTAssertEqual(summary.messageEventsProcessed, 1)
+        XCTAssertEqual(summary.evidenceRecordsWritten, 1)
+        XCTAssertEqual(knowledgeStore.bootstrapCallCount, 1)
+        XCTAssertEqual(knowledgeStore.batchWrites.count, 1)
+        let batchWrite = try XCTUnwrap(knowledgeStore.batchWrites.first)
+        XCTAssertEqual(batchWrite.rooms.map(\.id), ["room-1", "room-1"])
+        XCTAssertEqual(batchWrite.people.map(\.id), [
+            "webex:workspace:person:person-1",
+            "webex:workspace:person:person-1"
+        ])
+        XCTAssertEqual(batchWrite.messages.map(\.id), ["webex:workspace:message:webex-message-1"])
+        XCTAssertEqual(batchWrite.evidence.map(\.source), ["webex_message"])
+        XCTAssertEqual(batchWrite.evidence.map(\.sourceID), ["webex:workspace:message:webex-message-1"])
+    }
 }
 
 private final class StubIMessageSignalIngestionService: NativeIMessageIngesting {
@@ -270,6 +295,38 @@ private final class RecordingSignalKnowledgeWriter: SignalKnowledgeWriting {
     func write(_ batch: SignalSyncBatch) throws -> SignalWriteSummary {
         writtenConnectorIDs.append(batch.connectorID)
         return SignalWriteSummary(messageEventsProcessed: batch.events.count, evidenceRecordsWritten: 0)
+    }
+}
+
+private struct RecordedConnectorBatchWrite {
+    var rooms: [RoomRecord]
+    var people: [PersonRecord]
+    var messages: [MessageRecord]
+    var evidence: [BeliefEvidenceRecord]
+}
+
+private final class RecordingSignalKnowledgeStore: SignalKnowledgeWritableStore {
+    private(set) var bootstrapCallCount = 0
+    private(set) var batchWrites: [RecordedConnectorBatchWrite] = []
+
+    func bootstrap() throws {
+        bootstrapCallCount += 1
+    }
+
+    func writeConnectorMessageBatch(
+        rooms: [RoomRecord],
+        people: [PersonRecord],
+        messages: [MessageRecord],
+        evidence: [BeliefEvidenceRecord]
+    ) throws {
+        batchWrites.append(
+            RecordedConnectorBatchWrite(
+                rooms: rooms,
+                people: people,
+                messages: messages,
+                evidence: evidence
+            )
+        )
     }
 }
 
