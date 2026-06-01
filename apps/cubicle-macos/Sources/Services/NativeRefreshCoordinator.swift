@@ -80,20 +80,25 @@ final class NativeRefreshCoordinator {
     let webexIngestionService: NativeWebexIngestionService
     let codexOrchestrationService: CodexPromptOrchestrationService
     let questionService: QuestionCandidateService
+    let signalConnectorProcessingService: SignalConnectorProcessingService
 
     /// Wires runtime services for a single runtime root.
     init(configuration: RuntimeConfiguration = .current) {
         self.configuration = configuration
         self.configStore = ConfigStore(configuration: configuration)
-        self.webexClient = WebexAPIClient(configuration: configuration)
-        self.knowledgeStore = KnowledgeStore(configuration: configuration)
+        let webexClient = WebexAPIClient(configuration: configuration)
+        let knowledgeStore = KnowledgeStore(configuration: configuration)
+        let iMessageService = NativeIMessageIngestionService()
+        self.webexClient = webexClient
+        self.knowledgeStore = knowledgeStore
         self.codexRunner = CodexRunner(configuration: configuration)
         self.runtimeStore = NativeRuntimeStore(configuration: configuration)
         self.webexIngestionService = NativeWebexIngestionService(
             configuration: configuration,
             configStore: configStore,
             webexClient: webexClient,
-            knowledgeStore: knowledgeStore
+            knowledgeStore: knowledgeStore,
+            iMessageService: iMessageService
         )
         self.codexOrchestrationService = CodexPromptOrchestrationService(
             configuration: configuration,
@@ -102,6 +107,14 @@ final class NativeRefreshCoordinator {
         self.questionService = QuestionCandidateService(
             knowledgeStore: knowledgeStore,
             questionSynthesizer: codexOrchestrationService
+        )
+        self.signalConnectorProcessingService = SignalConnectorProcessingService(
+            factory: SignalConnectorFactory(
+                webexClient: webexClient,
+                webexProductClient: webexClient,
+                iMessageIngestionService: iMessageService
+            ),
+            writer: SignalKnowledgeWriter(knowledgeStore: knowledgeStore)
         )
     }
 
