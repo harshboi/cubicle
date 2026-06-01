@@ -189,6 +189,42 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertEqual(payload.body, "The rollout is blocked on approval.")
     }
 
+    func testWebexSignalConnectorFetchesDuplicateRoomSelectorsOnce() async throws {
+        let createdAt = Date(timeIntervalSince1970: 1_715_000_120)
+        let client = StubSignalWebexClient()
+        client.recentMessagesByRoomID["room-1"] = [
+            makeWebexSignalMessage(
+                id: "webex-message-1",
+                roomID: "room-1",
+                personID: "person-1",
+                personEmail: "alex@example.com",
+                text: "The rollout is blocked on approval.",
+                createdAt: createdAt
+            )
+        ]
+        let connector = WebexSignalConnector(webexClient: client, accountID: "workspace")
+        let spaceTarget = SignalTarget(
+            id: "space:room-1",
+            label: "Launch Room",
+            entityKind: .space,
+            selectors: [ConnectorSelector(connectorID: .webex, kind: .roomID, value: "room-1")]
+        )
+        let personTarget = SignalTarget(
+            id: "person:room-1",
+            label: "Alex Chen",
+            entityKind: .person,
+            selectors: [ConnectorSelector(connectorID: .webex, kind: .roomID, value: "room-1")]
+        )
+
+        let batch = try await connector.sync(
+            request: SignalSyncRequest(mode: .incremental, targets: [spaceTarget, personTarget], startedAt: createdAt, since: nil, limit: 25),
+            checkpoint: nil
+        )
+
+        XCTAssertEqual(client.recentFetches.map(\.0), ["room-1"])
+        XCTAssertEqual(batch.events.count, 1)
+    }
+
     func testSignalSyncPipelineRoutesTargetsAndWritesBatches() async throws {
         let webexBatch = SignalSyncBatch.empty(connectorID: .webex, accountID: "workspace")
         let iMessageBatch = SignalSyncBatch.empty(connectorID: .iMessage, accountID: "local")
@@ -311,6 +347,76 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertEqual(webexClient.recentFetches.map(\.0), ["room-1"])
         XCTAssertEqual(iMessageService.receivedHandles, ["+14085550100"])
         XCTAssertEqual(result.summary, "Signal sync: targets=2, batches=2, failures=0.")
+    }
+
+    func testNativeRefreshCoordinatorWebexSyncUsesSignalConnectorProcessingService() async throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleSignalCoordinatorTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let configuration = testSignalRuntimeConfiguration(runtimeRoot: runtimeRoot)
+        let configStore = ConfigStore(configuration: configuration)
+        try writeSignalSyncTargetFiles(configStore: configStore)
+        let processingService = RecordingSignalConnectorProcessingService(summary: "stub signal sync")
+        let coordinator = NativeRefreshCoordinator(
+            configuration: configuration,
+            signalConnectorProcessingService: processingService
+        )
+        var progressMessages: [String] = []
+
+        let result = try await coordinator.refresh(.webexSync, mode: .full) { progress in
+            progressMessages.append(progress.message)
+        }
+
+        XCTAssertEqual(processingService.syncCallCount, 1)
+        XCTAssertEqual(processingService.receivedMode, .full)
+        XCTAssertEqual(processingService.receivedLimit, 150)
+        XCTAssertEqual(
+            Set(processingService.receivedConfigTargets.map(\.id)),
+            Set([
+                "space:room:Y2lzY29zcGFyazovL3VzL1JPT00vSPACE",
+                "person:room:Y2lzY29zcGFyazovL3VzL1JPT00vPERSON",
+                "person:room:Y2lzY29zcGFyazovL3VzL1JPT00vBELIEF"
+            ])
+        )
+        XCTAssertEqual(result.summary, "stub signal sync Focus snapshots refreshed: spaces=1, people=1, supplemental=2.")
+        XCTAssertTrue(progressMessages.contains("Signal sync: preparing 3 target(s)."))
+        XCTAssertTrue(progressMessages.contains("stub signal sync Focus snapshots refreshed: spaces=1, people=1, supplemental=2."))
+        XCTAssertTrue(
+            FileManager.default.fileExists(
+                atPath: runtimeRoot
+                    .appendingPathComponent("knowledge/native/live_space_focus_cache_60d.json")
+                    .path
+            )
+        )
+        XCTAssertTrue(
+            FileManager.default.fileExists(
+                atPath: runtimeRoot
+                    .appendingPathComponent("knowledge/native/live_person_focus_cache_30d.json")
+                    .path
+            )
+        )
+    }
+
+    func testNativeRefreshCoordinatorDisabledWebexSyncSkipsSignalConnectorProcessing() async throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleDisabledSignalCoordinatorTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let configuration = testSignalRuntimeConfiguration(runtimeRoot: runtimeRoot)
+        let configStore = ConfigStore(configuration: configuration)
+        var settings = SystemSettings()
+        settings.webexSyncEnabled = false
+        try configStore.saveSystemSettings(settings)
+        try writeSignalSyncTargetFiles(configStore: configStore)
+        let processingService = RecordingSignalConnectorProcessingService(summary: "stub signal sync")
+        let coordinator = NativeRefreshCoordinator(
+            configuration: configuration,
+            signalConnectorProcessingService: processingService
+        )
+
+        let result = try await coordinator.refresh(.webexSync)
+
+        XCTAssertEqual(processingService.syncCallCount, 0)
+        XCTAssertEqual(result.summary, "Webex sync skipped: disabled in Settings.")
     }
 
     func testWebexProductServiceListsRoomsAndMembershipsWithoutAppModelCasting() async throws {
@@ -549,6 +655,41 @@ private final class RecordingSignalKnowledgeWriter: SignalKnowledgeWriting {
     }
 }
 
+private final class RecordingSignalConnectorProcessingService: SignalConnectorProcessing {
+    private let summary: String
+    private(set) var syncCallCount = 0
+    private(set) var receivedConfigTargets: [ConfigTarget] = []
+    private(set) var receivedMode: SignalSyncMode?
+    private(set) var receivedLimit: Int?
+    private(set) var receivedSince: Date?
+
+    init(summary: String) {
+        self.summary = summary
+    }
+
+    func sync(
+        configTargets: [ConfigTarget],
+        mode: SignalSyncMode,
+        limit: Int,
+        since: Date?
+    ) async throws -> SignalConnectorProcessingResult {
+        syncCallCount += 1
+        receivedConfigTargets = configTargets
+        receivedMode = mode
+        receivedLimit = limit
+        receivedSince = since
+        return SignalConnectorProcessingResult(
+            targetCount: configTargets.count,
+            pipelineResult: SignalSyncPipelineResult(
+                batches: [SignalSyncBatch.empty(connectorID: .webex, accountID: "workspace")],
+                writeSummaries: [:],
+                failures: []
+            ),
+            summary: summary
+        )
+    }
+}
+
 private struct RecordedConnectorBatchWrite {
     var rooms: [RoomRecord]
     var people: [PersonRecord]
@@ -783,6 +924,31 @@ private func executeSignalSQLite(
 private func appleMessageRawDate(_ date: Date, scale: TimeInterval) -> Int64 {
     let appleEpochOffset: TimeInterval = 978_307_200
     return Int64((date.timeIntervalSince1970 - appleEpochOffset) * scale)
+}
+
+private func writeSignalSyncTargetFiles(configStore: ConfigStore) throws {
+    try FileManager.default.createDirectory(
+        at: configStore.configDirectory,
+        withIntermediateDirectories: true
+    )
+    let importantSenders = """
+    space | Launch Room | Y2lzY29zcGFyazovL3VzL1JPT00vSPACE | group | |
+    person | Alex Chen | Y2lzY29zcGFyazovL3VzL1JPT00vPERSON | direct | alex@example.com | Alex Chen
+    """
+    let beliefTargets = """
+    person | Exec Sponsor | Y2lzY29zcGFyazovL3VzL1JPT00vBELIEF | direct | exec@example.com | Exec Sponsor
+    person | Alex Chen Duplicate | Y2lzY29zcGFyazovL3VzL1JPT00vPERSON | direct | alex@example.com | Alex Chen
+    """
+    try importantSenders.write(
+        to: configStore.importantTargetsURL,
+        atomically: true,
+        encoding: .utf8
+    )
+    try beliefTargets.write(
+        to: configStore.configDirectory.appendingPathComponent("belieftargets.txt"),
+        atomically: true,
+        encoding: .utf8
+    )
 }
 
 private let testISO8601: ISO8601DateFormatter = {

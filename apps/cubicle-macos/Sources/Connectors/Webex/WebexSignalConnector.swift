@@ -30,12 +30,14 @@ final class WebexSignalConnector: SignalConnector {
         var warnings: [ConnectorWarning] = []
         var seenObjectIDs: Set<GlobalSignalID> = []
         var seenEventIDs: Set<GlobalSignalID> = []
+        var fetchedRoomIDs: Set<String> = []
+        var fetchedEmails: Set<String> = []
 
         for target in request.targets {
             let roomIDs = target.selectors(for: .webex, kind: .roomID).map(\.value).filter { !$0.isEmpty }
             let emails = target.selectors(for: .webex, kind: .email).map(\.value).filter { !$0.isEmpty }
 
-            for roomID in roomIDs {
+            for roomID in roomIDs where fetchedRoomIDs.insert(roomID).inserted {
                 do {
                     let messages = try await webexClient.fetchRecentMessages(roomID: roomID, max: request.limit)
                     appendSignals(
@@ -52,7 +54,7 @@ final class WebexSignalConnector: SignalConnector {
                 }
             }
 
-            for email in emails where roomIDs.isEmpty {
+            for email in emails where roomIDs.isEmpty && fetchedEmails.insert(email).inserted {
                 // Prefer configured room IDs when present; direct lookup is only
                 // for email-only targets and can duplicate the same conversation.
                 do {

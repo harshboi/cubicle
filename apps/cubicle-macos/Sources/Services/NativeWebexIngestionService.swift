@@ -53,6 +53,18 @@ struct WebexMapRefreshOutcome: Hashable {
     }
 }
 
+/// Result for rebuilding native focus snapshots from stored connector evidence.
+struct WebexFocusSnapshotRefreshOutcome: Hashable {
+    var completedAt: String
+    var spaceTargets: Int
+    var personTargets: Int
+    var supplementalRoomTargets: Int
+
+    var summary: String {
+        "Focus snapshots refreshed: spaces=\(spaceTargets), people=\(personTargets), supplemental=\(supplementalRoomTargets)."
+    }
+}
+
 /// Progress event emitted while tracked conversations are syncing.
 struct WebexSyncProgress: Hashable {
     var completedRooms: Int
@@ -213,6 +225,28 @@ final class NativeWebexIngestionService {
             rooms: rooms.count,
             spaces: sortedEntries.filter { $0.kind == "space" }.count,
             senders: sortedEntries.filter { $0.kind == "sender" }.count
+        )
+    }
+
+    /// Rebuilds native live focus snapshots from already-stored connector rows.
+    func refreshFocusSnapshotsFromKnowledgeStore() throws -> WebexFocusSnapshotRefreshOutcome {
+        try knowledgeStore.bootstrap()
+        let completedAt = Self.iso8601String(from: Date())
+        let spaceTargets = try configStore.importantSpaces()
+        let personTargets = try configStore.importantPeople()
+        let beliefTargets = try configStore.beliefTargets()
+        try writeFocusSnapshots(
+            spaceTargets: spaceTargets,
+            personTargets: personTargets,
+            supplementalRoomTargets: beliefTargets,
+            roomTitlesByID: [:],
+            updatedAt: completedAt
+        )
+        return WebexFocusSnapshotRefreshOutcome(
+            completedAt: completedAt,
+            spaceTargets: spaceTargets.count,
+            personTargets: personTargets.count,
+            supplementalRoomTargets: beliefTargets.count
         )
     }
 

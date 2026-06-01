@@ -80,10 +80,13 @@ final class NativeRefreshCoordinator {
     let webexIngestionService: NativeWebexIngestionService
     let codexOrchestrationService: CodexPromptOrchestrationService
     let questionService: QuestionCandidateService
-    let signalConnectorProcessingService: SignalConnectorProcessingService
+    let signalConnectorProcessingService: SignalConnectorProcessing
 
     /// Wires runtime services for a single runtime root.
-    init(configuration: RuntimeConfiguration = .current) {
+    init(
+        configuration: RuntimeConfiguration = .current,
+        signalConnectorProcessingService: SignalConnectorProcessing? = nil
+    ) {
         self.configuration = configuration
         self.configStore = ConfigStore(configuration: configuration)
         let webexClient = WebexAPIClient(configuration: configuration)
@@ -108,7 +111,7 @@ final class NativeRefreshCoordinator {
             knowledgeStore: knowledgeStore,
             questionSynthesizer: codexOrchestrationService
         )
-        self.signalConnectorProcessingService = SignalConnectorProcessingService(
+        self.signalConnectorProcessingService = signalConnectorProcessingService ?? SignalConnectorProcessingService(
             factory: SignalConnectorFactory(
                 webexClient: webexClient,
                 webexProductClient: webexClient,
@@ -149,6 +152,26 @@ final class NativeRefreshCoordinator {
         return try await webexIngestionService.refreshMapFile()
     }
 
+    /// Loads the target categories that production signal sync should ingest.
+    private func signalSyncTargets() throws -> [ConfigTarget] {
+        stableDedupedTargets(
+            try configStore.importantSpaces()
+                + configStore.importantPeople()
+                + configStore.beliefTargets()
+        )
+    }
+
+    /// Preserves config order while avoiding duplicate connector fetches.
+    private func stableDedupedTargets(_ targets: [ConfigTarget]) -> [ConfigTarget] {
+        var seenIDs: Set<String> = []
+        var deduped: [ConfigTarget] = []
+        deduped.reserveCapacity(targets.count)
+        for target in targets where seenIDs.insert(target.id).inserted {
+            deduped.append(target)
+        }
+        return deduped
+    }
+
     /// Executes one refresh scope with the requested cache/network strategy.
     func refresh(
         _ scope: RefreshScope,
@@ -168,20 +191,30 @@ final class NativeRefreshCoordinator {
                 )
                 return RefreshExecutionResult(scope: scope, summary: summary, completedAt: completedAt(), reusedCache: nil)
             }
-            let syncMode: WebexSyncMode = mode == .full ? .full : .incremental
-            let trigger: WebexSyncTriggerReason = mode == .full ? .manual : .scheduled
-            let outcome = try await webexIngestionService.syncTrackedTargets(
-                mode: syncMode,
-                trigger: trigger
-            ) { update in
-                await progress?(
-                    RefreshExecutionProgress(
-                        scope: scope,
-                        message: update.summary
-                    )
+            let targets = try signalSyncTargets()
+            let syncMode: SignalSyncMode = mode == .full ? .full : .incremental
+            let preparingSummary = "Signal sync: preparing \(targets.count) target(s)."
+            await progress?(
+                RefreshExecutionProgress(
+                    scope: scope,
+                    message: preparingSummary
                 )
-            }
-            return RefreshExecutionResult(scope: scope, summary: outcome.summary, completedAt: outcome.completedAt, reusedCache: nil)
+            )
+            let outcome = try await signalConnectorProcessingService.sync(
+                configTargets: targets,
+                mode: syncMode,
+                limit: 150,
+                since: nil
+            )
+            let snapshotOutcome = try webexIngestionService.refreshFocusSnapshotsFromKnowledgeStore()
+            let summary = "\(outcome.summary) \(snapshotOutcome.summary)"
+            await progress?(
+                RefreshExecutionProgress(
+                    scope: scope,
+                    message: summary
+                )
+            )
+            return RefreshExecutionResult(scope: scope, summary: summary, completedAt: snapshotOutcome.completedAt, reusedCache: nil)
         case .beliefMaintenance:
             let outcome = try await runBeliefMaintenance()
             return RefreshExecutionResult(scope: scope, summary: outcome, completedAt: completedAt(), reusedCache: nil)
