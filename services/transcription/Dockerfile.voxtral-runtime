@@ -1,0 +1,90 @@
+# syntax=docker/dockerfile:1.7
+ARG VLLM_BASE_IMAGE=vllm/vllm-openai:v0.21.0-ubuntu2404
+FROM ${VLLM_BASE_IMAGE}
+
+ENV HF_HOME=/models/huggingface
+ENV TRANSFORMERS_CACHE=/models/huggingface
+ENV HF_HUB_ENABLE_HF_TRANSFER=1
+ENV VLLM_DISABLE_COMPILE_CACHE=1
+ENV HOME=/tmp
+ENV XDG_CACHE_HOME=/tmp/.cache
+ENV VLLM_CACHE_ROOT=/tmp/vllm
+ENV TMPDIR=/tmp
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+ARG VOXTRAL_MODEL_ID=mistralai/Voxtral-Mini-4B-Realtime-2602
+ENV VOXTRAL_MODEL_ID=${VOXTRAL_MODEL_ID}
+ENV VOXTRAL_HOST=0.0.0.0
+ENV VOXTRAL_PORT=8000
+ENV VOXTRAL_MAX_MODEL_LEN=45000
+ENV VOXTRAL_MAX_NUM_BATCHED_TOKENS=4096
+ENV VOXTRAL_TOKENIZER_MODE=mistral
+ENV VOXTRAL_GPU_MEMORY_UTILIZATION=0.90
+ENV VOXTRAL_ENFORCE_EAGER=false
+ENV VOXTRAL_COMPILATION_CONFIG='{"cudagraph_mode":"PIECEWISE"}'
+
+WORKDIR /runtime
+COPY scripts/voxtral-runtime-entrypoint.sh /runtime/voxtral-runtime-entrypoint.sh
+RUN chmod +x /runtime/voxtral-runtime-entrypoint.sh && mkdir -p /models/huggingface
+RUN if command -v apt-get >/dev/null 2>&1; then \
+      apt-get update && \
+      apt-get install -y --no-install-recommends ca-certificates && \
+      update-ca-certificates && \
+      rm -rf /var/lib/apt/lists/*; \
+    fi
+RUN python3 -m pip install --no-cache-dir "mistral-common[soundfile]" soundfile
+
+ARG PRELOAD_VOXTRAL_MODEL=false
+ARG HARDEN_RUNTIME_IMAGE=true
+RUN --mount=type=secret,id=hf_token,required=false \
+    --mount=type=secret,id=extra_ca,required=false \
+    if [ "$PRELOAD_VOXTRAL_MODEL" = "true" ]; then \
+      if [ -f /run/secrets/hf_token ]; then export HF_TOKEN="$(cat /run/secrets/hf_token)"; fi; \
+      build_ca_bundle=""; \
+      if [ -f /run/secrets/extra_ca ]; then \
+        build_ca_bundle="/tmp/cubicle-build-ca.pem"; \
+        cat /etc/ssl/certs/ca-certificates.crt /run/secrets/extra_ca > "$build_ca_bundle"; \
+        export SSL_CERT_FILE="$build_ca_bundle"; \
+        export REQUESTS_CA_BUNDLE="$build_ca_bundle"; \
+        export CURL_CA_BUNDLE="$build_ca_bundle"; \
+      fi; \
+      model_dir="/models/voxtral/${VOXTRAL_MODEL_ID##*/}"; \
+      mkdir -p "$model_dir"; \
+      hf download "$VOXTRAL_MODEL_ID" --local-dir "$model_dir" --cache-dir "$HF_HOME" >/tmp/voxtral-download.log; \
+      if [ "$(find "$model_dir" -type f | wc -l)" -eq 0 ]; then \
+        echo "Voxtral model download produced no files in $model_dir" >&2; \
+        exit 1; \
+      fi; \
+      rm -f /tmp/voxtral-download.log "$build_ca_bundle"; \
+    fi
+RUN if [ "$HARDEN_RUNTIME_IMAGE" = "true" ] && command -v apt-get >/dev/null 2>&1; then \
+      apt-get update && \
+      DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends && \
+      DEBIAN_FRONTEND=noninteractive apt-get purge -y \
+        ffmpeg \
+        gpg \
+        gnupg \
+        gnupg2 \
+        libavcodec58 \
+        libavdevice58 \
+        libavfilter7 \
+        libavformat58 \
+        libavutil56 \
+        libpostproc55 \
+        libswresample3 \
+        libswscale5 \
+        libzvbi-common \
+        libzvbi0 \
+        zvbi || true; \
+      apt-get clean && \
+      rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*; \
+    fi
+RUN if ! getent group 10001 >/dev/null; then groupadd --system --gid 10001 voxtral; fi && \
+    if ! id -u 10001 >/dev/null 2>&1; then useradd --system --uid 10001 --gid 10001 --home-dir /nonexistent --shell /usr/sbin/nologin voxtral; fi && \
+    chown 10001:10001 /runtime /runtime/voxtral-runtime-entrypoint.sh
+
+EXPOSE 8000
+
+USER 10001:10001
+ENTRYPOINT ["/runtime/voxtral-runtime-entrypoint.sh"]

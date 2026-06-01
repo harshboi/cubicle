@@ -1,0 +1,83 @@
+# syntax=docker/dockerfile:1.7
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV HOME=/tmp
+ENV XDG_CACHE_HOME=/tmp/app-cache
+ENV MPLCONFIGDIR=/tmp/app-cache/matplotlib
+ENV TMPDIR=/tmp
+ENV TRANSCRIPTION_SERVICE_HOST=0.0.0.0
+ENV TRANSCRIPTION_SERVICE_PORT=8080
+ENV TRANSCRIPTION_SERVICE_ROLE=diarization_worker
+ENV TRANSCRIPTION_WORKER_DIARIZATION_PROVIDER=pyannote
+ENV PYANNOTE_METRICS_ENABLED=0
+ENV HF_HOME=/models/huggingface
+ENV TRANSFORMERS_CACHE=/models/huggingface
+ENV HF_HUB_ENABLE_HF_TRANSFER=0
+ENV HF_HUB_DISABLE_XET=1
+
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      ca-certificates \
+      ffmpeg \
+      libsndfile1 && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /app/requirements.txt
+COPY requirements-diarization.txt /app/requirements-diarization.txt
+
+ARG TORCH_VERSION=2.11.0
+ARG TORCHAUDIO_VERSION=2.11.0
+ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir \
+      --index-url "$TORCH_INDEX_URL" \
+      "torch==${TORCH_VERSION}" \
+      "torchaudio==${TORCHAUDIO_VERSION}"
+
+RUN pip install --no-cache-dir \
+      -r /app/requirements.txt \
+      -r /app/requirements-diarization.txt
+
+RUN mkdir -p /models/huggingface /tmp/app-cache/matplotlib
+
+ARG PRELOAD_PYANNOTE_MODEL=false
+ARG PYANNOTE_MODEL_ID=pyannote/speaker-diarization-community-1
+RUN --mount=type=secret,id=hf_token,required=false \
+    --mount=type=secret,id=extra_ca,required=false \
+    set -e; \
+    if [ "$PRELOAD_PYANNOTE_MODEL" = "true" ]; then \
+      if [ -f /run/secrets/hf_token ]; then export HF_TOKEN="$(cat /run/secrets/hf_token)"; fi; \
+      build_ca_bundle=""; \
+      if [ -f /run/secrets/extra_ca ]; then \
+        build_ca_bundle="/tmp/cubicle-build-ca.pem"; \
+        cat /etc/ssl/certs/ca-certificates.crt /run/secrets/extra_ca > "$build_ca_bundle"; \
+        export SSL_CERT_FILE="$build_ca_bundle"; \
+        export REQUESTS_CA_BUNDLE="$build_ca_bundle"; \
+        export CURL_CA_BUNDLE="$build_ca_bundle"; \
+      fi; \
+      hf_cache_dir="$HF_HOME/hub"; \
+      mkdir -p "$hf_cache_dir"; \
+      huggingface-cli download "$PYANNOTE_MODEL_ID" --cache-dir "$hf_cache_dir" >/tmp/pyannote-download.log; \
+      if [ "$(find "$hf_cache_dir" -type f | wc -l)" -eq 0 ]; then \
+        echo "Pyannote model download produced no files in $hf_cache_dir" >&2; \
+        exit 1; \
+      fi; \
+      rm -f /tmp/pyannote-download.log "$build_ca_bundle"; \
+    fi
+
+COPY transcription_service /app/transcription_service
+RUN groupadd --system app && \
+    useradd --system --gid app --home-dir /nonexistent --shell /usr/sbin/nologin app && \
+    chown -R app:app /app /models /tmp/app-cache
+
+EXPOSE 8080
+
+USER app
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD python -c "import json, urllib.request; data=json.load(urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=2)); raise SystemExit(0 if data.get('status') == 'ok' else 1)"
+
+CMD ["python", "-m", "transcription_service.main"]

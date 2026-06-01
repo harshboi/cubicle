@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VoiceNotes</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body class="login-body">
+    <main class="login-shell">
+      <section class="login-panel">
+        <div class="brand-mark">VN</div>
+        <h1>VoiceNotes</h1>
+        <form id="login-form" class="login-form">
+          <label>
+            <span>Email</span>
+            <input id="email" name="email" type="email" autocomplete="username" required autofocus>
+          </label>
+          <label>
+            <span>Password</span>
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+          </label>
+          <button type="submit">Sign in</button>
+          <p id="login-error" class="form-error" hidden></p>
+        </form>
+      </section>
+    </main>
+    <script src="/static/login.js"></script>
+  </body>
+</html>
+

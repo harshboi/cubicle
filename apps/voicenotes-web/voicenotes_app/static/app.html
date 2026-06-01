@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VoiceNotes</title>
+    <link rel="stylesheet" href="/static/styles.css?v=202605242024">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="logo-row">
+          <div class="brand-mark small">VN</div>
+          <strong>VoiceNotes</strong>
+        </div>
+        <div class="profile-card">
+          <div id="profile-initial" class="avatar">V</div>
+          <div>
+            <strong id="profile-name">VoiceNotes</strong>
+            <span id="profile-email"></span>
+          </div>
+        </div>
+        <nav class="side-nav">
+          <a href="/" data-route="home" class="active">Home</a>
+          <a href="/record" data-route="record">Record</a>
+          <a href="/settings" data-route="settings">Settings</a>
+        </nav>
+        <div class="sidebar-footer">
+          <div class="quota-card">
+            <span>Monthly minutes</span>
+            <strong id="quota-label">0 used</strong>
+            <div class="quota-track"><div id="quota-bar"></div></div>
+          </div>
+          <button id="logout-button" class="secondary-button">Sign out</button>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="search-box">
+            <span>Search</span>
+            <input id="search-input" type="search" autocomplete="off" placeholder="">
+          </div>
+          <button id="record-top-button" class="primary-button">Record</button>
+        </header>
+
+        <section id="home-view" class="view active-view">
+          <div class="section-heading">
+            <div>
+              <h1>Recordings</h1>
+              <p id="recordings-count">No recordings yet</p>
+            </div>
+          </div>
+          <div id="bulk-actions" class="bulk-actions" hidden>
+            <label class="bulk-select">
+              <input id="select-all-notes" type="checkbox">
+              <span>Select all</span>
+            </label>
+            <span id="selection-count">0 selected</span>
+            <button id="bulk-delete-button" class="danger-button" disabled>Delete selected</button>
+          </div>
+          <div id="notes-list" class="notes-list"></div>
+          <div id="empty-notes" class="empty-state">
+            <div class="empty-icon">[]</div>
+            <h2>No voice notes yet</h2>
+          </div>
+        </section>
+
+        <section id="record-view" class="view">
+          <div class="record-layout">
+            <aside class="status-column">
+              <section class="status-card live-card">
+                <div class="pulse-icon" id="live-icon"></div>
+                <div>
+                  <strong id="live-title">Ready</strong>
+                  <p id="live-subtitle">Microphone idle</p>
+                </div>
+                <span id="live-badge" class="status-badge">idle</span>
+              </section>
+              <section class="status-card session-card">
+                <dl>
+                  <div>
+                    <dt>Session</dt>
+                    <dd id="session-id">not started</dd>
+                  </div>
+                  <div>
+                    <dt>Source</dt>
+                    <dd id="input-source-label">Microphone</dd>
+                  </div>
+                  <div>
+                    <dt>Language</dt>
+                    <dd>Auto</dd>
+                  </div>
+                  <div>
+                    <dt>Diarization</dt>
+                    <dd id="diarization-label">disabled</dd>
+                  </div>
+                  <div>
+                    <dt>Input level</dt>
+                    <dd><span id="mic-level">0%</span></dd>
+                  </div>
+                </dl>
+              </section>
+              <div class="source-segmented" aria-label="Recording source">
+                <button type="button" class="active" data-capture-source="microphone">Mic</button>
+                <button type="button" data-capture-source="tab">Tab audio</button>
+              </div>
+              <div class="record-controls">
+                <button id="start-button" class="primary-button">Start</button>
+                <button id="stop-button" class="secondary-button" disabled>Stop</button>
+              </div>
+              <div id="saved-note-actions" class="saved-note-actions" hidden>
+                <button id="open-saved-note-button" class="primary-button">Open transcript</button>
+                <button id="new-recording-button" class="secondary-button">New recording</button>
+              </div>
+            </aside>
+
+            <section class="transcript-panel">
+              <div class="transcript-header">
+                <div>
+                  <h1>Live Transcript</h1>
+                  <p>Auto to English</p>
+                </div>
+                <div class="toggle-row">
+                  <label class="toggle-label">
+                    <input id="diarization-toggle" type="checkbox" disabled>
+                    <span>Diarization</span>
+                  </label>
+                </div>
+              </div>
+              <div id="transcript-output" class="transcript-output">
+                <div class="empty-transcript">
+                  <div class="empty-icon">=</div>
+                  <h2>No transcript yet</h2>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="note-view" class="view">
+          <div class="note-detail-header">
+            <input id="note-title-input" class="title-input" type="text" maxlength="140">
+	            <div class="note-actions">
+	              <button id="toggle-original-button" class="secondary-button" hidden>Show original</button>
+	              <button id="copy-note-button" class="secondary-button">Copy</button>
+	              <button id="download-note-button" class="secondary-button">Download</button>
+	              <button id="delete-note-button" class="danger-button">Delete</button>
+	            </div>
+	          </div>
+	          <article id="note-transcript" class="note-transcript"></article>
+	          <section id="note-intelligence" class="note-intelligence" hidden>
+	            <div id="summary-panel" class="intelligence-panel" hidden>
+	              <h2>Summary</h2>
+	              <p id="summary-text"></p>
+	            </div>
+	            <div id="action-items-panel" class="intelligence-panel" hidden>
+	              <h2>Action items</h2>
+	              <ul id="action-items-list"></ul>
+	            </div>
+	            <div id="decisions-panel" class="intelligence-panel" hidden>
+	              <h2>Decisions</h2>
+	              <ul id="decisions-list"></ul>
+	            </div>
+	            <div id="open-questions-panel" class="intelligence-panel" hidden>
+	              <h2>Open questions</h2>
+	              <ul id="open-questions-list"></ul>
+	            </div>
+	          </section>
+	        </section>
+
+        <section id="settings-view" class="view">
+          <div class="section-heading">
+            <div>
+              <h1>Settings</h1>
+              <p>VoiceNotes account</p>
+            </div>
+          </div>
+          <div class="settings-card">
+            <dl>
+              <div><dt>Email</dt><dd id="settings-email"></dd></div>
+              <div><dt>Audio retention</dt><dd>disabled</dd></div>
+              <div><dt>Transcript storage</dt><dd>private</dd></div>
+            </dl>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="/static/app.js?v=202605251830"></script>
+  </body>
+</html>
