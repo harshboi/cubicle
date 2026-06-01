@@ -242,6 +242,77 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertEqual(connectors.map(\.descriptor.displayName), ["Webex", "iMessage"])
     }
 
+    func testSignalConnectorProcessingServiceBuildsConnectorsAndWritesRoutedBatches() async throws {
+        let since = Date(timeIntervalSince1970: 1_715_000_000)
+        let webexClient = StubFactoryWebexClient()
+        webexClient.recentMessagesByRoomID["room-1"] = [
+            makeWebexSignalMessage(
+                id: "webex-message-1",
+                roomID: "room-1",
+                personID: "person-1",
+                personEmail: "alex@example.com",
+                text: "The rollout is blocked on approval.",
+                createdAt: since.addingTimeInterval(60)
+            )
+        ]
+        let iMessageService = StubIMessageSignalIngestionService(messages: [
+            IMessageTimelineMessage(
+                id: "imessage-row-1",
+                threadID: "chat-1",
+                threadTitle: "Alex Chen",
+                handle: "+14085550100",
+                sender: "Alex Chen",
+                body: "Can you review the Jira plan?",
+                createdAt: testISO8601.string(from: since.addingTimeInterval(120)),
+                sortDate: since.addingTimeInterval(120),
+                isFromMe: false
+            )
+        ])
+        let factory = SignalConnectorFactory(
+            webexClient: webexClient,
+            iMessageIngestionService: iMessageService,
+            webexAccountID: "workspace",
+            iMessageAccountID: "local"
+        )
+        let writer = RecordingSignalKnowledgeWriter()
+        let service = SignalConnectorProcessingService(
+            factory: factory,
+            writer: writer,
+            connectorIDs: [.webex, .iMessage],
+            now: { since }
+        )
+        let spaceTarget = ConfigTarget(
+            kind: .space,
+            label: "Launch Room",
+            roomID: "room-1",
+            roomType: "group",
+            email: "",
+            iMessageHandles: []
+        )
+        let personTarget = ConfigTarget(
+            kind: .person,
+            label: "Alex Chen",
+            roomID: "",
+            roomType: "direct",
+            email: "alex@example.com",
+            iMessageHandles: ["(408) 555-0100"]
+        )
+
+        let result = try await service.sync(
+            configTargets: [spaceTarget, personTarget],
+            mode: .incremental,
+            limit: 10,
+            since: since
+        )
+
+        XCTAssertEqual(result.targetCount, 2)
+        XCTAssertEqual(result.pipelineResult.batches.map(\.connectorID), [.webex, .iMessage])
+        XCTAssertEqual(writer.writtenConnectorIDs, [.webex, .iMessage])
+        XCTAssertEqual(webexClient.recentFetches.map(\.0), ["room-1"])
+        XCTAssertEqual(iMessageService.receivedHandles, ["+14085550100"])
+        XCTAssertEqual(result.summary, "Signal sync: targets=2, batches=2, failures=0.")
+    }
+
     func testWebexProductServiceListsRoomsAndMembershipsWithoutAppModelCasting() async throws {
         let webexClient = StubFactoryWebexClient()
         webexClient.rooms = [
@@ -421,6 +492,8 @@ private final class StubSignalWebexClient: WebexClienting {
 private final class StubFactoryWebexClient: WebexClienting, WebexProductClienting {
     var rooms: [WebexRoom] = []
     var membershipsByRoomID: [String: [WebexMembership]] = [:]
+    var recentMessagesByRoomID: [String: [WebexMessage]] = [:]
+    private(set) var recentFetches: [(String, Int)] = []
 
     func rooms() async throws -> [WebexRoom] {
         rooms
@@ -431,11 +504,12 @@ private final class StubFactoryWebexClient: WebexClienting, WebexProductClientin
     }
 
     func fetchLatestMessage(roomID: String) async throws -> WebexMessage? {
-        nil
+        recentMessagesByRoomID[roomID]?.first
     }
 
     func fetchRecentMessages(roomID: String, max: Int) async throws -> [WebexMessage] {
-        []
+        recentFetches.append((roomID, max))
+        return recentMessagesByRoomID[roomID] ?? []
     }
 
     func fetchMessage(messageID: String) async throws -> WebexMessage {
