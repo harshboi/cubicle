@@ -224,6 +224,8 @@ final class KnowledgeStore: KnowledgeDAO {
                 "generated_at = excluded.generated_at",
                 "updated_at = excluded.updated_at"
             ]
+            // Older topic tables had UI/cache columns that are not part of the
+            // current record shape; preserve them when the local DB still has them.
             if columns.contains("label") {
                 insertColumns.append("label")
                 updateAssignments.append("label = excluded.label")
@@ -2141,6 +2143,8 @@ final class KnowledgeStore: KnowledgeDAO {
 
         try execute(sql: "BEGIN IMMEDIATE TRANSACTION;", db: db)
         do {
+            // Pre-DAO databases may have room rows but miss columns the current
+            // focus/cache queries require; patch in place instead of rebuilding.
             let requiredColumns: [(name: String, definition: String)] = [
                 ("title", "title TEXT NOT NULL DEFAULT ''"),
                 ("updated_at", "updated_at TEXT NOT NULL DEFAULT ''")

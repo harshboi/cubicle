@@ -48,6 +48,8 @@ struct KnowledgeDatabase {
 
     private func openDatabase() throws -> OpaquePointer {
         var db: OpaquePointer?
+        // App refreshes and tests open short-lived connections from different
+        // tasks; FULLMUTEX keeps SQLite serialization inside the handle.
         let flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX
         if sqlite3_open_v2(databaseURL.path, &db, flags, nil) != SQLITE_OK {
             let message = db.flatMap { String(cString: sqlite3_errmsg($0)) } ?? "unknown SQLite error"
@@ -64,6 +66,8 @@ struct KnowledgeDatabase {
     }
 
     private func applyConnectionPragmas(_ db: OpaquePointer) throws {
+        // Both pragmas are connection-scoped; every short-lived DAO connection
+        // must opt back into the same FK/WAL guarantees.
         try execute(sql: "PRAGMA foreign_keys = ON;", db: db)
         try execute(sql: "PRAGMA journal_mode = WAL;", db: db)
     }
