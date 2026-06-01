@@ -413,8 +413,8 @@ class AdminConsoleTests(unittest.TestCase):
 
         unauthenticated_login = client.get("/admin/login", follow_redirects=False)
         no_identity_admin = client.get("/admin", follow_redirects=False)
-        login = client.get("/admin/login", headers=headers, follow_redirects=False)
         redirected = client.get("/admin", headers=headers, follow_redirects=False)
+        login = client.get("/admin/login", headers=headers, follow_redirects=False)
         loaded = client.get("/admin", headers=headers)
 
         self.assertEqual(unauthenticated_login.status_code, 303)

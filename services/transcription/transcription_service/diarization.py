@@ -1,3 +1,5 @@
+"""Speaker diarization provider abstractions and local/remote adapters."""
+
 from __future__ import annotations
 
 import base64
@@ -17,22 +19,34 @@ from .protocol import StartSessionConfig
 
 
 class DiarizationProviderError(RuntimeError):
+    """Diarization runtime is unsupported, missing dependencies, or failed."""
+
     pass
 
 
 class DiarizationProvider(Protocol):
+    """Provider boundary for turning audio into speaker-time spans."""
+
     def warmup(self) -> None:
+        """Load heavy model/runtime dependencies before audio arrives."""
+
         ...
 
     def diarize(self, config: StartSessionConfig, pcm_s16le: bytes) -> list["SpeakerTurn"]:
+        """Return speaker turns for a completed PCM buffer."""
+
         ...
 
     def runtime_status(self) -> dict[str, Any]:
+        """Return readiness metadata without exposing secrets."""
+
         ...
 
 
 @dataclass(frozen=True)
 class SpeakerTurn:
+    """Speaker-labeled time span emitted by a diarization provider."""
+
     speaker_id: str
     start_time_ms: int
     end_time_ms: int
@@ -41,6 +55,8 @@ class SpeakerTurn:
 
 @dataclass(frozen=True)
 class DiarizationProviderSettings:
+    """Environment-backed diarization provider configuration."""
+
     provider: str = "mock"
     model_name: str = "pyannote/speaker-diarization-community-1"
     model_version: str = "pyannote-audio-4.x"
@@ -54,6 +70,8 @@ class DiarizationProviderSettings:
 
     @classmethod
     def from_environment(cls) -> "DiarizationProviderSettings":
+        """Load diarization settings from process environment variables."""
+
         return cls(
             provider=os.environ.get("TRANSCRIPTION_DIARIZATION_PROVIDER", "mock").strip().lower(),
             model_name=os.environ.get(
@@ -75,10 +93,14 @@ class DiarizationProviderSettings:
 
 @dataclass
 class DiarizationProviderFactory:
+    """Creates the configured speaker-diarization backend."""
+
     settings: DiarizationProviderSettings = field(default_factory=DiarizationProviderSettings.from_environment)
     pipeline_cache: "PyannotePipelineCache" = field(default_factory=lambda: default_pipeline_cache)
 
     def create_provider(self) -> DiarizationProvider:
+        """Instantiate the provider selected by settings."""
+
         if self.settings.provider == "mock":
             return MockDiarizationProvider()
         if self.settings.provider == "pyannote":
@@ -90,6 +112,8 @@ class DiarizationProviderFactory:
         raise DiarizationProviderError(f"unsupported diarization provider: {self.settings.provider}")
 
     def runtime_status(self) -> dict[str, Any]:
+        """Return status without failing the wider service startup."""
+
         try:
             return self.create_provider().runtime_status()
         except DiarizationProviderError as exc:
@@ -102,12 +126,18 @@ class DiarizationProviderFactory:
 
 @dataclass
 class DisabledDiarizationProvider:
+    """No-op provider for deployments that only need transcription."""
+
     provider_name: str = "disabled"
 
     def warmup(self) -> None:
+        """Disabled provider has nothing to initialize."""
+
         return None
 
     def runtime_status(self) -> dict[str, Any]:
+        """Report disabled diarization as an intentional ready state."""
+
         return {
             "provider": self.provider_name,
             "model_name": None,
@@ -121,19 +151,27 @@ class DisabledDiarizationProvider:
         }
 
     def diarize(self, _config: StartSessionConfig, _pcm_s16le: bytes) -> list[SpeakerTurn]:
+        """Return no speaker turns by design."""
+
         return []
 
 
 @dataclass
 class MockDiarizationProvider:
+    """Deterministic no-op provider for development and tests."""
+
     model_name: str = "mock-diarization"
     model_version: str = "slice-5"
     _warmed: bool = False
 
     def warmup(self) -> None:
+        """Mark the mock as initialized for runtime status checks."""
+
         self._warmed = True
 
     def runtime_status(self) -> dict[str, Any]:
+        """Return stable mock readiness metadata."""
+
         return {
             "provider": "mock",
             "model_name": self.model_name,
@@ -147,15 +185,21 @@ class MockDiarizationProvider:
         }
 
     def diarize(self, config: StartSessionConfig, pcm_s16le: bytes) -> list[SpeakerTurn]:
+        """Return no turns; tests can inject richer providers."""
+
         return []
 
 
 class PyannotePipelineCache:
+    """Thread-safe cache for expensive pyannote pipeline instances."""
+
     def __init__(self) -> None:
         self._pipelines: dict[tuple[str, str, str | None], Any] = {}
         self._lock = threading.Lock()
 
     def load_pipeline(self, settings: DiarizationProviderSettings) -> Any:
+        """Load or reuse a pyannote pipeline keyed by model/device/token."""
+
         cache_key = (settings.model_name, settings.device, _token_cache_key(settings.auth_token))
         with self._lock:
             cached = self._pipelines.get(cache_key)
@@ -193,6 +237,8 @@ class PyannotePipelineCache:
             return pipeline
 
     def is_loaded(self, settings: DiarizationProviderSettings) -> bool:
+        """Check cache membership without blocking active loads."""
+
         cache_key = (settings.model_name, settings.device, _token_cache_key(settings.auth_token))
         if not self._lock.acquire(blocking=False):
             return False
@@ -207,12 +253,18 @@ default_pipeline_cache = PyannotePipelineCache()
 
 @dataclass
 class RemoteHTTPDiarizationProvider:
+    """HTTP worker adapter for moving diarization off the API process."""
+
     settings: DiarizationProviderSettings = field(default_factory=DiarizationProviderSettings.from_environment)
 
     def warmup(self) -> None:
+        """Validate worker endpoint configuration before use."""
+
         self._validate_runtime()
 
     def runtime_status(self) -> dict[str, Any]:
+        """Report worker configuration and readiness."""
+
         endpoint_configured = bool(self.settings.worker_url and self.settings.worker_url.strip())
         return {
             "provider": self.settings.provider,
@@ -228,6 +280,8 @@ class RemoteHTTPDiarizationProvider:
         }
 
     def diarize(self, config: StartSessionConfig, pcm_s16le: bytes) -> list[SpeakerTurn]:
+        """Send one PCM buffer to the remote worker and parse turns."""
+
         if not config.diarization_enabled or not pcm_s16le:
             return []
         self._validate_runtime()
@@ -271,17 +325,23 @@ class RemoteHTTPDiarizationProvider:
 
 @dataclass
 class PyannoteDiarizationProvider:
+    """In-process pyannote adapter with lazy pipeline loading."""
+
     settings: DiarizationProviderSettings = field(default_factory=DiarizationProviderSettings.from_environment)
     pipeline_cache: PyannotePipelineCache = field(default_factory=lambda: default_pipeline_cache)
     _pipeline: Any | None = None
     _warmed: bool = False
 
     def warmup(self) -> None:
+        """Validate dependencies and load the pyannote pipeline."""
+
         self._validate_runtime()
         self._pipeline = self.pipeline_cache.load_pipeline(self.settings)
         self._warmed = True
 
     def runtime_status(self) -> dict[str, Any]:
+        """Expose dependency, auth, and cache readiness for operators."""
+
         dependencies_available = _optional_dependency_available("pyannote.audio")
         token_required = _requires_auth_token(self.settings.model_name)
         token_configured = bool(self.settings.auth_token and self.settings.auth_token.strip())
@@ -302,6 +362,8 @@ class PyannoteDiarizationProvider:
         }
 
     def diarize(self, config: StartSessionConfig, pcm_s16le: bytes) -> list[SpeakerTurn]:
+        """Write PCM to a temporary WAV and run pyannote over it."""
+
         if not config.diarization_enabled or not pcm_s16le:
             return []
         if self._pipeline is None:

@@ -3,6 +3,7 @@ import SQLite3
 
 private let sqliteTransientDestructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
+/// SQLite and validation failures surfaced by the knowledge store boundary.
 enum KnowledgeStoreError: LocalizedError {
     case sqliteOpenFailed(path: String, message: String)
     case sqliteExecFailed(sql: String, message: String)
@@ -38,6 +39,7 @@ enum KnowledgeStoreError: LocalizedError {
     }
 }
 
+/// Filesystem status for the SQLite database and WAL sidecars.
 struct KnowledgeDatabaseStatus: Equatable {
     var databaseExists: Bool
     var walExists: Bool
@@ -45,12 +47,14 @@ struct KnowledgeDatabaseStatus: Equatable {
     var path: String
 }
 
+/// Belief query filter for separating generated beliefs from operator-entered ones.
 private enum BeliefManualFilter {
     case all
     case manualOnly
     case automaticOnly
 }
 
+/// SQLite binding cases used to keep statement helpers type-safe.
 private enum SQLiteBindValue {
     case text(String)
     case optionalText(String?)
@@ -58,6 +62,7 @@ private enum SQLiteBindValue {
     case double(Double)
 }
 
+/// SQLite-backed store for focus, belief, question, Webex, and evidence records.
 final class KnowledgeStore {
     let configuration: RuntimeConfiguration
     private let fileManager = FileManager.default
@@ -69,20 +74,24 @@ final class KnowledgeStore {
         return formatter
     }()
 
+    /// Creates a store bound to the active runtime root.
     init(configuration: RuntimeConfiguration = .current) {
         self.configuration = configuration
         self.jsonEncoder.dateEncodingStrategy = .iso8601
         self.jsonDecoder.dateDecodingStrategy = .iso8601
     }
 
+    /// Directory containing the local knowledge database.
     var knowledgeDirectory: URL {
         configuration.runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
     }
 
+    /// SQLite database URL used by this store.
     var databaseURL: URL {
         knowledgeDirectory.appendingPathComponent("knowledge.db")
     }
 
+    /// Reports database/WAL sidecar presence for settings and diagnostics.
     func status() -> KnowledgeDatabaseStatus {
         KnowledgeDatabaseStatus(
             databaseExists: fileManager.fileExists(atPath: databaseURL.path),
@@ -92,10 +101,12 @@ final class KnowledgeStore {
         )
     }
 
+    /// Forces schema setup without reading or writing domain records.
     func bootstrap() throws {
         _ = try withDatabase { _ in true }
     }
 
+    /// Persists a generated focus cluster keyed by scope/entity/topic.
     func upsertFocusCluster(_ cluster: FocusClusterRecord) throws {
         try withDatabase { db in
             let sql = """
@@ -141,6 +152,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Loads generated clusters for one focus scope and entity.
     func loadFocusClusters(focusKind: String, scope: String, entityKey: String) throws -> [FocusClusterRecord] {
         try withDatabase { db in
             let sql = """
@@ -187,6 +199,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Persists a generated topic while preserving legacy-compatible columns.
     func upsertTopic(_ topic: TopicRecord) throws {
         try withDatabase { db in
             let topicID = normalizedID(topic.id)
@@ -273,6 +286,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Loads the highest-scoring topics for one focus scope and entity.
     func loadTopics(focusKind: String, scope: String, entityKey: String, limit: Int = 5) throws -> [TopicRecord] {
         try withDatabase { db in
             let sql = """
@@ -323,6 +337,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Loads manual and automatic beliefs for a typed scope.
     func loadBeliefs(scope: KnowledgeBeliefScope, entityKey: String = "") throws -> [BeliefRecord] {
         try loadBeliefs(
             scope: scope.rawValue,
@@ -335,6 +350,7 @@ final class KnowledgeStore {
         try loadBeliefs(scope: scope, entityKey: entityKey, manualFilter: .all)
     }
 
+    /// Loads user-authored beliefs for a typed scope.
     func loadManualBeliefs(scope: KnowledgeBeliefScope, entityKey: String = "") throws -> [BeliefRecord] {
         try loadBeliefs(
             scope: scope.rawValue,
@@ -347,6 +363,7 @@ final class KnowledgeStore {
         try loadBeliefs(scope: scope, entityKey: entityKey, manualFilter: .manualOnly)
     }
 
+    /// Loads Codex-maintained beliefs for a typed scope.
     func loadAutomaticBeliefs(scope: KnowledgeBeliefScope, entityKey: String = "") throws -> [BeliefRecord] {
         try loadBeliefs(
             scope: scope.rawValue,
@@ -406,18 +423,21 @@ final class KnowledgeStore {
         }
     }
 
+    /// Persists a belief as manual regardless of incoming metadata.
     func upsertManualBelief(_ belief: BeliefRecord) throws {
         var manualBelief = belief
         manualBelief.isManual = true
         try upsertBelief(manualBelief)
     }
 
+    /// Persists one belief using scope/entity/statement as the uniqueness surface.
     func upsertBelief(_ belief: BeliefRecord) throws {
         try withDatabase { db in
             try upsertBeliefRecord(belief, db: db)
         }
     }
 
+    /// Persists multiple beliefs in one SQLite transaction.
     func upsertBeliefs(_ beliefs: [BeliefRecord]) throws {
         guard beliefs.isEmpty == false else {
             return
@@ -437,6 +457,7 @@ final class KnowledgeStore {
     }
 
     @discardableResult
+    /// Updates a manual belief by ID after normalizing typed scope keys.
     func updateManualBelief(
         id: String,
         scope: KnowledgeBeliefScope,
@@ -510,6 +531,7 @@ final class KnowledgeStore {
     }
 
     @discardableResult
+    /// Deletes a manual belief by stable ID.
     func deleteManualBelief(id: String) throws -> Bool {
         let normalizedBeliefID = id.trimmingCharacters(in: .whitespacesAndNewlines)
         guard normalizedBeliefID.isEmpty == false else {
@@ -526,6 +548,7 @@ final class KnowledgeStore {
     }
 
     @discardableResult
+    /// Deletes a manual belief by typed scope and statement.
     func deleteManualBelief(scope: KnowledgeBeliefScope, entityKey: String = "", statement: String) throws -> Bool {
         try deleteManualBelief(
             scope: scope.rawValue,
@@ -551,6 +574,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Loads one belief by stable ID.
     func loadBelief(id: String) throws -> BeliefRecord? {
         let normalizedBeliefID = id.trimmingCharacters(in: .whitespacesAndNewlines)
         guard normalizedBeliefID.isEmpty == false else {
@@ -587,6 +611,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Loads one belief only when it is manual.
     func loadManualBelief(id: String) throws -> BeliefRecord? {
         guard let belief = try loadBelief(id: id) else {
             return nil
@@ -594,6 +619,7 @@ final class KnowledgeStore {
         return belief.isManual ? belief : nil
     }
 
+    /// Loads the evidence hash/run watermark for one typed belief target.
     func loadBeliefReconciliationState(
         scope: KnowledgeBeliefScope,
         entityKey: String = ""
@@ -633,6 +659,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Persists the belief reconciliation watermark for incremental runs.
     func upsertBeliefReconciliationState(_ state: BeliefReconciliationStateRecord) throws {
         let beliefScope = try normalizedBeliefScope(state.scope)
         let scopedEntityKey = scopedBeliefEntityKey(scope: beliefScope, entityKey: state.entityKey)
@@ -666,6 +693,7 @@ final class KnowledgeStore {
     }
 
     @discardableResult
+    /// Deletes reconciliation state for one typed belief target.
     func deleteBeliefReconciliationState(
         scope: KnowledgeBeliefScope,
         entityKey: String = ""
@@ -694,6 +722,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Persists active question candidates in one SQLite transaction.
     func upsertQuestionCandidates(_ candidates: [QuestionCandidate]) throws {
         guard !candidates.isEmpty else {
             return
@@ -712,6 +741,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Deletes non-terminal candidates for one source kind.
     func deleteActiveQuestionCandidates(sourceKind: String) throws {
         let normalizedSourceKind = sourceKind.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedSourceKind.isEmpty else {
@@ -730,6 +760,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Deletes all non-terminal candidates before a full regeneration.
     func deleteActiveQuestionCandidates() throws {
         try withDatabase { db in
             let sql = """
@@ -740,6 +771,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Lists candidates for the global Questions view.
     func listQuestionCandidates(limit: Int = 100, status: QuestionStatus? = nil) throws -> [QuestionCandidate] {
         try withDatabase { db in
             let hasStatusFilter = status != nil
@@ -811,6 +843,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Lists candidates attached to a focus item.
     func listQuestionCandidates(
         scopeType: QuestionScopeType,
         scopeKey: String,
@@ -854,6 +887,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Loads one question candidate by stable ID.
     func questionCandidate(id: String) throws -> QuestionCandidate? {
         let normalizedQuestionID = id.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedQuestionID.isEmpty else {
@@ -894,6 +928,7 @@ final class KnowledgeStore {
     }
 
     @discardableResult
+    /// Updates question status and optional snooze expiration.
     func updateQuestionStatus(id: String, status: QuestionStatus, expiresAt: Date? = nil) throws -> Bool {
         let normalizedQuestionID = id.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedQuestionID.isEmpty else {
@@ -919,11 +954,13 @@ final class KnowledgeStore {
     }
 
     @discardableResult
+    /// Marks a candidate as dismissed.
     func dismissQuestion(id: String) throws -> Bool {
         try updateQuestionStatus(id: id, status: .dismissed)
     }
 
     @discardableResult
+    /// Marks a candidate as snoozed until a future timestamp.
     func snoozeQuestion(id: String, until: Date) throws -> Bool {
         try updateQuestionStatus(id: id, status: .snoozed, expiresAt: until)
     }
@@ -1026,24 +1063,28 @@ final class KnowledgeStore {
         }
     }
 
+    /// Persists one room record from Webex ingestion.
     func upsertRoom(_ room: RoomRecord) throws {
         try withDatabase { db in
             try upsertRoomRecord(room, db: db)
         }
     }
 
+    /// Persists one person record from Webex ingestion.
     func upsertPerson(_ person: PersonRecord) throws {
         try withDatabase { db in
             try upsertPersonRecord(person, db: db)
         }
     }
 
+    /// Persists one message record from connector ingestion.
     func upsertMessage(_ message: MessageRecord) throws {
         try withDatabase { db in
             try upsertMessageRecord(message, db: db)
         }
     }
 
+    /// Persists multiple message records in one SQLite transaction.
     func upsertMessages(_ messages: [MessageRecord]) throws {
         guard messages.isEmpty == false else {
             return
@@ -1062,6 +1103,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Checks message idempotency for sync engines.
     func messageExists(messageID: String) throws -> Bool {
         try withDatabase { db in
             let sql = """
@@ -1077,10 +1119,12 @@ final class KnowledgeStore {
         }
     }
 
+    /// Returns the newest indexed message for one room.
     func latestMessage(roomID: String) throws -> MessageRecord? {
         try loadMessages(roomID: roomID, limit: 1).first
     }
 
+    /// Loads the polling watermark/backoff state for one Webex conversation.
     func loadWebexSyncState(conversationID: String) throws -> WebexConversationSyncStateRecord? {
         try withDatabase { db in
             let sql = """
@@ -1114,6 +1158,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Lists Webex polling states for diagnostics and planning.
     func loadWebexSyncStates(limit: Int = 10_000) throws -> [WebexConversationSyncStateRecord] {
         try withDatabase { db in
             let sql = """
@@ -1148,6 +1193,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Persists Webex polling watermark/backoff state.
     func upsertWebexSyncState(_ state: WebexConversationSyncStateRecord) throws {
         try withDatabase { db in
             let sql = """
@@ -1205,6 +1251,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Loads one indexed room by ID.
     func loadRoom(roomID: String) throws -> RoomRecord? {
         try withDatabase { db in
             let sql = """
@@ -1227,6 +1274,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Loads recent room messages, optionally bounded by timestamp.
     func loadMessages(roomID: String, sinceTimestamp: String? = nil, limit: Int = 500) throws -> [MessageRecord] {
         try withDatabase { db in
             let hasSinceFilter = (sinceTimestamp?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
@@ -1277,6 +1325,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Loads recent messages by person, optionally bounded by timestamp.
     func loadMessages(personID: String, sinceTimestamp: String? = nil, limit: Int = 500) throws -> [MessageRecord] {
         try withDatabase { db in
             let hasSinceFilter = (sinceTimestamp?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false)
@@ -1327,6 +1376,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Lists indexed people for target resolution and diagnostics.
     func loadPeople(limit: Int = 10_000) throws -> [PersonRecord] {
         try withDatabase { db in
             let sql = """
@@ -1353,12 +1403,14 @@ final class KnowledgeStore {
         }
     }
 
+    /// Persists one file attachment record.
     func upsertFile(_ file: FileRecord) throws {
         try withDatabase { db in
             try upsertFileRecord(file, db: db)
         }
     }
 
+    /// Persists file attachment records in one SQLite transaction.
     func upsertFiles(_ files: [FileRecord]) throws {
         guard files.isEmpty == false else {
             return
@@ -1377,6 +1429,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Loads file attachment records for a room/message window.
     func loadFiles(
         roomID: String,
         messageID: String? = nil,
@@ -1435,12 +1488,14 @@ final class KnowledgeStore {
         }
     }
 
+    /// Persists one evidence row used by belief reconciliation.
     func upsertBeliefEvidence(_ evidence: BeliefEvidenceRecord) throws {
         try withDatabase { db in
             try upsertBeliefEvidenceRecord(evidence, db: db)
         }
     }
 
+    /// Persists multiple evidence rows in one SQLite transaction.
     func upsertBeliefEvidence(_ evidenceRecords: [BeliefEvidenceRecord]) throws {
         guard evidenceRecords.isEmpty == false else {
             return
@@ -1459,6 +1514,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Loads evidence rows for a typed belief target.
     func loadBeliefEvidence(
         scope: KnowledgeBeliefScope,
         entityKey: String = "",
@@ -1543,6 +1599,7 @@ final class KnowledgeStore {
     }
 
     @discardableResult
+    /// Deletes one evidence row by source identity.
     func deleteBeliefEvidence(source: String, sourceID: String) throws -> Bool {
         let normalizedSource = normalizedNonEmpty(source)
         let normalizedSourceID = normalizedNonEmpty(sourceID)
@@ -1558,6 +1615,7 @@ final class KnowledgeStore {
     }
 
     @discardableResult
+    /// Prunes evidence for one typed belief target, optionally by time.
     func pruneBeliefEvidence(
         scope: KnowledgeBeliefScope,
         entityKey: String = "",
@@ -2025,6 +2083,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Opens SQLite, applies migrations/compat shims, then executes the operation.
     private func withDatabase<T>(_ body: (OpaquePointer) throws -> T) throws -> T {
         try ensureKnowledgeDirectory()
         let db = try openDatabase()
@@ -2060,6 +2119,7 @@ final class KnowledgeStore {
         return db
     }
 
+    /// Applies versioned migrations before legacy compatibility shims run.
     private func applyPendingMigrations(db: OpaquePointer) throws {
         try execute(
             sql: """
@@ -2099,6 +2159,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Backfills core tables created by earlier prototypes.
     private func ensureCoreSchemaCompatibility(db: OpaquePointer) throws {
         try ensureRoomSchemaCompatibility(db: db)
         try ensurePeopleSchemaCompatibility(db: db)
@@ -2343,6 +2404,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Backfills topic rows so generated topic upserts can rely on current columns.
     private func ensureTopicSchemaCompatibility(db: OpaquePointer) throws {
         var columns = try tableColumnNames("topics", db: db)
         guard columns.isEmpty == false else {
@@ -2434,6 +2496,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Backfills beliefs and folds legacy manual-belief rows into the unified table.
     private func ensureBeliefSchemaCompatibility(db: OpaquePointer) throws {
         var columns = try tableColumnNames("beliefs", db: db)
         guard columns.isEmpty == false else {
@@ -2515,6 +2578,7 @@ final class KnowledgeStore {
         }
     }
 
+    /// Copies legacy manual beliefs only when both old and new column sets are present.
     private func migrateLegacyManualBeliefsIfNeeded(db: OpaquePointer, beliefColumns: Set<String>) throws {
         let manualColumns = try tableColumnNames("manual_beliefs", db: db)
         let requiredManualColumns: Set<String> = [
@@ -2580,6 +2644,7 @@ final class KnowledgeStore {
         )
     }
 
+    /// Backfills evidence rows used by belief reconciliation.
     private func ensureBeliefEvidenceSchemaCompatibility(db: OpaquePointer) throws {
         var columns = try tableColumnNames("belief_evidence", db: db)
         guard columns.isEmpty == false else {
@@ -3244,6 +3309,7 @@ final class KnowledgeStore {
     }
 }
 
+/// Versioned SQL migration applied during database bootstrap.
 private struct Migration {
     var version: Int32
     var statements: [String]

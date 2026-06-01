@@ -1,3 +1,5 @@
+"""Transcript collection, rendering, and export helpers for VoiceNotes notes."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -8,6 +10,8 @@ from .models import Note, TranscriptSegment, utc_now
 
 @dataclass
 class TranscriptCollector:
+    """Accumulates transcript events into ordered final segments."""
+
     segments: dict[str, TranscriptSegment] = field(default_factory=dict)
     order: list[str] = field(default_factory=list)
 

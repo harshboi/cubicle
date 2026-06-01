@@ -1,3 +1,5 @@
+"""Structured logging helpers that redact sensitive audio/text fields."""
+
 from __future__ import annotations
 
 import json

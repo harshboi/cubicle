@@ -1,3 +1,5 @@
+"""FastAPI app factory and HTTP/WebSocket routes for VoiceNotes."""
+
 from __future__ import annotations
 
 import json
@@ -28,15 +30,21 @@ logger = logging.getLogger("voicenotes.app")
 
 
 class LoginRequest(BaseModel):
+    """JSON login payload for local password auth."""
+
     email: str
     password: str
 
 
 class TitleUpdate(BaseModel):
+    """Patch payload for note-title updates."""
+
     title: str
 
 
 class BulkDeleteRequest(BaseModel):
+    """Batch delete payload carrying note ids owned by the user."""
+
     note_ids: list[str]
 
 
@@ -45,6 +53,8 @@ def create_app(
     store: NoteStore | None = None,
     user_access_validator: Any | None = None,
 ) -> FastAPI:
+    """Build the VoiceNotes web app with injectable auth and storage seams."""
+
     settings = settings or Settings.from_environment()
     store = store or create_store(settings)
     session_codec = SessionCodec(settings.session_secret, settings.session_ttl_seconds)

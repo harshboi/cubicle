@@ -1,3 +1,5 @@
+"""Environment-backed settings for the VoiceNotes web app."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -26,6 +28,8 @@ def _env_list(name: str) -> tuple[str, ...]:
 
 @dataclass(frozen=True)
 class Settings:
+    """Environment-backed VoiceNotes app configuration."""
+
     app_name: str = "VoiceNotes"
     auth_mode: str = "local"
     session_secret: str = "dev-only-voicenotes-session-secret-change-me"

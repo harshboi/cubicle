@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Primary navigation sidebar for app sections.
 struct SidebarView: View {
     @EnvironmentObject private var model: AppModel
 

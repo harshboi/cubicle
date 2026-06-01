@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Scheduler/job overview for manual refresh controls and current run states.
 struct JobsView: View {
     @EnvironmentObject private var model: AppModel
 
@@ -33,6 +34,7 @@ struct JobsView: View {
     }
 }
 
+/// Status card for one refresh plan.
 private struct RefreshStatusCard: View {
     let plan: RefreshPlan
     let status: RefreshRunStatus
@@ -74,6 +76,7 @@ private struct RefreshStatusCard: View {
     }
 }
 
+/// Detail inspector for the selected refresh plan.
 struct JobsInspectorView: View {
     @EnvironmentObject private var model: AppModel
 
@@ -134,6 +137,7 @@ struct JobsInspectorView: View {
     }
 }
 
+/// Metric tile used inside the job inspector.
 private struct JobMetricCard: View {
     let title: String
     let value: String
@@ -156,6 +160,7 @@ private struct JobMetricCard: View {
     }
 }
 
+/// Row summary for one refresh plan in the inspector list.
 private struct JobInspectorRow: View {
     let plan: RefreshPlan
     let status: RefreshRunStatus
@@ -226,6 +231,7 @@ private struct JobInspectorRow: View {
     }
 }
 
+/// Presentation metadata for refresh scopes.
 private extension RefreshScope {
     var displayTitle: String {
         switch self {

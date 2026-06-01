@@ -3,6 +3,7 @@ import CryptoKit
 import Foundation
 import Network
 
+/// Ask Codex context scope selected by the user.
 enum AskCodexTargetScope: String, CaseIterable, Identifiable, Codable {
     case allTracked = "all_tracked"
     case selectedSpace = "selected_space"
@@ -10,6 +11,7 @@ enum AskCodexTargetScope: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
+    /// Display label used by the Ask Codex scope picker.
     var title: String {
         switch self {
         case .allTracked:
@@ -22,12 +24,14 @@ enum AskCodexTargetScope: String, CaseIterable, Identifiable, Codable {
     }
 }
 
+/// Destination type for submitting a transcript into timeline evidence.
 enum TranscriptionTimelineTargetKind: String, CaseIterable, Identifiable, Hashable {
     case space
     case person
 
     var id: String { rawValue }
 
+    /// Picker label for transcript submission targets.
     var title: String {
         switch self {
         case .space:
@@ -37,6 +41,7 @@ enum TranscriptionTimelineTargetKind: String, CaseIterable, Identifiable, Hashab
         }
     }
 
+    /// Target-management list that owns this timeline kind.
     var focusTargetKind: FocusTargetManagementKind {
         switch self {
         case .space:
@@ -47,6 +52,7 @@ enum TranscriptionTimelineTargetKind: String, CaseIterable, Identifiable, Hashab
     }
 }
 
+/// Timeline submission validation error surfaced directly to the settings UI.
 private enum TranscriptionTimelineSubmissionError: LocalizedError {
     case invalidTarget(String)
 
@@ -58,12 +64,14 @@ private enum TranscriptionTimelineSubmissionError: LocalizedError {
     }
 }
 
+/// Sort mode for focus lists.
 enum FocusSortOption: String, CaseIterable, Identifiable {
     case latestMessage = "latest_message"
     case name = "name"
 
     var id: String { rawValue }
 
+    /// Display label used in focus-list sort controls.
     var title: String {
         switch self {
         case .latestMessage:
@@ -74,6 +82,7 @@ enum FocusSortOption: String, CaseIterable, Identifiable {
     }
 }
 
+/// Long-running settings actions surfaced in the Settings view.
 enum SystemSettingsAction: String, Identifiable {
     case syncWebex = "sync_webex"
     case rebuildPersonFocusAll = "rebuild_person_focus_all"
@@ -82,12 +91,14 @@ enum SystemSettingsAction: String, Identifiable {
     var id: String { rawValue }
 }
 
+/// Editable copy of focus-analysis settings before persistence.
 struct FocusAnalysisSettingsDraft: Equatable {
     var personFocusDays: Int
     var personFocusAnalysisCadenceHours: Int
     var spaceFocusDays: Int
     var spaceFocusAnalysisCadenceHours: Int
 
+    /// Seeds draft fields from clamped persisted settings.
     init(settings: SystemSettings = SystemSettings()) {
         personFocusDays = SystemSettings.clamped(settings.personFocusDays, to: SystemSettings.focusDaysBounds)
         personFocusAnalysisCadenceHours = SystemSettings.clamped(
@@ -101,6 +112,7 @@ struct FocusAnalysisSettingsDraft: Equatable {
         )
     }
 
+    /// Updates one integer setting while preserving bounds.
     mutating func set(_ key: SystemSettingKey, value: Int) {
         switch key {
         case .personFocusDays:
@@ -122,6 +134,7 @@ struct FocusAnalysisSettingsDraft: Equatable {
         }
     }
 
+    /// Returns the draft value for one focus-analysis setting key.
     func value(for key: SystemSettingKey) -> Int {
         switch key {
         case .personFocusDays:
@@ -137,6 +150,7 @@ struct FocusAnalysisSettingsDraft: Equatable {
         }
     }
 
+    /// Applies the draft fields to a persisted settings value.
     func applying(to settings: SystemSettings) -> SystemSettings {
         var updated = settings
         updated.setInt(personFocusDays, for: .personFocusDays)
@@ -147,6 +161,7 @@ struct FocusAnalysisSettingsDraft: Equatable {
     }
 }
 
+/// Completed Ask Codex run shown in job/result views.
 struct AskCodexRunRecord: Hashable {
     var jobID: String
     var title: String
@@ -162,6 +177,7 @@ struct AskCodexRunRecord: Hashable {
     var status: String
 }
 
+/// Persisted Ask Codex prompt history entry.
 struct AskCodexQueryHistoryEntry: Codable, Identifiable, Hashable {
     var id: String
     var question: String
@@ -172,6 +188,7 @@ struct AskCodexQueryHistoryEntry: Codable, Identifiable, Hashable {
     var submittedAt: String
 }
 
+/// Selectable target for scoped belief views.
 struct BeliefTargetOption: Identifiable, Hashable {
     var entityKey: String
     var title: String
@@ -180,6 +197,7 @@ struct BeliefTargetOption: Identifiable, Hashable {
     var id: String { entityKey }
 }
 
+/// UI status for one refresh scope.
 struct RefreshRunStatus: Identifiable, Hashable {
     var scope: RefreshScope
     var isRunning: Bool
@@ -191,6 +209,7 @@ struct RefreshRunStatus: Identifiable, Hashable {
     var id: String { scope.rawValue }
 }
 
+/// Per-step state in the visible refresh progress pipeline.
 enum RefreshProgressStepState: String, Hashable {
     case pending
     case running
@@ -199,6 +218,7 @@ enum RefreshProgressStepState: String, Hashable {
     case failed
 }
 
+/// One visible step in a refresh pipeline run.
 struct RefreshProgressStep: Identifiable, Hashable {
     var id: String
     var scope: RefreshScope
@@ -209,6 +229,7 @@ struct RefreshProgressStep: Identifiable, Hashable {
     var error: String?
 }
 
+/// Whole-pipeline progress state for foreground refreshes.
 struct RefreshProgressState: Hashable {
     var isActive: Bool
     var title: String
@@ -230,12 +251,15 @@ struct RefreshProgressState: Hashable {
         lastSummary: nil
     )
 
+    /// Number of steps in the visible pipeline.
     var totalStepCount: Int { steps.count }
 
+    /// Terminal steps across success, skip, and failure states.
     var completedStepCount: Int {
         steps.filter { $0.state == .succeeded || $0.state == .skipped || $0.state == .failed }.count
     }
 
+    /// Step currently receiving progress/error updates.
     var currentStep: RefreshProgressStep? {
         if let currentStepID {
             return steps.first { $0.id == currentStepID }
@@ -245,6 +269,7 @@ struct RefreshProgressState: Hashable {
     }
 }
 
+/// Concrete context sent to Ask Codex.
 private struct AskCodexTargetContext {
     var key: String
     var title: String
@@ -252,6 +277,7 @@ private struct AskCodexTargetContext {
     var lines: [String]
 }
 
+/// Prompt-size limits for selected-target and all-tracked contexts.
 private struct AskCodexContextLimits {
     var maxItemsPerKind: Int
     var maxIntroLines: Int
@@ -282,29 +308,34 @@ private struct AskCodexContextLimits {
     )
 }
 
+/// Cache key for belief list reads.
 private struct BeliefCacheKey: Hashable {
     var scope: KnowledgeBeliefScope
     var entityKey: String
 }
 
+/// Cached belief rows for one scope/entity selection.
 private struct CachedBeliefSet {
     var manualBeliefs: [BeliefRecord]
     var automaticBeliefs: [BeliefRecord]
     var loadedAt: Date
 }
 
+/// Entity to include in belief-set summary counts.
 private struct BeliefSummaryTarget: Hashable {
     var scope: KnowledgeBeliefScope
     var entityKey: String
     var title: String
 }
 
+/// Cached belief summary list plus the target fingerprint it covered.
 private struct CachedBeliefSetSummaries {
     var summaries: [BeliefSetSummary]
     var targetFingerprint: String
     var loadedAt: Date
 }
 
+/// Internal refresh step with execution mode and cadence behavior.
 private struct RefreshPipelinePlan: Hashable {
     var id: String
     var scope: RefreshScope
@@ -313,6 +344,7 @@ private struct RefreshPipelinePlan: Hashable {
     var markCadence: Bool
     var skipWhenPreviousScopeReused: RefreshScope? = nil
 
+    /// Whether this step can launch Codex work.
     var usesCodex: Bool {
         if mode == .codexOnly {
             return true
@@ -328,6 +360,7 @@ private struct RefreshPipelinePlan: Hashable {
     }
 }
 
+/// Page-triggered refresh request that can interrupt background work.
 private struct PagePriorityRefreshRequest: Hashable {
     var section: AppSection
     var title: String
@@ -335,6 +368,7 @@ private struct PagePriorityRefreshRequest: Hashable {
     var reloadAfterEachScope: Bool
 }
 
+/// Disk checkpoint for restart/resume of a refresh pipeline.
 private struct PersistedRefreshCheckpoint: Codable {
     var version: Int
     var runID: String
@@ -359,6 +393,7 @@ private struct PersistedRefreshCheckpoint: Codable {
     }
 }
 
+/// Disk checkpoint row for one refresh pipeline step.
 private struct PersistedRefreshCheckpointStep: Codable {
     var id: String
     var scopeRawValue: String
@@ -383,6 +418,7 @@ private struct PersistedRefreshCheckpointStep: Codable {
     }
 }
 
+/// Main product state store and orchestration layer for the Mac app.
 @MainActor
 final class AppModel: ObservableObject {
     @Published var selectedSection: AppSection = .home
@@ -486,6 +522,7 @@ final class AppModel: ObservableObject {
     private static let beliefCacheFreshnessInterval: TimeInterval = 120
     private static let refreshCheckpointStaleInterval: TimeInterval = 30 * 60
 
+    /// Wires runtime-backed services and restores persisted UI-adjacent state.
     init(
         runtimeStore: NativeRuntimeStore = NativeRuntimeStore(),
         transcriptionClient: TranscriptionClient = TranscriptionWebSocketClient(),
@@ -538,6 +575,7 @@ final class AppModel: ObservableObject {
         networkPathMonitor?.cancel()
     }
 
+    /// Persists in-flight refresh state and shuts down transcription work.
     func handleAppWillTerminate() {
         persistActiveRefreshCheckpoint(cycleID: activeRefreshCycleID)
         Task { [transcriptionViewModel] in
@@ -545,6 +583,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Performs first-load work and optional startup refresh once per app launch.
     func startProgram() async {
         guard !startupRefreshStarted else {
             return
@@ -570,6 +609,7 @@ final class AppModel: ObservableObject {
     }
 
     @discardableResult
+    /// Loads runtime files, settings, caches, questions, and target lists.
     func loadAll() async -> Bool {
         isLoading = true
         errorMessage = nil
@@ -618,6 +658,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Starts the periodic refresh loop when settings and runtime access allow it.
     func startBackgroundRefreshIfNeeded() {
         guard refreshLoopTask == nil, !runtimeAccessDenied, systemSettings.backgroundStatus else {
             return
@@ -636,6 +677,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Runs a foreground full refresh across enabled scopes.
     func refreshNow() async {
         _ = await runRefreshCycle(
             title: "Manual refresh",
@@ -646,6 +688,7 @@ final class AppModel: ObservableObject {
         )
     }
 
+    /// Runs the refresh plan for the currently selected page.
     func refreshSelectedPageNow() async {
         let request = priorityRefreshRequest(for: selectedSection)
         if refreshCycleRunning {
@@ -659,6 +702,7 @@ final class AppModel: ObservableObject {
         await runPriorityRefresh(request)
     }
 
+    /// Reloads settings and derived UI state from disk/keychain.
     func reloadSystemSettings() {
         systemSettings = loadSystemSettingsWithSecureFields()
         transcriptionViewModel.apply(settings: systemSettings)
@@ -668,6 +712,7 @@ final class AppModel: ObservableObject {
         reloadOAuthStatuses()
     }
 
+    /// Updates the unsaved focus-analysis draft and previews matching caches.
     func updateFocusAnalysisDraft(_ key: SystemSettingKey, intValue: Int) {
         var draft = focusAnalysisDraft
         draft.set(key, value: intValue)
@@ -681,12 +726,14 @@ final class AppModel: ObservableObject {
         settingsLastMessage = "Focus analysis settings changed. Apply / Refresh to commit."
     }
 
+    /// Restores the focus-analysis draft from persisted settings.
     func resetFocusAnalysisDraft() {
         syncFocusAnalysisDraftFromSystemSettings()
         settingsLastMessage = "Focus analysis draft reset to saved values."
         settingsLastError = nil
     }
 
+    /// Checks whether the focus-analysis draft differs from saved settings.
     func focusAnalysisDraftHasChanges(kind: FocusKind? = nil) -> Bool {
         switch kind {
         case .person:
@@ -701,15 +748,18 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Human summary for whether an exact focus-analysis cache is reusable.
     func focusAnalysisStatusText(kind: FocusKind) -> String {
         let status = focusAnalysisCacheStatusByKind[kind] ?? computedFocusAnalysisCacheStatus(kind: kind)
         return status.summary
     }
 
+    /// Whether the settings refresh action for one focus kind is active.
     func isFocusAnalysisRefreshRunning(kind: FocusKind) -> Bool {
         settingsActionID == focusAnalysisRefreshActionID(kind: kind)
     }
 
+    /// Persists focus-analysis settings and rebuilds or reuses matching cache output.
     func applyFocusAnalysisDraftAndRefresh(kind: FocusKind) async {
         guard settingsActionID == nil else {
             settingsLastMessage = "A settings action is already running."
@@ -841,6 +891,7 @@ final class AppModel: ObservableObject {
         "focus_analysis_refresh_\(kind.rawValue)"
     }
 
+    /// Reloads OAuth status indicators for every configured provider.
     func reloadOAuthStatuses() {
         oauthProviderStatuses = Dictionary(
             uniqueKeysWithValues: OAuthProviderKind.allCases.map { provider in
@@ -849,14 +900,17 @@ final class AppModel: ObservableObject {
         )
     }
 
+    /// Returns cached provider status, falling back to a fresh config read.
     func oauthStatus(for provider: OAuthProviderKind) -> OAuthProviderStatus {
         oauthProviderStatuses[provider] ?? configStore.oauthProviderStatus(provider: provider)
     }
 
+    /// Whether an OAuth connect/revoke operation is in flight for a provider.
     func isOAuthActionRunning(_ provider: OAuthProviderKind) -> Bool {
         oauthActionID == provider.rawValue
     }
 
+    /// Starts browser-based OAuth and persists the resulting token.
     func connectOAuth(provider: OAuthProviderKind) async {
         guard oauthActionID == nil else {
             settingsLastMessage = "An OAuth action is already running."
@@ -879,6 +933,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Removes locally persisted OAuth material for a provider.
     func revokeOAuth(provider: OAuthProviderKind) {
         guard oauthActionID == nil else {
             settingsLastMessage = "An OAuth action is already running."
@@ -903,6 +958,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Persists one boolean setting and applies dependent runtime changes.
     func updateSystemSetting(_ key: SystemSettingKey, boolValue: Bool) {
         let previousValue = systemSettings.boolValue(for: key)
         var updated = systemSettings
@@ -916,6 +972,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Persists one integer setting and applies dependent runtime changes.
     func updateSystemSetting(_ key: SystemSettingKey, intValue: Int) {
         let previousValue = systemSettings.intValue(for: key)
         var updated = systemSettings
@@ -929,6 +986,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Persists one string-backed setting.
     func updateSystemSetting(_ key: SystemSettingKey, stringValue: String) {
         var updated = systemSettings
         updated.setString(stringValue, for: key)
@@ -973,6 +1031,7 @@ final class AppModel: ObservableObject {
         persistSystemSettings(updated, message: "\(settingTitle(key)) set to \(valueDescription).")
     }
 
+    /// Whether a transcription auth token is present in settings or Keychain.
     var transcriptionAuthTokenConfigured: Bool {
         if systemSettings.transcriptionAuthToken?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
             return true
@@ -980,6 +1039,7 @@ final class AppModel: ObservableObject {
         return configStore.transcriptionAuthTokenConfigured()
     }
 
+    /// Normalizes and saves the transcription auth token to Keychain.
     func saveTranscriptionAuthToken(_ token: String) {
         let normalized = normalizedTranscriptionAuthToken(token)
         guard !normalized.isEmpty else {
@@ -1012,6 +1072,7 @@ final class AppModel: ObservableObject {
             .trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
     }
 
+    /// Removes the transcription auth token from Keychain and active settings.
     func deleteTranscriptionAuthToken() {
         do {
             try configStore.deleteTranscriptionAuthToken()
@@ -1024,6 +1085,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Runs one settings-triggered refresh action.
     func runSystemSettingsAction(_ action: SystemSettingsAction) async {
         guard settingsActionID == nil else {
             settingsLastMessage = "A settings action is already running."
@@ -1058,11 +1120,13 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Whether a settings-triggered action is currently active.
     func isSystemSettingsActionRunning(_ action: SystemSettingsAction) -> Bool {
         settingsActionID == action.rawValue
     }
 
     @discardableResult
+    /// Saves settings and refreshes derived service/UI state.
     private func persistSystemSettings(_ settings: SystemSettings, message: String) -> Bool {
         do {
             try configStore.saveSystemSettings(settings)
@@ -1079,6 +1143,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Applies side effects for boolean setting changes.
     private func handleBooleanSystemSettingChange(
         _ key: SystemSettingKey,
         previousValue: Bool,
@@ -1134,12 +1199,14 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Loads settings while preserving secure fields held only in memory/Keychain.
     private func loadSystemSettingsWithSecureFields() -> SystemSettings {
         var settings = configStore.loadSystemSettings()
         settings.transcriptionAuthToken = systemSettings.transcriptionAuthToken
         return settings
     }
 
+    /// Applies side effects for integer setting changes.
     private func handleIntegerSystemSettingChange(
         _ key: SystemSettingKey,
         previousValue: Int,
@@ -1186,6 +1253,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Reloads visible focus cache when its lookback window changes.
     private func reloadFocusCacheForWindowSettingChange(kind: FocusKind, days: Int) {
         do {
             switch kind {
@@ -1212,6 +1280,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Starts or stops background refresh after the master switch changes.
     private func handleBackgroundSummariesSettingChange(currentValue: Bool) {
         if currentValue {
             settingsLastMessage = "Background summaries enabled. Starting background refresh."
@@ -1231,12 +1300,14 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Stops the periodic refresh loop.
     private func stopBackgroundRefresh() {
         refreshLoopTask?.cancel()
         refreshLoopTask = nil
         backgroundRefreshActive = false
     }
 
+    /// Installs wake/network observers used to trigger Webex catch-up.
     private func installSystemEventObserversIfNeeded() {
         if wakeObserver == nil {
             wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
@@ -1265,6 +1336,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Detects offline-to-online transitions.
     private func handleNetworkPathUpdate(isSatisfied: Bool) {
         let previous = lastNetworkPathSatisfied
         lastNetworkPathSatisfied = isSatisfied
@@ -1280,6 +1352,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Runs a small Webex-only catch-up after wake or reconnect.
     private func runWebexCatchUpForSystemEvent(title: String) async {
         guard systemSettings.backgroundStatus, systemSettings.webexSyncEnabled else {
             return
@@ -1308,6 +1381,7 @@ final class AppModel: ObservableObject {
         _ = await runPriorityRefresh(request)
     }
 
+    /// Starts or marks Webex sync after its enable switch changes.
     private func handleWebexSyncSettingChange(previousValue: Bool, currentValue: Bool) {
         guard previousValue != currentValue else {
             return
@@ -1324,6 +1398,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Runs Webex sync immediately after enabling the feature when possible.
     private func runWebexSyncAfterEnable() async {
         guard systemSettings.webexSyncEnabled else {
             return
@@ -1358,6 +1433,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Clears visible Webex sync work when the feature is disabled.
     private func markWebexSyncDisabledInUI() {
         let summary = "Webex sync disabled in Settings."
         updateRefreshStatus(.webexSync) { status in
@@ -1399,6 +1475,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Runs a settings-triggered focus rebuild as a one-step refresh cycle.
     private func runSettingsFocusRebuildAction(
         title: String,
         stepID: String,
@@ -1423,6 +1500,7 @@ final class AppModel: ObservableObject {
         settingsLastMessage = refreshStatuses[scope]?.lastSummary ?? "\(scope.title) rebuild completed."
     }
 
+    /// Runs a settings-triggered Webex map refresh plus sync.
     private func runSettingsWebexSyncAction() async {
         guard systemSettings.webexSyncEnabled else {
             let summary = "Webex sync skipped: disabled in Settings."
@@ -1602,6 +1680,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Startup pipeline ordered to get local evidence visible before Codex enrichment.
     private func startupRefreshPipelinePlans() -> [RefreshPipelinePlan] {
         [
             RefreshPipelinePlan(id: "startup-webex-sync", scope: .webexSync, title: "Webex sync", mode: .incremental, markCadence: true),
@@ -1615,10 +1694,12 @@ final class AppModel: ObservableObject {
         ]
     }
 
+    /// Drops disabled feature steps from a requested refresh pipeline.
     private func enabledRefreshPipelinePlans(_ plans: [RefreshPipelinePlan]) -> [RefreshPipelinePlan] {
         plans.filter(isRefreshPipelinePlanEnabled)
     }
 
+    /// Applies feature-flag gating to one refresh pipeline step.
     private func isRefreshPipelinePlanEnabled(_ plan: RefreshPipelinePlan) -> Bool {
         if plan.scope == .webexSync {
             return systemSettings.webexSyncEnabled
@@ -1641,6 +1722,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Test hook for the startup plan after settings gates are applied.
     func visibleStartupRefreshPlanTitlesForTesting() -> [String] {
         guard systemSettings.backgroundStatus else {
             return []
@@ -1648,11 +1730,13 @@ final class AppModel: ObservableObject {
         return enabledRefreshPipelinePlans(startupRefreshPipelinePlans()).map(\.title)
     }
 
+    /// Test hook for page-priority plans after settings gates are applied.
     func visiblePriorityRefreshPlanTitlesForTesting(section: AppSection) -> [String] {
         let request = priorityRefreshRequest(for: section)
         return enabledRefreshPipelinePlans(request.plans).map(\.title)
     }
 
+    /// Builds the smallest useful refresh plan for one visible page.
     private func priorityRefreshRequest(for section: AppSection) -> PagePriorityRefreshRequest {
         switch section {
         case .home:
@@ -1771,6 +1855,7 @@ final class AppModel: ObservableObject {
     }
 
     @discardableResult
+    /// Runs a page-priority refresh and follows with page-specific reload work.
     private func runPriorityRefresh(_ request: PagePriorityRefreshRequest) async -> Bool {
         var activeRequest = request
         activeRequest.plans = enabledRefreshPipelinePlans(request.plans)
@@ -1797,6 +1882,7 @@ final class AppModel: ObservableObject {
         return completed
     }
 
+    /// Performs non-pipeline reload work after a priority refresh finishes.
     private func runPostPriorityRefresh(for section: AppSection) async {
         switch section {
         case .settings:
@@ -1815,6 +1901,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Runs a guarded refresh pipeline with optional checkpoint persistence.
     private func runRefreshCycle(
         title: String,
         forceAll: Bool,
@@ -1940,6 +2027,7 @@ final class AppModel: ObservableObject {
         return true
     }
 
+    /// Resumes a persisted refresh checkpoint when settings/targets still match.
     private func resumeRefreshCheckpointIfNeeded() async -> Bool {
         guard let data = configStore.loadRefreshCheckpointData() else {
             return false
@@ -2010,6 +2098,7 @@ final class AppModel: ObservableObject {
         return true
     }
 
+    /// Captures metadata needed to persist the active refresh pipeline.
     private func activateRefreshCheckpointContext(
         cycleID: UUID,
         title: String,
@@ -2026,6 +2115,7 @@ final class AppModel: ObservableObject {
         activeRefreshPipelinePlansByID = Dictionary(uniqueKeysWithValues: plans.map { ($0.id, $0) })
     }
 
+    /// Clears active checkpoint metadata for the finishing refresh cycle.
     private func resetRefreshCheckpointContext(cycleID: UUID? = nil) {
         if let cycleID, activeRefreshCheckpointRunID != cycleID {
             return
@@ -2038,6 +2128,7 @@ final class AppModel: ObservableObject {
         activeRefreshPipelinePlansByID = [:]
     }
 
+    /// Writes the current refresh progress to disk for crash/restart recovery.
     private func persistActiveRefreshCheckpoint(cycleID: UUID?) {
         guard let runID = activeRefreshCheckpointRunID,
               refreshProgress.totalStepCount > 0 else {
@@ -2092,6 +2183,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Deletes any persisted refresh resume checkpoint.
     private func clearPersistedRefreshCheckpoint() {
         do {
             try configStore.clearRefreshCheckpoint()
@@ -2100,6 +2192,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Hashes settings and target files that make a checkpoint safe to resume.
     private func currentRefreshCheckpointFingerprint() -> String {
         var lines: [String] = [
             "webex_sync_enabled=\(systemSettings.webexSyncEnabled)",
@@ -2142,6 +2235,7 @@ final class AppModel: ObservableObject {
         return digest.map { String(format: "%02x", $0) }.joined()
     }
 
+    /// Checks cadence for a scheduled refresh scope.
     private func isRefreshDue(_ plan: RefreshPlan) -> Bool {
         guard let lastRun = lastRefreshDateByScope[plan.scope] else {
             return true
@@ -2149,6 +2243,7 @@ final class AppModel: ObservableObject {
         return Date().timeIntervalSince(lastRun) >= TimeInterval(plan.cadenceSeconds)
     }
 
+    /// Chooses incremental/cache-aware/full mode for one scope.
     private func refreshExecutionMode(scope: RefreshScope, force: Bool) -> RefreshExecutionMode {
         guard !force else {
             return .full
@@ -2163,6 +2258,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Internal result shape shared by progress and status updates.
     private struct RefreshScopeRunResult {
         var succeeded: Bool
         var summary: String?
@@ -2170,6 +2266,7 @@ final class AppModel: ObservableObject {
         var reusedCache: Bool?
     }
 
+    /// Executes one refresh scope and updates status/progress surfaces.
     private func runRefreshScope(
         _ scope: RefreshScope,
         mode: RefreshExecutionMode,
@@ -2242,6 +2339,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Mutates one refresh status entry in published state.
     private func updateRefreshStatus(_ scope: RefreshScope, mutate: (inout RefreshRunStatus) -> Void) {
         var next = refreshStatuses
         var status = next[scope] ?? RefreshRunStatus(scope: scope, isRunning: false)
@@ -2250,6 +2348,7 @@ final class AppModel: ObservableObject {
         refreshStatuses = next
     }
 
+    /// Starts a new visible progress pipeline.
     private func beginRefreshProgress(title: String, plans: [RefreshPipelinePlan]) {
         refreshProgress = RefreshProgressState(
             isActive: true,
@@ -2273,6 +2372,7 @@ final class AppModel: ObservableObject {
         )
     }
 
+    /// Guards async callbacks from stale refresh cycles.
     private func isCurrentRefreshCycle(_ cycleID: UUID?) -> Bool {
         guard let cycleID else {
             return true
@@ -2280,6 +2380,7 @@ final class AppModel: ObservableObject {
         return activeRefreshCycleID == cycleID
     }
 
+    /// Marks a pipeline step as running.
     private func markRefreshStepRunning(_ id: String, cycleID: UUID? = nil) {
         guard isCurrentRefreshCycle(cycleID) else {
             return
@@ -2301,6 +2402,7 @@ final class AppModel: ObservableObject {
         persistActiveRefreshCheckpoint(cycleID: cycleID)
     }
 
+    /// Updates the latest message for a running pipeline step.
     private func markRefreshStepProgress(id: String, message: String, cycleID: UUID? = nil) {
         guard isCurrentRefreshCycle(cycleID) else {
             return
@@ -2322,6 +2424,7 @@ final class AppModel: ObservableObject {
         persistActiveRefreshCheckpoint(cycleID: cycleID)
     }
 
+    /// Interrupts lower-priority refresh work for a page-triggered refresh.
     private func interruptActiveRefreshForPriority(_ request: PagePriorityRefreshRequest) {
         if let cycleID = activeRefreshCycleID {
             interruptedRefreshCycleIDs.insert(cycleID)
@@ -2355,6 +2458,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Stops active refresh UI/status after a setting invalidates the run.
     private func interruptActiveRefreshForSettingsChange(_ message: String) {
         if let cycleID = activeRefreshCycleID {
             interruptedRefreshCycleIDs.insert(cycleID)
@@ -2395,6 +2499,7 @@ final class AppModel: ObservableObject {
         persistActiveRefreshCheckpoint(cycleID: activeRefreshCycleID)
     }
 
+    /// Records that a page refresh was intentionally skipped while busy.
     private func markPriorityRefreshSkippedBecauseBusy(_ request: PagePriorityRefreshRequest) {
         let message = "\(request.title) skipped because another refresh is running and page reload pausing is disabled."
         var next = refreshProgress
@@ -2403,6 +2508,7 @@ final class AppModel: ObservableObject {
         persistActiveRefreshCheckpoint(cycleID: activeRefreshCycleID)
     }
 
+    /// Marks one pipeline step as skipped with its visible summary.
     private func markRefreshStepSkipped(id: String, summary: String, cycleID: UUID? = nil) {
         guard isCurrentRefreshCycle(cycleID) else {
             return
@@ -2426,6 +2532,7 @@ final class AppModel: ObservableObject {
         persistActiveRefreshCheckpoint(cycleID: cycleID)
     }
 
+    /// Skips pending downstream steps after a refresh interruption.
     private func markRemainingRefreshStepsSkipped(
         after completedPlanIndex: Int,
         in plans: [RefreshPipelinePlan],
@@ -2460,6 +2567,7 @@ final class AppModel: ObservableObject {
         persistActiveRefreshCheckpoint(cycleID: cycleID)
     }
 
+    /// Applies the terminal state for one pipeline step.
     private func markRefreshStepFinished(id: String, result: RefreshScopeRunResult, cycleID: UUID? = nil) {
         guard isCurrentRefreshCycle(cycleID) else {
             return
@@ -2483,6 +2591,7 @@ final class AppModel: ObservableObject {
         persistActiveRefreshCheckpoint(cycleID: cycleID)
     }
 
+    /// Closes the visible progress pipeline.
     private func finishRefreshProgress(cycleID: UUID? = nil) {
         if let cycleID, activeRefreshCycleID != cycleID {
             return
@@ -2495,6 +2604,7 @@ final class AppModel: ObservableObject {
         refreshProgress = next
     }
 
+    /// Reloads runtime-derived caches after refresh work changes files/DB rows.
     private func reloadRuntimeStateAfterRefresh() async {
         runtimeStatus = runtimeStore.runtimeStatus()
         do {
@@ -2515,10 +2625,12 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Whether a refresh scope is currently marked running.
     func isRefreshScopeRunning(_ scope: RefreshScope) -> Bool {
         refreshStatuses[scope]?.isRunning == true
     }
 
+    /// Visible status text for refresh cards.
     func refreshStatusDetail(for scope: RefreshScope, fallback: String) -> String {
         if let status = refreshStatuses[scope] {
             if let error = status.lastError, !error.isEmpty {
@@ -2531,6 +2643,7 @@ final class AppModel: ObservableObject {
         return fallback
     }
 
+    /// Compact inline status for a focus list.
     func focusRefreshStatusText(for kind: FocusKind) -> String? {
         let scope: RefreshScope = kind == .person ? .personFocus : .spaceFocus
         if refreshProgress.isActive {
@@ -2550,6 +2663,7 @@ final class AppModel: ObservableObject {
         return nil
     }
 
+    /// Reloads the active focus cache from disk.
     func reloadSelectedFocus() async {
         isLoading = true
         errorMessage = nil
@@ -2571,6 +2685,7 @@ final class AppModel: ObservableObject {
         isLoading = false
     }
 
+    /// Switches the active app section and loads section-specific state.
     func select(section: AppSection) {
         selectedSection = section
         switch section {
@@ -2595,12 +2710,14 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Reloads all focus target management lists.
     func reloadFocusTargetManagement() {
         targetManagementIsLoading = true
         reloadFocusTargetManagementState()
         targetManagementIsLoading = false
     }
 
+    /// Configured targets for one management surface.
     func focusTargets(for kind: FocusTargetManagementKind) -> [ConfigTarget] {
         switch kind {
         case .spaceFocus:
@@ -2612,6 +2729,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Addable target candidates for one management surface.
     func focusCandidates(for kind: FocusTargetManagementKind) -> [ConfigTarget] {
         switch kind {
         case .spaceFocus:
@@ -2623,6 +2741,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Source file backing one target-management surface.
     func focusTargetSourcePath(for kind: FocusTargetManagementKind) -> String {
         switch kind {
         case .spaceFocus:
@@ -2634,10 +2753,12 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Selected target ID for one management surface.
     func selectedFocusTargetID(for kind: FocusTargetManagementKind) -> String? {
         selectedFocusTargetIDByKind[kind]
     }
 
+    /// Updates selected target ID for one management surface.
     func setSelectedFocusTargetID(_ id: String?, for kind: FocusTargetManagementKind) {
         var next = selectedFocusTargetIDByKind
         if let id {
@@ -2648,6 +2769,7 @@ final class AppModel: ObservableObject {
         selectedFocusTargetIDByKind = next
     }
 
+    /// Selected target row, falling back to the first configured target.
     func selectedFocusTarget(for kind: FocusTargetManagementKind) -> ConfigTarget? {
         let targets = focusTargets(for: kind)
         if let selectedID = selectedFocusTargetID(for: kind),
@@ -2657,6 +2779,7 @@ final class AppModel: ObservableObject {
         return targets.first
     }
 
+    /// Timeline targets that can accept a submitted transcript.
     func transcriptionTimelineTargets(for kind: TranscriptionTimelineTargetKind) -> [ConfigTarget] {
         switch kind {
         case .space:
@@ -2670,10 +2793,12 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Selected transcript-submission target ID for a target kind.
     func selectedTranscriptionTimelineTargetID(for kind: TranscriptionTimelineTargetKind) -> String? {
         selectedTranscriptionTimelineTargetIDByKind[kind]
     }
 
+    /// Updates transcript-submission target selection.
     func setSelectedTranscriptionTimelineTargetID(_ id: String?, for kind: TranscriptionTimelineTargetKind) {
         var next = selectedTranscriptionTimelineTargetIDByKind
         if let id, !id.isEmpty {
@@ -2684,6 +2809,7 @@ final class AppModel: ObservableObject {
         selectedTranscriptionTimelineTargetIDByKind = next
     }
 
+    /// Selected transcript-submission target, falling back to the first valid target.
     func selectedTranscriptionTimelineTarget(for kind: TranscriptionTimelineTargetKind) -> ConfigTarget? {
         let targets = transcriptionTimelineTargets(for: kind)
         if let selectedID = selectedTranscriptionTimelineTargetID(for: kind),
@@ -2693,6 +2819,7 @@ final class AppModel: ObservableObject {
         return targets.first
     }
 
+    /// Persists the current transcript as timeline evidence and queues refresh.
     func submitCurrentTranscriptToTimeline() {
         guard !transcriptionTimelineSubmissionRunning else {
             return
@@ -2734,6 +2861,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Adds one candidate to a focus target file and queues affected refreshes.
     func addFocusTarget(_ candidate: ConfigTarget, to kind: FocusTargetManagementKind) {
         let mutationID = focusTargetMutationID(action: "add", target: candidate, kind: kind)
         guard targetManagementMutationID == nil else { return }
@@ -2765,6 +2893,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Removes one configured focus target and queues affected refreshes.
     func removeFocusTarget(_ target: ConfigTarget, from kind: FocusTargetManagementKind) {
         let mutationID = focusTargetMutationID(action: "remove", target: target, kind: kind)
         guard targetManagementMutationID == nil else { return }
@@ -2795,6 +2924,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Updates the Auto-Reply metadata on a person focus target.
     func setPersonFocusAutoReply(_ enabled: Bool, for target: ConfigTarget) {
         let mutationID = focusTargetMutationID(action: "auto-reply", target: target, kind: .personFocus)
         guard targetManagementMutationID == nil else { return }
@@ -2811,6 +2941,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Adds an iMessage handle to a person focus target.
     func addPersonIMessageHandle(to target: ConfigTarget) {
         let mutationID = focusTargetMutationID(action: "imessage-add", target: target, kind: .personFocus)
         guard targetManagementMutationID == nil else { return }
@@ -2839,6 +2970,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Removes an iMessage handle from a person focus target.
     func removePersonIMessageHandle(_ handle: String, from target: ConfigTarget) {
         let mutationID = focusTargetMutationID(action: "imessage-remove-\(handle)", target: target, kind: .personFocus)
         guard targetManagementMutationID == nil else { return }
@@ -2861,10 +2993,12 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Whether a specific target mutation button should show progress.
     func isTargetMutationRunning(action: String, target: ConfigTarget, kind: FocusTargetManagementKind) -> Bool {
         targetManagementMutationID == focusTargetMutationID(action: action, target: target, kind: kind)
     }
 
+    /// Reads target-management state from config files and candidate sources.
     private func reloadFocusTargetManagementState() {
         do {
             spaceFocusManagementTargets = try configStore.spaceFocusManagementTargets()
@@ -2884,6 +3018,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Keeps selected focus target valid after list reloads.
     private func ensureFocusTargetSelection(for kind: FocusTargetManagementKind) {
         let targets = focusTargets(for: kind)
         if let selectedID = selectedFocusTargetID(for: kind),
@@ -2893,10 +3028,12 @@ final class AppModel: ObservableObject {
         setSelectedFocusTargetID(targets.first?.id, for: kind)
     }
 
+    /// Stable ID for per-row target management actions.
     private func focusTargetMutationID(action: String, target: ConfigTarget, kind: FocusTargetManagementKind) -> String {
         "\(kind.rawValue):\(action):\(target.id)"
     }
 
+    /// Converts a submitted transcript into message/evidence rows.
     private func persistTranscriptionTimelineSubmission(
         kind: TranscriptionTimelineTargetKind,
         target: ConfigTarget,
@@ -3006,6 +3143,7 @@ final class AppModel: ObservableObject {
         return digest.prefix(8).map { String(format: "%02x", $0) }.joined()
     }
 
+    /// Marks affected refresh cadences stale after target changes.
     private func markFocusTargetRefreshDue(for kind: FocusTargetManagementKind) {
         switch kind {
         case .spaceFocus:
@@ -3024,6 +3162,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Queues a focused refresh after target changes.
     private func queueFocusTargetRefresh(for kind: FocusTargetManagementKind) {
         let plans: [RefreshPipelinePlan]
         switch kind {
@@ -3058,15 +3197,18 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Switches the active focus kind and ensures selection remains valid.
     func activateFocus(_ kind: FocusKind) {
         selectedFocusKind = kind
         ensureSelection(for: kind)
     }
 
+    /// Current search text for one focus kind.
     func searchText(for kind: FocusKind) -> String {
         searchTextByKind[kind, default: ""]
     }
 
+    /// Updates search text and repairs selection if filtering removes it.
     func setSearchText(_ text: String, for kind: FocusKind) {
         var next = searchTextByKind
         next[kind] = text
@@ -3074,10 +3216,12 @@ final class AppModel: ObservableObject {
         ensureSelection(for: kind)
     }
 
+    /// Current sort option for one focus kind.
     func sortOption(for kind: FocusKind) -> FocusSortOption {
         sortOptionByKind[kind, default: .latestMessage]
     }
 
+    /// Updates sort option and repairs selection.
     func setSortOption(_ option: FocusSortOption, for kind: FocusKind) {
         var next = sortOptionByKind
         next[kind] = option
@@ -3085,10 +3229,12 @@ final class AppModel: ObservableObject {
         ensureSelection(for: kind)
     }
 
+    /// Selected focus item ID for one focus kind.
     func selectedItemID(for kind: FocusKind) -> String? {
         selectedItemIDByKind[kind]
     }
 
+    /// Updates selected focus item ID for one focus kind.
     func setSelectedItemID(_ id: String?, for kind: FocusKind) {
         var next = selectedItemIDByKind
         if let id {
@@ -3099,20 +3245,24 @@ final class AppModel: ObservableObject {
         selectedItemIDByKind = next
     }
 
+    /// Whether the focus list has an active search query.
     func hasSearchQuery(for kind: FocusKind) -> Bool {
         !searchText(for: kind).trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    /// Number of expanded detail sections for one item.
     func expandedDetailSectionCount(for kind: FocusKind, itemID: String) -> Int {
         let key = detailItemKey(kind: kind, itemID: itemID)
         return expandedDetailSectionIDsByItemKey[key]?.count ?? 0
     }
 
+    /// Whether one detail section is expanded.
     func isDetailSectionExpanded(for kind: FocusKind, itemID: String, sectionID: String) -> Bool {
         let key = detailItemKey(kind: kind, itemID: itemID)
         return expandedDetailSectionIDsByItemKey[key]?.contains(sectionID) ?? false
     }
 
+    /// Updates expansion state for one detail section.
     func setDetailSectionExpanded(
         _ isExpanded: Bool,
         for kind: FocusKind,
@@ -3135,6 +3285,7 @@ final class AppModel: ObservableObject {
         expandedDetailSectionIDsByItemKey = next
     }
 
+    /// Expands or collapses every detail section for one item.
     func setAllDetailSectionsExpanded(
         _ isExpanded: Bool,
         for kind: FocusKind,
@@ -3151,6 +3302,7 @@ final class AppModel: ObservableObject {
         expandedDetailSectionIDsByItemKey = next
     }
 
+    /// Current cache for one focus kind.
     func cache(for kind: FocusKind) -> FocusCache {
         switch kind {
         case .space: return spaceCache
@@ -3158,6 +3310,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Search-filtered and sorted focus items.
     func filteredItems(for kind: FocusKind) -> [FocusItem] {
         let items = cache(for: kind).items
         let query = searchText(for: kind).trimmingCharacters(in: .whitespacesAndNewlines)
@@ -3170,6 +3323,7 @@ final class AppModel: ObservableObject {
         return sortItems(filteredItems, for: kind)
     }
 
+    /// Selected focus item, falling back to the first filtered item.
     func selectedItem(for kind: FocusKind) -> FocusItem? {
         let items = filteredItems(for: kind)
         if let selectedItemID = selectedItemID(for: kind),
@@ -3179,6 +3333,7 @@ final class AppModel: ObservableObject {
         return items.first
     }
 
+    /// Selectable belief targets for a scope.
     func beliefTargetOptions(for scope: KnowledgeBeliefScope) -> [BeliefTargetOption] {
         switch scope {
         case .global:
@@ -3208,16 +3363,19 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Current belief entity key for a scope.
     func selectedBeliefEntityKey(for scope: KnowledgeBeliefScope) -> String? {
         resolvedBeliefEntityKey(for: scope)
     }
 
+    /// Switches belief scope and applies any cached rows for it.
     func setBeliefScopeFilter(_ scope: KnowledgeBeliefScope) {
         beliefScopeFilter = scope
         ensureBeliefTargetSelection(for: scope)
         applyCachedBeliefsForCurrentSelection()
     }
 
+    /// Updates selected belief entity key within a scope.
     func setBeliefEntityKey(_ entityKey: String, for scope: KnowledgeBeliefScope) {
         var next = beliefEntityKeyByScope
         next[scope] = normalizedBeliefEntityKey(entityKey, scope: scope)
@@ -3225,10 +3383,12 @@ final class AppModel: ObservableObject {
         applyCachedBeliefsForCurrentSelection()
     }
 
+    /// Manual plus automatic beliefs in display order.
     func combinedBeliefs() -> [BeliefRecord] {
         manualBeliefs + automaticBeliefs
     }
 
+    /// Selected belief, falling back to the first combined belief.
     func selectedBelief() -> BeliefRecord? {
         guard let selectedBeliefID else {
             return combinedBeliefs().first
@@ -3236,19 +3396,23 @@ final class AppModel: ObservableObject {
         return combinedBeliefs().first(where: { $0.id == selectedBeliefID }) ?? combinedBeliefs().first
     }
 
+    /// Updates selected belief ID.
     func setSelectedBeliefID(_ id: String?) {
         selectedBeliefID = id
     }
 
+    /// Refresh status row for belief maintenance.
     func beliefMaintenanceStatus() -> RefreshRunStatus {
         refreshStatuses[.beliefMaintenance] ?? RefreshRunStatus(scope: .beliefMaintenance, isRunning: false)
     }
 
+    /// Opens a belief summary row in the scoped belief list.
     func selectBeliefSetSummary(_ summary: BeliefSetSummary) {
         setBeliefScopeFilter(summary.scope)
         setBeliefEntityKey(summary.entityKey, for: summary.scope)
     }
 
+    /// Runs belief reconciliation immediately and reloads belief views.
     func runBeliefMaintenanceNow() async {
         let startedAt = Self.iso8601Timestamp(Date())
         updateRefreshStatus(.beliefMaintenance) { status in
@@ -3280,6 +3444,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Refreshes cached belief-set summary counts.
     func refreshBeliefSetSummaries(force: Bool = false, showLoadingIndicator: Bool = true) async {
         let targets = beliefSummaryTargets()
         let targetFingerprint = beliefSummaryTargetFingerprint(targets)
@@ -3342,6 +3507,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Loads question candidates from the knowledge store.
     func loadQuestions() async {
         questionsIsLoading = true
         questionsLastError = nil
@@ -3357,6 +3523,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Rebuilds question candidates and reloads the visible list.
     func refreshQuestions() async {
         questionsIsLoading = true
         questionsLastError = nil
@@ -3374,6 +3541,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Selected question, falling back to the first candidate.
     func selectedQuestion() -> QuestionCandidate? {
         guard let selectedQuestionID else {
             return questionCandidates.first
@@ -3381,10 +3549,12 @@ final class AppModel: ObservableObject {
         return questionCandidates.first(where: { $0.id == selectedQuestionID }) ?? questionCandidates.first
     }
 
+    /// Updates selected question ID.
     func setSelectedQuestionID(_ id: String?) {
         selectedQuestionID = id
     }
 
+    /// Active questions scoped to a focus item.
     func questionCandidates(for kind: FocusKind, itemID: String, limit: Int = 5) -> [QuestionCandidate] {
         let scopeType: QuestionScopeType = kind == .person ? .person : .space
         let canonicalItemID = canonicalFocusScopeKey(itemID, kind: kind)
@@ -3405,6 +3575,7 @@ final class AppModel: ObservableObject {
         )
     }
 
+    /// Updates a question lifecycle state.
     func updateQuestionStatus(id: String, status: QuestionStatus) async {
         do {
             let expiresAt = status == .snoozed
@@ -3418,11 +3589,13 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Reloads question rows and repairs selection.
     private func loadQuestionsFromStore() throws {
         questionCandidates = try questionService.listQuestionCandidates(limit: 250)
         ensureQuestionSelection()
     }
 
+    /// Seeds questions when no Codex-generated questions are present.
     private func refreshQuestionsIfEmpty() async throws {
         let service = questionServiceForCurrentSettings()
         let existing = try service.listQuestionCandidates(limit: 250)
@@ -3436,6 +3609,7 @@ final class AppModel: ObservableObject {
         )
     }
 
+    /// Creates a question service respecting current Codex feature flags.
     private func questionServiceForCurrentSettings() -> QuestionCandidateService {
         let synthesizer: QuestionCandidateSynthesizing? = systemSettings.codexFeatureEnabled(.questionSynthesis)
             ? codexOrchestrationService
@@ -3446,6 +3620,7 @@ final class AppModel: ObservableObject {
         )
     }
 
+    /// Keeps selected question valid after list changes.
     private func ensureQuestionSelection() {
         guard let selectedQuestionID,
               questionCandidates.contains(where: { $0.id == selectedQuestionID }) else {
@@ -3454,6 +3629,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Refreshes manual/automatic beliefs for the selected scope/entity.
     func refreshBeliefs(force: Bool = false, showLoadingIndicator: Bool = true) async {
         guard let key = currentBeliefCacheKey() else {
             manualBeliefs = []
@@ -3513,6 +3689,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Adds a manual belief to the selected scope/entity.
     func addManualBelief(
         statement: String,
         confidence: Double,
@@ -3557,6 +3734,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Updates an existing manual belief in the selected store.
     func updateManualBelief(
         id: String,
         statement: String,
@@ -3594,6 +3772,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Deletes a manual belief and reloads the current belief set.
     func deleteManualBelief(id: String) async {
         do {
             try knowledgeStore.bootstrap()
@@ -3611,12 +3790,14 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Whether Ask Codex has enough input and context to run.
     var canRunAskCodex: Bool {
         guard !askCodexIsRunning else { return false }
         guard !askCodexQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
         return targetContext(for: askCodexTargetScope) != nil
     }
 
+    /// Warning text for unavailable scoped Ask Codex targets.
     func askCodexTargetWarning() -> String? {
         switch askCodexTargetScope {
         case .allTracked:
@@ -3628,6 +3809,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Preview context lines for the current Ask Codex scope.
     func askCodexContextPreviewLines() -> [String] {
         guard let context = targetContext(for: askCodexTargetScope) else {
             return []
@@ -3635,10 +3817,12 @@ final class AppModel: ObservableObject {
         return context.lines
     }
 
+    /// Current Ask Codex target title.
     func askCodexCurrentTargetTitle() -> String {
         targetContext(for: askCodexTargetScope)?.title ?? askCodexTargetScope.title
     }
 
+    /// Restores an Ask Codex history entry into the composer.
     func applyAskCodexQueryHistory(_ entry: AskCodexQueryHistoryEntry) {
         switch entry.targetScope {
         case .allTracked:
@@ -3660,10 +3844,12 @@ final class AppModel: ObservableObject {
         askCodexResult = nil
     }
 
+    /// Clears the Ask Codex prompt box.
     func clearAskCodexQuestion() {
         askCodexQuestion = ""
     }
 
+    /// Runs Codex over the selected local context and stores the result.
     func runAskCodex() async {
         guard !askCodexIsRunning else {
             return
@@ -3740,6 +3926,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Saves Ask Codex prompt history with duplicate collapse.
     private func recordAskCodexQuery(question: String, context: AskCodexTargetContext) {
         let entry = AskCodexQueryHistoryEntry(
             id: UUID().uuidString,
@@ -3765,6 +3952,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Keeps selected focus item valid after filter/cache changes.
     private func ensureSelection(for kind: FocusKind) {
         let items = filteredItems(for: kind)
         if let selectedItemID = selectedItemID(for: kind),
@@ -3774,10 +3962,12 @@ final class AppModel: ObservableObject {
         setSelectedItemID(items.first?.id, for: kind)
     }
 
+    /// Storage key for expanded detail sections by item.
     private func detailItemKey(kind: FocusKind, itemID: String) -> String {
         "\(kind.rawValue):\(itemID)"
     }
 
+    /// Normalizes old prefixed focus IDs before comparisons.
     private func canonicalFocusScopeKey(_ value: String, kind: FocusKind) -> String {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         switch kind {
@@ -3793,6 +3983,7 @@ final class AppModel: ObservableObject {
         return trimmed
     }
 
+    /// Drops expansion state for items no longer present in the cache.
     private func pruneDetailSectionExpansionState(for kind: FocusKind) {
         let validKeys = Set(cache(for: kind).items.map { detailItemKey(kind: kind, itemID: $0.id) })
         let prefix = "\(kind.rawValue):"
@@ -3807,6 +3998,7 @@ final class AppModel: ObservableObject {
         expandedDetailSectionIDsByItemKey = next
     }
 
+    /// Keeps belief target selection valid after cache changes.
     private func ensureBeliefTargetSelection(for scope: KnowledgeBeliefScope) {
         let options = beliefTargetOptions(for: scope)
         guard !options.isEmpty else {
@@ -3825,11 +4017,13 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Selected belief entity key after validation.
     private func resolvedBeliefEntityKey(for scope: KnowledgeBeliefScope) -> String? {
         ensureBeliefTargetSelection(for: scope)
         return beliefEntityKeyByScope[scope]
     }
 
+    /// Keeps selected belief valid after row changes.
     private func ensureBeliefSelection() {
         let availableIDs = Set(combinedBeliefs().map(\.id))
         guard let selectedBeliefID, availableIDs.contains(selectedBeliefID) else {
@@ -3838,6 +4032,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Current belief cache key, if a target is selected.
     private func currentBeliefCacheKey() -> BeliefCacheKey? {
         ensureBeliefTargetSelection(for: beliefScopeFilter)
         guard let entityKey = beliefEntityKeyByScope[beliefScopeFilter] else {
@@ -3849,6 +4044,7 @@ final class AppModel: ObservableObject {
         )
     }
 
+    /// Applies cached belief rows for the current selection when present.
     private func applyCachedBeliefsForCurrentSelection() {
         guard let key = currentBeliefCacheKey() else {
             manualBeliefs = []
@@ -3865,12 +4061,14 @@ final class AppModel: ObservableObject {
         applyBeliefCacheEntry(cached)
     }
 
+    /// Publishes cached manual/automatic rows.
     private func applyBeliefCacheEntry(_ cached: CachedBeliefSet) {
         manualBeliefs = cached.manualBeliefs
         automaticBeliefs = cached.automaticBeliefs
         ensureBeliefSelection()
     }
 
+    /// Invalidates one belief cache entry or all belief caches.
     private func invalidateBeliefCaches(for key: BeliefCacheKey? = nil) {
         if let key {
             beliefSetCache.removeValue(forKey: key)
@@ -3880,14 +4078,17 @@ final class AppModel: ObservableObject {
         cachedBeliefSetSummaries = nil
     }
 
+    /// Whether cached belief rows are still fresh enough for instant reuse.
     private func isBeliefCacheFresh(_ loadedAt: Date) -> Bool {
         Date().timeIntervalSince(loadedAt) < Self.beliefCacheFreshnessInterval
     }
 
+    /// Entity key used to load beliefs for a focus item.
     private func beliefEntityKey(for item: FocusItem, scope: KnowledgeBeliefScope) -> String {
         normalizedBeliefEntityKey(item.id, scope: scope)
     }
 
+    /// Canonical entity key per belief scope.
     private func normalizedBeliefEntityKey(_ entityKey: String, scope: KnowledgeBeliefScope) -> String {
         switch scope {
         case .global:
@@ -3899,6 +4100,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Targets included in the belief summary index.
     private func beliefSummaryTargets() -> [BeliefSummaryTarget] {
         var targets = [
             BeliefSummaryTarget(
@@ -3916,12 +4118,14 @@ final class AppModel: ObservableObject {
         return targets
     }
 
+    /// Fingerprint used to reuse belief summary cache entries.
     private func beliefSummaryTargetFingerprint(_ targets: [BeliefSummaryTarget]) -> String {
         targets
             .map { "\($0.scope.rawValue):\($0.entityKey):\($0.title)" }
             .joined(separator: "|")
     }
 
+    /// Sorts summary cards by scope priority and recency.
     private func sortedBeliefSetSummaries(_ summaries: [BeliefSetSummary]) -> [BeliefSetSummary] {
         summaries.sorted { left, right in
             let leftRank = Self.beliefScopeRank(left.scope)
@@ -3938,6 +4142,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Loads belief rows off the main actor.
     nonisolated private static func loadBeliefSet(
         configuration: RuntimeConfiguration,
         key: BeliefCacheKey
@@ -3953,6 +4158,7 @@ final class AppModel: ObservableObject {
         }.value
     }
 
+    /// Loads belief summary counts off the main actor.
     nonisolated private static func loadBeliefSetSummaries(
         configuration: RuntimeConfiguration,
         targets: [BeliefSummaryTarget]
@@ -3981,6 +4187,7 @@ final class AppModel: ObservableObject {
         }.value
     }
 
+    /// Builds one belief summary from the currently loaded knowledge store.
     private func makeBeliefSetSummary(
         scope: KnowledgeBeliefScope,
         entityKey: String,
@@ -4011,6 +4218,7 @@ final class AppModel: ObservableObject {
         )
     }
 
+    /// Resolves the Ask Codex context for the selected scope.
     private func targetContext(for scope: AskCodexTargetScope) -> AskCodexTargetContext? {
         switch scope {
         case .allTracked:
@@ -4087,6 +4295,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Context lines for one selected focus item plus scoped questions.
     private func askCodexSelectedItemContextLines(item: FocusItem, kind: FocusKind) -> [String] {
         var lines = askCodexItemContextLines(
             item: item,
@@ -4106,6 +4315,7 @@ final class AppModel: ObservableObject {
         return lines
     }
 
+    /// Converts one focus item into bounded prompt context.
     private func askCodexItemContextLines(
         item: FocusItem,
         kind: FocusKind,
@@ -4173,6 +4383,7 @@ final class AppModel: ObservableObject {
         return lines
     }
 
+    /// Question context for all tracked Ask Codex scope.
     private func askCodexQuestionContextLines(limit: Int) -> [String] {
         let questions = sortedAskCodexQuestionCandidates(questionCandidates)
             .prefix(limit)
@@ -4186,6 +4397,7 @@ final class AppModel: ObservableObject {
         return lines
     }
 
+    /// Question context for one selected focus item.
     private func askCodexQuestionContextLines(for kind: FocusKind, itemID: String, limit: Int) -> [String] {
         let questions = questionCandidates(for: kind, itemID: itemID, limit: limit)
         guard !questions.isEmpty else {
@@ -4198,6 +4410,7 @@ final class AppModel: ObservableObject {
         return lines
     }
 
+    /// Prompt lines for one question candidate.
     private func askCodexQuestionLines(_ question: QuestionCandidate) -> [String] {
         var lines = [
             "- \(question.scopeType.title): \(question.scopeLabel) — \(question.questionText)",
@@ -4215,6 +4428,7 @@ final class AppModel: ObservableObject {
         return lines
     }
 
+    /// Active Ask Codex questions sorted by priority.
     private func sortedAskCodexQuestionCandidates(_ candidates: [QuestionCandidate]) -> [QuestionCandidate] {
         candidates
             .filter { activeQuestionStatuses.contains($0.status) }
@@ -4226,6 +4440,7 @@ final class AppModel: ObservableObject {
             }
     }
 
+    /// Belief summary context for all-tracked Ask Codex scope.
     private func askCodexBeliefSummaryContextLines(limit: Int) -> [String] {
         let summaries = sortedBeliefSetSummaries(beliefSetSummaries).prefix(limit)
         guard !summaries.isEmpty else {
@@ -4238,6 +4453,7 @@ final class AppModel: ObservableObject {
         return lines
     }
 
+    /// Trims and bounds a list of prompt lines.
     private func limitedCleanLines(_ values: [String], limit: Int) -> [String] {
         values
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -4246,6 +4462,7 @@ final class AppModel: ObservableObject {
             .map { String($0) }
     }
 
+    /// Final Ask Codex prompt assembled from question and local context.
     private func askCodexPrompt(
         question: String,
         targetContext: AskCodexTargetContext,
@@ -4274,6 +4491,7 @@ final class AppModel: ObservableObject {
         """
     }
 
+    /// Job metadata and output locations for one Ask Codex run.
     private func askCodexJob(
         targetContext: AskCodexTargetContext,
         promptVersion: String,
@@ -4308,6 +4526,7 @@ final class AppModel: ObservableObject {
         return normalized.isEmpty ? "target" : normalized
     }
 
+    /// Rewrites space titles to configured labels when cache titles drift.
     private func canonicalizeSpaceTitles(_ cache: FocusCache) -> FocusCache {
         guard let targets = try? configStore.importantSpaces(),
               !targets.isEmpty else {
@@ -4377,6 +4596,7 @@ final class AppModel: ObservableObject {
         )
     }
 
+    /// Resolves the room ID from cache IDs or legacy detail lines.
     private func roomIDForSpaceItem(_ item: FocusItem) -> String {
         let trimmedID = item.id.trimmingCharacters(in: .whitespacesAndNewlines)
         if let range = trimmedID.range(of: "spacefocus:", options: [.anchored, .caseInsensitive]) {
@@ -4417,6 +4637,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Sorts visible focus items according to the current per-kind preference.
     private func sortItems(_ items: [FocusItem], for kind: FocusKind) -> [FocusItem] {
         switch sortOption(for: kind) {
         case .latestMessage:
@@ -4448,6 +4669,7 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Parses current and legacy timestamp formats emitted by runtime scripts.
     private func parsedTimestamp(_ value: String) -> Date? {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -4491,6 +4713,7 @@ final class AppModel: ObservableObject {
         return formatter
     }()
 
+    /// Marks runtime access failures and stops background work when permissions are denied.
     private func handleRuntimeAccessError(_ error: Error) {
         let message = error.localizedDescription
         errorMessage = message
@@ -4501,12 +4724,14 @@ final class AppModel: ObservableObject {
         stopBackgroundRefreshLoop()
     }
 
+    /// Stops background refresh after runtime access becomes unavailable.
     private func stopBackgroundRefreshLoop() {
         refreshLoopTask?.cancel()
         refreshLoopTask = nil
         backgroundRefreshActive = false
     }
 
+    /// Detects macOS/TCC-style filesystem permission failures.
     private func isRuntimeAccessDeniedError(_ message: String) -> Bool {
         let normalized = message.lowercased()
         return normalized.contains("authorization denied")

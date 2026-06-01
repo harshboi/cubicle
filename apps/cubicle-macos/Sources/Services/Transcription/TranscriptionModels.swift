@@ -1,5 +1,6 @@
 import Foundation
 
+/// Language/translation mode sent to the transcription backend.
 enum TranscriptionLanguageMode: String, CaseIterable, Identifiable, Codable, Hashable, Sendable {
     case englishToEnglish = "english_to_english"
     case japaneseToEnglish = "japanese_to_english"
@@ -27,6 +28,7 @@ enum TranscriptionLanguageMode: String, CaseIterable, Identifiable, Codable, Has
     }
 }
 
+/// UI-facing state for the live transcription session.
 enum TranscriptionConnectionStatus: Equatable, Sendable {
     case disabled
     case stopped
@@ -87,6 +89,7 @@ enum TranscriptionConnectionStatus: Equatable, Sendable {
     }
 }
 
+/// Session-start contract shared by settings, WebSocket codec, and capture runtime.
 struct TranscriptionSessionConfig: Codable, Equatable, Sendable {
     static let currentProtocolVersion = "transcription.v1"
     static let defaultSampleRate = 16_000
@@ -123,6 +126,7 @@ struct TranscriptionSessionConfig: Codable, Equatable, Sendable {
         case privacySafeDeviceID = "privacy_safe_device_id"
     }
 
+    /// Builds a backend config from current system settings.
     init(
         settings: SystemSettings,
         appVersion: String? = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
@@ -151,6 +155,7 @@ struct TranscriptionSessionConfig: Codable, Equatable, Sendable {
     }
 }
 
+/// One transcript span, partial or final, optionally attributed to a speaker.
 struct TranscriptSegment: Identifiable, Equatable, Sendable {
     var id: String
     var startTimeMilliseconds: Int
@@ -175,6 +180,7 @@ struct TranscriptSegment: Identifiable, Equatable, Sendable {
         return "Speaker \(speakerID)"
     }
 
+    /// Returns a final copy without mutating the original segment.
     func finalized() -> TranscriptSegment {
         var updated = self
         updated.isFinal = true
@@ -196,6 +202,7 @@ struct TranscriptSegment: Identifiable, Equatable, Sendable {
     }
 }
 
+/// Events emitted by the transcription backend over WebSocket.
 enum TranscriptionServerEvent: Equatable, Sendable {
     case sessionStarted(sessionID: String)
     case partialTranscript(TranscriptSegment)
@@ -207,6 +214,7 @@ enum TranscriptionServerEvent: Equatable, Sendable {
     case sessionStopped
 }
 
+/// Maintains final/partial transcript state from an event stream.
 struct TranscriptAggregator: Equatable, Sendable {
     private var finalizedSegments: [TranscriptSegment] = []
     private var partialSegmentsByID: [String: TranscriptSegment] = [:]
@@ -230,11 +238,13 @@ struct TranscriptAggregator: Equatable, Sendable {
         partialSegments.last?.text
     }
 
+    /// Clears all accumulated transcript state.
     mutating func reset() {
         finalizedSegments.removeAll()
         partialSegmentsByID.removeAll()
     }
 
+    /// Applies one backend event to the visible transcript model.
     mutating func apply(_ event: TranscriptionServerEvent) {
         switch event {
         case .partialTranscript(let segment):

@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Target-management screen for important people, spaces, and belief targets.
 struct FocusTargetManagementView: View {
     @EnvironmentObject private var model: AppModel
     let kind: FocusTargetManagementKind
@@ -165,6 +166,7 @@ struct FocusTargetManagementView: View {
     }
 }
 
+/// Detail pane for a selected configured target.
 struct FocusTargetDetailView: View {
     @EnvironmentObject private var model: AppModel
     let kind: FocusTargetManagementKind
@@ -280,6 +282,7 @@ struct FocusTargetDetailView: View {
     }
 }
 
+/// Header for one target-management mode.
 private struct FocusTargetHeader: View {
     let kind: FocusTargetManagementKind
 
@@ -309,6 +312,7 @@ private struct FocusTargetHeader: View {
     }
 }
 
+/// Metric strip for configured/candidate target counts.
 private struct FocusTargetMetricStrip: View {
     let currentCount: Int
     let candidateCount: Int
@@ -323,6 +327,7 @@ private struct FocusTargetMetricStrip: View {
     }
 }
 
+/// Small count tile for target-management metrics.
 private struct FocusTargetMetric: View {
     let value: String
     let label: String
@@ -346,6 +351,7 @@ private struct FocusTargetMetric: View {
     }
 }
 
+/// Framed panel used by target lists and candidate lists.
 private struct FocusTargetPanel<Content: View>: View {
     let title: String
     @ViewBuilder var content: Content
@@ -364,6 +370,7 @@ private struct FocusTargetPanel<Content: View>: View {
     }
 }
 
+/// Row for an already-configured target.
 private struct FocusTargetRow: View {
     let target: ConfigTarget
     let kind: FocusTargetManagementKind
@@ -427,6 +434,7 @@ private struct FocusTargetRow: View {
     }
 }
 
+/// Row for a candidate target discovered from source maps.
 private struct FocusCandidateRow: View {
     let target: ConfigTarget
     let kind: FocusTargetManagementKind
@@ -466,6 +474,7 @@ private struct FocusCandidateRow: View {
     }
 }
 
+/// Type badge for target rows.
 private struct FocusTargetBadge: View {
     let text: String
 
@@ -479,6 +488,7 @@ private struct FocusTargetBadge: View {
     }
 }
 
+/// Header card for the selected target detail pane.
 private struct FocusTargetDetailHeader: View {
     let target: ConfigTarget
     let kind: FocusTargetManagementKind
@@ -501,6 +511,7 @@ private struct FocusTargetDetailHeader: View {
     }
 }
 
+/// Row for one configured iMessage handle.
 private struct FocusTargetHandleRow: View {
     let handle: String
     let isRemoving: Bool
@@ -531,6 +542,7 @@ private struct FocusTargetHandleRow: View {
     }
 }
 
+/// Source metadata row for the selected target.
 private struct FocusTargetSourceRow: View {
     let title: String
     let value: String
@@ -561,6 +573,7 @@ private struct FocusTargetSourceRow: View {
     }
 }
 
+/// Status/error banner used in target management.
 private struct FocusTargetBanner: View {
     let text: String
     let symbolName: String
@@ -580,6 +593,7 @@ private struct FocusTargetBanner: View {
     }
 }
 
+/// Empty state for target-management panels.
 private struct FocusTargetEmptyState: View {
     let symbolName: String
     let title: String
@@ -602,6 +616,7 @@ private struct FocusTargetEmptyState: View {
     }
 }
 
+/// Presentation helpers for configured targets.
 private extension ConfigTarget {
     var focusTargetSubtitle: String {
         var parts: [String] = []
@@ -628,6 +643,7 @@ private extension ConfigTarget {
     }
 }
 
+/// Copy helpers for each target-management mode.
 private extension FocusTargetManagementKind {
     var entitySingular: String {
         switch self {

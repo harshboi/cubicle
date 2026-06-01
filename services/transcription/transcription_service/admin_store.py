@@ -1,3 +1,5 @@
+"""DynamoDB-backed admin usage and audio-tuning stores."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -6,11 +8,15 @@ from typing import Any, Protocol
 
 
 class AdminStoreError(RuntimeError):
+    """Admin persistence contract violation or backend operation failure."""
+
     pass
 
 
 @dataclass(frozen=True)
 class AdminAudioTuningConfig:
+    """Server-side audio normalization knobs shared by ASR runtimes."""
+
     target_rms: float = 0.20
     rms_floor: float = 0.008
     max_gain: float = 24.0
@@ -21,6 +27,8 @@ class AdminAudioTuningConfig:
 
 @dataclass(frozen=True)
 class AdminUserRecord:
+    """Transcription account record managed from the admin console."""
+
     email: str
     display_name: str | None = None
     role: str = "transcription_user"
@@ -32,6 +40,8 @@ class AdminUserRecord:
 
 @dataclass(frozen=True)
 class AdminTokenRecord:
+    """Issued-token ledger row used for revocation and usage joins."""
+
     user_email: str
     token_id: str
     status: str = "active"
@@ -44,6 +54,8 @@ class AdminTokenRecord:
 
 @dataclass(frozen=True)
 class AdminUsageSummary:
+    """Aggregated usage counters shown by the admin console."""
+
     email: str
     session_count: int = 0
     total_audio_bytes: int = 0
@@ -55,11 +67,15 @@ class AdminUsageSummary:
 
     @property
     def total_audio_minutes(self) -> float:
+        """Return audio duration in billing/operator-friendly units."""
+
         return self.total_audio_ms / 60_000
 
 
 @dataclass(frozen=True)
 class AdminUsageEvent:
+    """Per-session usage row written after a transcription session stops."""
+
     email: str
     session_id: str
     token_id: str | None = None
@@ -75,6 +91,8 @@ class AdminUsageEvent:
 
 @dataclass(frozen=True)
 class AdminHistoryEvent:
+    """Append-only admin action record for audit views."""
+
     event_id: str
     event_type: str
     email: str
@@ -86,7 +104,11 @@ class AdminHistoryEvent:
 
 
 class AdminStore(Protocol):
+    """Storage boundary for admin users, tokens, usage, history, and tuning."""
+
     def list_users(self) -> list[AdminUserRecord]:
+        """Return all managed transcription users in display order."""
+
         ...
 
     def add_user(
@@ -97,9 +119,13 @@ class AdminStore(Protocol):
         role: str = "transcription_user",
         notes: str | None = None,
     ) -> AdminUserRecord:
+        """Create or reactivate a user without issuing credentials."""
+
         ...
 
     def disable_user(self, *, email: str) -> AdminUserRecord:
+        """Mark a user inactive while leaving usage history available."""
+
         ...
 
     def revoke_all_tokens(
@@ -108,9 +134,13 @@ class AdminStore(Protocol):
         email: str,
         reason: str | None = None,
     ) -> list[AdminTokenRecord]:
+        """Revoke every active token for a user as one admin action."""
+
         ...
 
     def delete_user(self, *, email: str, delete_usage: bool = True) -> None:
+        """Remove a user and tokens; optionally scrub usage metadata."""
+
         ...
 
     def record_issued_token(
@@ -122,6 +152,8 @@ class AdminStore(Protocol):
         issued_at: str,
         expires_at: str,
     ) -> AdminTokenRecord:
+        """Persist a token id before the signed bearer token is returned."""
+
         ...
 
     def revoke_token(
@@ -131,31 +163,49 @@ class AdminStore(Protocol):
         token_id: str,
         reason: str | None = None,
     ) -> AdminTokenRecord:
+        """Mark one token unusable while keeping ledger metadata."""
+
         ...
 
     def list_tokens(self, *, email: str) -> list[AdminTokenRecord]:
+        """Return token ledger rows for one user, newest first."""
+
         ...
 
     def usage_summary(self, *, email: str) -> AdminUsageSummary:
+        """Aggregate stored usage and token state for one user."""
+
         ...
 
     def record_usage_event(self, event: AdminUsageEvent) -> None:
+        """Persist a completed-session usage event if the backend supports it."""
+
         ...
 
     def record_history_event(self, event: AdminHistoryEvent) -> None:
+        """Append an operator-facing audit event."""
+
         ...
 
     def list_history_events(self, *, limit: int = 100) -> list[AdminHistoryEvent]:
+        """Return recent admin audit events newest first."""
+
         ...
 
     def get_audio_tuning_config(self) -> AdminAudioTuningConfig | None:
+        """Load the active audio tuning config, if one was saved."""
+
         ...
 
     def save_audio_tuning_config(self, config: AdminAudioTuningConfig) -> AdminAudioTuningConfig:
+        """Normalize and persist the active audio tuning config."""
+
         ...
 
 
 class InMemoryAdminStore:
+    """Process-local admin store for development and tests."""
+
     def __init__(self) -> None:
         self._users: dict[str, AdminUserRecord] = {}
         self._tokens: dict[tuple[str, str], AdminTokenRecord] = {}
@@ -340,6 +390,8 @@ class InMemoryAdminStore:
 
 
 class DynamoDBAdminStore:
+    """DynamoDB admin store using user, token-ledger, and optional audit tables."""
+
     def __init__(
         self,
         *,
@@ -719,6 +771,8 @@ class DynamoDBAdminStore:
 
 
 class DynamoDBAudioTuningStore:
+    """Small DynamoDB-backed tuning store for runtimes that only need config reads."""
+
     def __init__(self, *, client: Any, table_name: str) -> None:
         if not table_name:
             raise AdminStoreError("audio tuning table name is required")

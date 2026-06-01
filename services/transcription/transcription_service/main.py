@@ -1,3 +1,5 @@
+"""Command-line entry point for the transcription FastAPI service."""
+
 from __future__ import annotations
 
 import logging

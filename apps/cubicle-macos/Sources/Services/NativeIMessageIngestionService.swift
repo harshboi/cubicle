@@ -1,6 +1,7 @@
 import Foundation
 import SQLite3
 
+/// Normalized iMessage row used as person-focus evidence.
 struct IMessageTimelineMessage: Hashable {
     var id: String
     var threadID: String
@@ -13,7 +14,9 @@ struct IMessageTimelineMessage: Hashable {
     var isFromMe: Bool
 }
 
+/// Narrow iMessage ingestion boundary used by Webex/person timeline assembly.
 protocol NativeIMessageIngesting {
+    /// Loads messages for matching handles from the local Messages database.
     func loadMessages(
         matching handles: [String],
         displayName: String,
@@ -22,7 +25,9 @@ protocol NativeIMessageIngesting {
     ) throws -> [IMessageTimelineMessage]
 }
 
+/// Normalizes email/phone handles to match Apple's Messages storage variants.
 enum IMessageHandleNormalizer {
+    /// Canonical value used for config persistence and direct matching.
     static func normalizedStorageValue(_ value: String) -> String? {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
@@ -44,6 +49,7 @@ enum IMessageHandleNormalizer {
         return trimmed
     }
 
+    /// Matching keys that cover phone/email formats seen in `chat.db`.
     static func matchKeys(_ value: String) -> Set<String> {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return [] }
@@ -67,6 +73,7 @@ enum IMessageHandleNormalizer {
     }
 }
 
+/// SQLite access failures for the local Messages database.
 enum NativeIMessageIngestionError: LocalizedError {
     case databaseUnavailable(URL)
     case openFailed(URL, String)
@@ -87,6 +94,7 @@ enum NativeIMessageIngestionError: LocalizedError {
     }
 }
 
+/// Reads the user's local `~/Library/Messages/chat.db` without mutating it.
 final class NativeIMessageIngestionService: NativeIMessageIngesting {
     private let chatDatabaseURL: URL
     private let fileManager: FileManager
@@ -96,12 +104,14 @@ final class NativeIMessageIngestionService: NativeIMessageIngesting {
         return formatter
     }()
 
+    /// Allows tests to point at a fixture database instead of the user's chat DB.
     init(chatDatabaseURL: URL? = nil, fileManager: FileManager = .default) {
         self.chatDatabaseURL = chatDatabaseURL ?? URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
             .appendingPathComponent("Library/Messages/chat.db")
         self.fileManager = fileManager
     }
 
+    /// Loads recent timeline messages for configured handles.
     func loadMessages(
         matching handles: [String],
         displayName: String,
@@ -145,11 +155,13 @@ final class NativeIMessageIngestionService: NativeIMessageIngesting {
         }
     }
 
+    /// Internal handle row matched from Apple Messages tables.
     private struct MatchedHandle {
         var rowID: Int64
         var handle: String
     }
 
+    /// Scans handles because normalized phone/email variants are not indexed uniformly.
     private func matchingHandles(matchKeys: Set<String>, db: OpaquePointer) throws -> [MatchedHandle] {
         let sql = "SELECT ROWID, COALESCE(id, '') FROM handle;"
         return try withPreparedStatement(db: db, sql: sql) { statement in
@@ -464,6 +476,7 @@ final class NativeIMessageIngestionService: NativeIMessageIngesting {
     }
 }
 
+/// Converts Apple Messages timestamps across nanosecond/second-era schemas.
 private enum IMessageDateScale {
     case seconds
     case milliseconds

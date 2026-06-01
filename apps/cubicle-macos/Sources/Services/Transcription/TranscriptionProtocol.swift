@@ -1,5 +1,6 @@
 import Foundation
 
+/// Protocol/codec failures for the transcription WebSocket contract.
 enum TranscriptionProtocolError: LocalizedError {
     case invalidEndpoint(String)
     case emptyEndpoint
@@ -41,12 +42,15 @@ enum TranscriptionProtocolError: LocalizedError {
     }
 }
 
+/// Transport-neutral WebSocket message wrapper.
 enum TranscriptionWebSocketMessage: Equatable, Sendable {
     case text(String)
     case data(Data)
 }
 
+/// Encodes client commands and decodes backend transcription events.
 struct TranscriptionProtocolCodec: Sendable {
+    /// Validates a raw endpoint before WebSocket connection.
     func endpointURL(from rawEndpoint: String) throws -> URL {
         let trimmed = rawEndpoint.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -64,6 +68,7 @@ struct TranscriptionProtocolCodec: Sendable {
         return url
     }
 
+    /// Encodes the `start_session` command expected before audio streaming.
     func encodeStartSession(_ config: TranscriptionSessionConfig) throws -> String {
         var payload: [String: Any] = [
             "type": "start_session",
@@ -86,6 +91,7 @@ struct TranscriptionProtocolCodec: Sendable {
         return try encodeJSONObject(payload)
     }
 
+    /// Builds optional bearer-token headers for the WebSocket handshake.
     func authorizationHeaders(for config: TranscriptionSessionConfig) -> [String: String] {
         guard let authToken = clean(config.authToken) else {
             return [:]
@@ -93,6 +99,7 @@ struct TranscriptionProtocolCodec: Sendable {
         return ["Authorization": "Bearer \(authToken)"]
     }
 
+    /// Encodes the graceful stop command for the active session.
     func encodeStopSession(sessionID: String) throws -> String {
         try encodeJSONObject([
             "type": "stop_session",
@@ -106,6 +113,7 @@ struct TranscriptionProtocolCodec: Sendable {
         data
     }
 
+    /// Decodes one transport message into a typed server event.
     func decodeServerEvent(from message: TranscriptionWebSocketMessage) throws -> TranscriptionServerEvent {
         switch message {
         case .text(let text):

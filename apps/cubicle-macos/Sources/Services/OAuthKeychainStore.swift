@@ -2,13 +2,16 @@ import Foundation
 import LocalAuthentication
 import Security
 
+/// Keychain access wrapper for OAuth and transcription secrets.
 struct OAuthKeychainStore {
     private let serviceName = "com.cubicle.oauth"
 
+    /// Loads an OAuth access token by provider.
     func loadAccessToken(provider: OAuthProviderKind, allowUserInteraction: Bool = false) -> String? {
         loadSecret(account: accountName(for: provider), allowUserInteraction: allowUserInteraction)
     }
 
+    /// Loads a raw secret by Keychain account name.
     func loadSecret(account: String, allowUserInteraction: Bool = true) -> String? {
         var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -36,6 +39,7 @@ struct OAuthKeychainStore {
         return value
     }
 
+    /// Checks for a secret without returning its value.
     func secretExists(account: String) -> Bool {
         let context = LAContext()
         context.interactionNotAllowed = true
@@ -51,10 +55,12 @@ struct OAuthKeychainStore {
         return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
     }
 
+    /// Saves an OAuth access token under the provider account.
     func saveAccessToken(_ token: String, provider: OAuthProviderKind) throws {
         try saveSecret(token, account: accountName(for: provider), description: "OAuth token")
     }
 
+    /// Saves a raw secret under a Keychain account name.
     func saveSecret(_ token: String, account: String, description: String = "secret") throws {
         let normalized = token.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalized.isEmpty else {
@@ -95,10 +101,12 @@ struct OAuthKeychainStore {
         }
     }
 
+    /// Deletes an OAuth access token by provider.
     func deleteAccessToken(provider: OAuthProviderKind) throws {
         try deleteSecret(account: accountName(for: provider), description: "OAuth token")
     }
 
+    /// Deletes a raw secret by Keychain account name.
     func deleteSecret(account: String, description: String = "secret") throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,

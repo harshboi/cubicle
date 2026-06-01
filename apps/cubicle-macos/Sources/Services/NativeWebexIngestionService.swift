@@ -1,5 +1,6 @@
 import Foundation
 
+/// Per-room sync result used for progress, summaries, and live snapshot badges.
 struct WebexRoomSyncResult: Hashable {
     var roomID: String
     var title: String
@@ -14,6 +15,7 @@ struct WebexRoomSyncResult: Hashable {
     var unchanged: Bool = false
 }
 
+/// Aggregate result for a Webex target sync run.
 struct WebexSyncOutcome: Hashable {
     var startedAt: String
     var completedAt: String
@@ -32,11 +34,13 @@ struct WebexSyncOutcome: Hashable {
     }
 }
 
+/// Webex sync breadth selected by refresh orchestration.
 enum WebexSyncMode: Hashable {
     case full
     case incremental
 }
 
+/// Result for regenerating the Webex target lookup map.
 struct WebexMapRefreshOutcome: Hashable {
     var mapFileURL: URL
     var rooms: Int
@@ -49,6 +53,7 @@ struct WebexMapRefreshOutcome: Hashable {
     }
 }
 
+/// Progress event emitted while tracked conversations are syncing.
 struct WebexSyncProgress: Hashable {
     var completedRooms: Int
     var totalRooms: Int
@@ -70,12 +75,14 @@ struct WebexSyncProgress: Hashable {
     }
 }
 
+/// Resolved room target with all config roles that point at that room.
 private struct TrackedRoomTarget {
     var roomID: String
     var label: String
     var kinds: Set<ConfigTarget.Kind>
 }
 
+/// Tab-separated map row written for target picking and config bootstrap.
 private struct WebexMapEntry: Hashable {
     var kind: String
     var label: String
@@ -85,21 +92,25 @@ private struct WebexMapEntry: Hashable {
     var personDisplayName: String = ""
 }
 
+/// Optional room-list snapshot used to skip unchanged incremental syncs.
 private struct TrackedRoomActivityProbe {
     var roomsByID: [String: WebexRoom]
     var usedLiveRoomList: Bool
 }
 
+/// Legacy room-based sync plan retained for direct room refresh helpers.
 private struct RoomSyncPlan {
     var roomsToSync: [TrackedRoomTarget]
     var unchangedResults: [WebexRoomSyncResult]
 }
 
+/// Conversation sync plan after backoff and polling-mode gates.
 private struct ConversationSyncPlan {
     var conversationsToSync: [WebexTrackedConversation]
     var precomputedResults: [WebexConversationSyncResult]
 }
 
+/// Unified person timeline event across Webex and iMessage.
 private struct PersonTimelineEvent {
     var id: String
     var source: String
@@ -110,6 +121,7 @@ private struct PersonTimelineEvent {
     var body: String
 }
 
+/// Ingestion failures that are local to Webex sync orchestration.
 private enum NativeWebexIngestionError: LocalizedError {
     case webexSyncDisabled
 
@@ -121,6 +133,7 @@ private enum NativeWebexIngestionError: LocalizedError {
     }
 }
 
+/// Coordinates Webex ingestion, iMessage timeline enrichment, and live focus snapshots.
 final class NativeWebexIngestionService {
     let configuration: RuntimeConfiguration
     let configStore: ConfigStore
@@ -130,6 +143,7 @@ final class NativeWebexIngestionService {
 
     private let encoder: JSONEncoder
 
+    /// Wires ingestion dependencies; tests can inject stores/clients independently.
     init(
         configuration: RuntimeConfiguration = .current,
         configStore: ConfigStore? = nil,
@@ -146,6 +160,7 @@ final class NativeWebexIngestionService {
         self.encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     }
 
+    /// Writes the local Webex map file used to configure important people/spaces.
     func refreshMapFile() async throws -> WebexMapRefreshOutcome {
         let rooms = try await webexClient.rooms()
         guard webexSyncEnabled() else {
@@ -201,6 +216,7 @@ final class NativeWebexIngestionService {
         )
     }
 
+    /// Syncs configured targets and writes native live focus snapshots after completion.
     func syncTrackedTargets(
         messageLimitPerRoom: Int = 150,
         mode: WebexSyncMode = .full,
@@ -415,6 +431,7 @@ final class NativeWebexIngestionService {
         )
     }
 
+    /// Applies persisted backoff/polling gates before API calls are made.
     private func planConversationsForSync(
         _ conversations: [WebexTrackedConversation],
         trigger: WebexSyncTriggerReason
@@ -581,6 +598,7 @@ final class NativeWebexIngestionService {
         )
     }
 
+    /// Builds the adaptive polling engine with self-message filtering.
     private func makeSyncEngine() async -> WebexSyncEngine {
         // Cubicle runs as a local macOS app, so we keep adaptive REST polling as the
         // production sync path. Webex webhooks require a stable public HTTPS target URL.
@@ -614,6 +632,7 @@ final class NativeWebexIngestionService {
         )
     }
 
+    /// Converts current config targets into unique sync-engine conversations.
     private func trackedConversations(
         roomTargets: [TrackedRoomTarget],
         personTargets: [ConfigTarget],
@@ -693,6 +712,7 @@ final class NativeWebexIngestionService {
         }
     }
 
+    /// Uses Webex room activity as a cheap unchanged-room probe for incremental runs.
     private func trackedRoomActivityProbe(
         for targets: [TrackedRoomTarget],
         mode: WebexSyncMode,
@@ -737,6 +757,7 @@ final class NativeWebexIngestionService {
         }
     }
 
+    /// Plans legacy room syncs by comparing remote activity with local latest messages.
     private func roomSyncPlan(
         for targets: [TrackedRoomTarget],
         roomsByID: [String: WebexRoom],
@@ -784,6 +805,7 @@ final class NativeWebexIngestionService {
         return RoomSyncPlan(roomsToSync: roomsToSync, unchangedResults: unchangedResults)
     }
 
+    /// Legacy direct room sync path retained for compatibility with older tests/callers.
     private func syncRoomTarget(_ target: TrackedRoomTarget, messageLimit: Int) async throws -> WebexRoomSyncResult {
         let roomID = normalizedRoomID(target.roomID)
         guard !roomID.isEmpty else {
@@ -989,6 +1011,7 @@ final class NativeWebexIngestionService {
         .joined(separator: "\t")
     }
 
+    /// Writes native live snapshots consumed by the runtime store, not canonical Pine output.
     private func writeFocusSnapshots(
         spaceTargets: [ConfigTarget],
         personTargets: [ConfigTarget],
@@ -1035,6 +1058,7 @@ final class NativeWebexIngestionService {
             .write(to: nativeDirectory.appendingPathComponent("live_\(FocusKind.person.snapshotFilename(days: settings.personFocusDays))"), options: [.atomic])
     }
 
+    /// Builds the live Webex-backed cache for configured spaces.
     private func makeSpaceFocusCache(
         targets: [ConfigTarget],
         roomTitlesByID: [String: String],
@@ -1097,6 +1121,7 @@ final class NativeWebexIngestionService {
         )
     }
 
+    /// Builds the live person cache from Webex messages plus optional iMessage events.
     func makePersonFocusCache(
         targets: [ConfigTarget],
         trackedRoomIDs: [String],
@@ -1212,6 +1237,7 @@ final class NativeWebexIngestionService {
         )
     }
 
+    /// Loads iMessage evidence without failing the broader person-focus snapshot.
     private func loadIMessageTimeline(
         target: ConfigTarget,
         title: String,
@@ -1233,6 +1259,7 @@ final class NativeWebexIngestionService {
         }
     }
 
+    /// Merges Webex and iMessage evidence into one recency-sorted timeline.
     private func personTimelineEvents(
         webexMessages: [MessageRecord],
         iMessages: [IMessageTimelineMessage],

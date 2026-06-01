@@ -1,24 +1,29 @@
 import Foundation
 
+/// Provenance for one configured target line/entry.
 struct ConfigTargetSourceMetadata: Hashable {
     var fileName: String
     var lineNumber: Int?
     var entryKey: String
     var parseMode: String
 
+    /// Stable fallback ID when a target lacks room/email identity.
     var deterministicID: String {
         let lineSegment = lineNumber.map(String.init) ?? "na"
         return "\(fileName)#\(lineSegment):\(entryKey):\(parseMode)"
     }
 }
 
+/// Person/space target loaded from operator config files or Webex map data.
 struct ConfigTarget: Identifiable, Hashable {
+    /// Target category used by focus and belief flows.
     enum Kind: String {
         case person
         case space
         case unknown
     }
 
+    /// Stable identity derived from room ID, email, or normalized label.
     var id: String {
         let normalizedRoomID = Self.normalizeRoomID(roomID)
         if !normalizedRoomID.isEmpty {
@@ -61,6 +66,7 @@ struct ConfigTarget: Identifiable, Hashable {
     }
 }
 
+/// Persisted settings keys used by Settings UI and refresh orchestration.
 enum SystemSettingKey: String, CaseIterable, Hashable {
     case debug = "debug"
     case backgroundStatus = "background_status"
@@ -94,6 +100,7 @@ enum SystemSettingKey: String, CaseIterable, Hashable {
     case pollSeconds = "poll_seconds"
 }
 
+/// Fine-grained Codex feature flag under the global Codex switch.
 enum CodexFeatureToggle: String, CaseIterable, Identifiable, Hashable {
     case askCodex
     case questionSynthesis
@@ -105,6 +112,7 @@ enum CodexFeatureToggle: String, CaseIterable, Identifiable, Hashable {
 
     var id: String { rawValue }
 
+    /// Backing settings key for this feature toggle.
     var settingKey: SystemSettingKey {
         switch self {
         case .askCodex:
@@ -124,6 +132,7 @@ enum CodexFeatureToggle: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// User-facing feature name.
     var displayName: String {
         switch self {
         case .askCodex:
@@ -143,6 +152,7 @@ enum CodexFeatureToggle: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// Settings row subtitle.
     var settingsSubtitle: String {
         switch self {
         case .askCodex:
@@ -162,6 +172,7 @@ enum CodexFeatureToggle: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// SF Symbol for this feature.
     var symbolName: String {
         switch self {
         case .askCodex:
@@ -182,6 +193,7 @@ enum CodexFeatureToggle: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
+/// Codex model option persisted in settings.
 enum CodexModelSelection: String, CaseIterable, Identifiable {
     case gpt55 = "gpt-5.5"
     case gpt54 = "gpt-5.4"
@@ -192,6 +204,7 @@ enum CodexModelSelection: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// User-facing model label.
     var displayName: String {
         switch self {
         case .gpt55:
@@ -209,6 +222,7 @@ enum CodexModelSelection: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Parses persisted model values with current default fallback.
     static func normalized(_ rawValue: String?) -> CodexModelSelection {
         guard let rawValue = rawValue?.trimmingCharacters(in: .whitespacesAndNewlines),
               let value = CodexModelSelection(rawValue: rawValue) else {
@@ -218,6 +232,7 @@ enum CodexModelSelection: String, CaseIterable, Identifiable {
     }
 }
 
+/// Codex reasoning level persisted in settings.
 enum CodexReasoningLevel: String, CaseIterable, Identifiable {
     case low
     case medium
@@ -226,6 +241,7 @@ enum CodexReasoningLevel: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// User-facing reasoning label.
     var displayName: String {
         switch self {
         case .low:
@@ -239,6 +255,7 @@ enum CodexReasoningLevel: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Parses persisted reasoning values with current default fallback.
     static func normalized(_ rawValue: String?) -> CodexReasoningLevel {
         guard let rawValue = rawValue?.trimmingCharacters(in: .whitespacesAndNewlines),
               let value = CodexReasoningLevel(rawValue: rawValue) else {
@@ -248,6 +265,7 @@ enum CodexReasoningLevel: String, CaseIterable, Identifiable {
     }
 }
 
+/// Persisted app settings plus secure in-memory fields.
 struct SystemSettings: Equatable {
     static let persistedVersion = 8
     static let focusDaysBounds = 7...90
@@ -288,6 +306,7 @@ struct SystemSettings: Equatable {
     var pollSeconds: Int = 300
     var updatedAt: Date?
 
+    /// Reads a boolean setting by key.
     func boolValue(for key: SystemSettingKey) -> Bool {
         switch key {
         case .debug:
@@ -339,6 +358,7 @@ struct SystemSettings: Equatable {
         }
     }
 
+    /// Reads an integer setting by key.
     func intValue(for key: SystemSettingKey) -> Int {
         switch key {
         case .webexSyncMinutes:
@@ -387,6 +407,7 @@ struct SystemSettings: Equatable {
         }
     }
 
+    /// Reads a string-backed setting by key.
     func stringValue(for key: SystemSettingKey) -> String {
         switch key {
         case .codexModel:
@@ -427,6 +448,7 @@ struct SystemSettings: Equatable {
         }
     }
 
+    /// Mutates a boolean setting by key.
     mutating func setBool(_ value: Bool, for key: SystemSettingKey) {
         switch key {
         case .debug:
@@ -478,6 +500,7 @@ struct SystemSettings: Equatable {
         }
     }
 
+    /// Mutates a string-backed setting by key.
     mutating func setString(_ value: String, for key: SystemSettingKey) {
         switch key {
         case .codexModel:
@@ -518,6 +541,7 @@ struct SystemSettings: Equatable {
         }
     }
 
+    /// Mutates an integer setting by key and keeps linked legacy fields in sync.
     mutating func setInt(_ value: Int, for key: SystemSettingKey) {
         switch key {
         case .webexSyncMinutes:
@@ -568,15 +592,18 @@ struct SystemSettings: Equatable {
         }
     }
 
+    /// Applies the global Codex switch plus feature-specific toggle.
     func codexFeatureEnabled(_ feature: CodexFeatureToggle) -> Bool {
         codexEnabled && boolValue(for: feature.settingKey)
     }
 
+    /// Clamps a persisted or user-edited integer setting.
     static func clamped(_ value: Int, to bounds: ClosedRange<Int>) -> Int {
         min(max(value, bounds.lowerBound), bounds.upperBound)
     }
 }
 
+/// Config parsing and persistence errors surfaced to UI actions.
 enum ConfigStoreError: LocalizedError {
     case oauthSettingsPayloadUnreadable(URL, Error)
     case oauthSettingsPayloadInvalidJSON(URL, Error)
@@ -625,12 +652,14 @@ enum ConfigStoreError: LocalizedError {
     }
 }
 
+/// OAuth providers supported by local setup.
 enum OAuthProviderKind: String, CaseIterable, Identifiable {
     case webex
     case outlook
 
     var id: String { rawValue }
 
+    /// User-facing provider name.
     var displayName: String {
         switch self {
         case .webex:
@@ -642,6 +671,7 @@ enum OAuthProviderKind: String, CaseIterable, Identifiable {
 }
 
 extension OAuthProviderKind {
+    /// Config JSON sections accepted for this provider.
     var oauthSettingsSectionNames: [String] {
         switch self {
         case .webex:
@@ -651,6 +681,7 @@ extension OAuthProviderKind {
         }
     }
 
+    /// Environment variable names accepted for client ID.
     var oauthClientIDSettingKeys: [String] {
         switch self {
         case .webex:
@@ -660,6 +691,7 @@ extension OAuthProviderKind {
         }
     }
 
+    /// Environment variable names accepted for client secret.
     var oauthClientSecretSettingKeys: [String] {
         switch self {
         case .webex:
@@ -669,6 +701,7 @@ extension OAuthProviderKind {
         }
     }
 
+    /// Environment variable names accepted for redirect URI.
     var oauthRedirectURISettingKeys: [String] {
         switch self {
         case .webex:
@@ -678,6 +711,7 @@ extension OAuthProviderKind {
         }
     }
 
+    /// Environment variable names accepted for OAuth scope.
     var oauthScopeSettingKeys: [String] {
         switch self {
         case .webex:
@@ -687,6 +721,7 @@ extension OAuthProviderKind {
         }
     }
 
+    /// Environment variable names accepted for tenant selection.
     var oauthTenantSettingKeys: [String] {
         switch self {
         case .webex:
@@ -697,6 +732,7 @@ extension OAuthProviderKind {
     }
 }
 
+/// OAuth app configuration loaded from oauth-settings.json.
 struct OAuthAppSettings: Equatable {
     var sourceFile: URL?
     var clientID: String?
@@ -706,6 +742,7 @@ struct OAuthAppSettings: Equatable {
     var tenant: String?
 }
 
+/// Parsed OAuth token file with computed expiry metadata.
 struct OAuthTokenRecord: Equatable {
     var sourceFile: URL
     var accessToken: String
@@ -720,27 +757,32 @@ struct OAuthTokenRecord: Equatable {
     var hasAccessToken: Bool { !accessToken.isEmpty }
     var hasRefreshToken: Bool { !refreshToken.isEmpty }
 
+    /// Whether access token is expired at a reference time.
     func isAccessTokenExpired(at now: Date = Date()) -> Bool {
         guard let accessTokenExpiresAt else { return false }
         return accessTokenExpiresAt <= now
     }
 
+    /// Whether access token is within refresh skew at a reference time.
     func isAccessTokenExpiringSoon(skewSeconds: TimeInterval, at now: Date = Date()) -> Bool {
         guard let accessTokenExpiresAt else { return false }
         return accessTokenExpiresAt <= now.addingTimeInterval(max(0, skewSeconds))
     }
 
+    /// Whether refresh token is expired at a reference time.
     func isRefreshTokenExpired(at now: Date = Date()) -> Bool {
         guard let refreshTokenExpiresAt else { return false }
         return refreshTokenExpiresAt <= now
     }
 
+    /// Whether refresh token is within refresh skew at a reference time.
     func isRefreshTokenExpiringSoon(skewSeconds: TimeInterval, at now: Date = Date()) -> Bool {
         guard let refreshTokenExpiresAt else { return false }
         return refreshTokenExpiresAt <= now.addingTimeInterval(max(0, skewSeconds))
     }
 }
 
+/// OAuth token health bucket for Settings UI.
 enum OAuthTokenHealthState: String, Equatable {
     case missingTokenFile
     case invalidTokenFile
@@ -754,12 +796,14 @@ enum OAuthTokenHealthState: String, Equatable {
     case unknownExpiry
 }
 
+/// Provider token health plus source parse detail.
 struct OAuthTokenHealth: Equatable {
     var state: OAuthTokenHealthState
     var record: OAuthTokenRecord?
     var parseError: String?
 }
 
+/// File and Keychain-backed configuration store.
 final class ConfigStore {
     private static let transcriptionAuthTokenKeychainAccount = "transcription.service_token"
 
@@ -769,50 +813,62 @@ final class ConfigStore {
     private let oauthSettingsFilename = "oauth-settings.json"
     private let keychainStore = OAuthKeychainStore()
 
+    /// Pins config reads/writes to a runtime root.
     init(configuration: RuntimeConfiguration = .current) {
         self.configuration = configuration
     }
 
+    /// Runtime config directory.
     var configDirectory: URL {
         configuration.runtimeRoot.appendingPathComponent("config", isDirectory: true)
     }
 
+    /// Persisted system settings file.
     var systemSettingsURL: URL {
         configDirectory.appendingPathComponent("pine-ui-settings.json")
     }
 
+    /// Persisted Ask Codex history file.
     var askCodexQueryHistoryURL: URL {
         configDirectory.appendingPathComponent("ask-codex-query-history.json")
     }
 
+    /// Persisted refresh resume checkpoint file.
     var refreshCheckpointURL: URL {
         configDirectory.appendingPathComponent("refresh-checkpoint.json")
     }
 
+    /// OAuth app settings file.
     var oauthSettingsURL: URL {
         configDirectory.appendingPathComponent(oauthSettingsFilename)
     }
 
+    /// Webex map file generated by sync.
     var mapFileURL: URL {
         configDirectory.appendingPathComponent("map.txt")
     }
 
+    /// Important senders/targets config file.
     var importantTargetsURL: URL {
         configDirectory.appendingPathComponent("important-senders.txt")
     }
 
+    /// Important executives config file.
     var importantExecutivesURL: URL {
         configDirectory.appendingPathComponent("importantexec.txt")
     }
 
+    /// Person-focus per-target preferences file.
     var personFocusPreferencesURL: URL {
         configDirectory.appendingPathComponent("person-focus-people.json")
     }
 
+    /// Space-focus per-target preferences file.
     var spaceFocusPreferencesURL: URL {
         configDirectory.appendingPathComponent("space-focus-spaces.json")
     }
 
+    /// Compact description of watched config sources.
     var watchSourcesDescription: String {
         [
             "Important: \(importantTargetsURL.path)",
@@ -820,18 +876,22 @@ final class ConfigStore {
         ].joined(separator: " | ")
     }
 
+    /// Loads configured executive targets.
     func importantExecutives() throws -> [ConfigTarget] {
         try loadTargets(filename: "importantexec.txt")
     }
 
+    /// Loads configured belief targets.
     func beliefTargets() throws -> [ConfigTarget] {
         try loadTargets(filename: "belieftargets.txt")
     }
 
+    /// Loads all important sender targets.
     func importantTargets() throws -> [ConfigTarget] {
         try loadTargets(filename: "important-senders.txt")
     }
 
+    /// Loads space targets with space-focus preferences applied.
     func importantSpaces() throws -> [ConfigTarget] {
         let preferences = try loadJSONFocusPreferences(filename: "space-focus-spaces.json", mapKey: "spaces")
         return try importantTargets()
@@ -839,6 +899,7 @@ final class ConfigStore {
             .map { applyFocusPreference(to: $0, preferences: preferences, key: normalizeRoomID($0.roomID)) }
     }
 
+    /// Loads person targets with person-focus preferences applied.
     func importantPeople() throws -> [ConfigTarget] {
         let preferences = try loadJSONFocusPreferences(filename: "person-focus-people.json", mapKey: "people")
         return try importantTargets()
@@ -846,6 +907,7 @@ final class ConfigStore {
             .map { applyFocusPreference(to: $0, preferences: preferences, key: normalizeEmail($0.email)) }
     }
 
+    /// Configured person-focus targets for management UI.
     func personFocusManagementTargets() throws -> [ConfigTarget] {
         let preferences = try loadJSONFocusPreferences(filename: "person-focus-people.json", mapKey: "people")
         return try loadManagedTargets(filename: "important-senders.txt")
@@ -854,6 +916,7 @@ final class ConfigStore {
             .sorted(by: targetDisplaySort)
     }
 
+    /// Configured space-focus targets for management UI.
     func spaceFocusManagementTargets() throws -> [ConfigTarget] {
         let preferences = try loadJSONFocusPreferences(filename: "space-focus-spaces.json", mapKey: "spaces")
         return try loadManagedTargets(filename: "important-senders.txt")
@@ -862,28 +925,33 @@ final class ConfigStore {
             .sorted(by: targetDisplaySort)
     }
 
+    /// Configured exec-focus targets for management UI.
     func execFocusManagementTargets() throws -> [ConfigTarget] {
         try loadManagedTargets(filename: "importantexec.txt")
             .filter { $0.kind == .person }
             .sorted(by: targetDisplaySort)
     }
 
+    /// Webex people that can be added to person focus.
     func personFocusAddablePeople() throws -> [ConfigTarget] {
         let existingKeys = Set(try personFocusManagementTargets().map(fileIdentityKey))
         return try mapPersonCandidates(excluding: existingKeys)
     }
 
+    /// Webex spaces that can be added to space focus.
     func spaceFocusAddableSpaces() throws -> [ConfigTarget] {
         let existingKeys = Set(try spaceFocusManagementTargets().map(fileIdentityKey))
         return try mapSpaceCandidates(excluding: existingKeys)
     }
 
+    /// Webex people that can be added to exec focus.
     func execFocusAddablePeople() throws -> [ConfigTarget] {
         let existingKeys = Set(try execFocusManagementTargets().map(fileIdentityKey))
         return try mapPersonCandidates(excluding: existingKeys)
     }
 
     @discardableResult
+    /// Adds a person target to important-senders.txt.
     func addPersonFocusTarget(_ target: ConfigTarget) throws -> Bool {
         guard target.kind == .person else {
             throw ConfigStoreError.focusTargetUnsupportedKind(target.label)
@@ -892,6 +960,7 @@ final class ConfigStore {
     }
 
     @discardableResult
+    /// Adds a space target to important-senders.txt.
     func addSpaceFocusTarget(_ target: ConfigTarget) throws -> Bool {
         guard target.kind == .space else {
             throw ConfigStoreError.focusTargetUnsupportedSpaceKind(target.label)
@@ -900,6 +969,7 @@ final class ConfigStore {
     }
 
     @discardableResult
+    /// Adds an executive target to importantexec.txt.
     func addExecFocusTarget(_ target: ConfigTarget) throws -> Bool {
         guard target.kind == .person else {
             throw ConfigStoreError.focusTargetUnsupportedKind(target.label)
@@ -908,20 +978,24 @@ final class ConfigStore {
     }
 
     @discardableResult
+    /// Removes a person target from important-senders.txt.
     func removePersonFocusTarget(_ target: ConfigTarget) throws -> Int {
         try removeEntriesByRoom(target, from: importantTargetsURL)
     }
 
     @discardableResult
+    /// Removes a space target from important-senders.txt.
     func removeSpaceFocusTarget(_ target: ConfigTarget) throws -> Int {
         try removeEntriesByRoom(target, from: importantTargetsURL)
     }
 
     @discardableResult
+    /// Removes an executive target from importantexec.txt.
     func removeExecFocusTarget(_ target: ConfigTarget) throws -> Int {
         try removeEntriesByRoom(target, from: importantExecutivesURL)
     }
 
+    /// Updates Auto-Reply metadata for a person-focus target.
     func setPersonFocusAutoReply(_ enabled: Bool, for target: ConfigTarget) throws {
         let key = normalizeEmail(target.email)
         guard !key.isEmpty else {
@@ -935,6 +1009,7 @@ final class ConfigStore {
     }
 
     @discardableResult
+    /// Adds an iMessage handle to a person-focus preference entry.
     func addPersonIMessageHandle(_ rawHandle: String, to target: ConfigTarget) throws -> Bool {
         let key = normalizeEmail(target.email)
         guard !key.isEmpty else {
@@ -956,6 +1031,7 @@ final class ConfigStore {
     }
 
     @discardableResult
+    /// Removes an iMessage handle from a person-focus preference entry.
     func removePersonIMessageHandle(_ rawHandle: String, from target: ConfigTarget) throws -> Bool {
         let key = normalizeEmail(target.email)
         guard !key.isEmpty else {
@@ -975,10 +1051,12 @@ final class ConfigStore {
         return preference.iMessageHandles.count != originalCount
     }
 
+    /// Candidate OAuth token file locations for Webex.
     func oauthTokenFileCandidates() -> [URL] {
         oauthTokenFileCandidates(provider: .webex)
     }
 
+    /// Candidate OAuth token file locations for a provider.
     func oauthTokenFileCandidates(provider: OAuthProviderKind) -> [URL] {
         var candidates: [URL] = []
 
@@ -1017,6 +1095,7 @@ final class ConfigStore {
         return deduped
     }
 
+    /// Loads OAuth app settings from oauth-settings.json.
     func oauthAppSettings(provider: OAuthProviderKind) throws -> OAuthAppSettings {
         let url = oauthSettingsURL
         guard FileManager.default.fileExists(atPath: url.path) else {
@@ -1077,10 +1156,12 @@ final class ConfigStore {
         )
     }
 
+    /// Loads the Webex OAuth token record.
     func loadOAuthTokenRecord() throws -> OAuthTokenRecord? {
         try loadOAuthTokenRecord(provider: .webex)
     }
 
+    /// Loads one provider's OAuth token record.
     func loadOAuthTokenRecord(provider: OAuthProviderKind) throws -> OAuthTokenRecord? {
         let fileManager = FileManager.default
         for candidate in oauthTokenFileCandidates(provider: provider) where fileManager.fileExists(atPath: candidate.path) {
@@ -1118,6 +1199,7 @@ final class ConfigStore {
         return nil
     }
 
+    /// Resolves the Webex access token from Keychain or token files.
     func webexAccessToken() throws -> String {
         if let keychainToken = keychainStore.loadAccessToken(provider: .webex, allowUserInteraction: false),
            !keychainToken.isEmpty {
@@ -1132,10 +1214,12 @@ final class ConfigStore {
         return record.accessToken
     }
 
+    /// Current Webex token health.
     func oauthTokenHealth(now: Date = Date()) -> OAuthTokenHealth {
         oauthTokenHealth(provider: .webex, now: now)
     }
 
+    /// Current OAuth token health for a provider.
     func oauthTokenHealth(provider: OAuthProviderKind, now: Date = Date()) -> OAuthTokenHealth {
         do {
             guard let record = try loadOAuthTokenRecord(provider: provider) else {
@@ -1179,6 +1263,7 @@ final class ConfigStore {
         }
     }
 
+    /// Legacy Webex token status consumed by Settings UI.
     func tokenFileStatus() -> TokenFileStatus {
         let local = configuration.runtimeRoot.appendingPathComponent(defaultOAuthTokenFilename)
         let config = configDirectory.appendingPathComponent(defaultOAuthTokenFilename)
@@ -1203,6 +1288,7 @@ final class ConfigStore {
         )
     }
 
+    /// Provider-level OAuth status consumed by Settings UI.
     func oauthProviderStatus(provider: OAuthProviderKind) -> OAuthProviderStatus {
         let candidates = oauthTokenFileCandidates(provider: provider)
         let health = oauthTokenHealth(provider: provider)
@@ -1220,6 +1306,7 @@ final class ConfigStore {
         )
     }
 
+    /// Saves OAuth token JSON and mirrors access token into Keychain.
     func saveOAuthTokenPayload(_ payload: [String: Any], provider: OAuthProviderKind) throws -> URL {
         let url = configDirectory.appendingPathComponent(
             provider == .webex ? defaultOAuthTokenFilename : defaultOutlookOAuthTokenFilename
@@ -1235,6 +1322,7 @@ final class ConfigStore {
     }
 
     @discardableResult
+    /// Deletes token files and Keychain mirror for a provider.
     func deleteOAuthTokenFiles(provider: OAuthProviderKind) throws -> [URL] {
         let candidates = oauthTokenFileCandidates(provider: provider)
         var removed: [URL] = []
@@ -1246,6 +1334,7 @@ final class ConfigStore {
         return removed
     }
 
+    /// Loads persisted settings, applying defaults and migrations.
     func loadSystemSettings() -> SystemSettings {
         var settings = SystemSettings()
         settings.updatedAt = nil
@@ -1322,6 +1411,7 @@ final class ConfigStore {
         return settings
     }
 
+    /// Saves persisted settings as versioned JSON.
     func saveSystemSettings(_ settings: SystemSettings) throws {
         try FileManager.default.createDirectory(at: configDirectory, withIntermediateDirectories: true)
         let payload = PersistedSystemSettingsPayload(
@@ -1335,6 +1425,7 @@ final class ConfigStore {
         try data.write(to: systemSettingsURL, options: [.atomic])
     }
 
+    /// Loads the transcription token from Keychain.
     func loadTranscriptionAuthToken() -> String? {
         keychainStore.loadSecret(
             account: Self.transcriptionAuthTokenKeychainAccount,
@@ -1342,6 +1433,7 @@ final class ConfigStore {
         )
     }
 
+    /// Saves the transcription token to Keychain.
     func saveTranscriptionAuthToken(_ token: String) throws {
         try keychainStore.saveSecret(
             token,
@@ -1350,6 +1442,7 @@ final class ConfigStore {
         )
     }
 
+    /// Deletes the transcription token from Keychain.
     func deleteTranscriptionAuthToken() throws {
         try keychainStore.deleteSecret(
             account: Self.transcriptionAuthTokenKeychainAccount,
@@ -1357,10 +1450,12 @@ final class ConfigStore {
         )
     }
 
+    /// Checks whether the transcription token exists without reading it.
     func transcriptionAuthTokenConfigured() -> Bool {
         keychainStore.secretExists(account: Self.transcriptionAuthTokenKeychainAccount)
     }
 
+    /// Loads bounded Ask Codex query history.
     func loadAskCodexQueryHistory(limit: Int = 100) -> [AskCodexQueryHistoryEntry] {
         guard FileManager.default.fileExists(atPath: askCodexQueryHistoryURL.path),
               let data = try? Data(contentsOf: askCodexQueryHistoryURL) else {
@@ -1378,6 +1473,7 @@ final class ConfigStore {
         return Array(entries.prefix(max(0, limit)))
     }
 
+    /// Saves bounded Ask Codex query history as versioned JSON.
     func saveAskCodexQueryHistory(_ entries: [AskCodexQueryHistoryEntry], limit: Int = 100) throws {
         try FileManager.default.createDirectory(at: configDirectory, withIntermediateDirectories: true)
         let payload = PersistedAskCodexQueryHistoryPayload(
@@ -1391,6 +1487,7 @@ final class ConfigStore {
         try data.write(to: askCodexQueryHistoryURL, options: [.atomic])
     }
 
+    /// Loads raw refresh checkpoint data, if present.
     func loadRefreshCheckpointData() -> Data? {
         guard FileManager.default.fileExists(atPath: refreshCheckpointURL.path) else {
             return nil
@@ -1398,11 +1495,13 @@ final class ConfigStore {
         return try? Data(contentsOf: refreshCheckpointURL)
     }
 
+    /// Saves raw refresh checkpoint data.
     func saveRefreshCheckpointData(_ data: Data) throws {
         try FileManager.default.createDirectory(at: configDirectory, withIntermediateDirectories: true)
         try data.write(to: refreshCheckpointURL, options: [.atomic])
     }
 
+    /// Deletes any persisted refresh checkpoint.
     func clearRefreshCheckpoint() throws {
         guard FileManager.default.fileExists(atPath: refreshCheckpointURL.path) else {
             return
@@ -1410,6 +1509,7 @@ final class ConfigStore {
         try FileManager.default.removeItem(at: refreshCheckpointURL)
     }
 
+    /// Loads de-duplicated targets from a text config file.
     private func loadTargets(filename: String) throws -> [ConfigTarget] {
         let url = configDirectory.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
@@ -1425,6 +1525,7 @@ final class ConfigStore {
         return deduplicateTargets(parsedTargets)
     }
 
+    /// Loads representative targets for management UI from text config.
     private func loadManagedTargets(filename: String) throws -> [ConfigTarget] {
         let url = configDirectory.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
@@ -1440,6 +1541,7 @@ final class ConfigStore {
         return representativeTargets(parsedTargets)
     }
 
+    /// Parses strict target rows used by runtime focus input.
     private func parseTargetLine(
         _ rawLine: String,
         sourceFile: String,
@@ -1478,6 +1580,7 @@ final class ConfigStore {
         )
     }
 
+    /// Parses management rows more leniently so existing config remains editable.
     private func parseManagedTargetLine(
         _ rawLine: String,
         sourceFile: String,
@@ -1511,12 +1614,14 @@ final class ConfigStore {
         )
     }
 
+    /// Per-target JSON preference overlay.
     private struct FocusPreference {
         var label: String
         var autoReply: Bool
         var iMessageHandles: [String] = []
     }
 
+    /// Loads JSON preferences keyed by room ID or email.
     private func loadJSONFocusPreferences(filename: String, mapKey: String) throws -> [String: FocusPreference] {
         let url = configDirectory.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: url.path) else { return [:] }
@@ -1546,6 +1651,7 @@ final class ConfigStore {
         return preferences
     }
 
+    /// Saves person preference overlays as versioned JSON.
     private func savePersonFocusPeoplePreferences(_ preferences: [String: FocusPreference]) throws {
         try FileManager.default.createDirectory(at: configDirectory, withIntermediateDirectories: true)
         let peoplePayload = Dictionary(
@@ -1572,6 +1678,7 @@ final class ConfigStore {
         try data.write(to: personFocusPreferencesURL, options: [.atomic])
     }
 
+    /// Applies optional JSON preference fields onto a config target.
     private func applyFocusPreference(
         to target: ConfigTarget,
         preferences: [String: FocusPreference],
@@ -1590,6 +1697,7 @@ final class ConfigStore {
         return updated
     }
 
+    /// Loads JSON focus targets from map or array format.
     private func loadJSONFocusTargets(filename: String, kind: ConfigTarget.Kind) throws -> [ConfigTarget] {
         let url = configDirectory.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
@@ -1683,6 +1791,7 @@ final class ConfigStore {
         return String(describing: value).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Extracts iMessage handles from accepted JSON key variants.
     private func iMessageHandles(from payload: [String: Any]) -> [String] {
         let rawValue = payload["imessage_handles"]
             ?? payload["iMessageHandles"]
@@ -1706,6 +1815,7 @@ final class ConfigStore {
         return dedupedIMessageHandles(rawHandles)
     }
 
+    /// Normalizes and de-dupes iMessage handles while preserving display order.
     private func dedupedIMessageHandles(_ handles: [String]) -> [String] {
         var result: [String] = []
         var seen = Set<String>()
@@ -2198,6 +2308,7 @@ private extension Array {
     }
 }
 
+/// Versioned settings file payload.
 private struct PersistedSystemSettingsPayload: Codable {
     var version: Int
     var updatedAt: String
@@ -2210,6 +2321,7 @@ private struct PersistedSystemSettingsPayload: Codable {
     }
 }
 
+/// Versioned Ask Codex history payload.
 private struct PersistedAskCodexQueryHistoryPayload: Codable {
     var version: Int
     var updatedAt: String
@@ -2222,6 +2334,7 @@ private struct PersistedAskCodexQueryHistoryPayload: Codable {
     }
 }
 
+/// JSON representation of persisted settings values.
 private struct PersistedSystemSettingsValues: Codable {
     var debug: Bool
     var backgroundStatus: Bool
@@ -2287,6 +2400,7 @@ private struct PersistedSystemSettingsValues: Codable {
         case pollSeconds = "poll_seconds"
     }
 
+    /// Converts in-memory settings into the persisted schema.
     init(settings: SystemSettings) {
         self.debug = settings.debug
         self.backgroundStatus = settings.backgroundStatus
@@ -2330,6 +2444,7 @@ private struct PersistedSystemSettingsValues: Codable {
     }
 }
 
+/// Legacy Webex token-file status model for Settings UI.
 struct TokenFileStatus: Equatable {
     var rootTokenFileExists: Bool
     var configTokenFileExists: Bool
@@ -2345,6 +2460,7 @@ struct TokenFileStatus: Equatable {
     var parseError: String? = nil
 }
 
+/// Provider-specific OAuth status row for Settings UI.
 struct OAuthProviderStatus: Equatable, Identifiable {
     var provider: OAuthProviderKind
     var tokenFileExists: Bool
@@ -2360,6 +2476,7 @@ struct OAuthProviderStatus: Equatable, Identifiable {
 }
 
 private extension OAuthTokenRecord {
+    /// Computes absolute expiry timestamps when token files only store durations.
     func withComputedExpiryFallbacks() -> OAuthTokenRecord {
         var updated = self
         if updated.accessTokenExpiresAt == nil,

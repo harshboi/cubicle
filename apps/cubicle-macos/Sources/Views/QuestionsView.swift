@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Question inbox with scope/status filtering and selection.
 struct QuestionsListView: View {
     @EnvironmentObject private var model: AppModel
     @State private var scopeFilter: QuestionScopeFilter = .active
@@ -94,6 +95,7 @@ struct QuestionsListView: View {
     }
 }
 
+/// Detail view for one generated question and its evidence.
 struct QuestionDetailView: View {
     @EnvironmentObject private var model: AppModel
 
@@ -272,6 +274,7 @@ struct QuestionDetailView: View {
     }()
 }
 
+/// Row summary for a question candidate.
 private struct QuestionRow: View {
     let question: QuestionCandidate
 
@@ -311,6 +314,7 @@ private struct QuestionRow: View {
     }
 }
 
+/// Status badge for candidate/answered/snoozed/dismissed questions.
 private struct QuestionStatusBadge: View {
     let status: QuestionStatus
 
@@ -329,6 +333,7 @@ private struct QuestionStatusBadge: View {
     }
 }
 
+/// Scope filter used by the question inbox.
 private enum QuestionScopeFilter: String, CaseIterable, Identifiable {
     case active
     case person
@@ -353,6 +358,7 @@ private enum QuestionScopeFilter: String, CaseIterable, Identifiable {
     }
 }
 
+/// Status filter used by the question inbox.
 private enum QuestionStatusFilter: String, CaseIterable, Identifiable {
     case active
     case candidate

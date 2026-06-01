@@ -1,5 +1,6 @@
 import Foundation
 
+/// Small dependency-free statistics helpers used by local analyzers.
 public enum Statistics {
     public static func mean(_ values: [Double]) -> Double? {
         guard !values.isEmpty else { return nil }

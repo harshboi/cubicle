@@ -1,5 +1,6 @@
 import Foundation
 
+/// Room payload normalized from the Webex REST API.
 struct WebexRoom: Identifiable, Hashable, Decodable {
     var id: String
     var title: String
@@ -22,12 +23,14 @@ struct WebexRoom: Identifiable, Hashable, Decodable {
     }
 }
 
+/// Person payload used for self identity, members, and direct-message targets.
 struct WebexPerson: Identifiable, Hashable, Decodable {
     var id: String
     var displayName: String
     var emails: [String]
 }
 
+/// Room membership payload used to resolve participants and aliases.
 struct WebexMembership: Identifiable, Hashable, Decodable {
     var id: String
     var roomID: String
@@ -44,6 +47,7 @@ struct WebexMembership: Identifiable, Hashable, Decodable {
     }
 }
 
+/// Message payload normalized across Webex `text` and `markdown` fields.
 struct WebexMessage: Identifiable, Hashable, Decodable {
     var id: String
     var roomID: String
@@ -75,6 +79,7 @@ struct WebexMessage: Identifiable, Hashable, Decodable {
     }
 }
 
+/// Webex client failures mapped into sync-engine status categories.
 enum WebexAPIError: LocalizedError {
     case missingAccessToken
     case invalidAccessToken(String)
@@ -110,12 +115,14 @@ enum WebexAPIError: LocalizedError {
     }
 }
 
+/// Thin async Webex REST client with token reload, pagination, and retry handling.
 final class WebexAPIClient {
     let configuration: RuntimeConfiguration
     private let urlSession: URLSession
     private let configStore: ConfigStore
     private let decoder = JSONDecoder()
 
+    /// Allows tests to inject a session/config store while production uses app settings.
     init(
         configuration: RuntimeConfiguration = .current,
         configStore: ConfigStore? = nil,
@@ -126,6 +133,7 @@ final class WebexAPIClient {
         self.urlSession = urlSession
     }
 
+    /// Fetches the authenticated Webex user.
     func currentUser() async throws -> WebexPerson {
         let url = try buildURL(pathOrURL: "/people/me")
         let (data, _) = try await requestData(url: url, method: "GET")
@@ -138,6 +146,7 @@ final class WebexAPIClient {
         }
     }
 
+    /// Lists all visible rooms using Webex pagination.
     func rooms() async throws -> [WebexRoom] {
         try await fetchPaginated(
             path: "/rooms",
@@ -145,6 +154,7 @@ final class WebexAPIClient {
         )
     }
 
+    /// Fetches one room by ID.
     func room(id roomID: String) async throws -> WebexRoom {
         let normalizedRoomID = roomID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedRoomID.isEmpty else {
@@ -162,6 +172,7 @@ final class WebexAPIClient {
         }
     }
 
+    /// Lists memberships for a room.
     func memberships(roomID: String) async throws -> [WebexMembership] {
         let normalizedRoomID = roomID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedRoomID.isEmpty else {
@@ -176,6 +187,7 @@ final class WebexAPIClient {
         )
     }
 
+    /// Loads recent room messages newest-first, bounded by `max`.
     func messages(roomID: String, before: Date? = nil, max: Int = 100) async throws -> [WebexMessage] {
         let normalizedRoomID = roomID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedRoomID.isEmpty else {
@@ -223,6 +235,7 @@ final class WebexAPIClient {
         return collected
     }
 
+    /// Loads messages newer than the stored watermark and returns them oldest-first.
     func messagesAfter(
         roomID: String,
         lastMessageID: String = "",
@@ -296,11 +309,13 @@ final class WebexAPIClient {
         return collected
     }
 
+    /// Fetches the newest message for activity probing.
     func latestMessage(roomID: String) async throws -> WebexMessage? {
         let messages = try await messages(roomID: roomID, max: 1)
         return messages.first
     }
 
+    /// Fetches one message by ID.
     func message(id messageID: String) async throws -> WebexMessage {
         let normalizedMessageID = messageID.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !normalizedMessageID.isEmpty else {
@@ -317,6 +332,7 @@ final class WebexAPIClient {
         }
     }
 
+    /// Fetches direct messages by email or person ID.
     func directMessages(
         personEmail: String? = nil,
         personID: String? = nil,
@@ -348,6 +364,7 @@ final class WebexAPIClient {
         }
     }
 
+    /// Follows Webex `Link` pagination while detecting loops.
     private func fetchPaginated<T: Decodable>(
         path: String,
         queryItems: [URLQueryItem]
@@ -379,6 +396,7 @@ final class WebexAPIClient {
         return results
     }
 
+    /// Performs an authenticated request with token reload and retry/backoff.
     private func requestData(
         url: URL,
         method: String,
@@ -708,6 +726,7 @@ final class WebexAPIClient {
     }()
 }
 
+/// Standard Webex paginated response wrapper.
 private struct PaginatedResponse<T: Decodable>: Decodable {
     let items: [T]
 }

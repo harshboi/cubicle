@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Detail pane for the selected person or space focus item.
 struct DetailView: View {
     @EnvironmentObject private var model: AppModel
     let kind: FocusKind
@@ -226,6 +227,7 @@ struct DetailView: View {
     }
 }
 
+/// Compact summary metric for a focus item.
 private struct InsightCard: View {
     let title: String
     let text: String
@@ -252,11 +254,13 @@ private struct InsightCard: View {
     }
 }
 
+/// Rendering style for structured detail-line cards.
 private enum DetailLinesCardStyle {
     case metadata
     case intelligence
 }
 
+/// Card for metadata, evidence, or generated detail lines.
 private struct DetailLinesCard: View {
     let title: String
     let subtitle: String
@@ -290,6 +294,7 @@ private struct DetailLinesCard: View {
     }
 }
 
+/// Embedded question list scoped to the selected focus item.
 private struct ScopedQuestionsCard: View {
     @EnvironmentObject private var model: AppModel
     let questions: [QuestionCandidate]
@@ -343,6 +348,7 @@ private struct ScopedQuestionsCard: View {
     }
 }
 
+/// Formats one detail line into heading, bullet, label, or recent-conversation UI.
 private struct DetailLineRow: View {
     let line: String
     let style: DetailLinesCardStyle
@@ -437,6 +443,7 @@ private struct DetailLineRow: View {
     }
 }
 
+/// Collapsible display for generated focus detail sections.
 private struct GeneratedSectionCard: View {
     let section: FocusDetailSection
     @Binding var isExpanded: Bool
@@ -588,6 +595,7 @@ private struct GeneratedSectionCard: View {
     }
 }
 
+/// Rich row for parsed recent-conversation lines.
 private struct RecentConversationRow: View {
     let line: FormattedRecentConversationLine
     @State private var showingFullMessage = false
@@ -644,6 +652,7 @@ private struct RecentConversationRow: View {
     }
 }
 
+/// Parsed recent-conversation line with preview/full-message separation.
 private struct FormattedRecentConversationLine {
     var header: String
     var previewLine: String
@@ -652,6 +661,7 @@ private struct FormattedRecentConversationLine {
     var boldPrefixThrough: String?
 }
 
+/// Parser for recent-conversation detail lines emitted by focus snapshots.
 private enum RecentConversationLineFormatter {
     static let headerDelimiter = " - "
 

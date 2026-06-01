@@ -1,3 +1,5 @@
+"""Browser recording WebSocket proxy and transcript event normalization."""
+
 from __future__ import annotations
 
 import asyncio
@@ -29,14 +31,20 @@ AccessValidator = Callable[[User], Awaitable[None]]
 
 
 class RecordingError(Exception):
+    """Recording-session failure for the browser WebSocket proxy."""
+
     pass
 
 
 class RecordingAccessRevoked(RecordingError):
+    """Raised when access is revoked while a recording is active."""
+
     pass
 
 
 class ActiveSessionRegistry:
+    """In-memory per-user active-recording counter."""
+
     def __init__(self) -> None:
         self._active_by_user: dict[str, int] = {}
         self._lock = asyncio.Lock()
@@ -59,6 +67,8 @@ class ActiveSessionRegistry:
 
 
 class RealtimeTranslationCoordinator:
+    """Schedules translation for finalized transcript lines without blocking capture."""
+
     def __init__(
         self,
         *,
@@ -173,6 +183,8 @@ class RealtimeTranslationCoordinator:
 
 
 class RealtimeTranscriptLineNormalizer:
+    """Splits long transcript events into stable browser-visible line events."""
+
     def __init__(self, *, max_words_per_line: int = 18, max_chars_per_line: int = 140) -> None:
         self.max_words_per_line = max(4, max_words_per_line)
         self.max_chars_per_line = max(40, max_chars_per_line)

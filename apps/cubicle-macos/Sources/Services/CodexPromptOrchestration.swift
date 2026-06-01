@@ -1,18 +1,21 @@
 import Foundation
 import CryptoKit
 
+/// Prompt contract family for cluster summary/title work.
 enum CodexClusterPromptKind: String, CaseIterable, Codable, Hashable {
     case personSummary = "person-cluster-summary"
     case personTitle = "person-cluster-title"
     case spaceTitle = "space-cluster-title"
 }
 
+/// Version and expected JSON field for a cluster prompt.
 struct CodexClusterPromptContract: Hashable {
     var kind: CodexClusterPromptKind
     var promptVersion: String
     var outputField: String
 }
 
+/// Central prompt-version registry for Codex-generated artifacts.
 enum CodexPromptVersionRegistry {
     static let personFocusClusterSummary = "person-focus-cluster-summary-v10"
     static let personFocusClusterTitle = "person-focus-cluster-title-v1"
@@ -41,6 +44,7 @@ enum CodexPromptVersionRegistry {
     ]
 }
 
+/// Cache freshness policy for Codex prompt outputs.
 struct CodexPromptCachePolicy: Hashable {
     var maxAgeSeconds: TimeInterval
 
@@ -48,12 +52,14 @@ struct CodexPromptCachePolicy: Hashable {
     static let execQuestions = CodexPromptCachePolicy(maxAgeSeconds: 15 * 60)
 }
 
+/// Conversation cluster passed into space/exec prompts.
 struct SpaceConversationCluster: Codable, Hashable {
     var title: String
     var summary: String
     var openLoops: [String]
 }
 
+/// Input context for a space summary prompt.
 struct SpaceSummaryContext: Hashable {
     var roomID: String
     var roomTitle: String
@@ -63,12 +69,14 @@ struct SpaceSummaryContext: Hashable {
     var previousGeneratedAt: String?
 }
 
+/// Meaningful topic extracted from a space summary.
 struct SpaceSummaryTopic: Codable, Hashable {
     var title: String
     var summary: String
     var soWhat: String
 }
 
+/// Persisted Codex space summary output.
 struct SpaceSummaryResult: Codable, Hashable {
     var roomID: String
     var summary: String
@@ -90,6 +98,7 @@ struct SpaceSummaryResult: Codable, Hashable {
         case inputHash
     }
 
+    /// Creates a normalized space summary result.
     init(
         roomID: String,
         summary: String,
@@ -110,6 +119,7 @@ struct SpaceSummaryResult: Codable, Hashable {
         self.inputHash = inputHash
     }
 
+    /// Decodes older cache entries that may omit open loops.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         roomID = try container.decode(String.self, forKey: .roomID)
@@ -123,11 +133,13 @@ struct SpaceSummaryResult: Codable, Hashable {
     }
 }
 
+/// Focus kind used by cluster title prompts.
 enum ClusterFocusKind: String, Codable, Hashable {
     case person
     case space
 }
 
+/// Input context for a person cluster summary prompt.
 struct PersonClusterSummaryContext: Hashable {
     var personID: String
     var personLabel: String
@@ -135,6 +147,7 @@ struct PersonClusterSummaryContext: Hashable {
     var existingSummary: String?
 }
 
+/// Persisted Codex person cluster summary output.
 struct PersonClusterSummaryResult: Codable, Hashable {
     var personID: String
     var personLabel: String
@@ -145,6 +158,7 @@ struct PersonClusterSummaryResult: Codable, Hashable {
     var inputHash: String
 }
 
+/// Input context for a cluster title prompt.
 struct ClusterTitleContext: Hashable {
     var focusKind: ClusterFocusKind
     var clusterID: String
@@ -153,6 +167,7 @@ struct ClusterTitleContext: Hashable {
     var existingTitle: String?
 }
 
+/// Persisted Codex cluster title output.
 struct ClusterTitleResult: Codable, Hashable {
     var focusKind: ClusterFocusKind
     var clusterID: String
@@ -163,6 +178,7 @@ struct ClusterTitleResult: Codable, Hashable {
     var inputHash: String
 }
 
+/// Input context for executive-question generation.
 struct ExecQuestionsContext: Hashable {
     var roomID: String
     var roomTitle: String
@@ -174,16 +190,19 @@ struct ExecQuestionsContext: Hashable {
     var execBeliefs: [BeliefSnapshot]
 }
 
+/// Room participant used to match executives.
 struct SpaceParticipant: Hashable {
     var name: String
     var email: String
 }
 
+/// Executive identity loaded from config.
 struct ImportantExecutive: Hashable {
     var name: String
     var email: String
 }
 
+/// Persisted Codex executive-question output.
 struct ExecQuestionsResult: Codable, Hashable {
     var roomID: String
     var execName: String
@@ -195,6 +214,7 @@ struct ExecQuestionsResult: Codable, Hashable {
     var inputHash: String
 }
 
+/// Draft question produced by Codex before store normalization.
 struct CodexQuestionSynthesisDraft: Codable, Hashable {
     var scopeType: QuestionScopeType
     var scopeKey: String
@@ -217,6 +237,7 @@ struct CodexQuestionSynthesisDraft: Codable, Hashable {
     }
 }
 
+/// Persisted Codex question-synthesis output.
 struct CodexQuestionSynthesisResult: Codable, Hashable {
     var questions: [CodexQuestionSynthesisDraft]
     var source: String
@@ -225,6 +246,7 @@ struct CodexQuestionSynthesisResult: Codable, Hashable {
     var inputHash: String
 }
 
+/// Belief reconciliation scope used in prompt contracts.
 enum BeliefScope: String, Codable, Hashable {
     case global
     case person
@@ -233,6 +255,7 @@ enum BeliefScope: String, Codable, Hashable {
     static let globalEntityKey = "__global__"
 }
 
+/// Current belief snapshot included in reconciliation prompts.
 struct BeliefSnapshot: Codable, Hashable {
     var statement: String
     var confidence: Double
@@ -244,6 +267,7 @@ struct BeliefSnapshot: Codable, Hashable {
     var lastEvidenceAt: String = ""
 }
 
+/// Evidence row included in reconciliation prompts.
 struct BeliefEvidence: Codable, Hashable {
     var id: String
     var text: String
@@ -251,6 +275,7 @@ struct BeliefEvidence: Codable, Hashable {
     var occurredAt: String
 }
 
+/// Input context for one belief reconciliation run.
 struct BeliefReconciliationContext: Hashable {
     var scope: BeliefScope
     var entityKey: String
@@ -263,11 +288,13 @@ struct BeliefReconciliationContext: Hashable {
     var chunkCount: Int?
 }
 
+/// Persisted reconciliation checkpoint for one scope/entity.
 struct BeliefReconciliationState: Codable, Hashable {
     var lastRunAt: String?
     var lastEvidenceHash: String?
 }
 
+/// Reason reconciliation did or did not run.
 enum BeliefReconciliationTriggerReason: String, Codable, Hashable {
     case firstRun
     case forced
@@ -277,6 +304,7 @@ enum BeliefReconciliationTriggerReason: String, Codable, Hashable {
     case invalidScopeEntityKey
 }
 
+/// Run decision plus evidence hash and staleness marker.
 struct BeliefReconciliationDecision: Codable, Hashable {
     var shouldRun: Bool
     var reason: BeliefReconciliationTriggerReason
@@ -284,6 +312,7 @@ struct BeliefReconciliationDecision: Codable, Hashable {
     var staleAt: String?
 }
 
+/// Belief mutation proposed by Codex.
 struct BeliefChange: Codable, Hashable {
     var statement: String
     var confidence: Double
@@ -295,6 +324,7 @@ struct BeliefChange: Codable, Hashable {
     var lastEvidenceAt: String = ""
 }
 
+/// Parsed Codex reconciliation result.
 struct BeliefReconciliationResult: Codable, Hashable {
     var taskType: String
     var scope: BeliefScope
@@ -311,33 +341,39 @@ struct BeliefReconciliationResult: Codable, Hashable {
     var source: String
 }
 
+/// Reconciliation decision plus optional Codex result and next checkpoint.
 struct BeliefReconciliationRunOutcome: Hashable {
     var decision: BeliefReconciliationDecision
     var result: BeliefReconciliationResult?
     var nextState: BeliefReconciliationState
 }
 
+/// Stable key for reconciliation state.
 struct BeliefReconciliationScopeKey: Codable, Hashable {
     var scope: BeliefScope
     var entityKey: String
 }
 
+/// Reconciliation target with current state.
 struct BeliefReconciliationTarget: Hashable {
     var context: BeliefReconciliationContext
     var state: BeliefReconciliationState
 }
 
+/// Outcome for one reconciliation target.
 struct BeliefReconciliationTargetOutcome: Hashable {
     var key: BeliefReconciliationScopeKey
     var outcome: BeliefReconciliationRunOutcome
 }
 
+/// Batched reconciliation results plus trigger counts.
 struct BeliefReconciliationBatchOutcome: Hashable {
     var outcomes: [BeliefReconciliationTargetOutcome]
     var triggeredCount: Int
     var skippedCount: Int
 }
 
+/// Error thrown when a requested Codex feature is disabled.
 struct CodexFeatureDisabledError: LocalizedError {
     var feature: CodexFeatureToggle
 
@@ -346,12 +382,14 @@ struct CodexFeatureDisabledError: LocalizedError {
     }
 }
 
+/// Builds prompts, runs Codex, parses outputs, and manages prompt caches.
 final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
     let configuration: RuntimeConfiguration
     let runner: CodexRunner
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
 
+    /// Injects runner/config and sets stable JSON output formatting.
     init(configuration: RuntimeConfiguration = .current, runner: CodexRunner? = nil) {
         self.configuration = configuration
         self.runner = runner ?? CodexRunner(configuration: configuration)
@@ -372,6 +410,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         }
     }
 
+    /// Synthesizes publishable question candidates from deterministic candidates.
     func synthesizeQuestionCandidates(
         from candidates: [QuestionCandidate],
         now: Date = Date()
@@ -437,6 +476,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         )
     }
 
+    /// Generates or reuses a person cluster summary.
     func generatePersonClusterSummary(
         context: PersonClusterSummaryContext,
         workingDirectory: URL,
@@ -491,6 +531,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         return result
     }
 
+    /// Generates or reuses a compact cluster title.
     func generateClusterTitle(
         context: ClusterTitleContext,
         workingDirectory: URL,
@@ -547,6 +588,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         return result
     }
 
+    /// Generates or reuses a room-level space summary.
     func generateSpaceSummary(
         context: SpaceSummaryContext,
         workingDirectory: URL,
@@ -601,6 +643,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         return result
     }
 
+    /// Generates exec questions for matching room participants.
     func generateExecQuestions(
         context: ExecQuestionsContext,
         workingDirectory: URL,
@@ -656,6 +699,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         return result
     }
 
+    /// Generates or reuses exec questions for one executive/room pair.
     func generateExecQuestionsForRoom(
         roomID: String,
         roomTitle: String,
@@ -733,6 +777,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         return results
     }
 
+    /// Decides whether reconciliation should run for a scope/entity.
     func evaluateBeliefReconciliation(
         context: BeliefReconciliationContext,
         state: BeliefReconciliationState,
@@ -792,6 +837,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         )
     }
 
+    /// Runs reconciliation for one context/state pair.
     func runBeliefReconciliation(
         context: BeliefReconciliationContext,
         state: BeliefReconciliationState,
@@ -854,6 +900,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         return BeliefReconciliationRunOutcome(decision: decision, result: result, nextState: nextState)
     }
 
+    /// Runs reconciliation across multiple targets and reports trigger counts.
     func runBeliefReconciliationBatch(
         targets: [BeliefReconciliationTarget],
         workingDirectory: URL,
@@ -901,6 +948,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         )
     }
 
+    /// Expands broad reconciliation into smaller evidence windows/chunks.
     private func runDeepBeliefReconciliation(
         target: BeliefReconciliationTarget,
         workingDirectory: URL,
@@ -984,6 +1032,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         )
     }
 
+    /// Creates deterministic Codex job paths for one prompt kind/key.
     private func makeJob(
         kind: String,
         key: String,
@@ -1006,6 +1055,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         )
     }
 
+    /// Root directory for Codex cache artifacts.
     private func cacheDirectoryURL() -> URL {
         configuration.runtimeRoot
             .appendingPathComponent("knowledge", isDirectory: true)
@@ -1013,6 +1063,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
             .appendingPathComponent("cache", isDirectory: true)
     }
 
+    /// Root directory for Codex job artifacts of one kind/key.
     private func jobDirectoryURL(kind: String, key: String) -> URL {
         configuration.runtimeRoot
             .appendingPathComponent("knowledge", isDirectory: true)
@@ -1022,6 +1073,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
             .appendingPathComponent(safeKey(key), isDirectory: true)
     }
 
+    /// Cache file path for one prompt kind/key.
     private func cacheFileURL(kind: String, key: String) -> URL {
         cacheDirectoryURL().appendingPathComponent("\(kind)-\(safeKey(key)).json")
     }
@@ -1962,6 +2014,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
     private static let maxBeliefIncrementalWindowDays = 90
 }
 
+/// Lenient decode payload for Codex space summaries.
 private struct SpaceSummaryPayload: Decodable {
     var spaceSummary: String
     var openLoops: [String]
@@ -1981,10 +2034,12 @@ private struct SpaceSummaryPayload: Decodable {
     }
 }
 
+/// Decode payload for Codex-refined question candidates.
 private struct CodexQuestionSynthesisPayload: Decodable {
     var questions: [CodexQuestionSynthesisDraft]
 }
 
+/// Topic payload supporting both snake_case and camelCase keys.
 private struct SpaceSummaryTopicPayload: Decodable {
     var title: String
     var summary: String
@@ -2011,18 +2066,22 @@ private struct SpaceSummaryTopicPayload: Decodable {
     }
 }
 
+/// Encode/decode payload for one person-cluster summary.
 private struct PersonClusterSummaryPayload: Codable {
     var summary: String
 }
 
+/// Encode/decode payload for one generated cluster title.
 private struct ClusterTitlePayload: Codable {
     var title: String
 }
 
+/// Encode/decode payload for generated executive questions.
 private struct ExecQuestionsPayload: Codable {
     var questions: [String]
 }
 
+/// Lenient decode payload for belief reconciliation results.
 private struct BeliefReconciliationPayload: Codable {
     var beliefsToAdd: [BeliefChangePayload]
     var beliefsToUpdate: [BeliefChangePayload]
@@ -2048,6 +2107,7 @@ private struct BeliefReconciliationPayload: Codable {
     }
 }
 
+/// Raw belief change before normalization into `BeliefChange`.
 private struct BeliefChangePayload: Codable {
     var statement: String
     var confidence: Double
@@ -2108,6 +2168,7 @@ private struct BeliefChangePayload: Codable {
     }
 }
 
+/// Normalized belief reconciliation payload used after JSON repair/decoding.
 private struct BeliefReconciliationParsed: Hashable {
     var beliefsToAdd: [BeliefChange]
     var beliefsToUpdate: [BeliefChange]

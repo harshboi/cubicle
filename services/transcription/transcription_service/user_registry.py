@@ -1,3 +1,5 @@
+"""User-registry authorization checks for signed transcription tokens."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,10 +9,14 @@ from typing import Any, Protocol
 
 
 class UserRegistryError(PermissionError):
+    """User or token is not authorized by the external registry."""
+
     pass
 
 
 class UserRegistry(Protocol):
+    """Authorization backend for signed per-user transcription tokens."""
+
     def validate_user_token(
         self,
         *,
@@ -18,9 +24,13 @@ class UserRegistry(Protocol):
         email: str | None,
         token_id: str | None,
     ) -> None:
+        """Raise when the user/token pair is not allowed to stream."""
+
         ...
 
     def runtime_status(self) -> dict[str, Any]:
+        """Return operator-safe registry readiness metadata."""
+
         ...
 
 
@@ -50,6 +60,8 @@ def _split_csv(value: str | None, *, default: frozenset[str]) -> frozenset[str]:
 
 @dataclass(frozen=True)
 class UserRegistrySettings:
+    """Environment-backed registry configuration and backend factory."""
+
     backend: str = "env"
     user_table_name: str | None = None
     token_ledger_table_name: str | None = None
@@ -61,6 +73,8 @@ class UserRegistrySettings:
 
     @classmethod
     def from_environment(cls) -> "UserRegistrySettings":
+        """Load registry settings from process environment variables."""
+
         backend = os.environ.get("TRANSCRIPTION_USER_REGISTRY_BACKEND", "env").strip().lower() or "env"
         region_name = (
             os.environ.get("TRANSCRIPTION_USER_REGISTRY_REGION")
@@ -93,6 +107,8 @@ class UserRegistrySettings:
         )
 
     def create_registry(self) -> UserRegistry | None:
+        """Build the configured registry or disable registry checks."""
+
         if self.backend in {"env", "disabled", "none"}:
             return None
         if self.backend != "dynamodb":
@@ -115,6 +131,8 @@ class UserRegistrySettings:
         )
 
     def runtime_status(self) -> dict[str, Any]:
+        """Expose config presence without leaking table contents."""
+
         return {
             "backend": self.backend,
             "enabled": self.backend == "dynamodb",
@@ -127,11 +145,15 @@ class UserRegistrySettings:
 
 @dataclass(frozen=True)
 class _CachedResult:
+    """Short-lived authorization cache entry, including denials."""
+
     expires_at: float
     error_message: str | None
 
 
 class DynamoDBUserRegistry:
+    """DynamoDB-backed authorization gate for active users and issued tokens."""
+
     def __init__(
         self,
         *,
@@ -161,6 +183,8 @@ class DynamoDBUserRegistry:
         email: str | None,
         token_id: str | None,
     ) -> None:
+        """Validate against DynamoDB with cached allow/deny results."""
+
         cache_key = (user_id.lower(), email.lower() if email else None, token_id.lower() if token_id else None)
         cached = self._cache.get(cache_key)
         now = self._clock()
@@ -181,6 +205,8 @@ class DynamoDBUserRegistry:
         self._store_cache(cache_key, None)
 
     def runtime_status(self) -> dict[str, Any]:
+        """Return backend readiness and cache policy metadata."""
+
         return {
             "backend": "dynamodb",
             "user_table_configured": bool(self._user_table_name),

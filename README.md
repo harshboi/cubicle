@@ -169,3 +169,7 @@ __pycache__/
 .env*
 logs
 ```
+
+## Code Comments
+
+Use [docs/commenting-guide.md](docs/commenting-guide.md) for the repo commenting rubric.

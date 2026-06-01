@@ -1,3 +1,5 @@
+"""Wire protocol validation and event encoding for transcription sessions."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -13,15 +15,21 @@ MAX_AUDIO_FRAME_BYTES = 64 * 1024
 
 
 class SessionConfigError(ValueError):
+    """Invalid `start_session` payload or unsupported session contract."""
+
     pass
 
 
 class AudioFrameError(ValueError):
+    """Invalid binary audio frame for the transcription wire protocol."""
+
     pass
 
 
 @dataclass(frozen=True)
 class StartSessionConfig:
+    """Validated client session contract for transcription WebSocket startup."""
+
     protocol_version: str
     session_id: str
     transcription_enabled: bool

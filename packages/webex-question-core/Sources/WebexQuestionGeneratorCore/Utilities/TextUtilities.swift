@@ -1,5 +1,6 @@
 import Foundation
 
+/// Text cleanup, tokenization, mention extraction, and local redaction helpers.
 public enum TextUtilities {
     public static let urlPattern = #"https?://[^\s]+"#
     public static let emailPattern = #"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}"#

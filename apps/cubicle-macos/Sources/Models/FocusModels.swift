@@ -1,5 +1,6 @@
 import Foundation
 
+/// Top-level navigation sections in the Mac app.
 enum AppSection: String, CaseIterable, Identifiable {
     case home
     case spaceFocus
@@ -16,6 +17,7 @@ enum AppSection: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// Human-readable navigation title.
     var title: String {
         switch self {
         case .home: return "Home"
@@ -33,6 +35,7 @@ enum AppSection: String, CaseIterable, Identifiable {
         }
     }
 
+    /// SF Symbol name for the sidebar item.
     var symbolName: String {
         switch self {
         case .home: return "square.grid.2x2"
@@ -51,6 +54,7 @@ enum AppSection: String, CaseIterable, Identifiable {
     }
 }
 
+/// Target-management mode for focus source lists.
 enum FocusTargetManagementKind: String, CaseIterable, Identifiable, Hashable {
     case spaceFocus
     case personFocus
@@ -58,6 +62,7 @@ enum FocusTargetManagementKind: String, CaseIterable, Identifiable, Hashable {
 
     var id: String { rawValue }
 
+    /// Full navigation title.
     var title: String {
         switch self {
         case .spaceFocus:
@@ -69,6 +74,7 @@ enum FocusTargetManagementKind: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// Compact label used in constrained controls.
     var shortTitle: String {
         switch self {
         case .spaceFocus:
@@ -80,6 +86,7 @@ enum FocusTargetManagementKind: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// Badge text for target rows.
     var badgeText: String {
         switch self {
         case .spaceFocus:
@@ -91,6 +98,7 @@ enum FocusTargetManagementKind: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// SF Symbol name for this management surface.
     var symbolName: String {
         switch self {
         case .spaceFocus:
@@ -102,6 +110,7 @@ enum FocusTargetManagementKind: String, CaseIterable, Identifiable, Hashable {
         }
     }
 
+    /// Runtime config filename backing this target list.
     var sourceFilename: String {
         switch self {
         case .spaceFocus:
@@ -114,12 +123,14 @@ enum FocusTargetManagementKind: String, CaseIterable, Identifiable, Hashable {
     }
 }
 
+/// Focus cache family shown in the main product views.
 enum FocusKind: String, CaseIterable, Identifiable {
     case space
     case person
 
     var id: String { rawValue }
 
+    /// User-facing focus title.
     var title: String {
         switch self {
         case .space: return "Space Focus"
@@ -127,6 +138,7 @@ enum FocusKind: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Default lookback window for runtime cache files.
     var defaultDays: Int {
         switch self {
         case .space: return 60
@@ -134,6 +146,7 @@ enum FocusKind: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Snapshot filename for a lookback window.
     func snapshotFilename(days: Int? = nil) -> String {
         let value = days ?? defaultDays
         switch self {
@@ -145,6 +158,7 @@ enum FocusKind: String, CaseIterable, Identifiable {
     }
 }
 
+/// Decoded focus cache snapshot from the runtime layer.
 struct FocusCache: Codable, Equatable {
     var focusDays: Int
     var items: [FocusItem]
@@ -155,6 +169,7 @@ struct FocusCache: Codable, Equatable {
     var subjectsProcessed: Int
     var subjectsTotal: Int
 
+    /// Empty cache preserving the default lookback for a focus kind.
     static func empty(kind: FocusKind) -> FocusCache {
         FocusCache(
             focusDays: kind.defaultDays,
@@ -200,6 +215,7 @@ struct FocusCache: Codable, Equatable {
         self.subjectsTotal = subjectsTotal
     }
 
+    /// Accepts older snapshots that used `spaces`/`people` instead of `items.count`.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         focusDays = try container.decodeIfPresent(Int.self, forKey: .focusDays) ?? 60
@@ -214,6 +230,7 @@ struct FocusCache: Codable, Equatable {
         subjectsTotal = try container.decodeIfPresent(Int.self, forKey: .subjectsTotal) ?? 0
     }
 
+    /// Writes the legacy `spaces` count field for runtime compatibility.
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(focusDays, forKey: .focusDays)
@@ -231,6 +248,7 @@ struct FocusCache: Codable, Equatable {
     }
 }
 
+/// One focus subject shown in list/detail views.
 struct FocusItem: Identifiable, Codable, Hashable {
     var id: String
     var title: String
@@ -258,6 +276,7 @@ struct FocusItem: Identifiable, Codable, Hashable {
         case detailTailLines = "detail_tail_lines"
     }
 
+    /// Stable initializer used by cache rewriting and tests.
     init(
         id: String,
         title: String,
@@ -284,6 +303,7 @@ struct FocusItem: Identifiable, Codable, Hashable {
         self.detailTailLines = detailTailLines
     }
 
+    /// Decodes sparse runtime snapshots without failing the whole cache.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
@@ -299,16 +319,19 @@ struct FocusItem: Identifiable, Codable, Hashable {
         detailTailLines = try container.decodeIfPresent([String].self, forKey: .detailTailLines) ?? []
     }
 
+    /// Text used by local filtering/search.
     var searchableText: String {
         ([title, subtitle, meta, timestamp, badge, statusBadge] + detailLines.prefix(12)).joined(separator: " ")
     }
 
+    /// Extracts a value from legacy flat detail lines.
     func firstDetailLine(prefix: String) -> String {
         detailLines.first { $0.localizedCaseInsensitiveContains(prefix) }?
             .replacingOccurrences(of: prefix, with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 
+    /// Parses conversation lines into stable event records for clustering.
     func normalizedEvents(kind: FocusKind) -> [FocusNormalizedEvent] {
         let roomTitle = firstDetailLine(prefix: "Space Name:").isEmpty ? title : firstDetailLine(prefix: "Space Name:")
         let sourceLines = detailLines.isEmpty ? fallbackDetailLines : detailLines
@@ -324,6 +347,7 @@ struct FocusItem: Identifiable, Codable, Hashable {
         }
     }
 
+    /// Rebuilds detail sections around current cluster seeds.
     func assembledDetailPayload(kind: FocusKind, focusDays: Int, clusterSeeds: [FocusClusterSeed]) -> FocusItem {
         let payload = FocusDetailPayloadAssembler.assemble(
             item: self,
@@ -371,6 +395,7 @@ struct FocusItem: Identifiable, Codable, Hashable {
     }
 }
 
+/// Renderable detail section for a focus item.
 struct FocusDetailSection: Identifiable, Codable, Hashable {
     var id: String
     var header: String
@@ -388,6 +413,7 @@ struct FocusDetailSection: Identifiable, Codable, Hashable {
         case summaryGeneratedAt = "summary_generated_at"
     }
 
+    /// Stable initializer used by the section assembler.
     init(
         id: String,
         header: String,
@@ -404,6 +430,7 @@ struct FocusDetailSection: Identifiable, Codable, Hashable {
         self.summaryGeneratedAt = summaryGeneratedAt
     }
 
+    /// Decodes legacy sections that may be missing IDs or metadata.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         header = try container.decodeIfPresent(String.self, forKey: .header) ?? "Details"
@@ -415,6 +442,7 @@ struct FocusDetailSection: Identifiable, Codable, Hashable {
     }
 }
 
+/// File/runtime availability shown in settings.
 struct RuntimeStatus: Equatable {
     var runtimeRoot: URL
     var knowledgeDirectoryExists: Bool
@@ -423,6 +451,7 @@ struct RuntimeStatus: Equatable {
     var codexExecutable: String
 }
 
+/// Normalized message-like event used for clustering and signatures.
 struct FocusNormalizedEvent: Identifiable, Hashable {
     var id: String
     var subjectID: String
@@ -436,6 +465,7 @@ struct FocusNormalizedEvent: Identifiable, Hashable {
     var linkageKey: String
 }
 
+/// Seed summary used before Codex enriches cluster titles/summaries.
 struct FocusClusterSeed: Identifiable, Hashable {
     var id: String
     var key: String
@@ -446,16 +476,19 @@ struct FocusClusterSeed: Identifiable, Hashable {
     var sampleMessages: [String]
     var soWhat: String
 
+    /// Groups normalized events into bounded seed clusters.
     static func makeSeeds(kind: FocusKind, events: [FocusNormalizedEvent], limit: Int = 12) -> [FocusClusterSeed] {
         FocusClusterSeedBuilder.makeSeeds(kind: kind, events: events, limit: limit)
     }
 }
 
 extension FocusCache {
+    /// Flattens all item-level normalized events for one focus kind.
     func normalizedEvents(kind: FocusKind) -> [FocusNormalizedEvent] {
         items.flatMap { $0.normalizedEvents(kind: kind) }
     }
 
+    /// Stable content signature for cache reuse and Codex enrichment checks.
     func sourceSignature(kind: FocusKind) -> String {
         let itemFingerprint = items
             .map { item in
@@ -497,6 +530,7 @@ extension FocusCache {
         return FocusStableHash.hex(base)
     }
 
+    /// Signature narrowed to message identity for sparse-cache protection.
     func messageIDsSignature(kind: FocusKind) -> String {
         let eventFingerprint = items
             .flatMap { $0.normalizedEvents(kind: kind) }
@@ -516,6 +550,7 @@ extension FocusCache {
     }
 }
 
+/// Parser for legacy flat focus-cache conversation lines.
 private enum FocusMessageLineParser {
     private static let messagePrefixes = ["Webex ", "Space message "]
     private static let nonTopicWords: Set<String> = [
@@ -526,6 +561,7 @@ private enum FocusMessageLineParser {
         "today", "tomorrow", "yesterday"
     ]
 
+    /// Converts one flat detail line into a normalized event if it is message-like.
     static func parse(
         _ rawLine: String,
         itemID: String,
@@ -592,6 +628,7 @@ private enum FocusMessageLineParser {
         )
     }
 
+    /// Human title fallback for locally derived topic keys.
     static func topicTitle(for topicKey: String, fallback: String) -> String {
         guard topicKey != "general" else {
             return fallback.isEmpty ? "General update" : fallback
@@ -650,6 +687,7 @@ private enum FocusMessageLineParser {
     }
 }
 
+/// Builds local cluster seeds from normalized focus events.
 private enum FocusClusterSeedBuilder {
     private struct Accumulator {
         var events: [FocusNormalizedEvent] = []
@@ -695,6 +733,7 @@ private enum FocusClusterSeedBuilder {
         "workflows": "workflow"
     ]
 
+    /// Groups events by person/space semantics and returns ranked seeds.
     static func makeSeeds(kind: FocusKind, events: [FocusNormalizedEvent], limit: Int) -> [FocusClusterSeed] {
         var grouped: [String: Accumulator] = [:]
         grouped.reserveCapacity(events.count)
@@ -882,7 +921,9 @@ private enum FocusClusterSeedBuilder {
     }
 }
 
+/// Assembles structured detail sections while preserving legacy flat lines.
 private enum FocusDetailPayloadAssembler {
+    /// Structured and flattened representations of one detail payload.
     struct Payload {
         var introLines: [String]
         var sections: [FocusDetailSection]
@@ -890,6 +931,7 @@ private enum FocusDetailPayloadAssembler {
         var flattenedLines: [String]
     }
 
+    /// Partitions legacy detail lines and injects a recent-conversation section when needed.
     static func assemble(item: FocusItem, kind: FocusKind, focusDays: Int, clusterSeeds: [FocusClusterSeed]) -> Payload {
         let sourceLines = item.detailLines.isEmpty ? fallbackSourceLines(item) : item.detailLines
         let partitioned = partition(sourceLines)
@@ -1134,7 +1176,9 @@ private enum FocusDetailPayloadAssembler {
     }
 }
 
+/// Small stable hash used for UI/cache IDs.
 enum FocusStableHash {
+    /// FNV-1a hex digest for deterministic local IDs.
     static func hex(_ input: String) -> String {
         var hash: UInt64 = 1469598103934665603
         for byte in input.utf8 {

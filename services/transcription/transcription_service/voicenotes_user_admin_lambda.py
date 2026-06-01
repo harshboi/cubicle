@@ -1,3 +1,5 @@
+"""Lambda entry point for VoiceNotes Cognito user and data administration."""
+
 from __future__ import annotations
 
 from datetime import datetime

@@ -1,3 +1,5 @@
+"""FastAPI service factory for transcription WebSocket sessions and admin routes."""
+
 from __future__ import annotations
 
 import asyncio

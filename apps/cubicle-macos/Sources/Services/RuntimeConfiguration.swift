@@ -1,5 +1,6 @@
 import Foundation
 
+/// Runtime paths, executable choices, and network tuning loaded from env.
 struct RuntimeConfiguration: Equatable {
     var runtimeRoot: URL
     var codexExecutable: String

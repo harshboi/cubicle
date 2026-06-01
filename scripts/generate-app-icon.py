@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Generate the Cubicle macOS app icon set."""
+
 import os
 import shutil
 import subprocess
