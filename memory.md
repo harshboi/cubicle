@@ -65,6 +65,175 @@ Entry point
 
 Explain by paths, not paragraphs.
 
+## Canonical Diagram Style
+
+This is the preferred explanation style because it is easier for the user to consume.
+Use it before prose when explaining code structure.
+
+```text
+Component As Hub
+
+                         EntryPoint.swift
+                                  |
+                                  v
+                            CoreFile.swift
+                                  |
+        +-------------------------+--------------------------+
+        |                         |                          |
+        v                         v                          v
+   UI / callers              Local Services              Data Models
+        |                         |                          |
+        v                         v                          v
+ ScreenA.swift            Store.swift                  ModelA.swift
+ ScreenB.swift            Config.swift                 ModelB.swift
+ ScreenC.swift            Coordinator.swift            ModelC.swift
+```
+
+Use named diagrams for different angles on the same system.
+
+```text
+Boot Diagram
+
+EntryPoint.swift
+  |
+  +-- optional CLI/runtime command
+  |     |
+  |     +-- command runs, then exits
+  |
+  +-- CoreModel()
+  |
+  +-- RootView()
+        |
+        +-- model.startProgram()
+              |
+              +-- loadAll()
+              |     |
+              |     +-- settings
+              |     +-- runtime status
+              |     +-- caches
+              |     +-- DB bootstrap
+              |     +-- questions
+              |     +-- target lists
+              |
+              +-- startup refresh
+              |
+              +-- background refresh loop
+```
+
+```text
+Boundary Diagram
+
+Frontend / SwiftUI
+  |
+  +-- RootView.swift
+  +-- SidebarView.swift
+  +-- DashboardView.swift
+  +-- FocusListView.swift
+  +-- QuestionsView.swift
+  +-- BeliefsView.swift
+  +-- AskCodexView.swift
+  +-- SettingsView.swift
+  |
+  v
+AppModel.swift
+  |
+  v
+Local backend inside app
+  |
+  +-- KnowledgeStore.swift
+  +-- ConfigStore.swift
+  +-- NativeRuntimeStore.swift
+  +-- NativeRefreshCoordinator.swift
+  +-- Connectors/*
+  +-- CodexPromptOrchestration.swift
+```
+
+```text
+Responsibilities Diagram
+
+Component.swift
+  |
+  +-- UI state
+  |     |
+  |     +-- selected section
+  |     +-- selected item
+  |     +-- loading/error state
+  |
+  +-- Startup
+  |     |
+  |     +-- startProgram()
+  |     +-- loadAll()
+  |
+  +-- Refresh
+  |     |
+  |     +-- refreshNow()
+  |     +-- refreshSelectedPageNow()
+  |     +-- runRefreshCycle()
+  |
+  +-- Knowledge views
+        |
+        +-- load focus cache
+        +-- load questions
+        +-- load beliefs
+```
+
+```text
+Data Flow Diagram
+
+External source
+  |
+  v
+Connectors / coordinator
+  |
+  v
+KnowledgeStore.sqlite
+  |
+  v
+AppModel
+  |
+  +-- Focus cache
+  +-- Questions
+  +-- Beliefs
+  +-- Ask Codex context
+  |
+  v
+SwiftUI screens
+```
+
+```text
+Reading Path
+
+EntryPoint.swift
+  |
+  v
+RootView.swift
+  |
+  v
+CoreFile.swift
+  |
+  +-- init()
+  |
+  +-- startProgram()
+  |
+  +-- loadAll()
+  |
+  +-- refreshNow()
+  |
+  +-- runRefreshCycle()
+  |
+  v
+StorageFile.swift
+```
+
+When answering architecture questions:
+
+```text
+Diagram first
+  -> one-line summary
+  -> next files to read
+  -> only then short prose
+```
+
 ## Context Priority
 
 Maintaining context is more important than isolated answers.
@@ -218,4 +387,3 @@ TDD
 ```
 
 Use call-flow DAGs in PR descriptions when changing architecture.
-
