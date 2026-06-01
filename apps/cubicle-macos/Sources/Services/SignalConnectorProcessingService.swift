@@ -7,8 +7,18 @@ struct SignalConnectorProcessingResult: Hashable {
     var summary: String
 }
 
+/// App-facing connector processor used by refresh orchestration.
+protocol SignalConnectorProcessing {
+    func sync(
+        configTargets: [ConfigTarget],
+        mode: SignalSyncMode,
+        limit: Int,
+        since: Date?
+    ) async throws -> SignalConnectorProcessingResult
+}
+
 /// App-level service that builds connectors, routes targets, and writes signal batches.
-final class SignalConnectorProcessingService {
+final class SignalConnectorProcessingService: SignalConnectorProcessing {
     private let factory: SignalConnectorFactory
     private let writer: SignalKnowledgeWriting
     private let connectorIDs: [ConnectorID]
