@@ -1506,6 +1506,39 @@ final class KnowledgeStore: KnowledgeDAO {
         }
     }
 
+    /// Atomically persists connector-mapped rows for one signal batch.
+    func writeConnectorMessageBatch(
+        rooms: [RoomRecord],
+        people: [PersonRecord],
+        messages: [MessageRecord],
+        evidence: [BeliefEvidenceRecord]
+    ) throws {
+        guard !rooms.isEmpty || !people.isEmpty || !messages.isEmpty || !evidence.isEmpty else {
+            return
+        }
+        try withDatabase { db in
+            try execute(sql: "BEGIN IMMEDIATE TRANSACTION;", db: db)
+            do {
+                for room in rooms {
+                    try upsertRoomRecord(room, db: db)
+                }
+                for person in people {
+                    try upsertPersonRecord(person, db: db)
+                }
+                for message in messages {
+                    try upsertMessageRecord(message, db: db)
+                }
+                for evidenceRecord in evidence {
+                    try upsertBeliefEvidenceRecord(evidenceRecord, db: db)
+                }
+                try execute(sql: "COMMIT;", db: db)
+            } catch {
+                _ = sqlite3_exec(db, "ROLLBACK;", nil, nil, nil)
+                throw error
+            }
+        }
+    }
+
     /// Loads evidence rows for a typed belief target.
     func loadBeliefEvidence(
         scope: KnowledgeBeliefScope,
