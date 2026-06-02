@@ -1336,14 +1336,90 @@ final class NativeRuntimeStore {
         focusDays: Int,
         seeds: [FocusClusterSeed]
     ) -> FocusItem {
+        let displayItem: FocusItem
         if hasPineDetailPayload(item) {
+            displayItem = item
+        } else {
+            displayItem = item.assembledDetailPayload(
+                kind: kind,
+                focusDays: focusDays,
+                clusterSeeds: seeds
+            )
+        }
+        return repairedIMessageUnavailableDisplay(displayItem, kind: kind)
+    }
+
+    private func repairedIMessageUnavailableDisplay(_ item: FocusItem, kind: FocusKind) -> FocusItem {
+        guard kind == .person,
+              !item.firstDetailLine(prefix: "iMessage unavailable:").isEmpty,
+              (integerDetailValue(item, prefix: "iMessage messages indexed:") ?? 0) == 0 else {
             return item
         }
-        return item.assembledDetailPayload(
-            kind: kind,
-            focusDays: focusDays,
-            clusterSeeds: seeds
+        return FocusItem(
+            id: item.id,
+            title: item.title,
+            subtitle: repairedIMessageUnavailableSubtitle(item.subtitle),
+            meta: item.meta,
+            timestamp: item.timestamp,
+            badge: item.badge,
+            statusBadge: repairedIMessageUnavailableStatusBadge(item.statusBadge),
+            detailLines: item.detailLines,
+            detailIntroLines: item.detailIntroLines,
+            detailSections: item.detailSections,
+            detailTailLines: item.detailTailLines
         )
+    }
+
+    private func repairedIMessageUnavailableSubtitle(_ subtitle: String) -> String {
+        let preview = singleLine(subtitle)
+        if preview.lowercased().hasPrefix("imessage unavailable;") {
+            return preview
+        }
+        if preview.isEmpty {
+            return "iMessage unavailable; showing Webex only."
+        }
+        if isNoSyncedMessagesSubtitle(preview) {
+            return "iMessage unavailable; no Webex messages found."
+        }
+        return "iMessage unavailable; latest Webex: \(preview)"
+    }
+
+    private func repairedIMessageUnavailableStatusBadge(_ statusBadge: String) -> String {
+        if statusBadge.lowercased().contains("imessage-unavailable") {
+            return statusBadge
+        }
+        var replaced = false
+        let tokens = statusBadge.split(separator: "+", omittingEmptySubsequences: false).map { token -> String in
+            let value = String(token)
+            let normalized = value.lowercased()
+            if normalized == "imessage" || normalized == "imessage-configured" {
+                replaced = true
+                return "imessage-unavailable"
+            }
+            return value
+        }
+        if replaced {
+            return tokens.joined(separator: "+")
+        }
+        if statusBadge.isEmpty {
+            return "imessage-unavailable"
+        }
+        return "\(statusBadge)+imessage-unavailable"
+    }
+
+    private func integerDetailValue(_ item: FocusItem, prefix: String) -> Int? {
+        let value = item.firstDetailLine(prefix: prefix)
+        let digits = value.prefix { $0.isNumber }
+        guard !digits.isEmpty else {
+            return nil
+        }
+        return Int(digits)
+    }
+
+    private func singleLine(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func hasPineDetailPayload(_ item: FocusItem) -> Bool {

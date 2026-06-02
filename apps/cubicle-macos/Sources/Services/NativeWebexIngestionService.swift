@@ -1241,7 +1241,7 @@ final class NativeWebexIngestionService {
             return FocusItem(
                 id: targetEmail.isEmpty ? target.id : targetEmail,
                 title: title,
-                subtitle: latestTimelinePreview(timelineEvents.first),
+                subtitle: latestTimelinePreview(timelineEvents.first, iMessageLoadError: iMessageOutcome.error),
                 meta: "\(autoReplyMeta(target)) | messages=\(timelineEvents.count)",
                 timestamp: timelineEvents.first?.createdAt ?? "",
                 badge: "person",
@@ -1250,7 +1250,8 @@ final class NativeWebexIngestionService {
                     webexMessages: matchingMessages,
                     iMessages: iMessageOutcome.messages,
                     target: target,
-                    syncState: syncStatesByRoomID[directRoomID]
+                    syncState: syncStatesByRoomID[directRoomID],
+                    iMessageLoadError: iMessageOutcome.error
                 ),
                 detailLines: detailLines,
                 detailIntroLines: [],
@@ -1372,7 +1373,13 @@ final class NativeWebexIngestionService {
         return lines
     }
 
-    private func latestTimelinePreview(_ event: PersonTimelineEvent?) -> String {
+    private func latestTimelinePreview(_ event: PersonTimelineEvent?, iMessageLoadError: String? = nil) -> String {
+        if iMessageLoadError != nil {
+            guard let event else {
+                return "iMessage unavailable; no Webex messages found."
+            }
+            return "iMessage unavailable; latest \(event.source): \(oneLine(event.body))"
+        }
         guard let event else {
             return "No synced Webex or iMessage messages yet."
         }
@@ -1384,7 +1391,8 @@ final class NativeWebexIngestionService {
         webexMessages: [MessageRecord],
         iMessages: [IMessageTimelineMessage],
         target: ConfigTarget,
-        syncState: WebexConversationSyncStateRecord?
+        syncState: WebexConversationSyncStateRecord?,
+        iMessageLoadError: String? = nil
     ) -> String {
         let hasWebex = !webexMessages.isEmpty
         let hasIMessage = !iMessages.isEmpty
@@ -1393,6 +1401,10 @@ final class NativeWebexIngestionService {
         }
         if hasIMessage {
             return appendSyncStatusBadge(base: "imessage", state: syncState)
+        }
+        if iMessageLoadError != nil, !target.iMessageHandles.isEmpty {
+            let base = directRoomID.isEmpty ? "email-match+imessage-unavailable" : "live-webex+imessage-unavailable"
+            return appendSyncStatusBadge(base: base, state: syncState)
         }
         if !target.iMessageHandles.isEmpty {
             let base = directRoomID.isEmpty ? "email-match+imessage-configured" : "live-webex+imessage-configured"
