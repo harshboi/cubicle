@@ -21,9 +21,19 @@ struct RuntimeConfiguration: Equatable {
     var webexPublicWebhookURL: URL? = nil
 
     static var current: RuntimeConfiguration {
-        let environment = ProcessInfo.processInfo.environment
+        resolved(environment: ProcessInfo.processInfo.environment)
+    }
+
+    static func resolved(
+        environment: [String: String],
+        fileExists: (String) -> Bool = FileManager.default.fileExists(atPath:)
+    ) -> RuntimeConfiguration {
         let rootPath = environment["GETWEBEXSPACE_RUNTIME_ROOT"]?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let resolvedRoot = rootPath?.isEmpty == false ? rootPath! : "/Volumes/Webex/getwebexspace-data"
+        let resolvedRoot = resolvedRuntimeRoot(
+            explicitRoot: rootPath,
+            environment: environment,
+            fileExists: fileExists
+        )
         let baseURLString = environment["WEBEX_API_BASE_URL"]?.trimmingCharacters(in: .whitespacesAndNewlines)
         let baseURL = URL(string: baseURLString ?? "") ?? URL(string: "https://webexapis.com/v1")!
         let pageSize = parseInt(
@@ -117,6 +127,29 @@ struct RuntimeConfiguration: Equatable {
             webexSyncConcurrencyLimit: syncConcurrencyLimit,
             webexPublicWebhookURL: publicWebhookURL
         )
+    }
+
+    private static func resolvedRuntimeRoot(
+        explicitRoot: String?,
+        environment: [String: String],
+        fileExists: (String) -> Bool
+    ) -> String {
+        if let explicitRoot, !explicitRoot.isEmpty {
+            return explicitRoot
+        }
+
+        let home = trimToNil(environment["HOME"]) ?? NSHomeDirectory()
+        let desktopRuntimeRoot = "\(home)/Desktop/getwebexspace-data"
+        if fileExists(desktopRuntimeRoot) {
+            return desktopRuntimeRoot
+        }
+
+        let volumeRuntimeRoot = "/Volumes/Webex/getwebexspace-data"
+        if fileExists(volumeRuntimeRoot) {
+            return volumeRuntimeRoot
+        }
+
+        return "\(home)/Library/Application Support/Cubicle"
     }
 
     private static func parseInt(

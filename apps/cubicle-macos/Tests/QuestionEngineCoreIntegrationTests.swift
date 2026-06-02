@@ -61,6 +61,26 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
         XCTAssertEqual(RuntimeConfiguration.current.codexExecutable, "/tmp/cubicle-codex")
     }
 
+    func testRuntimeConfigurationUsesDesktopRuntimeRootWhenEnvIsMissing() throws {
+        let homeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleRuntimeHomeTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: homeRoot) }
+        let desktopRuntimeRoot = homeRoot
+            .appendingPathComponent("Desktop", isDirectory: true)
+            .appendingPathComponent("getwebexspace-data", isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: desktopRuntimeRoot,
+            withIntermediateDirectories: true
+        )
+
+        let configuration = RuntimeConfiguration.resolved(
+            environment: ["HOME": homeRoot.path],
+            fileExists: { $0 == desktopRuntimeRoot.path }
+        )
+
+        XCTAssertEqual(configuration.runtimeRoot.path, desktopRuntimeRoot.path)
+    }
+
     func testSystemSettingsPersistsCodexModelAndReasoning() throws {
         let runtimeRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("CubicleSystemSettingsTests-\(UUID().uuidString)", isDirectory: true)
