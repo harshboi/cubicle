@@ -2,52 +2,400 @@ import Foundation
 
 /// File names and document types for optional macOS JSON configuration.
 enum MacAppJSONConfigurationFiles {
-    static let runtime = "runtime.json"
-    static let targets = "targets.json"
-    static let codex = "codex.json"
-    static let questionGeneration = "question-generation.json"
+    static let entrypoint = "cubicle.json"
+    static let base = "base.json"
 }
 
-/// Runtime, Webex, Codex executable, and local source tuning.
-struct MacAppJSONRuntimeDocument: Codable, Equatable {
-    var version: Int?
-    var codex: MacAppJSONRuntimeCodexSettings?
-    var webex: MacAppJSONWebexRuntimeSettings?
-    var imessage: MacAppJSONIMessageRuntimeSettings?
-}
+/// Environment names controlling the optional JSON configuration layer.
+enum MacAppJSONConfigurationEnvironment {
+    static let enabled = "CUBICLE_JSON_CONFIG_ENABLED"
+    static let file = "CUBICLE_CONFIG_FILE"
+    static let directory = "CUBICLE_JSON_CONFIG_DIR"
 
-/// Runtime Codex executable choices.
-struct MacAppJSONRuntimeCodexSettings: Codable, Equatable {
-    var executable: String?
-}
+    static func isEnabled(in environment: [String: String]) -> Bool {
+        guard let value = trimmed(environment[enabled])?.lowercased() else {
+            return false
+        }
+        return ["1", "true", "yes", "on"].contains(value)
+    }
 
-/// Runtime Webex API/OAuth/sync tuning.
-struct MacAppJSONWebexRuntimeSettings: Codable, Equatable {
-    var apiBaseURL: String?
-    var pageSize: Int?
-    var retryCount: Int?
-    var timeoutSeconds: Double?
-    var oauthTokenFile: String?
-    var oauthRefreshSkewSeconds: Double?
-    var oauthRefreshTokenSkewSeconds: Double?
-    var publicWebhookURL: String?
-    var sync: MacAppJSONWebexSyncSettings?
-
-    enum CodingKeys: String, CodingKey {
-        case apiBaseURL = "api_base_url"
-        case pageSize = "page_size"
-        case retryCount = "retry_count"
-        case timeoutSeconds = "timeout_seconds"
-        case oauthTokenFile = "oauth_token_file"
-        case oauthRefreshSkewSeconds = "oauth_refresh_skew_seconds"
-        case oauthRefreshTokenSkewSeconds = "oauth_refresh_token_skew_seconds"
-        case publicWebhookURL = "public_webhook_url"
-        case sync
+    static func trimmed(_ value: String?) -> String? {
+        guard let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !trimmed.isEmpty else {
+            return nil
+        }
+        return trimmed
     }
 }
 
-/// Webex sync scheduler/concurrency tuning.
-struct MacAppJSONWebexSyncSettings: Codable, Equatable {
+/// HOCON-style JSON composer used before decoding the typed Cubicle config.
+struct MacAppJSONConfigurationComposer {
+    var fileManager: FileManager
+
+    init(fileManager: FileManager = .default) {
+        self.fileManager = fileManager
+    }
+
+    /// Loads one entrypoint, applies `extends`, resolves `use` references, and decodes the typed document.
+    func loadDocument(entrypointURL: URL) throws -> MacAppJSONConfigurationDocument {
+        let object = try resolvedJSONObject(entrypointURL: entrypointURL)
+        try MacAppJSONConfigurationValidator.validateNoSecrets(in: object)
+        let data = try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
+        do {
+            return try JSONDecoder().decode(MacAppJSONConfigurationDocument.self, from: data)
+        } catch {
+            throw MacAppJSONConfigurationError.decodeFailed(entrypointURL, error)
+        }
+    }
+
+    /// Loads one entrypoint and returns the resolved raw object for diagnostics and tests.
+    func resolvedJSONObject(entrypointURL: URL) throws -> [String: Any] {
+        let loaded = try loadJSONObject(entrypointURL, stack: [])
+        return try resolveUseReferences(in: loaded, root: loaded, path: [], stack: [])
+    }
+
+    private func loadJSONObject(_ url: URL, stack: [URL]) throws -> [String: Any] {
+        let standardizedURL = url.standardizedFileURL
+        if stack.contains(standardizedURL) {
+            throw MacAppJSONConfigurationError.extendCycle((stack + [standardizedURL]).map(\.path))
+        }
+        guard fileManager.fileExists(atPath: standardizedURL.path) else {
+            throw MacAppJSONConfigurationError.missingFile(standardizedURL)
+        }
+
+        let data: Data
+        do {
+            data = try Data(contentsOf: standardizedURL)
+        } catch {
+            throw MacAppJSONConfigurationError.readFailed(standardizedURL, error)
+        }
+
+        let raw: Any
+        do {
+            raw = try JSONSerialization.jsonObject(with: data)
+        } catch {
+            throw MacAppJSONConfigurationError.invalidJSON(standardizedURL, error)
+        }
+        guard var object = raw as? [String: Any] else {
+            throw MacAppJSONConfigurationError.invalidRootObject(standardizedURL)
+        }
+
+        let extendsValues = try extendsList(in: object, sourceURL: standardizedURL)
+        object.removeValue(forKey: "extends")
+
+        var merged: [String: Any] = [:]
+        let parentStack = stack + [standardizedURL]
+        for extendsValue in extendsValues {
+            let parentURL = expandedFileURL(
+                extendsValue,
+                baseDirectory: standardizedURL.deletingLastPathComponent()
+            )
+            let parent = try loadJSONObject(parentURL, stack: parentStack)
+            merged = Self.deepMerging(merged, parent)
+        }
+        return Self.deepMerging(merged, object)
+    }
+
+    private func extendsList(in object: [String: Any], sourceURL: URL) throws -> [String] {
+        guard let value = object["extends"] else { return [] }
+        if let string = value as? String {
+            return [string]
+        }
+        if let array = value as? [String] {
+            return array
+        }
+        throw MacAppJSONConfigurationError.invalidExtends(sourceURL)
+    }
+
+    private func resolveUseReferences(
+        in value: Any,
+        root: [String: Any],
+        path: [String],
+        stack: [String]
+    ) throws -> [String: Any] {
+        guard var object = value as? [String: Any] else {
+            throw MacAppJSONConfigurationError.invalidUseObject(path.joined(separator: "."))
+        }
+
+        if let usePath = object["use"] as? String {
+            if stack.contains(usePath) {
+                throw MacAppJSONConfigurationError.useCycle(stack + [usePath])
+            }
+            guard let referenced = Self.value(at: usePath, in: root) as? [String: Any] else {
+                throw MacAppJSONConfigurationError.invalidUseReference(usePath)
+            }
+            object.removeValue(forKey: "use")
+            let resolvedReference = try resolveUseReferences(
+                in: referenced,
+                root: root,
+                path: usePath.components(separatedBy: "."),
+                stack: stack + [usePath]
+            )
+            object = Self.deepMerging(resolvedReference, object)
+        }
+
+        for (key, child) in object {
+            if let childObject = child as? [String: Any] {
+                object[key] = try resolveUseReferences(
+                    in: childObject,
+                    root: root,
+                    path: path + [key],
+                    stack: stack
+                )
+            } else if let childArray = child as? [Any] {
+                let resolvedArray: [Any] = try childArray.enumerated().map { index, element in
+                    if let elementObject = element as? [String: Any] {
+                        let resolvedObject = try resolveUseReferences(
+                            in: elementObject,
+                            root: root,
+                            path: path + [key, String(index)],
+                            stack: stack
+                        )
+                        return resolvedObject as Any
+                    }
+                    return element
+                }
+                object[key] = resolvedArray
+            }
+        }
+        return object
+    }
+
+    private func expandedFileURL(_ value: String, baseDirectory: URL) -> URL {
+        let expanded = NSString(string: value).expandingTildeInPath
+        if expanded.hasPrefix("/") {
+            return URL(fileURLWithPath: expanded)
+        }
+        return baseDirectory.appendingPathComponent(expanded)
+    }
+
+    static func deepMerging(_ base: [String: Any], _ overlay: [String: Any]) -> [String: Any] {
+        var merged = base
+        for (key, overlayValue) in overlay {
+            if let baseObject = merged[key] as? [String: Any],
+               let overlayObject = overlayValue as? [String: Any] {
+                merged[key] = deepMerging(baseObject, overlayObject)
+            } else {
+                merged[key] = overlayValue
+            }
+        }
+        return merged
+    }
+
+    static func value(at path: String, in root: [String: Any]) -> Any? {
+        let parts = path
+            .split(separator: ".")
+            .map(String.init)
+            .filter { !$0.isEmpty }
+        guard !parts.isEmpty else { return nil }
+        var current: Any = root
+        for part in parts {
+            guard let object = current as? [String: Any],
+                  let next = object[part] else {
+                return nil
+            }
+            current = next
+        }
+        return current
+    }
+}
+
+enum MacAppJSONConfigurationError: LocalizedError, Equatable {
+    case missingFile(URL)
+    case readFailed(URL, Error)
+    case invalidJSON(URL, Error)
+    case invalidRootObject(URL)
+    case invalidExtends(URL)
+    case extendCycle([String])
+    case invalidUseObject(String)
+    case invalidUseReference(String)
+    case useCycle([String])
+    case secretKeyNotAllowed(String)
+    case decodeFailed(URL, Error)
+
+    static func == (lhs: MacAppJSONConfigurationError, rhs: MacAppJSONConfigurationError) -> Bool {
+        switch (lhs, rhs) {
+        case (.missingFile(let left), .missingFile(let right)):
+            return left == right
+        case (.readFailed(let left, _), .readFailed(let right, _)):
+            return left == right
+        case (.invalidJSON(let left, _), .invalidJSON(let right, _)):
+            return left == right
+        case (.invalidRootObject(let left), .invalidRootObject(let right)):
+            return left == right
+        case (.invalidExtends(let left), .invalidExtends(let right)):
+            return left == right
+        case (.extendCycle(let left), .extendCycle(let right)):
+            return left == right
+        case (.invalidUseObject(let left), .invalidUseObject(let right)):
+            return left == right
+        case (.invalidUseReference(let left), .invalidUseReference(let right)):
+            return left == right
+        case (.useCycle(let left), .useCycle(let right)):
+            return left == right
+        case (.secretKeyNotAllowed(let left), .secretKeyNotAllowed(let right)):
+            return left == right
+        case (.decodeFailed(let left, _), .decodeFailed(let right, _)):
+            return left == right
+        default:
+            return false
+        }
+    }
+
+    var errorDescription: String? {
+        switch self {
+        case .missingFile(let url):
+            return "Missing Cubicle JSON config file: \(url.path)"
+        case .readFailed(let url, let error):
+            return "Could not read Cubicle JSON config file \(url.path): \(error.localizedDescription)"
+        case .invalidJSON(let url, let error):
+            return "Invalid Cubicle JSON config in \(url.path): \(error.localizedDescription)"
+        case .invalidRootObject(let url):
+            return "Cubicle JSON config root must be an object: \(url.path)"
+        case .invalidExtends(let url):
+            return "`extends` must be a string or string array in \(url.path)."
+        case .extendCycle(let paths):
+            return "Cubicle JSON config extends cycle: \(paths.joined(separator: " -> "))"
+        case .invalidUseObject(let path):
+            return "`use` can only appear in an object at \(path)."
+        case .invalidUseReference(let path):
+            return "Cubicle JSON config `use` reference does not point to an object: \(path)"
+        case .useCycle(let paths):
+            return "Cubicle JSON config `use` cycle: \(paths.joined(separator: " -> "))"
+        case .secretKeyNotAllowed(let keyPath):
+            return "Secret-bearing key is not allowed in Cubicle JSON config: \(keyPath)"
+        case .decodeFailed(let url, let error):
+            return "Could not decode resolved Cubicle JSON config from \(url.path): \(error.localizedDescription)"
+        }
+    }
+}
+
+enum MacAppJSONConfigurationValidator {
+    private static let forbiddenSecretKeys: Set<String> = [
+        "access_token",
+        "accesstoken",
+        "auth_token",
+        "authtoken",
+        "client_secret",
+        "clientsecret",
+        "refresh_token",
+        "refreshtoken"
+    ]
+
+    static func validateNoSecrets(in object: [String: Any]) throws {
+        try validateNoSecrets(in: object, path: [])
+    }
+
+    private static func validateNoSecrets(in value: Any, path: [String]) throws {
+        if let object = value as? [String: Any] {
+            for (key, child) in object {
+                let normalizedKey = key
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .lowercased()
+                    .replacingOccurrences(of: "-", with: "_")
+                if forbiddenSecretKeys.contains(normalizedKey) {
+                    throw MacAppJSONConfigurationError.secretKeyNotAllowed((path + [key]).joined(separator: "."))
+                }
+                try validateNoSecrets(in: child, path: path + [key])
+            }
+        } else if let array = value as? [Any] {
+            for (index, child) in array.enumerated() {
+                try validateNoSecrets(in: child, path: path + [String(index)])
+            }
+        }
+    }
+}
+
+/// Resolved top-level Cubicle configuration after composition.
+struct MacAppJSONConfigurationDocument: Codable, Equatable {
+    var version: Int?
+    var environment: MacAppJSONEnvironmentConfiguration?
+    var connectors: MacAppJSONConnectorsConfiguration?
+    var codex: MacAppJSONCodexConfiguration?
+    var questionGeneration: MacAppJSONQuestionGenerationConfiguration?
+    var testMode: MacAppJSONTestModeConfiguration?
+
+    enum CodingKeys: String, CodingKey {
+        case version
+        case environment
+        case connectors
+        case codex
+        case questionGeneration = "question_generation"
+        case testMode = "test_mode"
+    }
+}
+
+/// Reusable policy blocks scoped to one parent section.
+struct MacAppJSONCommonPolicies: Codable, Equatable {
+    var runPolicy: MacAppJSONRunPolicy?
+    var networkPolicy: MacAppJSONNetworkPolicy?
+    var cachePolicy: MacAppJSONCachePolicy?
+    var syncPolicy: MacAppJSONSyncPolicy?
+
+    enum CodingKeys: String, CodingKey {
+        case runPolicy = "run_policy"
+        case networkPolicy = "network_policy"
+        case cachePolicy = "cache_policy"
+        case syncPolicy = "sync_policy"
+    }
+}
+
+/// Parent defaults applied to child sections before child overrides.
+struct MacAppJSONPolicyDefaults: Codable, Equatable {
+    var runPolicy: MacAppJSONRunPolicy?
+    var networkPolicy: MacAppJSONNetworkPolicy?
+    var cachePolicy: MacAppJSONCachePolicy?
+    var syncPolicy: MacAppJSONSyncPolicy?
+
+    enum CodingKeys: String, CodingKey {
+        case runPolicy = "run_policy"
+        case networkPolicy = "network_policy"
+        case cachePolicy = "cache_policy"
+        case syncPolicy = "sync_policy"
+    }
+}
+
+/// Retry and timeout behavior shared by Codex jobs and other runnable work.
+struct MacAppJSONRunPolicy: Codable, Equatable {
+    var timeoutSeconds: Double?
+    var maxAttempts: Int?
+    var retryDelaySeconds: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case timeoutSeconds = "timeout_seconds"
+        case maxAttempts = "max_attempts"
+        case retryDelaySeconds = "retry_delay_seconds"
+    }
+}
+
+/// Network request behavior shared by remote connectors.
+struct MacAppJSONNetworkPolicy: Codable, Equatable {
+    var timeoutSeconds: Double?
+    var retryCount: Int?
+    var pageSize: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case timeoutSeconds = "timeout_seconds"
+        case retryCount = "retry_count"
+        case pageSize = "page_size"
+    }
+}
+
+/// Cache freshness behavior shared by generated artifacts.
+struct MacAppJSONCachePolicy: Codable, Equatable {
+    var maxAgeSeconds: Double?
+    var summaryMaxAgeSeconds: Double?
+    var execQuestionsMaxAgeSeconds: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case maxAgeSeconds = "max_age_seconds"
+        case summaryMaxAgeSeconds = "summary_max_age_seconds"
+        case execQuestionsMaxAgeSeconds = "exec_questions_max_age_seconds"
+    }
+}
+
+/// Scheduler/concurrency behavior shared by connector sync work.
+struct MacAppJSONSyncPolicy: Codable, Equatable {
     var concurrencyLimit: Int?
     var adaptiveActiveIntervalSeconds: Double?
     var adaptiveRecentIntervalSeconds: Double?
@@ -63,8 +411,48 @@ struct MacAppJSONWebexSyncSettings: Codable, Equatable {
     }
 }
 
-/// Local iMessage source tuning.
-struct MacAppJSONIMessageRuntimeSettings: Codable, Equatable {
+/// Env-like non-secret runtime tuning.
+struct MacAppJSONEnvironmentConfiguration: Codable, Equatable {
+    var common: MacAppJSONCommonPolicies?
+    var defaults: MacAppJSONPolicyDefaults?
+    var codexExecutable: String?
+    var runtimeRoot: String?
+    var webex: MacAppJSONEnvironmentWebexSettings?
+    var imessage: MacAppJSONEnvironmentIMessageSettings?
+
+    enum CodingKeys: String, CodingKey {
+        case common
+        case defaults
+        case codexExecutable = "codex_executable"
+        case runtimeRoot = "runtime_root"
+        case webex
+        case imessage
+    }
+}
+
+/// Env-like Webex tuning that is not secret material.
+struct MacAppJSONEnvironmentWebexSettings: Codable, Equatable {
+    var apiBaseURL: String?
+    var publicWebhookURL: String?
+    var oauthTokenFile: String?
+    var oauthRefreshSkewSeconds: Double?
+    var oauthRefreshTokenSkewSeconds: Double?
+    var networkPolicy: MacAppJSONNetworkPolicy?
+    var syncPolicy: MacAppJSONSyncPolicy?
+
+    enum CodingKeys: String, CodingKey {
+        case apiBaseURL = "api_base_url"
+        case publicWebhookURL = "public_webhook_url"
+        case oauthTokenFile = "oauth_token_file"
+        case oauthRefreshSkewSeconds = "oauth_refresh_skew_seconds"
+        case oauthRefreshTokenSkewSeconds = "oauth_refresh_token_skew_seconds"
+        case networkPolicy = "network_policy"
+        case syncPolicy = "sync_policy"
+    }
+}
+
+/// Env-like iMessage source tuning.
+struct MacAppJSONEnvironmentIMessageSettings: Codable, Equatable {
     var chatDatabasePath: String?
     var busyTimeoutMilliseconds: Int?
 
@@ -74,78 +462,67 @@ struct MacAppJSONIMessageRuntimeSettings: Codable, Equatable {
     }
 }
 
-/// Operator-controlled focus target groups.
-struct MacAppJSONTargetsDocument: Codable, Equatable {
-    var version: Int?
-    var groups: MacAppJSONTargetGroups?
-}
-
-/// Configured focus, executive, and belief target groups.
-struct MacAppJSONTargetGroups: Codable, Equatable {
-    var important: [MacAppJSONTargetDocument]?
-    var executives: [MacAppJSONTargetDocument]?
-    var beliefs: [MacAppJSONTargetDocument]?
-}
-
-/// JSON representation of one person or space target.
-struct MacAppJSONTargetDocument: Codable, Equatable {
-    var kind: String?
-    var label: String?
-    var roomID: String?
-    var roomType: String?
-    var email: String?
-    var autoReply: Bool?
-    var iMessageHandles: [String]?
+/// Connector selection and connector-specific non-secret settings.
+struct MacAppJSONConnectorsConfiguration: Codable, Equatable {
+    var common: MacAppJSONCommonPolicies?
+    var defaults: MacAppJSONPolicyDefaults?
+    var enabled: [String]?
+    var webex: MacAppJSONWebexConnectorConfiguration?
+    var imessage: MacAppJSONIMessageConnectorConfiguration?
 
     enum CodingKeys: String, CodingKey {
-        case kind
-        case label
-        case roomID = "room_id"
-        case roomType = "room_type"
-        case email
-        case autoReply = "auto_reply"
-        case iMessageHandles = "imessage_handles"
+        case common
+        case defaults
+        case enabled
+        case webex
+        case imessage
+    }
+}
+
+struct MacAppJSONWebexConnectorConfiguration: Codable, Equatable {
+    var enabled: Bool?
+    var networkPolicy: MacAppJSONNetworkPolicy?
+    var syncPolicy: MacAppJSONSyncPolicy?
+    var fixturePath: String?
+
+    enum CodingKeys: String, CodingKey {
+        case enabled
+        case networkPolicy = "network_policy"
+        case syncPolicy = "sync_policy"
+        case fixturePath = "fixture_path"
+    }
+}
+
+struct MacAppJSONIMessageConnectorConfiguration: Codable, Equatable {
+    var enabled: Bool?
+    var chatDatabasePath: String?
+    var busyTimeoutMilliseconds: Int?
+    var fixturePath: String?
+
+    enum CodingKeys: String, CodingKey {
+        case enabled
+        case chatDatabasePath = "chat_database_path"
+        case busyTimeoutMilliseconds = "busy_timeout_milliseconds"
+        case fixturePath = "fixture_path"
     }
 }
 
 /// Codex execution, cache, belief, and synthesis tuning.
-struct MacAppJSONCodexDocument: Codable, Equatable {
-    var version: Int?
-    var runPolicy: MacAppJSONCodexRunPolicy?
-    var cachePolicy: MacAppJSONCodexCachePolicy?
+struct MacAppJSONCodexConfiguration: Codable, Equatable {
+    var common: MacAppJSONCommonPolicies?
+    var defaults: MacAppJSONPolicyDefaults?
+    var runPolicy: MacAppJSONRunPolicy?
+    var cachePolicy: MacAppJSONCachePolicy?
     var beliefs: MacAppJSONCodexBeliefPolicy?
-    var questionSynthesis: MacAppJSONQuestionSynthesisPolicy?
+    var questionSynthesis: MacAppJSONCodexQuestionSynthesisPolicy?
 
     enum CodingKeys: String, CodingKey {
-        case version
+        case common
+        case defaults
         case runPolicy = "run_policy"
         case cachePolicy = "cache_policy"
         case beliefs
         case questionSynthesis = "question_synthesis"
-    }
-}
-
-/// Retry and timeout tuning for local Codex processes.
-struct MacAppJSONCodexRunPolicy: Codable, Equatable {
-    var timeoutSeconds: Double?
-    var maxAttempts: Int?
-    var retryDelaySeconds: Double?
-
-    enum CodingKeys: String, CodingKey {
-        case timeoutSeconds = "timeout_seconds"
-        case maxAttempts = "max_attempts"
-        case retryDelaySeconds = "retry_delay_seconds"
-    }
-}
-
-/// Cache freshness tuning for Codex prompt outputs.
-struct MacAppJSONCodexCachePolicy: Codable, Equatable {
-    var summaryMaxAgeSeconds: Double?
-    var execQuestionsMaxAgeSeconds: Double?
-
-    enum CodingKeys: String, CodingKey {
-        case summaryMaxAgeSeconds = "summary_max_age_seconds"
-        case execQuestionsMaxAgeSeconds = "exec_questions_max_age_seconds"
     }
 }
 
@@ -162,8 +539,9 @@ struct MacAppJSONCodexBeliefPolicy: Codable, Equatable {
     }
 }
 
-/// Question-synthesis prompt input sizing.
-struct MacAppJSONQuestionSynthesisPolicy: Codable, Equatable {
+/// Question-synthesis prompt input sizing and optional run-policy override.
+struct MacAppJSONCodexQuestionSynthesisPolicy: Codable, Equatable {
+    var runPolicy: MacAppJSONRunPolicy?
     var seedCandidateLimit: Int?
     var queryHistoryLimit: Int?
     var promptHistoryLimit: Int?
@@ -171,6 +549,7 @@ struct MacAppJSONQuestionSynthesisPolicy: Codable, Equatable {
     var outputLimit: Int?
 
     enum CodingKeys: String, CodingKey {
+        case runPolicy = "run_policy"
         case seedCandidateLimit = "seed_candidate_limit"
         case queryHistoryLimit = "query_history_limit"
         case promptHistoryLimit = "prompt_history_limit"
@@ -180,8 +559,9 @@ struct MacAppJSONQuestionSynthesisPolicy: Codable, Equatable {
 }
 
 /// Local question generation and filtering tuning.
-struct MacAppJSONQuestionGenerationDocument: Codable, Equatable {
-    var version: Int?
+struct MacAppJSONQuestionGenerationConfiguration: Codable, Equatable {
+    var common: MacAppJSONCommonPolicies?
+    var defaults: MacAppJSONPolicyDefaults?
     var core: MacAppJSONQuestionGenerationCoreSettings?
     var cubicle: MacAppJSONQuestionGenerationCubicleSettings?
 }
@@ -244,5 +624,26 @@ struct MacAppJSONQuestionGenerationCubicleSettings: Codable, Equatable {
         case publishableQuestionLimit = "publishable_question_limit"
         case evidenceLimit = "evidence_limit"
         case coreEvidenceLimit = "core_evidence_limit"
+    }
+}
+
+/// Test-app mode uses stable input files that cleanup must never delete.
+struct MacAppJSONTestModeConfiguration: Codable, Equatable {
+    var enabled: Bool?
+    var profile: String?
+    var fixtureRoot: String?
+    var targetData: String?
+    var settings: String?
+    var protectPaths: [String]?
+    var connectorFixtures: [String: String]?
+
+    enum CodingKeys: String, CodingKey {
+        case enabled
+        case profile
+        case fixtureRoot = "fixture_root"
+        case targetData = "target_data"
+        case settings
+        case protectPaths = "protect_paths"
+        case connectorFixtures = "connector_fixtures"
     }
 }
