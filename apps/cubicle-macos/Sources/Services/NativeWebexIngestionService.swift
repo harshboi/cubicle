@@ -65,6 +65,18 @@ struct WebexFocusSnapshotRefreshOutcome: Hashable {
     }
 }
 
+/// Webex ingestion boundary used by refresh orchestration tests.
+protocol NativeWebexIngesting {
+    func refreshMapFile() async throws -> WebexMapRefreshOutcome
+    func refreshFocusSnapshotsFromKnowledgeStore() throws -> WebexFocusSnapshotRefreshOutcome
+    func syncTrackedTargets(
+        messageLimitPerRoom: Int,
+        mode: WebexSyncMode,
+        trigger: WebexSyncTriggerReason,
+        progress: ((WebexSyncProgress) async -> Void)?
+    ) async throws -> WebexSyncOutcome
+}
+
 /// Progress event emitted while tracked conversations are syncing.
 struct WebexSyncProgress: Hashable {
     var completedRooms: Int
@@ -146,7 +158,7 @@ private enum NativeWebexIngestionError: LocalizedError {
 }
 
 /// Coordinates Webex ingestion, iMessage timeline enrichment, and live focus snapshots.
-final class NativeWebexIngestionService {
+final class NativeWebexIngestionService: NativeWebexIngesting {
     let configuration: RuntimeConfiguration
     let configStore: ConfigStore
     let webexClient: WebexAPIClient

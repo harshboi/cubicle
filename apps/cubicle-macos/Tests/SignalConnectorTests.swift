@@ -349,17 +349,23 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertEqual(result.summary, "Signal sync: targets=2, batches=2, failures=0.")
     }
 
-    func testNativeRefreshCoordinatorWebexSyncUsesSignalConnectorProcessingService() async throws {
+    func testNativeRefreshCoordinatorWebexSyncPreservesWebexEngineAndRunsIMessageSignals() async throws {
         let runtimeRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("CubicleSignalCoordinatorTests-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let configuration = testSignalRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
         try writeSignalSyncTargetFiles(configStore: configStore)
-        let processingService = RecordingSignalConnectorProcessingService(summary: "stub signal sync")
+        let personTarget = try XCTUnwrap(
+            configStore.personFocusManagementTargets().first { $0.email == "alex@example.com" }
+        )
+        XCTAssertTrue(try configStore.addPersonIMessageHandle("(408) 555-0100", to: personTarget))
+        let webexIngestionService = RecordingNativeWebexIngestionService()
+        let processingService = RecordingSignalConnectorProcessingService(summary: "stub iMessage sync")
         let coordinator = NativeRefreshCoordinator(
             configuration: configuration,
-            signalConnectorProcessingService: processingService
+            webexIngestionService: webexIngestionService,
+            iMessageConnectorProcessingService: processingService
         )
         var progressMessages: [String] = []
 
@@ -367,34 +373,23 @@ final class SignalConnectorTests: XCTestCase {
             progressMessages.append(progress.message)
         }
 
+        XCTAssertEqual(webexIngestionService.syncCallCount, 1)
+        XCTAssertEqual(webexIngestionService.receivedMessageLimitPerRoom, 150)
+        XCTAssertEqual(webexIngestionService.receivedMode, WebexSyncMode.full)
+        XCTAssertEqual(webexIngestionService.receivedTrigger, WebexSyncTriggerReason.manual)
         XCTAssertEqual(processingService.syncCallCount, 1)
         XCTAssertEqual(processingService.receivedMode, .full)
         XCTAssertEqual(processingService.receivedLimit, 150)
         XCTAssertEqual(
-            Set(processingService.receivedConfigTargets.map(\.id)),
-            Set([
-                "space:room:Y2lzY29zcGFyazovL3VzL1JPT00vSPACE",
-                "person:room:Y2lzY29zcGFyazovL3VzL1JPT00vPERSON",
-                "person:room:Y2lzY29zcGFyazovL3VzL1JPT00vBELIEF"
-            ])
+            processingService.receivedConfigTargets.map(\.id),
+            ["person:room:Y2lzY29zcGFyazovL3VzL1JPT00vPERSON"]
         )
-        XCTAssertEqual(result.summary, "stub signal sync Focus snapshots refreshed: spaces=1, people=1, supplemental=2.")
-        XCTAssertTrue(progressMessages.contains("Signal sync: preparing 3 target(s)."))
-        XCTAssertTrue(progressMessages.contains("stub signal sync Focus snapshots refreshed: spaces=1, people=1, supplemental=2."))
-        XCTAssertTrue(
-            FileManager.default.fileExists(
-                atPath: runtimeRoot
-                    .appendingPathComponent("knowledge/native/live_space_focus_cache_60d.json")
-                    .path
-            )
-        )
-        XCTAssertTrue(
-            FileManager.default.fileExists(
-                atPath: runtimeRoot
-                    .appendingPathComponent("knowledge/native/live_person_focus_cache_30d.json")
-                    .path
-            )
-        )
+        XCTAssertEqual(processingService.receivedConfigTargets.flatMap(\.iMessageHandles), ["+14085550100"])
+        XCTAssertTrue(result.summary.contains("Webex sync indexed 2 message(s), 2 evidence row(s)"))
+        XCTAssertTrue(result.summary.contains("stub iMessage sync"))
+        XCTAssertTrue(progressMessages.contains { $0.contains("Webex sync:") })
+        XCTAssertTrue(progressMessages.contains("iMessage signal sync: preparing 1 target(s)."))
+        XCTAssertTrue(progressMessages.contains("stub iMessage sync"))
     }
 
     func testNativeRefreshCoordinatorDisabledWebexSyncSkipsSignalConnectorProcessing() async throws {
@@ -407,14 +402,17 @@ final class SignalConnectorTests: XCTestCase {
         settings.webexSyncEnabled = false
         try configStore.saveSystemSettings(settings)
         try writeSignalSyncTargetFiles(configStore: configStore)
+        let webexIngestionService = RecordingNativeWebexIngestionService()
         let processingService = RecordingSignalConnectorProcessingService(summary: "stub signal sync")
         let coordinator = NativeRefreshCoordinator(
             configuration: configuration,
-            signalConnectorProcessingService: processingService
+            webexIngestionService: webexIngestionService,
+            iMessageConnectorProcessingService: processingService
         )
 
         let result = try await coordinator.refresh(.webexSync)
 
+        XCTAssertEqual(webexIngestionService.syncCallCount, 0)
         XCTAssertEqual(processingService.syncCallCount, 0)
         XCTAssertEqual(result.summary, "Webex sync skipped: disabled in Settings.")
     }
@@ -681,11 +679,85 @@ private final class RecordingSignalConnectorProcessingService: SignalConnectorPr
         return SignalConnectorProcessingResult(
             targetCount: configTargets.count,
             pipelineResult: SignalSyncPipelineResult(
-                batches: [SignalSyncBatch.empty(connectorID: .webex, accountID: "workspace")],
+                batches: [SignalSyncBatch.empty(connectorID: .iMessage, accountID: "local")],
                 writeSummaries: [:],
                 failures: []
             ),
             summary: summary
+        )
+    }
+}
+
+private final class RecordingNativeWebexIngestionService: NativeWebexIngesting {
+    private(set) var mapRefreshCallCount = 0
+    private(set) var snapshotRefreshCallCount = 0
+    private(set) var syncCallCount = 0
+    private(set) var receivedMessageLimitPerRoom: Int?
+    private(set) var receivedMode: WebexSyncMode?
+    private(set) var receivedTrigger: WebexSyncTriggerReason?
+
+    func refreshMapFile() async throws -> WebexMapRefreshOutcome {
+        mapRefreshCallCount += 1
+        return WebexMapRefreshOutcome(
+            mapFileURL: URL(fileURLWithPath: "/tmp/webex-map.tsv"),
+            rooms: 1,
+            spaces: 1,
+            senders: 1
+        )
+    }
+
+    func refreshFocusSnapshotsFromKnowledgeStore() throws -> WebexFocusSnapshotRefreshOutcome {
+        snapshotRefreshCallCount += 1
+        return WebexFocusSnapshotRefreshOutcome(
+            completedAt: "2026-06-03T00:00:01.000Z",
+            spaceTargets: 1,
+            personTargets: 1,
+            supplementalRoomTargets: 1
+        )
+    }
+
+    func syncTrackedTargets(
+        messageLimitPerRoom: Int,
+        mode: WebexSyncMode,
+        trigger: WebexSyncTriggerReason,
+        progress: ((WebexSyncProgress) async -> Void)?
+    ) async throws -> WebexSyncOutcome {
+        syncCallCount += 1
+        receivedMessageLimitPerRoom = messageLimitPerRoom
+        receivedMode = mode
+        receivedTrigger = trigger
+        await progress?(
+            WebexSyncProgress(
+                completedRooms: 1,
+                totalRooms: 1,
+                fetchedMessages: 2,
+                indexedMessages: 2,
+                currentRoomTitle: "Launch Room"
+            )
+        )
+        return WebexSyncOutcome(
+            startedAt: "2026-06-03T00:00:00.000Z",
+            completedAt: "2026-06-03T00:00:01.000Z",
+            requestedTargets: 3,
+            syncedRooms: 1,
+            fetchedMessages: 2,
+            indexedMessages: 2,
+            indexedEvidence: 2,
+            skippedTargets: 0,
+            unchangedRooms: 0,
+            roomResults: [
+                WebexRoomSyncResult(
+                    roomID: "room-1",
+                    title: "Launch Room",
+                    targetKinds: ["space"],
+                    fetchedMessages: 2,
+                    indexedMessages: 2,
+                    indexedEvidence: 2,
+                    memberCount: 3,
+                    latestMessageID: "message-2",
+                    latestMessageCreated: "2026-06-03T00:00:00.000Z"
+                )
+            ]
         )
     }
 }
