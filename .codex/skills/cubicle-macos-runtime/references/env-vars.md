@@ -71,6 +71,37 @@ export GETWEBEXSPACE_RUNTIME_ROOT=<path-to-getwebexspace-data>
 export CODEX_BIN=/opt/homebrew/bin/codex
 ```
 
+For Finder/Dock-launched apps, shell exports do not apply. Use `launchctl`:
+
+```bash
+launchctl setenv GETWEBEXSPACE_RUNTIME_ROOT "$HOME/Desktop/getwebexspace-data"
+osascript -e 'quit app "Cubicle"'
+open /Applications/Cubicle.app
+```
+
+Failure shape:
+
+```text
+"permission to save knowledge"
+ |
+ +-- first check GETWEBEXSPACE_RUNTIME_ROOT in the app process
+ |
+ +-- then check Desktop/Full Disk Access if the root is correct
+```
+
+Codex model/account check:
+
+```text
+Codex exited status 1
+ |
+ +-- run.log says unsupported model
+ |
+ +-- change Settings -> Codex -> GPT model
+       -> GPT-5.5 or GPT-5.4 Mini
+```
+
+Observed on 2026-06-03: `gpt-5` was rejected by the local ChatGPT Codex account; `gpt-5.5` and `gpt-5.4-mini` succeeded.
+
 ## Other Repo Surfaces
 
 These are not needed for normal macOS app work unless the user explicitly asks about those systems.
