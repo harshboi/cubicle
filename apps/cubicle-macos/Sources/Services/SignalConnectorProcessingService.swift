@@ -57,6 +57,7 @@ final class SignalConnectorProcessingService: SignalConnectorProcessing {
         let result = await pipeline.sync(
             request: SignalSyncRequest(
                 mode: mode,
+                trigger: mode == .full ? .manual : .scheduled,
                 targets: targets,
                 startedAt: now(),
                 since: since,

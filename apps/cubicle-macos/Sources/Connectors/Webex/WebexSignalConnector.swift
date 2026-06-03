@@ -10,208 +10,178 @@ final class WebexSignalConnector: SignalConnector {
 
     private let webexClient: WebexClienting
     private let accountID: String
+    private let engineConfiguration: WebexSyncEngine.Configuration
+    private let selfPersonID: String?
+    private let selfEmail: String?
+    private let existingMessageLookup: (String) throws -> Bool
+    private let legacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup?
+    private let now: () -> Date
+    private let randomUnitInterval: () -> Double
 
-    /// Shares the Webex client protocol with the existing sync engine.
-    init(webexClient: WebexClienting, accountID: String = "default") {
+    init(
+        webexClient: WebexClienting,
+        accountID: String = "default",
+        engineConfiguration: WebexSyncEngine.Configuration = WebexSyncEngine.Configuration(),
+        selfPersonID: String? = nil,
+        selfEmail: String? = nil,
+        existingMessageLookup: @escaping (String) throws -> Bool = { _ in false },
+        legacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup? = nil,
+        now: @escaping () -> Date = Date.init,
+        randomUnitInterval: @escaping () -> Double = { Double.random(in: 0...1) }
+    ) {
         self.webexClient = webexClient
         self.accountID = accountID
+        self.engineConfiguration = engineConfiguration
+        self.selfPersonID = selfPersonID
+        self.selfEmail = selfEmail
+        self.existingMessageLookup = existingMessageLookup
+        self.legacyStateLookup = legacyStateLookup
+        self.now = now
+        self.randomUnitInterval = randomUnitInterval
     }
 
-    /// Converts configured Webex selectors into normalized message events.
     func sync(
         request: SignalSyncRequest,
         checkpoints: ConnectorCheckpointSet
     ) async throws -> SignalSyncBatch {
-        // Production Webex cursor/backoff still lives in WebexSyncEngine; this
-        // adapter is the signal-shape bridge for the new substrate.
-        _ = checkpoints
-        var objects: [SignalObject] = []
-        var events: [SignalEvent] = []
-        var warnings: [ConnectorWarning] = []
-        var seenObjectIDs: Set<GlobalSignalID> = []
-        var seenEventIDs: Set<GlobalSignalID> = []
-        var fetchedRoomIDs: Set<String> = []
-        var fetchedEmails: Set<String> = []
+        let conversations = webexConversations(from: request)
+        guard !conversations.isEmpty else {
+            return .empty(connectorID: .webex, accountID: accountID)
+        }
 
+        let stateStore = WebexSignalSyncStateStore(
+            accountID: accountID,
+            checkpoints: checkpoints,
+            legacyStateLookup: legacyStateLookup,
+            now: now
+        )
+        let processor = WebexSignalBatchMessageProcessor(
+            accountID: accountID,
+            ignoreSelfMessages: true,
+            selfPersonID: selfPersonID,
+            selfEmail: selfEmail,
+            messageExists: existingMessageLookup
+        )
+        let engine = WebexSyncEngine(
+            webexClient: webexClient,
+            stateStore: stateStore,
+            messageProcessor: processor,
+            configuration: engineConfiguration,
+            now: now,
+            randomUnitInterval: randomUnitInterval
+        )
+        let results = await engine.syncConversations(
+            conversations,
+            trigger: webexTrigger(from: request.trigger)
+        )
+        let checkpoints = await stateStore.pendingCheckpoints()
+        let warnings = connectorWarnings(from: results)
+        return processor.makeBatch(
+            checkpoints: checkpoints,
+            warnings: warnings,
+            availability: availability(results: results, warnings: warnings)
+        )
+    }
+
+    private func webexConversations(from request: SignalSyncRequest) -> [WebexTrackedConversation] {
+        var conversations: [WebexTrackedConversation] = []
         for target in request.targets {
             let roomIDs = target.selectors(for: .webex, kind: .roomID).map(\.value).filter { !$0.isEmpty }
             let emails = target.selectors(for: .webex, kind: .email).map(\.value).filter { !$0.isEmpty }
-
-            for roomID in roomIDs where fetchedRoomIDs.insert(roomID).inserted {
-                do {
-                    let messages = try await webexClient.fetchRecentMessages(roomID: roomID, max: request.limit)
-                    appendSignals(
-                        from: messages,
-                        target: target,
-                        fallbackRoomID: roomID,
-                        objects: &objects,
-                        events: &events,
-                        seenObjectIDs: &seenObjectIDs,
-                        seenEventIDs: &seenEventIDs
+            for roomID in roomIDs {
+                let conversationType: WebexConversationType = target.entityKind == .person ? .direct : .space
+                conversations.append(
+                    WebexTrackedConversation(
+                        conversationID: "room:\(roomID)",
+                        conversationType: conversationType,
+                        roomID: roomID,
+                        personID: nil,
+                        personEmail: emails.first,
+                        displayName: target.label,
+                        pollingMode: pollingMode(for: request.mode, conversationType: conversationType)
                     )
-                } catch {
-                    warnings.append(ConnectorWarning(connectorID: .webex, targetID: target.id, message: error.localizedDescription))
-                }
+                )
             }
-
-            for email in emails where roomIDs.isEmpty && fetchedEmails.insert(email).inserted {
-                // Prefer configured room IDs when present; direct lookup is only
-                // for email-only targets and can duplicate the same conversation.
-                do {
-                    let messages = try await webexClient.fetchDirectMessages(personEmail: email, personID: nil, max: request.limit)
-                    appendSignals(
-                        from: messages,
-                        target: target,
-                        fallbackRoomID: "direct:\(email)",
-                        objects: &objects,
-                        events: &events,
-                        seenObjectIDs: &seenObjectIDs,
-                        seenEventIDs: &seenEventIDs
+            guard roomIDs.isEmpty else {
+                continue
+            }
+            for email in emails {
+                conversations.append(
+                    WebexTrackedConversation(
+                        conversationID: "person:\(email)",
+                        conversationType: .direct,
+                        roomID: "",
+                        personID: nil,
+                        personEmail: email,
+                        displayName: target.label.isEmpty ? email : target.label,
+                        pollingMode: pollingMode(for: request.mode, conversationType: .direct)
                     )
-                } catch {
-                    warnings.append(ConnectorWarning(connectorID: .webex, targetID: target.id, message: error.localizedDescription))
-                }
+                )
             }
         }
-
-        return SignalSyncBatch(
-            connectorID: .webex,
-            accountID: accountID,
-            objects: objects,
-            events: events,
-            relations: [],
-            content: [],
-            checkpoint: nil,
-            warnings: warnings,
-            availability: availability(hasSignals: !events.isEmpty || !objects.isEmpty, warnings: warnings)
-        )
-    }
-
-    /// Adds converted Webex messages while de-duping objects/events within a batch.
-    private func appendSignals(
-        from messages: [WebexMessage],
-        target: SignalTarget,
-        fallbackRoomID: String,
-        objects: inout [SignalObject],
-        events: inout [SignalEvent],
-        seenObjectIDs: inout Set<GlobalSignalID>,
-        seenEventIDs: inout Set<GlobalSignalID>
-    ) {
-        for message in messages {
-            let converted = makeMessageSignal(message, target: target, fallbackRoomID: fallbackRoomID)
-            for object in converted.objects where seenObjectIDs.insert(object.id).inserted {
-                objects.append(object)
+        return conversations.sorted { lhs, rhs in
+            if lhs.displayName.localizedCaseInsensitiveCompare(rhs.displayName) != .orderedSame {
+                return lhs.displayName.localizedCaseInsensitiveCompare(rhs.displayName) == .orderedAscending
             }
-            if seenEventIDs.insert(converted.event.id).inserted {
-                events.append(converted.event)
-            }
+            return lhs.conversationID < rhs.conversationID
         }
     }
 
-    /// Builds normalized room/person objects plus the message event.
-    private func makeMessageSignal(
-        _ message: WebexMessage,
-        target: SignalTarget,
-        fallbackRoomID: String
-    ) -> (objects: [SignalObject], event: SignalEvent) {
-        let roomID = normalized(message.roomID).isEmpty ? fallbackRoomID : normalized(message.roomID)
-        let roomSourceID = SourceObjectID(
-            connectorID: .webex,
-            accountID: accountID,
-            kind: "room",
-            externalID: roomID
-        )
-        let personExternalID = normalized(message.personID).isEmpty
-            ? normalized(message.personEmail).lowercased()
-            : normalized(message.personID)
-        let personSourceID = SourceObjectID(
-            connectorID: .webex,
-            accountID: accountID,
-            kind: "person",
-            externalID: personExternalID
-        )
-        let eventSourceID = SourceEventID(
-            connectorID: .webex,
-            accountID: accountID,
-            kind: "message",
-            externalID: message.id
-        )
-        let occurredAt = Self.parseDate(message.created) ?? Date()
-        let visibility = SignalVisibility.authenticatedUser(connectorID: .webex, accountID: accountID)
-        let senderEmail = normalized(message.personEmail).lowercased()
-        let senderDisplayName = senderEmail.isEmpty ? personExternalID : senderEmail
-        let roomObject = SignalObject(
-            id: roomSourceID.globalID,
-            sourceID: roomSourceID,
-            kind: target.entityKind == .space ? .space : .thread,
-            title: target.label,
-            url: nil,
-            createdAt: nil,
-            updatedAt: occurredAt,
-            visibility: visibility,
-            properties: ["webex.roomID": .string(roomID)]
-        )
-        let personObject = SignalObject(
-            id: personSourceID.globalID,
-            sourceID: personSourceID,
-            kind: .person,
-            title: senderDisplayName,
-            url: nil,
-            createdAt: nil,
-            updatedAt: occurredAt,
-            visibility: visibility,
-            properties: senderEmail.isEmpty ? [:] : ["webex.email": .string(senderEmail)]
-        )
-        let payload = MessageEventPayload(
-            threadID: roomSourceID.globalID,
-            threadSourceID: roomSourceID,
-            threadTitle: target.label,
-            senderID: personSourceID.globalID,
-            senderDisplayName: senderDisplayName,
-            senderEmail: senderEmail.isEmpty ? nil : senderEmail,
-            body: message.text,
-            isFromCurrentUser: false
-        )
-        let event = SignalEvent(
-            id: eventSourceID.globalID,
-            sourceID: eventSourceID,
-            kind: .message,
-            actor: SignalActor(id: personSourceID.globalID, displayName: senderDisplayName, email: senderEmail.isEmpty ? nil : senderEmail),
-            occurredAt: occurredAt,
-            objectIDs: [roomSourceID.globalID, personSourceID.globalID],
-            visibility: visibility,
-            payload: .message(payload)
-        )
-        return ([roomObject, personObject], event)
-    }
-
-    private func normalized(_ value: String) -> String {
-        value.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    /// Distinguishes partial Webex failures from a clean empty sync.
-    private func availability(hasSignals: Bool, warnings: [ConnectorWarning]) -> ConnectorAvailability {
-        guard !warnings.isEmpty else { return .available }
-        return hasSignals ? .partial : .unavailable
-    }
-
-    /// Accepts both fractional and non-fractional Webex timestamps.
-    private static func parseDate(_ value: String) -> Date? {
-        if let date = iso8601WithFractionalSeconds.date(from: value) {
-            return date
+    private func pollingMode(
+        for mode: SignalSyncMode,
+        conversationType: WebexConversationType
+    ) -> WebexPollingMode {
+        switch mode {
+        case .full:
+            return .active
+        case .incremental:
+            return conversationType == .direct ? .recent : .background
         }
-        return iso8601.date(from: value)
     }
 
-    private static let iso8601WithFractionalSeconds: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter
-    }()
+    private func webexTrigger(from trigger: SignalSyncTriggerReason) -> WebexSyncTriggerReason {
+        switch trigger {
+        case .startup:
+            return .startup
+        case .scheduled:
+            return .scheduled
+        case .manual:
+            return .manual
+        case .wakeFromSleep:
+            return .wakeFromSleep
+        case .networkReconnect:
+            return .networkReconnect
+        case .userOpenedTarget:
+            return .userOpenedConversation
+        }
+    }
 
-    private static let iso8601: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter
-    }()
+    private func connectorWarnings(from results: [WebexConversationSyncResult]) -> [ConnectorWarning] {
+        results.compactMap { result in
+            guard let reason = result.skippedReason, result.status != .synced else {
+                return nil
+            }
+            return ConnectorWarning(
+                connectorID: .webex,
+                targetID: result.conversationID,
+                message: reason
+            )
+        }
+    }
+
+    private func availability(
+        results: [WebexConversationSyncResult],
+        warnings: [ConnectorWarning]
+    ) -> ConnectorAvailability {
+        if results.contains(where: { $0.status == .authRequired }) {
+            return .authRequired
+        }
+        if results.contains(where: { $0.status == .delayedRateLimit }) {
+            return .rateLimited
+        }
+        guard !warnings.isEmpty else {
+            return .available
+        }
+        return results.contains(where: { $0.processedMessages > 0 }) ? .partial : .unavailable
+    }
 }

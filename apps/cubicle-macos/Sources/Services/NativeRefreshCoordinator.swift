@@ -116,7 +116,14 @@ final class NativeRefreshCoordinator {
             factory: SignalConnectorFactory(
                 webexClient: webexClient,
                 webexProductClient: webexClient,
-                iMessageIngestionService: iMessageService
+                iMessageIngestionService: iMessageService,
+                webexEngineConfiguration: SignalConnectorFactory.webexEngineConfiguration(from: configuration),
+                webexExistingMessageLookup: { messageID in
+                    try knowledgeStore.messageExists(messageID: messageID)
+                },
+                webexLegacyStateLookup: { conversationID in
+                    try knowledgeStore.loadWebexSyncState(conversationID: conversationID)
+                }
             ),
             writer: SignalKnowledgeWriter(knowledgeStore: knowledgeStore),
             checkpointStore: SignalCheckpointStore(configuration: configuration),

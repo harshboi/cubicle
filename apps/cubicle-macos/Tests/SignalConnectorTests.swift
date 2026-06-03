@@ -174,7 +174,7 @@ final class SignalConnectorTests: XCTestCase {
 
         XCTAssertEqual(client.recentFetches.count, 1)
         XCTAssertEqual(client.recentFetches.first?.0, "room-1")
-        XCTAssertEqual(client.recentFetches.first?.1, 25)
+        XCTAssertEqual(client.recentFetches.first?.1, 100)
         XCTAssertEqual(batch.connectorID, .webex)
         XCTAssertEqual(batch.accountID, "workspace")
         XCTAssertEqual(batch.availability, .available)
@@ -223,6 +223,125 @@ final class SignalConnectorTests: XCTestCase {
 
         XCTAssertEqual(client.recentFetches.map(\.0), ["room-1"])
         XCTAssertEqual(batch.events.count, 1)
+    }
+
+    func testWebexSignalConnectorSkipsCatchupWhenCheckpointMatchesLatestMessage() async throws {
+        let createdAt = Date(timeIntervalSince1970: 1_715_000_120)
+        let message = makeWebexSignalMessage(
+            id: "webex-message-1",
+            roomID: "room-1",
+            personID: "person-1",
+            personEmail: "alex@example.com",
+            text: "Already indexed.",
+            createdAt: createdAt
+        )
+        let client = StubSignalWebexClient()
+        client.recentMessagesByRoomID["room-1"] = [message]
+        let checkpoint = webexSignalCheckpoint(
+            roomID: "room-1",
+            lastSeenMessageID: "webex-message-1",
+            lastSeenCreated: testISO8601.string(from: createdAt)
+        )
+        let connector = WebexSignalConnector(
+            webexClient: client,
+            accountID: "workspace",
+            engineConfiguration: testWebexSignalEngineConfiguration()
+        )
+        let target = SignalTarget(
+            id: "space:room-1",
+            label: "Launch Room",
+            entityKind: .space,
+            selectors: [ConnectorSelector(connectorID: .webex, kind: .roomID, value: "room-1")]
+        )
+
+        let batch = try await connector.sync(
+            request: SignalSyncRequest(mode: .incremental, targets: [target], startedAt: createdAt, limit: 25),
+            checkpoints: ConnectorCheckpointSet([checkpoint])
+        )
+
+        XCTAssertEqual(client.latestFetches, ["room-1"])
+        XCTAssertTrue(client.recentFetches.isEmpty)
+        XCTAssertTrue(batch.events.isEmpty)
+        XCTAssertEqual(batch.checkpoints.first?.payload["lastSeenMessageID"], "webex-message-1")
+    }
+
+    func testWebexSignalConnectorFallsBackToLegacySyncState() async throws {
+        let createdAt = Date(timeIntervalSince1970: 1_715_000_120)
+        let message = makeWebexSignalMessage(
+            id: "webex-message-legacy",
+            roomID: "room-legacy",
+            personID: "person-1",
+            personEmail: "alex@example.com",
+            text: "Already indexed through old Webex sync.",
+            createdAt: createdAt
+        )
+        let client = StubSignalWebexClient()
+        client.recentMessagesByRoomID["room-legacy"] = [message]
+        let legacyState = webexSignalState(
+            roomID: "room-legacy",
+            lastSeenMessageID: "webex-message-legacy",
+            lastSeenCreated: testISO8601.string(from: createdAt)
+        )
+        let connector = WebexSignalConnector(
+            webexClient: client,
+            accountID: "workspace",
+            engineConfiguration: testWebexSignalEngineConfiguration(),
+            legacyStateLookup: { conversationID in
+                conversationID == legacyState.conversationID ? legacyState : nil
+            }
+        )
+        let target = SignalTarget(
+            id: "space:room-legacy",
+            label: "Launch Room",
+            entityKind: .space,
+            selectors: [ConnectorSelector(connectorID: .webex, kind: .roomID, value: "room-legacy")]
+        )
+
+        let batch = try await connector.sync(
+            request: SignalSyncRequest(mode: .incremental, targets: [target], startedAt: createdAt, limit: 25),
+            checkpoints: .empty
+        )
+
+        XCTAssertEqual(client.latestFetches, ["room-legacy"])
+        XCTAssertTrue(client.recentFetches.isEmpty)
+        XCTAssertTrue(batch.events.isEmpty)
+        XCTAssertEqual(batch.checkpoints.first?.payload["lastSeenMessageID"], "webex-message-legacy")
+    }
+
+    func testWebexSignalConnectorReturnsBackoffCheckpointForRateLimit() async throws {
+        let now = Date(timeIntervalSince1970: 1_715_000_000)
+        let client = StubSignalWebexClient()
+        client.latestErrorsByRoomID["room-429"] = .httpStatus(
+            code: 429,
+            detail: "rate limited",
+            retryAfterSeconds: 120
+        )
+        let connector = WebexSignalConnector(
+            webexClient: client,
+            accountID: "workspace",
+            engineConfiguration: testWebexSignalEngineConfiguration(),
+            now: { now },
+            randomUnitInterval: { 0.5 }
+        )
+        let target = SignalTarget(
+            id: "space:room-429",
+            label: "Launch Room",
+            entityKind: .space,
+            selectors: [ConnectorSelector(connectorID: .webex, kind: .roomID, value: "room-429")]
+        )
+
+        let batch = try await connector.sync(
+            request: SignalSyncRequest(mode: .incremental, targets: [target], startedAt: now, limit: 25),
+            checkpoints: .empty
+        )
+
+        XCTAssertEqual(client.latestFetches, ["room-429"])
+        XCTAssertEqual(batch.availability, .rateLimited)
+        XCTAssertTrue(batch.events.isEmpty)
+        XCTAssertEqual(batch.checkpoints.first?.payload["consecutiveFailureCount"], "1")
+        XCTAssertEqual(batch.checkpoints.first?.payload["lastSeenMessageID"], "")
+        let nextAllowed = try XCTUnwrap(batch.checkpoints.first?.payload["nextAllowedSyncAt"])
+        XCTAssertEqual(testISO8601.date(from: nextAllowed), now.addingTimeInterval(120))
     }
 
     func testSignalSyncPipelineRoutesTargetsAndWritesBatches() async throws {
@@ -738,15 +857,25 @@ private final class StubIMessageSignalIngestionService: NativeIMessageIngesting 
 
 private final class StubSignalWebexClient: WebexClienting {
     var recentMessagesByRoomID: [String: [WebexMessage]] = [:]
+    var latestErrorsByRoomID: [String: WebexAPIError] = [:]
+    var recentErrorsByRoomID: [String: WebexAPIError] = [:]
     var directMessagesByEmail: [String: [WebexMessage]] = [:]
+    private(set) var latestFetches: [String] = []
     private(set) var recentFetches: [(String, Int)] = []
 
     func fetchLatestMessage(roomID: String) async throws -> WebexMessage? {
-        recentMessagesByRoomID[roomID]?.first
+        latestFetches.append(roomID)
+        if let error = latestErrorsByRoomID[roomID] {
+            throw error
+        }
+        return recentMessagesByRoomID[roomID]?.first
     }
 
     func fetchRecentMessages(roomID: String, max: Int) async throws -> [WebexMessage] {
         recentFetches.append((roomID, max))
+        if let error = recentErrorsByRoomID[roomID] {
+            throw error
+        }
         return recentMessagesByRoomID[roomID] ?? []
     }
 
@@ -1064,6 +1193,57 @@ private func makeWebexSignalMessage(
     ]
     let data = try! JSONSerialization.data(withJSONObject: payload, options: [])
     return try! JSONDecoder().decode(WebexMessage.self, from: data)
+}
+
+private func webexSignalCheckpoint(
+    roomID: String,
+    lastSeenMessageID: String,
+    lastSeenCreated: String
+) -> ConnectorCheckpoint {
+    let state = webexSignalState(
+        roomID: roomID,
+        lastSeenMessageID: lastSeenMessageID,
+        lastSeenCreated: lastSeenCreated
+    )
+    return WebexSignalSyncStateStore.checkpoint(
+        from: state,
+        accountID: "workspace",
+        targetID: "roomID:\(roomID)"
+    )
+}
+
+private func webexSignalState(
+    roomID: String,
+    lastSeenMessageID: String,
+    lastSeenCreated: String
+) -> WebexConversationSyncStateRecord {
+    WebexConversationSyncStateRecord(
+        conversationID: "room:\(roomID)",
+        conversationType: .space,
+        roomID: roomID,
+        personID: nil,
+        personEmail: nil,
+        title: "Launch Room",
+        lastSeenMessageID: lastSeenMessageID,
+        lastSeenCreated: lastSeenCreated,
+        lastSuccessfulSyncAt: lastSeenCreated,
+        nextAllowedSyncAt: nil,
+        pollingMode: .background,
+        consecutiveFailureCount: 0,
+        lastError: nil,
+        lastErrorAt: nil,
+        updatedAt: lastSeenCreated
+    )
+}
+
+private func testWebexSignalEngineConfiguration() -> WebexSyncEngine.Configuration {
+    WebexSyncEngine.Configuration(
+        maxConcurrentAPIRequests: 3,
+        activeIntervalSeconds: 20,
+        recentIntervalSeconds: 60,
+        backgroundIntervalSeconds: 180,
+        jitterRatio: 0
+    )
 }
 
 private func makeSignalMessageBatch(occurredAt: Date) -> SignalSyncBatch {

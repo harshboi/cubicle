@@ -7,12 +7,20 @@ final class SignalConnectorFactory {
     /// Builds production connectors from runtime configuration.
     convenience init(configuration: RuntimeConfiguration = .current) {
         let webexAPIClient = WebexAPIClient(configuration: configuration)
+        let knowledgeStore = KnowledgeStore(configuration: configuration)
         self.init(
             webexClient: webexAPIClient,
             webexProductClient: webexAPIClient,
             iMessageIngestionService: NativeIMessageIngestionService(),
             webexAccountID: "default",
-            iMessageAccountID: "local"
+            iMessageAccountID: "local",
+            webexEngineConfiguration: Self.webexEngineConfiguration(from: configuration),
+            webexExistingMessageLookup: { messageID in
+                try knowledgeStore.messageExists(messageID: messageID)
+            },
+            webexLegacyStateLookup: { conversationID in
+                try knowledgeStore.loadWebexSyncState(conversationID: conversationID)
+            }
         )
     }
 
@@ -21,14 +29,20 @@ final class SignalConnectorFactory {
         webexClient: WebexClienting & WebexProductClienting,
         iMessageIngestionService: NativeIMessageIngesting,
         webexAccountID: String = "default",
-        iMessageAccountID: String = "local"
+        iMessageAccountID: String = "local",
+        webexEngineConfiguration: WebexSyncEngine.Configuration = WebexSyncEngine.Configuration(),
+        webexExistingMessageLookup: @escaping (String) throws -> Bool = { _ in false },
+        webexLegacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup? = nil
     ) {
         self.init(
             webexClient: webexClient,
             webexProductClient: webexClient,
             iMessageIngestionService: iMessageIngestionService,
             webexAccountID: webexAccountID,
-            iMessageAccountID: iMessageAccountID
+            iMessageAccountID: iMessageAccountID,
+            webexEngineConfiguration: webexEngineConfiguration,
+            webexExistingMessageLookup: webexExistingMessageLookup,
+            webexLegacyStateLookup: webexLegacyStateLookup
         )
     }
 
@@ -38,14 +52,20 @@ final class SignalConnectorFactory {
         webexProductClient: WebexProductClienting,
         iMessageIngestionService: NativeIMessageIngesting,
         webexAccountID: String = "default",
-        iMessageAccountID: String = "local"
+        iMessageAccountID: String = "local",
+        webexEngineConfiguration: WebexSyncEngine.Configuration = WebexSyncEngine.Configuration(),
+        webexExistingMessageLookup: @escaping (String) throws -> Bool = { _ in false },
+        webexLegacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup? = nil
     ) {
         self.registry = try! SignalConnectorRegistry(
             providers: [
                 WebexConnectorProvider(
                     webexClient: webexClient,
                     productClient: webexProductClient,
-                    accountID: webexAccountID
+                    accountID: webexAccountID,
+                    engineConfiguration: webexEngineConfiguration,
+                    existingMessageLookup: webexExistingMessageLookup,
+                    legacyStateLookup: webexLegacyStateLookup
                 ),
                 IMessageConnectorProvider(
                     ingestionService: iMessageIngestionService,
@@ -84,6 +104,18 @@ final class SignalConnectorFactory {
             throw SignalConnectorFactoryError.unsupportedProductService(.iMessage)
         }
         return provider.makeIMessageProductService()
+    }
+
+    static func webexEngineConfiguration(
+        from configuration: RuntimeConfiguration
+    ) -> WebexSyncEngine.Configuration {
+        WebexSyncEngine.Configuration(
+            maxConcurrentAPIRequests: max(1, configuration.webexSyncConcurrencyLimit),
+            activeIntervalSeconds: max(5, configuration.webexAdaptiveActiveIntervalSeconds),
+            recentIntervalSeconds: max(15, configuration.webexAdaptiveRecentIntervalSeconds),
+            backgroundIntervalSeconds: max(60, configuration.webexAdaptiveBackgroundIntervalSeconds),
+            jitterRatio: min(max(0, configuration.webexAdaptiveJitterRatio), 0.8)
+        )
     }
 }
 

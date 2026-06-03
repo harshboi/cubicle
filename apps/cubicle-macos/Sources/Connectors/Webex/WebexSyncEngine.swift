@@ -137,8 +137,14 @@ private actor AsyncPermitPool {
     }
 }
 
+/// State boundary used by the Webex sync engine.
+protocol WebexSyncStateStoring: AnyObject {
+    func loadOrCreate(for conversation: WebexTrackedConversation) async throws -> WebexConversationSyncStateRecord
+    func save(_ state: WebexConversationSyncStateRecord) async throws
+}
+
 /// Serializes sync watermark reads/writes through `KnowledgeStore`.
-actor SyncStateStore {
+actor SyncStateStore: WebexSyncStateStoring {
     private let knowledgeStore: KnowledgeStore
     private let now: () -> Date
 
@@ -152,7 +158,7 @@ actor SyncStateStore {
     }
 
     /// Loads persisted state or creates a blank watermark for a new conversation.
-    func loadOrCreate(for conversation: WebexTrackedConversation) throws -> WebexConversationSyncStateRecord {
+    func loadOrCreate(for conversation: WebexTrackedConversation) async throws -> WebexConversationSyncStateRecord {
         if let existing = try knowledgeStore.loadWebexSyncState(conversationID: conversation.conversationID) {
             return existing
         }
@@ -177,7 +183,7 @@ actor SyncStateStore {
     }
 
     /// Persists the latest watermark/backoff state.
-    func save(_ state: WebexConversationSyncStateRecord) throws {
+    func save(_ state: WebexConversationSyncStateRecord) async throws {
         try knowledgeStore.upsertWebexSyncState(state)
     }
 
@@ -359,7 +365,7 @@ actor WebexSyncEngine {
     }
 
     private let webexClient: WebexClienting
-    private let stateStore: SyncStateStore
+    private let stateStore: any WebexSyncStateStoring
     private let messageProcessor: MessageProcessing
     private let requestPermits: AsyncPermitPool
     private let configuration: Configuration
@@ -371,7 +377,7 @@ actor WebexSyncEngine {
     /// Creates an engine with injectable time/randomness for deterministic tests.
     init(
         webexClient: WebexClienting,
-        stateStore: SyncStateStore,
+        stateStore: any WebexSyncStateStoring,
         messageProcessor: MessageProcessing,
         configuration: Configuration = Configuration(),
         now: @escaping () -> Date = Date.init,

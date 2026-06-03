@@ -47,19 +47,34 @@ final class WebexConnectorProvider: SignalConnectorProvider, WebexProductService
     private let webexClient: WebexClienting
     private let productClient: WebexProductClienting
     private let accountID: String
+    private let engineConfiguration: WebexSyncEngine.Configuration
+    private let existingMessageLookup: (String) throws -> Bool
+    private let legacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup?
 
     init(
         webexClient: WebexClienting,
         productClient: WebexProductClienting,
-        accountID: String = "default"
+        accountID: String = "default",
+        engineConfiguration: WebexSyncEngine.Configuration = WebexSyncEngine.Configuration(),
+        existingMessageLookup: @escaping (String) throws -> Bool = { _ in false },
+        legacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup? = nil
     ) {
         self.webexClient = webexClient
         self.productClient = productClient
         self.accountID = accountID
+        self.engineConfiguration = engineConfiguration
+        self.existingMessageLookup = existingMessageLookup
+        self.legacyStateLookup = legacyStateLookup
     }
 
     func makeSignalConnector() throws -> SignalConnector {
-        WebexSignalConnector(webexClient: webexClient, accountID: accountID)
+        WebexSignalConnector(
+            webexClient: webexClient,
+            accountID: accountID,
+            engineConfiguration: engineConfiguration,
+            existingMessageLookup: existingMessageLookup,
+            legacyStateLookup: legacyStateLookup
+        )
     }
 
     func makeWebexProductService() -> WebexProductService {
