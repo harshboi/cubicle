@@ -39,14 +39,6 @@ enum KnowledgeStoreError: LocalizedError {
     }
 }
 
-/// Filesystem status for the SQLite database and WAL sidecars.
-struct KnowledgeDatabaseStatus: Equatable {
-    var databaseExists: Bool
-    var walExists: Bool
-    var shmExists: Bool
-    var path: String
-}
-
 /// Belief query filter for separating generated beliefs from operator-entered ones.
 private enum BeliefManualFilter {
     case all
@@ -62,10 +54,10 @@ private enum SQLiteBindValue {
     case double(Double)
 }
 
-/// SQLite-backed store for focus, belief, question, Webex, and evidence records.
-final class KnowledgeStore {
+/// SQLite-backed DAO for focus, belief, question, Webex, and evidence records.
+final class KnowledgeStore: KnowledgeDAO {
     let configuration: RuntimeConfiguration
-    private let fileManager = FileManager.default
+    let database: KnowledgeDatabase
     private let jsonEncoder = JSONEncoder()
     private let jsonDecoder = JSONDecoder()
     private let timestampFormatter: ISO8601DateFormatter = {
@@ -77,32 +69,30 @@ final class KnowledgeStore {
     /// Creates a store bound to the active runtime root.
     init(configuration: RuntimeConfiguration = .current) {
         self.configuration = configuration
+        self.database = KnowledgeDatabase(configuration: configuration)
         self.jsonEncoder.dateEncodingStrategy = .iso8601
         self.jsonDecoder.dateDecodingStrategy = .iso8601
     }
 
     /// Directory containing the local knowledge database.
     var knowledgeDirectory: URL {
-        configuration.runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
+        database.knowledgeDirectory
     }
 
     /// SQLite database URL used by this store.
     var databaseURL: URL {
-        knowledgeDirectory.appendingPathComponent("knowledge.db")
+        database.databaseURL
     }
 
     /// Reports database/WAL sidecar presence for settings and diagnostics.
     func status() -> KnowledgeDatabaseStatus {
-        KnowledgeDatabaseStatus(
-            databaseExists: fileManager.fileExists(atPath: databaseURL.path),
-            walExists: fileManager.fileExists(atPath: databaseURL.path + "-wal"),
-            shmExists: fileManager.fileExists(atPath: databaseURL.path + "-shm"),
-            path: databaseURL.path
-        )
+        database.status()
     }
 
     /// Forces schema setup without reading or writing domain records.
     func bootstrap() throws {
+        // Opening a connection is what runs migrations; bootstrap keeps that
+        // side effect explicit at refresh/app-start call sites.
         _ = try withDatabase { _ in true }
     }
 
@@ -234,6 +224,8 @@ final class KnowledgeStore {
                 "generated_at = excluded.generated_at",
                 "updated_at = excluded.updated_at"
             ]
+            // Older topic tables had UI/cache columns that are not part of the
+            // current record shape; preserve them when the local DB still has them.
             if columns.contains("label") {
                 insertColumns.append("label")
                 updateAssignments.append("label = excluded.label")
@@ -1514,6 +1506,39 @@ final class KnowledgeStore {
         }
     }
 
+    /// Atomically persists connector-mapped rows for one signal batch.
+    func writeConnectorMessageBatch(
+        rooms: [RoomRecord],
+        people: [PersonRecord],
+        messages: [MessageRecord],
+        evidence: [BeliefEvidenceRecord]
+    ) throws {
+        guard !rooms.isEmpty || !people.isEmpty || !messages.isEmpty || !evidence.isEmpty else {
+            return
+        }
+        try withDatabase { db in
+            try execute(sql: "BEGIN IMMEDIATE TRANSACTION;", db: db)
+            do {
+                for room in rooms {
+                    try upsertRoomRecord(room, db: db)
+                }
+                for person in people {
+                    try upsertPersonRecord(person, db: db)
+                }
+                for message in messages {
+                    try upsertMessageRecord(message, db: db)
+                }
+                for evidenceRecord in evidence {
+                    try upsertBeliefEvidenceRecord(evidenceRecord, db: db)
+                }
+                try execute(sql: "COMMIT;", db: db)
+            } catch {
+                _ = sqlite3_exec(db, "ROLLBACK;", nil, nil, nil)
+                throw error
+            }
+        }
+    }
+
     /// Loads evidence rows for a typed belief target.
     func loadBeliefEvidence(
         scope: KnowledgeBeliefScope,
@@ -2085,38 +2110,14 @@ final class KnowledgeStore {
 
     /// Opens SQLite, applies migrations/compat shims, then executes the operation.
     private func withDatabase<T>(_ body: (OpaquePointer) throws -> T) throws -> T {
-        try ensureKnowledgeDirectory()
-        let db = try openDatabase()
-        defer { sqlite3_close(db) }
-        try execute(sql: "PRAGMA foreign_keys = ON;", db: db)
-        try execute(sql: "PRAGMA journal_mode = WAL;", db: db)
-        try applyPendingMigrations(db: db)
-        try ensureCoreSchemaCompatibility(db: db)
-        try ensureTopicSchemaCompatibility(db: db)
-        try ensureBeliefSchemaCompatibility(db: db)
-        try ensureBeliefEvidenceSchemaCompatibility(db: db)
-        return try body(db)
-    }
-
-    private func ensureKnowledgeDirectory() throws {
-        try fileManager.createDirectory(at: knowledgeDirectory, withIntermediateDirectories: true)
-    }
-
-    private func openDatabase() throws -> OpaquePointer {
-        var db: OpaquePointer?
-        let flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX
-        if sqlite3_open_v2(databaseURL.path, &db, flags, nil) != SQLITE_OK {
-            let message = db.flatMap { String(cString: sqlite3_errmsg($0)) } ?? "unknown SQLite error"
-            if let db {
-                sqlite3_close(db)
-            }
-            throw KnowledgeStoreError.sqliteOpenFailed(path: databaseURL.path, message: message)
+        try database.withOpenConnection { db in
+            try applyPendingMigrations(db: db)
+            try ensureCoreSchemaCompatibility(db: db)
+            try ensureTopicSchemaCompatibility(db: db)
+            try ensureBeliefSchemaCompatibility(db: db)
+            try ensureBeliefEvidenceSchemaCompatibility(db: db)
+            return try body(db)
         }
-        guard let db else {
-            throw KnowledgeStoreError.sqliteOpenFailed(path: databaseURL.path, message: "nil SQLite pointer")
-        }
-        sqlite3_busy_timeout(db, 5000)
-        return db
     }
 
     /// Applies versioned migrations before legacy compatibility shims run.
@@ -2175,6 +2176,8 @@ final class KnowledgeStore {
 
         try execute(sql: "BEGIN IMMEDIATE TRANSACTION;", db: db)
         do {
+            // Pre-DAO databases may have room rows but miss columns the current
+            // focus/cache queries require; patch in place instead of rebuilding.
             let requiredColumns: [(name: String, definition: String)] = [
                 ("title", "title TEXT NOT NULL DEFAULT ''"),
                 ("updated_at", "updated_at TEXT NOT NULL DEFAULT ''")

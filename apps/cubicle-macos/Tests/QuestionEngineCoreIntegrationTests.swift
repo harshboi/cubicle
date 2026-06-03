@@ -1626,6 +1626,62 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
         XCTAssertEqual(beliefs.first?.supportCount, 4)
     }
 
+    func testKnowledgeStoreConnectorBatchRollsBackOnEvidenceFailure() throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleConnectorBatchRollback-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let store = KnowledgeStore(configuration: testRuntimeConfiguration(runtimeRoot: runtimeRoot))
+        let now = "2026-06-01T00:00:00.000Z"
+
+        XCTAssertThrowsError(
+            try store.writeConnectorMessageBatch(
+                rooms: [RoomRecord(id: "room-rollback", title: "Rollback Room", updatedAt: now)],
+                people: [
+                    PersonRecord(
+                        id: "person-rollback",
+                        displayName: "Rollback Person",
+                        email: "rollback@example.com",
+                        updatedAt: now
+                    )
+                ],
+                messages: [
+                    MessageRecord(
+                        id: "message-rollback",
+                        roomID: "room-rollback",
+                        personID: "person-rollback",
+                        body: "Should roll back.",
+                        createdAt: now,
+                        updatedAt: now
+                    )
+                ],
+                evidence: [
+                    BeliefEvidenceRecord(
+                        id: "duplicate-evidence-id",
+                        source: "webex_message",
+                        sourceID: "message-rollback",
+                        roomID: "room-rollback",
+                        personID: "person-rollback",
+                        occurredAt: now,
+                        text: "First evidence row should be rolled back."
+                    ),
+                    BeliefEvidenceRecord(
+                        id: "duplicate-evidence-id",
+                        source: "webex_message",
+                        sourceID: "message-rollback-conflict",
+                        roomID: "room-rollback",
+                        personID: "person-rollback",
+                        occurredAt: now,
+                        text: "Primary key conflict should roll back prior writes."
+                    )
+                ]
+            )
+        )
+
+        XCTAssertNil(try store.loadRoom(roomID: "room-rollback"))
+        XCTAssertFalse(try store.messageExists(messageID: "message-rollback"))
+        XCTAssertTrue(try store.loadBeliefEvidence(scope: .space, entityKey: "room-rollback").isEmpty)
+    }
+
     func testTopicUpsertHandlesMigratedLegacyRequiredColumns() throws {
         let runtimeRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("CubicleTopicLegacyUpsertTests-\(UUID().uuidString)", isDirectory: true)
