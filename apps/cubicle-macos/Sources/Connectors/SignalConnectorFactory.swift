@@ -15,6 +15,10 @@ final class SignalConnectorFactory {
             webexAccountID: "default",
             iMessageAccountID: "local",
             webexEngineConfiguration: Self.webexEngineConfiguration(from: configuration),
+            webexSelfIdentityLookup: {
+                let user = try await webexAPIClient.currentUser()
+                return WebexSelfIdentity(personID: user.id, email: user.emails.first)
+            },
             webexExistingMessageLookup: { messageID in
                 try knowledgeStore.messageExists(messageID: messageID)
             },
@@ -31,6 +35,7 @@ final class SignalConnectorFactory {
         webexAccountID: String = "default",
         iMessageAccountID: String = "local",
         webexEngineConfiguration: WebexSyncEngine.Configuration = WebexSyncEngine.Configuration(),
+        webexSelfIdentityLookup: WebexSignalConnector.SelfIdentityLookup? = nil,
         webexExistingMessageLookup: @escaping (String) throws -> Bool = { _ in false },
         webexLegacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup? = nil
     ) {
@@ -41,6 +46,7 @@ final class SignalConnectorFactory {
             webexAccountID: webexAccountID,
             iMessageAccountID: iMessageAccountID,
             webexEngineConfiguration: webexEngineConfiguration,
+            webexSelfIdentityLookup: webexSelfIdentityLookup,
             webexExistingMessageLookup: webexExistingMessageLookup,
             webexLegacyStateLookup: webexLegacyStateLookup
         )
@@ -54,6 +60,7 @@ final class SignalConnectorFactory {
         webexAccountID: String = "default",
         iMessageAccountID: String = "local",
         webexEngineConfiguration: WebexSyncEngine.Configuration = WebexSyncEngine.Configuration(),
+        webexSelfIdentityLookup: WebexSignalConnector.SelfIdentityLookup? = nil,
         webexExistingMessageLookup: @escaping (String) throws -> Bool = { _ in false },
         webexLegacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup? = nil
     ) {
@@ -64,6 +71,7 @@ final class SignalConnectorFactory {
                     productClient: webexProductClient,
                     accountID: webexAccountID,
                     engineConfiguration: webexEngineConfiguration,
+                    selfIdentityLookup: webexSelfIdentityLookup,
                     existingMessageLookup: webexExistingMessageLookup,
                     legacyStateLookup: webexLegacyStateLookup
                 ),

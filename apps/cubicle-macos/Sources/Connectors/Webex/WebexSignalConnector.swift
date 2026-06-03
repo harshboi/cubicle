@@ -1,7 +1,15 @@
 import Foundation
 
+/// Authenticated Webex actor used for self-message filtering.
+struct WebexSelfIdentity: Hashable {
+    var personID: String?
+    var email: String?
+}
+
 /// Signal adapter for Webex room and direct-message conversations.
 final class WebexSignalConnector: SignalConnector {
+    typealias SelfIdentityLookup = () async throws -> WebexSelfIdentity?
+
     let descriptor = ConnectorDescriptor(
         id: .webex,
         displayName: "Webex",
@@ -11,8 +19,7 @@ final class WebexSignalConnector: SignalConnector {
     private let webexClient: WebexClienting
     private let accountID: String
     private let engineConfiguration: WebexSyncEngine.Configuration
-    private let selfPersonID: String?
-    private let selfEmail: String?
+    private let selfIdentityLookup: SelfIdentityLookup?
     private let existingMessageLookup: (String) throws -> Bool
     private let legacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup?
     private let now: () -> Date
@@ -24,6 +31,7 @@ final class WebexSignalConnector: SignalConnector {
         engineConfiguration: WebexSyncEngine.Configuration = WebexSyncEngine.Configuration(),
         selfPersonID: String? = nil,
         selfEmail: String? = nil,
+        selfIdentityLookup: SelfIdentityLookup? = nil,
         existingMessageLookup: @escaping (String) throws -> Bool = { _ in false },
         legacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup? = nil,
         now: @escaping () -> Date = Date.init,
@@ -32,8 +40,15 @@ final class WebexSignalConnector: SignalConnector {
         self.webexClient = webexClient
         self.accountID = accountID
         self.engineConfiguration = engineConfiguration
-        self.selfPersonID = selfPersonID
-        self.selfEmail = selfEmail
+        if let selfIdentityLookup {
+            self.selfIdentityLookup = selfIdentityLookup
+        } else if selfPersonID != nil || selfEmail != nil {
+            self.selfIdentityLookup = {
+                WebexSelfIdentity(personID: selfPersonID, email: selfEmail)
+            }
+        } else {
+            self.selfIdentityLookup = nil
+        }
         self.existingMessageLookup = existingMessageLookup
         self.legacyStateLookup = legacyStateLookup
         self.now = now
@@ -55,18 +70,21 @@ final class WebexSignalConnector: SignalConnector {
             legacyStateLookup: legacyStateLookup,
             now: now
         )
+        let selfIdentity = try? await selfIdentityLookup?()
         let processor = WebexSignalBatchMessageProcessor(
             accountID: accountID,
             ignoreSelfMessages: true,
-            selfPersonID: selfPersonID,
-            selfEmail: selfEmail,
+            selfPersonID: selfIdentity?.personID,
+            selfEmail: selfIdentity?.email,
             messageExists: existingMessageLookup
         )
+        var configuration = engineConfiguration
+        configuration.messageFetchLimit = request.limit
         let engine = WebexSyncEngine(
             webexClient: webexClient,
             stateStore: stateStore,
             messageProcessor: processor,
-            configuration: engineConfiguration,
+            configuration: configuration,
             now: now,
             randomUnitInterval: randomUnitInterval
         )
@@ -176,12 +194,13 @@ final class WebexSignalConnector: SignalConnector {
         if results.contains(where: { $0.status == .authRequired }) {
             return .authRequired
         }
+        let hasProcessedMessages = results.contains { $0.processedMessages > 0 }
         if results.contains(where: { $0.status == .delayedRateLimit }) {
-            return .rateLimited
+            return hasProcessedMessages ? .partial : .rateLimited
         }
         guard !warnings.isEmpty else {
             return .available
         }
-        return results.contains(where: { $0.processedMessages > 0 }) ? .partial : .unavailable
+        return hasProcessedMessages ? .partial : .unavailable
     }
 }

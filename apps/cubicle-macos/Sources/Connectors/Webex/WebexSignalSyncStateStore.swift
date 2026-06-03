@@ -32,15 +32,7 @@ actor WebexSignalSyncStateStore: WebexSyncStateStoring {
         if let pending = pendingStatesByConversationID[conversation.conversationID] {
             return pending
         }
-        if let checkpoint = checkpoints.checkpoint(
-            connectorID: .webex,
-            targetID: targetID,
-            key: webexSignalSyncStateCheckpointKey
-        ) ?? checkpoints.checkpoint(
-            connectorID: .webex,
-            targetID: conversation.conversationID,
-            key: webexSignalSyncStateCheckpointKey
-        ) {
+        if let checkpoint = checkpoint(for: conversation, targetID: targetID) {
             return Self.state(from: checkpoint, fallbackConversation: conversation)
         }
         if let legacy = try legacyStateLookup?(conversation.conversationID) {
@@ -54,20 +46,57 @@ actor WebexSignalSyncStateStore: WebexSyncStateStoring {
     }
 
     func pendingCheckpoints() -> [ConnectorCheckpoint] {
-        pendingStatesByConversationID.values
-            .map { state in
-                Self.checkpoint(
-                    from: state,
-                    accountID: accountID,
-                    targetID: targetIDByConversationID[state.conversationID] ?? state.conversationID
-                )
+        pendingStatesByConversationID.values.flatMap { state in
+            Self.checkpointTargetIDs(
+                from: state,
+                primaryTargetID: targetIDByConversationID[state.conversationID] ?? state.conversationID
+            ).map { targetID in
+                Self.checkpoint(from: state, accountID: accountID, targetID: targetID)
             }
+        }
             .sorted { lhs, rhs in
                 if lhs.targetID != rhs.targetID {
                     return lhs.targetID < rhs.targetID
                 }
                 return lhs.key < rhs.key
             }
+    }
+
+    private func checkpoint(
+        for conversation: WebexTrackedConversation,
+        targetID: String
+    ) -> ConnectorCheckpoint? {
+        if let exact = checkpoints.checkpoint(
+            connectorID: .webex,
+            targetID: targetID,
+            key: webexSignalSyncStateCheckpointKey
+        ) ?? checkpoints.checkpoint(
+            connectorID: .webex,
+            targetID: conversation.conversationID,
+            key: webexSignalSyncStateCheckpointKey
+        ) {
+            return exact
+        }
+
+        let roomID = Self.normalized(conversation.roomID)
+        let email = Self.normalized(conversation.personEmail?.lowercased() ?? "")
+        return checkpoints.all.last { checkpoint in
+            guard checkpoint.connectorID == .webex,
+                  checkpoint.key == webexSignalSyncStateCheckpointKey else {
+                return false
+            }
+            let payload = checkpoint.payload
+            if Self.nonEmpty(payload["conversationID"]) == conversation.conversationID {
+                return true
+            }
+            if !roomID.isEmpty, Self.nonEmpty(payload["roomID"]) == roomID {
+                return true
+            }
+            if !email.isEmpty, Self.nonEmpty(payload["personEmail"])?.lowercased() == email {
+                return true
+            }
+            return false
+        }
     }
 
     static func checkpointTargetID(for conversation: WebexTrackedConversation) -> String {
@@ -80,6 +109,20 @@ actor WebexSignalSyncStateStore: WebexSyncStateStoring {
             return "email:\(email)"
         }
         return normalized(conversation.conversationID)
+    }
+
+    static func checkpointTargetIDs(
+        from state: WebexConversationSyncStateRecord,
+        primaryTargetID: String
+    ) -> [String] {
+        stableDeduped(
+            [
+                primaryTargetID,
+                targetID(kind: "roomID", value: state.roomID),
+                targetID(kind: "email", value: state.personEmail?.lowercased() ?? ""),
+                state.conversationID
+            ].compactMap { $0 }
+        )
     }
 
     static func checkpoint(
@@ -120,7 +163,7 @@ actor WebexSignalSyncStateStore: WebexSyncStateStoring {
     ) -> WebexConversationSyncStateRecord {
         let payload = checkpoint.payload
         return WebexConversationSyncStateRecord(
-            conversationID: nonEmpty(payload["conversationID"]) ?? fallbackConversation.conversationID,
+            conversationID: fallbackConversation.conversationID,
             conversationType: WebexConversationType(rawValue: payload["conversationType"] ?? "") ?? fallbackConversation.conversationType,
             roomID: nonEmpty(payload["roomID"]) ?? fallbackConversation.roomID,
             personID: nonEmpty(payload["personID"]) ?? fallbackConversation.personID,
@@ -163,6 +206,26 @@ actor WebexSignalSyncStateStore: WebexSyncStateStoring {
 
     private static func normalized(_ value: String) -> String {
         value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func targetID(kind: String, value: String) -> String? {
+        let normalized = normalized(value)
+        guard !normalized.isEmpty else {
+            return nil
+        }
+        return "\(kind):\(normalized)"
+    }
+
+    private static func stableDeduped(_ values: [String]) -> [String] {
+        var seen: Set<String> = []
+        var result: [String] = []
+        for value in values {
+            let normalized = normalized(value)
+            if !normalized.isEmpty, seen.insert(normalized).inserted {
+                result.append(normalized)
+            }
+        }
+        return result
     }
 
     private static func nonEmpty(_ value: String?) -> String? {

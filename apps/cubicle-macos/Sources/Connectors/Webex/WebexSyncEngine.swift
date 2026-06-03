@@ -362,6 +362,7 @@ actor WebexSyncEngine {
         var recentIntervalSeconds: TimeInterval = 60
         var backgroundIntervalSeconds: TimeInterval = 180
         var jitterRatio: Double = 0.20
+        var messageFetchLimit: Int = 100
     }
 
     private let webexClient: WebexClienting
@@ -647,7 +648,10 @@ actor WebexSyncEngine {
             }
 
             let catchup = try await withRequestPermit {
-                try await webexClient.fetchRecentMessages(roomID: resolvedRoomID, max: 100)
+                try await webexClient.fetchRecentMessages(
+                    roomID: resolvedRoomID,
+                    max: boundedMessageFetchLimit
+                )
             }
 
             let unseen = unseenMessages(
@@ -750,7 +754,7 @@ actor WebexSyncEngine {
             try await webexClient.fetchDirectMessages(
                 personEmail: normalizedOptional(conversation.personEmail),
                 personID: normalizedOptional(conversation.personID),
-                max: 100
+                max: boundedMessageFetchLimit
             )
         }
         guard let resolved = directMessages.first(where: { !normalizedRoomID($0.roomID).isEmpty })?.roomID else {
@@ -794,6 +798,10 @@ actor WebexSyncEngine {
             }
         }
         return ascending
+    }
+
+    private var boundedMessageFetchLimit: Int {
+        min(max(1, configuration.messageFetchLimit), 5_000)
     }
 
     private func successResult(

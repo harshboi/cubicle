@@ -12,6 +12,7 @@ protocol SignalConnectorProcessing {
     func sync(
         configTargets: [ConfigTarget],
         mode: SignalSyncMode,
+        trigger: SignalSyncTriggerReason,
         limit: Int,
         since: Date?
     ) async throws -> SignalConnectorProcessingResult
@@ -44,6 +45,7 @@ final class SignalConnectorProcessingService: SignalConnectorProcessing {
     func sync(
         configTargets: [ConfigTarget],
         mode: SignalSyncMode,
+        trigger: SignalSyncTriggerReason = .scheduled,
         limit: Int,
         since: Date? = nil
     ) async throws -> SignalConnectorProcessingResult {
@@ -57,7 +59,7 @@ final class SignalConnectorProcessingService: SignalConnectorProcessing {
         let result = await pipeline.sync(
             request: SignalSyncRequest(
                 mode: mode,
-                trigger: mode == .full ? .manual : .scheduled,
+                trigger: trigger,
                 targets: targets,
                 startedAt: now(),
                 since: since,

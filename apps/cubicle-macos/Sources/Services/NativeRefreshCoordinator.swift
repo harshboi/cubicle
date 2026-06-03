@@ -30,6 +30,25 @@ enum RefreshScope: String, CaseIterable, Identifiable {
     }
 }
 
+private extension SignalSyncTriggerReason {
+    init(webexTrigger: WebexSyncTriggerReason) {
+        switch webexTrigger {
+        case .startup:
+            self = .startup
+        case .scheduled:
+            self = .scheduled
+        case .manual:
+            self = .manual
+        case .wakeFromSleep:
+            self = .wakeFromSleep
+        case .networkReconnect:
+            self = .networkReconnect
+        case .userOpenedConversation:
+            self = .userOpenedTarget
+        }
+    }
+}
+
 /// Cadence metadata for one refresh scope.
 struct RefreshPlan: Hashable {
     var scope: RefreshScope
@@ -118,6 +137,10 @@ final class NativeRefreshCoordinator {
                 webexProductClient: webexClient,
                 iMessageIngestionService: iMessageService,
                 webexEngineConfiguration: SignalConnectorFactory.webexEngineConfiguration(from: configuration),
+                webexSelfIdentityLookup: {
+                    let user = try await webexClient.currentUser()
+                    return WebexSelfIdentity(personID: user.id, email: user.emails.first)
+                },
                 webexExistingMessageLookup: { messageID in
                     try knowledgeStore.messageExists(messageID: messageID)
                 },
@@ -185,6 +208,7 @@ final class NativeRefreshCoordinator {
     /// Runs the connector path for local iMessage evidence only.
     private func syncIMessageSignals(
         mode: SignalSyncMode,
+        trigger: SignalSyncTriggerReason,
         progress: ((RefreshExecutionProgress) async -> Void)?
     ) async throws -> SignalConnectorProcessingResult? {
         let targets = try iMessageSignalSyncTargets()
@@ -201,6 +225,7 @@ final class NativeRefreshCoordinator {
         let outcome = try await iMessageConnectorProcessingService.sync(
             configTargets: targets,
             mode: mode,
+            trigger: trigger,
             limit: 150,
             since: nil
         )
@@ -249,6 +274,7 @@ final class NativeRefreshCoordinator {
             let iMessageMode: SignalSyncMode = mode == .full ? .full : .incremental
             let iMessageOutcome = try await syncIMessageSignals(
                 mode: iMessageMode,
+                trigger: SignalSyncTriggerReason(webexTrigger: trigger),
                 progress: progress
             )
             let summary = [

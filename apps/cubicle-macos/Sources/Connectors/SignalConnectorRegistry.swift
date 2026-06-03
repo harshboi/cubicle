@@ -48,6 +48,7 @@ final class WebexConnectorProvider: SignalConnectorProvider, WebexProductService
     private let productClient: WebexProductClienting
     private let accountID: String
     private let engineConfiguration: WebexSyncEngine.Configuration
+    private let selfIdentityLookup: WebexSignalConnector.SelfIdentityLookup?
     private let existingMessageLookup: (String) throws -> Bool
     private let legacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup?
 
@@ -56,6 +57,7 @@ final class WebexConnectorProvider: SignalConnectorProvider, WebexProductService
         productClient: WebexProductClienting,
         accountID: String = "default",
         engineConfiguration: WebexSyncEngine.Configuration = WebexSyncEngine.Configuration(),
+        selfIdentityLookup: WebexSignalConnector.SelfIdentityLookup? = nil,
         existingMessageLookup: @escaping (String) throws -> Bool = { _ in false },
         legacyStateLookup: WebexSignalSyncStateStore.LegacyStateLookup? = nil
     ) {
@@ -63,6 +65,7 @@ final class WebexConnectorProvider: SignalConnectorProvider, WebexProductService
         self.productClient = productClient
         self.accountID = accountID
         self.engineConfiguration = engineConfiguration
+        self.selfIdentityLookup = selfIdentityLookup
         self.existingMessageLookup = existingMessageLookup
         self.legacyStateLookup = legacyStateLookup
     }
@@ -72,6 +75,7 @@ final class WebexConnectorProvider: SignalConnectorProvider, WebexProductService
             webexClient: webexClient,
             accountID: accountID,
             engineConfiguration: engineConfiguration,
+            selfIdentityLookup: selfIdentityLookup,
             existingMessageLookup: existingMessageLookup,
             legacyStateLookup: legacyStateLookup
         )
