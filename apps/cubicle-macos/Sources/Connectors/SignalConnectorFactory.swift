@@ -2,11 +2,7 @@ import Foundation
 
 /// Construction root for signal connectors and source-specific product services.
 final class SignalConnectorFactory {
-    private let webexClient: WebexClienting
-    private let webexProductClient: WebexProductClienting
-    private let iMessageIngestionService: NativeIMessageIngesting
-    private let webexAccountID: String
-    private let iMessageAccountID: String
+    private let registry: SignalConnectorRegistry
 
     /// Builds production connectors from runtime configuration.
     convenience init(configuration: RuntimeConfiguration = .current) {
@@ -44,26 +40,29 @@ final class SignalConnectorFactory {
         webexAccountID: String = "default",
         iMessageAccountID: String = "local"
     ) {
-        self.webexClient = webexClient
-        self.webexProductClient = webexProductClient
-        self.iMessageIngestionService = iMessageIngestionService
-        self.webexAccountID = webexAccountID
-        self.iMessageAccountID = iMessageAccountID
+        self.registry = try! SignalConnectorRegistry(
+            providers: [
+                WebexConnectorProvider(
+                    webexClient: webexClient,
+                    productClient: webexProductClient,
+                    accountID: webexAccountID
+                ),
+                IMessageConnectorProvider(
+                    ingestionService: iMessageIngestionService,
+                    accountID: iMessageAccountID
+                )
+            ]
+        )
+    }
+
+    /// Uses caller-supplied providers for tests and future connector packs.
+    init(registry: SignalConnectorRegistry) {
+        self.registry = registry
     }
 
     /// Creates one signal connector by stable source ID.
     func makeSignalConnector(id: ConnectorID) throws -> SignalConnector {
-        switch id {
-        case .webex:
-            return WebexSignalConnector(webexClient: webexClient, accountID: webexAccountID)
-        case .iMessage:
-            return IMessageSignalConnector(
-                ingestionService: iMessageIngestionService,
-                accountID: iMessageAccountID
-            )
-        default:
-            throw SignalConnectorFactoryError.unsupportedConnector(id)
-        }
+        try registry.provider(for: id).makeSignalConnector()
     }
 
     /// Creates connectors in caller-specified order.
@@ -72,23 +71,35 @@ final class SignalConnectorFactory {
     }
 
     /// Creates the Webex-only surface for rooms, memberships, and settings flows.
-    func makeWebexProductService() -> WebexProductService {
-        WebexProductService(client: webexProductClient)
+    func makeWebexProductService() throws -> WebexProductService {
+        guard let provider = try registry.provider(for: .webex) as? WebexProductServiceProviding else {
+            throw SignalConnectorFactoryError.unsupportedProductService(.webex)
+        }
+        return provider.makeWebexProductService()
     }
 
     /// Creates the iMessage-only surface for local handle/chat workflows.
-    func makeIMessageProductService() -> IMessageProductService {
-        IMessageProductService(ingestionService: iMessageIngestionService)
+    func makeIMessageProductService() throws -> IMessageProductService {
+        guard let provider = try registry.provider(for: .iMessage) as? IMessageProductServiceProviding else {
+            throw SignalConnectorFactoryError.unsupportedProductService(.iMessage)
+        }
+        return provider.makeIMessageProductService()
     }
 }
 
 enum SignalConnectorFactoryError: LocalizedError {
     case unsupportedConnector(ConnectorID)
+    case duplicateConnectorProvider(ConnectorID)
+    case unsupportedProductService(ConnectorID)
 
     var errorDescription: String? {
         switch self {
         case .unsupportedConnector(let connectorID):
             return "Unsupported signal connector: \(connectorID.rawValue)"
+        case .duplicateConnectorProvider(let connectorID):
+            return "Duplicate signal connector provider: \(connectorID.rawValue)"
+        case .unsupportedProductService(let connectorID):
+            return "Unsupported connector product service: \(connectorID.rawValue)"
         }
     }
 }
