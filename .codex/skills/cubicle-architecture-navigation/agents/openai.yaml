@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cubicle Architecture Navigation"
+  short_description: "Navigate Cubicle architecture and reading paths."
+  default_prompt: "Use Cubicle architecture navigation to find the right files, layers, call flows, and reading order."

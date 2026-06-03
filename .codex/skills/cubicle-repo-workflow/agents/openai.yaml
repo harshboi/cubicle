@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cubicle Repo Workflow"
+  short_description: "Work safely in the Cubicle repo PR stack."
+  default_prompt: "Use the Cubicle repo workflow to plan, edit, verify, and split PRs in the Cubicle codebase."

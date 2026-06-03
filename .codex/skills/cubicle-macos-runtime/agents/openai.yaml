@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cubicle macOS Runtime"
+  short_description: "Build, run, and debug the Cubicle macOS app."
+  default_prompt: "Use the Cubicle macOS runtime workflow to debug app launch, env vars, data roots, and runtime cache issues."
