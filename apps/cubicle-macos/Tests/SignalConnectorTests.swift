@@ -81,7 +81,7 @@ final class SignalConnectorTests: XCTestCase {
 
         let batch = try await connector.sync(
             request: SignalSyncRequest(mode: .incremental, targets: [target], startedAt: since, since: since, limit: 10),
-            checkpoint: nil
+            checkpoints: .empty
         )
 
         XCTAssertEqual(iMessageService.receivedHandles, ["+14085550100"])
@@ -134,7 +134,7 @@ final class SignalConnectorTests: XCTestCase {
 
         let batch = try await connector.sync(
             request: SignalSyncRequest(mode: .incremental, targets: [target], startedAt: messageDate, since: nil, limit: 10),
-            checkpoint: nil
+            checkpoints: .empty
         )
 
         XCTAssertEqual(batch.availability, .available)
@@ -169,7 +169,7 @@ final class SignalConnectorTests: XCTestCase {
 
         let batch = try await connector.sync(
             request: SignalSyncRequest(mode: .incremental, targets: [target], startedAt: createdAt, since: nil, limit: 25),
-            checkpoint: nil
+            checkpoints: .empty
         )
 
         XCTAssertEqual(client.recentFetches.count, 1)
@@ -218,7 +218,7 @@ final class SignalConnectorTests: XCTestCase {
 
         let batch = try await connector.sync(
             request: SignalSyncRequest(mode: .incremental, targets: [spaceTarget, personTarget], startedAt: createdAt, since: nil, limit: 25),
-            checkpoint: nil
+            checkpoints: .empty
         )
 
         XCTAssertEqual(client.recentFetches.map(\.0), ["room-1"])
@@ -260,6 +260,114 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertEqual(writer.writtenConnectorIDs, [.webex, .iMessage])
         XCTAssertEqual(result.batches.map(\.connectorID), [.webex, .iMessage])
         XCTAssertTrue(result.failures.isEmpty)
+    }
+
+    func testSignalSyncPipelineLoadsScopedCheckpointsAndSavesAfterSuccessfulWrite() async throws {
+        var order: [String] = []
+        let storedCheckpoint = ConnectorCheckpoint(
+            connectorID: .webex,
+            accountID: "workspace",
+            targetID: "roomID:room-1",
+            key: "cursor",
+            updatedAt: Date(timeIntervalSince1970: 1_715_000_000),
+            payload: ["messageID": "webex-message-1"]
+        )
+        let updatedCheckpoint = ConnectorCheckpoint(
+            connectorID: .webex,
+            accountID: "workspace",
+            targetID: "roomID:room-1",
+            key: "cursor",
+            updatedAt: Date(timeIntervalSince1970: 1_715_000_120),
+            payload: ["messageID": "webex-message-2"]
+        )
+        let batch = SignalSyncBatch(
+            connectorID: .webex,
+            accountID: "workspace",
+            objects: [],
+            events: [],
+            relations: [],
+            content: [],
+            checkpoint: nil,
+            checkpoints: [updatedCheckpoint],
+            warnings: [],
+            availability: .available
+        )
+        let connector = StubSignalConnector(connectorID: .webex, batch: batch)
+        let writer = RecordingSignalKnowledgeWriter(onWrite: { order.append("write") })
+        let checkpointStore = RecordingSignalCheckpointStore(
+            loadResult: ConnectorCheckpointSet([storedCheckpoint]),
+            onSave: { _ in order.append("save") }
+        )
+        let pipeline = SignalSyncPipeline(
+            connectors: [connector],
+            writer: writer,
+            checkpointStore: checkpointStore
+        )
+        let target = SignalTarget(
+            id: "space:room-1",
+            label: "Launch Room",
+            entityKind: .space,
+            selectors: [ConnectorSelector(connectorID: .webex, kind: .roomID, value: "room-1")]
+        )
+
+        let result = await pipeline.sync(
+            request: SignalSyncRequest(mode: .incremental, targets: [target], limit: 50)
+        )
+
+        XCTAssertEqual(checkpointStore.receivedLoadConnectorIDs, [.webex])
+        XCTAssertEqual(checkpointStore.receivedLoadTargetIDs, [["space:room-1", "roomID:room-1"]])
+        XCTAssertEqual(connector.receivedCheckpoints.all, [storedCheckpoint])
+        XCTAssertEqual(writer.writtenConnectorIDs, [.webex])
+        XCTAssertEqual(checkpointStore.savedCheckpoints, [updatedCheckpoint])
+        XCTAssertEqual(order, ["write", "save"])
+        XCTAssertEqual(result.batches.map(\.connectorID), [.webex])
+        XCTAssertTrue(result.failures.isEmpty)
+    }
+
+    func testSignalSyncPipelineDoesNotSaveCheckpointWhenWriteFails() async throws {
+        let checkpoint = ConnectorCheckpoint(
+            connectorID: .webex,
+            accountID: "workspace",
+            targetID: "roomID:room-1",
+            key: "cursor",
+            updatedAt: Date(timeIntervalSince1970: 1_715_000_120),
+            payload: ["messageID": "webex-message-2"]
+        )
+        let batch = SignalSyncBatch(
+            connectorID: .webex,
+            accountID: "workspace",
+            objects: [],
+            events: [],
+            relations: [],
+            content: [],
+            checkpoint: nil,
+            checkpoints: [checkpoint],
+            warnings: [],
+            availability: .available
+        )
+        let connector = StubSignalConnector(connectorID: .webex, batch: batch)
+        let writer = FailingSignalKnowledgeWriter()
+        let checkpointStore = RecordingSignalCheckpointStore()
+        let pipeline = SignalSyncPipeline(
+            connectors: [connector],
+            writer: writer,
+            checkpointStore: checkpointStore
+        )
+        let target = SignalTarget(
+            id: "space:room-1",
+            label: "Launch Room",
+            entityKind: .space,
+            selectors: [ConnectorSelector(connectorID: .webex, kind: .roomID, value: "room-1")]
+        )
+
+        let result = await pipeline.sync(
+            request: SignalSyncRequest(mode: .incremental, targets: [target], limit: 50)
+        )
+
+        XCTAssertEqual(writer.writeCallCount, 1)
+        XCTAssertTrue(checkpointStore.savedCheckpoints.isEmpty)
+        XCTAssertTrue(result.batches.isEmpty)
+        XCTAssertEqual(result.failures.map(\.connectorID), [.webex])
     }
 
     func testSignalConnectorFactoryBuildsWebexAndIMessageConnectors() throws {
@@ -687,6 +795,7 @@ private final class StubSignalConnector: SignalConnector {
     let descriptor: ConnectorDescriptor
     let batch: SignalSyncBatch
     private(set) var receivedTargetIDs: [String] = []
+    private(set) var receivedCheckpoints = ConnectorCheckpointSet.empty
 
     init(connectorID: ConnectorID, batch: SignalSyncBatch) {
         self.descriptor = ConnectorDescriptor(id: connectorID, displayName: connectorID.rawValue, capabilities: [.messages])
@@ -695,9 +804,10 @@ private final class StubSignalConnector: SignalConnector {
 
     func sync(
         request: SignalSyncRequest,
-        checkpoint: ConnectorCheckpoint?
+        checkpoints: ConnectorCheckpointSet
     ) async throws -> SignalSyncBatch {
         receivedTargetIDs = request.targets.map(\.id)
+        receivedCheckpoints = checkpoints
         return batch
     }
 }
@@ -718,11 +828,57 @@ private final class MinimalSignalConnectorProvider: SignalConnectorProvider {
 
 private final class RecordingSignalKnowledgeWriter: SignalKnowledgeWriting {
     private(set) var writtenConnectorIDs: [ConnectorID] = []
+    private let onWrite: () -> Void
+
+    init(onWrite: @escaping () -> Void = {}) {
+        self.onWrite = onWrite
+    }
 
     func write(_ batch: SignalSyncBatch) throws -> SignalWriteSummary {
+        onWrite()
         writtenConnectorIDs.append(batch.connectorID)
         return SignalWriteSummary(messageEventsProcessed: batch.events.count, evidenceRecordsWritten: 0)
     }
+}
+
+private final class FailingSignalKnowledgeWriter: SignalKnowledgeWriting {
+    private(set) var writeCallCount = 0
+
+    func write(_ batch: SignalSyncBatch) throws -> SignalWriteSummary {
+        writeCallCount += 1
+        throw SignalConnectorTestError.writeFailed
+    }
+}
+
+private final class RecordingSignalCheckpointStore: SignalCheckpointStoring {
+    private let loadResult: ConnectorCheckpointSet
+    private let onSave: (ConnectorCheckpoint) -> Void
+    private(set) var receivedLoadConnectorIDs: [ConnectorID] = []
+    private(set) var receivedLoadTargetIDs: [[String]] = []
+    private(set) var savedCheckpoints: [ConnectorCheckpoint] = []
+
+    init(
+        loadResult: ConnectorCheckpointSet = .empty,
+        onSave: @escaping (ConnectorCheckpoint) -> Void = { _ in }
+    ) {
+        self.loadResult = loadResult
+        self.onSave = onSave
+    }
+
+    func loadCheckpoints(connectorID: ConnectorID, targetIDs: [String]) throws -> ConnectorCheckpointSet {
+        receivedLoadConnectorIDs.append(connectorID)
+        receivedLoadTargetIDs.append(targetIDs)
+        return loadResult
+    }
+
+    func save(_ checkpoint: ConnectorCheckpoint) throws {
+        onSave(checkpoint)
+        savedCheckpoints.append(checkpoint)
+    }
+}
+
+private enum SignalConnectorTestError: Error {
+    case writeFailed
 }
 
 private final class RecordingSignalConnectorProcessingService: SignalConnectorProcessing {

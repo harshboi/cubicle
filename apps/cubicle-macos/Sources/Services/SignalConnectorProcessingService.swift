@@ -21,6 +21,7 @@ protocol SignalConnectorProcessing {
 final class SignalConnectorProcessingService: SignalConnectorProcessing {
     private let factory: SignalConnectorFactory
     private let writer: SignalKnowledgeWriting
+    private let checkpointStore: SignalCheckpointStoring?
     private let connectorIDs: [ConnectorID]
     private let now: () -> Date
 
@@ -28,11 +29,13 @@ final class SignalConnectorProcessingService: SignalConnectorProcessing {
     init(
         factory: SignalConnectorFactory,
         writer: SignalKnowledgeWriting,
+        checkpointStore: SignalCheckpointStoring? = nil,
         connectorIDs: [ConnectorID] = [.webex, .iMessage],
         now: @escaping () -> Date = Date.init
     ) {
         self.factory = factory
         self.writer = writer
+        self.checkpointStore = checkpointStore
         self.connectorIDs = connectorIDs
         self.now = now
     }
@@ -46,7 +49,11 @@ final class SignalConnectorProcessingService: SignalConnectorProcessing {
     ) async throws -> SignalConnectorProcessingResult {
         let targets = configTargets.map(SignalTarget.init)
         let connectors = try factory.makeSignalConnectors(ids: connectorIDs)
-        let pipeline = SignalSyncPipeline(connectors: connectors, writer: writer)
+        let pipeline = SignalSyncPipeline(
+            connectors: connectors,
+            writer: writer,
+            checkpointStore: checkpointStore
+        )
         let result = await pipeline.sync(
             request: SignalSyncRequest(
                 mode: mode,

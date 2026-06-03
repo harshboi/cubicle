@@ -8,6 +8,6 @@ protocol SignalConnector {
     /// Fetches connector-native data and converts it into signal objects/events.
     func sync(
         request: SignalSyncRequest,
-        checkpoint: ConnectorCheckpoint?
+        checkpoints: ConnectorCheckpointSet
     ) async throws -> SignalSyncBatch
 }

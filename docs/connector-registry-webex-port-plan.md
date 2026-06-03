@@ -33,6 +33,24 @@ Target state
        -> stores per-room/per-person cursor + retry state
 ```
 
+## Implemented Checkpoint Slice
+
+```text
+SignalSyncPipeline
+ |
+ +-- * SignalCheckpointStore
+ |     -> loads connector checkpoints by routed target/selector scope
+ |
+ +-- SignalConnector.sync(...)
+ |     -> receives ConnectorCheckpointSet
+ |
+ +-- SignalKnowledgeWriter.write(batch)
+ |     -> writes normalized rows first
+ |
+ +-- * SignalCheckpointStore.save(batch.checkpoints)
+       -> advances cursor/backoff only after write succeeds
+```
+
 ## Adversarial Review
 
 ```text
@@ -54,8 +72,8 @@ Risk: cursor advances before DB write
  +-- writer fails
  +-- checkpoint saved anyway
  |
- v
-Pipeline must save checkpoint after SignalKnowledgeWriter succeeds.
+v
+Covered by checkpoint pipeline tests.
 ```
 
 ```text
@@ -79,6 +97,7 @@ safe to merge registry
 
 not safe to switch Webex yet
  |
- +-- checkpoint pipeline missing
- +-- per-target cursor/backoff not in connector contract
+ +-- WebexSyncEngine behavior not extracted
+ +-- WebexSignalConnector still shallow-fetches recent messages
+ +-- connector checkpoints are not account-scoped in DAO yet
 ```
