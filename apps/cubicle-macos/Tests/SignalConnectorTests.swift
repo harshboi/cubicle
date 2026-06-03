@@ -1,4 +1,5 @@
 import Foundation
+import SQLite3
 import XCTest
 @testable import GetWebexSpaceMacApp
 
@@ -96,6 +97,53 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertEqual(payload.senderDisplayName, "Alex Chen")
         XCTAssertEqual(payload.body, "Can you review the Jira plan?")
         XCTAssertFalse(payload.isFromCurrentUser)
+    }
+
+    func testIMessageSignalConnectorHandlesNilSinceWithNanosecondChatDatabase() async throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleSignalIMessageNanoseconds-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        try FileManager.default.createDirectory(at: runtimeRoot, withIntermediateDirectories: true)
+        let databaseURL = runtimeRoot.appendingPathComponent("chat.db")
+        let messageDate = try XCTUnwrap(testISO8601.date(from: "2026-06-02T19:40:00.000Z"))
+        let rawDate = appleMessageRawDate(messageDate, scale: 1_000_000_000)
+        try executeSignalSQLite(
+            """
+            CREATE TABLE handle (ROWID INTEGER PRIMARY KEY, id TEXT);
+            CREATE TABLE chat (ROWID INTEGER PRIMARY KEY, guid TEXT, chat_identifier TEXT, display_name TEXT);
+            CREATE TABLE chat_handle_join (chat_id INTEGER, handle_id INTEGER);
+            CREATE TABLE chat_message_join (chat_id INTEGER, message_id INTEGER);
+            CREATE TABLE message (ROWID INTEGER PRIMARY KEY, guid TEXT, text TEXT, date INTEGER, is_from_me INTEGER, handle_id INTEGER);
+            INSERT INTO handle (ROWID, id) VALUES (1, '+14085550100');
+            INSERT INTO chat (ROWID, guid, chat_identifier, display_name) VALUES (1, 'chat-guid', '+14085550100', '');
+            INSERT INTO chat_handle_join (chat_id, handle_id) VALUES (1, 1);
+            INSERT INTO message (ROWID, guid, text, date, is_from_me, handle_id) VALUES (1, 'nanosecond-guid', 'Crash repro message.', \(rawDate), 0, 1);
+            INSERT INTO chat_message_join (chat_id, message_id) VALUES (1, 1);
+            """,
+            databaseURL: databaseURL
+        )
+        let connector = IMessageSignalConnector(
+            ingestionService: NativeIMessageIngestionService(chatDatabaseURL: databaseURL)
+        )
+        let target = SignalTarget(
+            id: "person:alex",
+            label: "Alex Chen",
+            entityKind: .person,
+            selectors: [ConnectorSelector(connectorID: .iMessage, kind: .handle, value: "+14085550100")]
+        )
+
+        let batch = try await connector.sync(
+            request: SignalSyncRequest(mode: .incremental, targets: [target], startedAt: messageDate, since: nil, limit: 10),
+            checkpoint: nil
+        )
+
+        XCTAssertEqual(batch.availability, .available)
+        XCTAssertEqual(batch.events.count, 1)
+        guard case .message(let payload) = batch.events[0].payload else {
+            return XCTFail("Expected a message payload.")
+        }
+        XCTAssertEqual(payload.body, "Crash repro message.")
+        XCTAssertEqual(payload.threadTitle, "iMessage - Alex Chen")
     }
 
     func testWebexSignalConnectorEmitsRoomMessageEvents() async throws {
@@ -637,6 +685,30 @@ private func testSignalRuntimeConfiguration(runtimeRoot: URL) -> RuntimeConfigur
         webexOAuthRefreshSkewSeconds: 300,
         webexOAuthRefreshTokenSkewSeconds: 86_400
     )
+}
+
+private func executeSignalSQLite(
+    _ sql: String,
+    databaseURL: URL,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) throws {
+    var db: OpaquePointer?
+    XCTAssertEqual(sqlite3_open(databaseURL.path, &db), SQLITE_OK, file: file, line: line)
+    defer { sqlite3_close(db) }
+    var errorMessage: UnsafeMutablePointer<Int8>?
+    let result = sqlite3_exec(db, sql, nil, nil, &errorMessage)
+    if let errorMessage {
+        let message = String(cString: errorMessage)
+        sqlite3_free(errorMessage)
+        XCTFail("SQLite exec failed: \(message)", file: file, line: line)
+    }
+    XCTAssertEqual(result, SQLITE_OK, file: file, line: line)
+}
+
+private func appleMessageRawDate(_ date: Date, scale: TimeInterval) -> Int64 {
+    let appleEpochOffset: TimeInterval = 978_307_200
+    return Int64((date.timeIntervalSince1970 - appleEpochOffset) * scale)
 }
 
 private let testISO8601: ISO8601DateFormatter = {
