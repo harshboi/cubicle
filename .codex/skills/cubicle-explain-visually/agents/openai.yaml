@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cubicle Visual Explainer"
+  short_description: "Explain Cubicle architecture with concise DAGs."
+  default_prompt: "Use the Cubicle visual explainer style to explain components and call flow with DAGs, stars, and inline summaries."

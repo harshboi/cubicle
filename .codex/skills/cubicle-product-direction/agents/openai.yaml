@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cubicle Product Direction"
+  short_description: "Guide Cubicle product strategy and roadmap decisions."
+  default_prompt: "Use Cubicle product direction to decide what to build, why it matters, and how it should fit the engineering-insight product."
