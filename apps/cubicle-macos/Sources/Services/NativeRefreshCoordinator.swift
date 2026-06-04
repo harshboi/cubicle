@@ -81,38 +81,28 @@ final class NativeRefreshCoordinator {
     let codexOrchestrationService: CodexPromptOrchestrationService
     let questionService: QuestionCandidateService
     let iMessageConnectorProcessingService: SignalConnectorProcessing
+    let refreshSourceRegistry: RefreshSourceRegistry
 
     /// Wires runtime services for a single runtime root.
     init(
         configuration: RuntimeConfiguration = .current,
         webexIngestionService: NativeWebexIngesting? = nil,
-        iMessageConnectorProcessingService: SignalConnectorProcessing? = nil
+        iMessageConnectorProcessingService: SignalConnectorProcessing? = nil,
+        refreshSourceRegistry: RefreshSourceRegistry? = nil
     ) {
         self.configuration = configuration
         self.configStore = ConfigStore(configuration: configuration)
         let webexClient = WebexAPIClient(configuration: configuration)
         let knowledgeStore = KnowledgeStore(configuration: configuration)
         let iMessageService = NativeIMessageIngestionService()
-        self.webexClient = webexClient
-        self.knowledgeStore = knowledgeStore
-        self.codexRunner = CodexRunner(configuration: configuration)
-        self.runtimeStore = NativeRuntimeStore(configuration: configuration)
-        self.webexIngestionService = webexIngestionService ?? NativeWebexIngestionService(
+        let resolvedWebexIngestionService = webexIngestionService ?? NativeWebexIngestionService(
             configuration: configuration,
             configStore: configStore,
             webexClient: webexClient,
             knowledgeStore: knowledgeStore,
             iMessageService: iMessageService
         )
-        self.codexOrchestrationService = CodexPromptOrchestrationService(
-            configuration: configuration,
-            runner: codexRunner
-        )
-        self.questionService = QuestionCandidateService(
-            knowledgeStore: knowledgeStore,
-            questionSynthesizer: codexOrchestrationService
-        )
-        self.iMessageConnectorProcessingService = iMessageConnectorProcessingService ?? SignalConnectorProcessingService(
+        let resolvedIMessageConnectorProcessingService = iMessageConnectorProcessingService ?? SignalConnectorProcessingService(
             factory: SignalConnectorFactory(
                 webexClient: webexClient,
                 webexProductClient: webexClient,
@@ -121,6 +111,37 @@ final class NativeRefreshCoordinator {
             writer: SignalKnowledgeWriter(knowledgeStore: knowledgeStore),
             connectorIDs: [.iMessage]
         )
+        self.webexClient = webexClient
+        self.knowledgeStore = knowledgeStore
+        self.codexRunner = CodexRunner(configuration: configuration)
+        self.runtimeStore = NativeRuntimeStore(configuration: configuration)
+        self.webexIngestionService = resolvedWebexIngestionService
+        self.codexOrchestrationService = CodexPromptOrchestrationService(
+            configuration: configuration,
+            runner: codexRunner
+        )
+        self.questionService = QuestionCandidateService(
+            knowledgeStore: knowledgeStore,
+            questionSynthesizer: codexOrchestrationService
+        )
+        self.iMessageConnectorProcessingService = resolvedIMessageConnectorProcessingService
+        if let refreshSourceRegistry {
+            self.refreshSourceRegistry = refreshSourceRegistry
+        } else {
+            let registry = RefreshSourceRegistry()
+            registry.register(
+                WebexSyncRefreshSource(
+                    webexIngestionService: resolvedWebexIngestionService
+                )
+            )
+            registry.register(
+                IMessageSignalRefreshSource(
+                    configStore: configStore,
+                    processingService: resolvedIMessageConnectorProcessingService
+                )
+            )
+            self.refreshSourceRegistry = registry
+        }
     }
 
     /// Builds scheduler plans from current user settings.
@@ -154,57 +175,6 @@ final class NativeRefreshCoordinator {
         return try await webexIngestionService.refreshMapFile()
     }
 
-    /// Loads targets that have local iMessage selectors configured.
-    private func iMessageSignalSyncTargets() throws -> [ConfigTarget] {
-        stableDedupedTargets(
-            try configStore.importantSpaces()
-                + configStore.importantPeople()
-                + configStore.beliefTargets()
-        ).filter { !$0.iMessageHandles.isEmpty }
-    }
-
-    /// Preserves config order while avoiding duplicate connector fetches.
-    private func stableDedupedTargets(_ targets: [ConfigTarget]) -> [ConfigTarget] {
-        var seenIDs: Set<String> = []
-        var deduped: [ConfigTarget] = []
-        deduped.reserveCapacity(targets.count)
-        for target in targets where seenIDs.insert(target.id).inserted {
-            deduped.append(target)
-        }
-        return deduped
-    }
-
-    /// Runs the connector path for local iMessage evidence only.
-    private func syncIMessageSignals(
-        mode: SignalSyncMode,
-        progress: ((RefreshExecutionProgress) async -> Void)?
-    ) async throws -> SignalConnectorProcessingResult? {
-        let targets = try iMessageSignalSyncTargets()
-        guard !targets.isEmpty else {
-            return nil
-        }
-        let preparingSummary = "iMessage signal sync: preparing \(targets.count) target(s)."
-        await progress?(
-            RefreshExecutionProgress(
-                scope: .webexSync,
-                message: preparingSummary
-            )
-        )
-        let outcome = try await iMessageConnectorProcessingService.sync(
-            configTargets: targets,
-            mode: mode,
-            limit: 150,
-            since: nil
-        )
-        await progress?(
-            RefreshExecutionProgress(
-                scope: .webexSync,
-                message: outcome.summary
-            )
-        )
-        return outcome
-    }
-
     /// Executes one refresh scope with the requested cache/network strategy.
     func refresh(
         _ scope: RefreshScope,
@@ -224,36 +194,25 @@ final class NativeRefreshCoordinator {
                 )
                 return RefreshExecutionResult(scope: scope, summary: summary, completedAt: completedAt(), reusedCache: nil)
             }
-            let webexSyncMode: WebexSyncMode = mode == .full ? .full : .incremental
-            let trigger: WebexSyncTriggerReason = mode == .full ? .manual : .scheduled
-            let webexOutcome = try await webexIngestionService.syncTrackedTargets(
-                messageLimitPerRoom: 150,
-                mode: webexSyncMode,
-                trigger: trigger
-            ) { update in
-                await progress?(
-                    RefreshExecutionProgress(
-                        scope: scope,
-                        message: update.summary
-                    )
-                )
-            }
-            let iMessageMode: SignalSyncMode = mode == .full ? .full : .incremental
-            let iMessageOutcome = try await syncIMessageSignals(
-                mode: iMessageMode,
+            let sourceResults = try await refreshSourceRegistry.refresh(
+                scope: scope,
+                mode: mode,
                 progress: progress
             )
-            let summary = [
-                webexOutcome.summary,
-                iMessageOutcome?.summary
-            ].compactMap { $0 }.joined(separator: " ")
+            let summary = sourceResults.map(\.summary).joined(separator: " ")
+            let finalSummary = summary.isEmpty ? "Webex sync completed with no registered sources." : summary
             await progress?(
                 RefreshExecutionProgress(
                     scope: scope,
-                    message: summary
+                    message: finalSummary
                 )
             )
-            return RefreshExecutionResult(scope: scope, summary: summary, completedAt: webexOutcome.completedAt, reusedCache: nil)
+            return RefreshExecutionResult(
+                scope: scope,
+                summary: finalSummary,
+                completedAt: sourceResults.compactMap(\.completedAt).first ?? completedAt(),
+                reusedCache: nil
+            )
         case .beliefMaintenance:
             let outcome = try await runBeliefMaintenance()
             return RefreshExecutionResult(scope: scope, summary: outcome, completedAt: completedAt(), reusedCache: nil)

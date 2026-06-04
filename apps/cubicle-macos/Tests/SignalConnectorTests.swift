@@ -349,6 +349,25 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertEqual(result.summary, "Signal sync: targets=2, batches=2, failures=0.")
     }
 
+    func testRefreshSourceRegistryRunsRegisteredSourcesInOrder() async throws {
+        let registry = RefreshSourceRegistry()
+        let first = RecordingRefreshSource(id: "webex", summary: "webex done")
+        let second = RecordingRefreshSource(id: "imessage", summary: "imessage done")
+        registry.register(first)
+        registry.register(second)
+
+        let results = try await registry.refresh(
+            scope: .webexSync,
+            mode: .full,
+            progress: nil
+        )
+
+        XCTAssertEqual(results.map(\.sourceID), ["webex", "imessage"])
+        XCTAssertEqual(results.map(\.summary), ["webex done", "imessage done"])
+        XCTAssertEqual(first.receivedModes, [.full])
+        XCTAssertEqual(second.receivedModes, [.full])
+    }
+
     func testNativeRefreshCoordinatorWebexSyncPreservesWebexEngineAndRunsIMessageSignals() async throws {
         let runtimeRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("CubicleSignalCoordinatorTests-\(UUID().uuidString)", isDirectory: true)
@@ -650,6 +669,30 @@ private final class RecordingSignalKnowledgeWriter: SignalKnowledgeWriting {
     func write(_ batch: SignalSyncBatch) throws -> SignalWriteSummary {
         writtenConnectorIDs.append(batch.connectorID)
         return SignalWriteSummary(messageEventsProcessed: batch.events.count, evidenceRecordsWritten: 0)
+    }
+}
+
+private final class RecordingRefreshSource: RefreshSource {
+    let id: String
+    let scope = RefreshScope.webexSync
+    private let summary: String
+    private(set) var receivedModes: [RefreshExecutionMode] = []
+
+    init(id: String, summary: String) {
+        self.id = id
+        self.summary = summary
+    }
+
+    func refresh(
+        mode: RefreshExecutionMode,
+        progress: ((RefreshExecutionProgress) async -> Void)?
+    ) async throws -> RefreshSourceResult? {
+        receivedModes.append(mode)
+        return RefreshSourceResult(
+            sourceID: id,
+            summary: summary,
+            completedAt: nil
+        )
     }
 }
 
