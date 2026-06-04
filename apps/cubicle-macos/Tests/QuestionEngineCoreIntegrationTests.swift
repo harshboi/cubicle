@@ -61,6 +61,26 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
         XCTAssertEqual(RuntimeConfiguration.current.codexExecutable, "/tmp/cubicle-codex")
     }
 
+    func testRuntimeConfigurationUsesDesktopRuntimeRootWhenEnvIsMissing() throws {
+        let homeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleRuntimeHomeTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: homeRoot) }
+        let desktopRuntimeRoot = homeRoot
+            .appendingPathComponent("Desktop", isDirectory: true)
+            .appendingPathComponent("getwebexspace-data", isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: desktopRuntimeRoot,
+            withIntermediateDirectories: true
+        )
+
+        let configuration = RuntimeConfiguration.resolved(
+            environment: ["HOME": homeRoot.path],
+            fileExists: { $0 == desktopRuntimeRoot.path }
+        )
+
+        XCTAssertEqual(configuration.runtimeRoot.path, desktopRuntimeRoot.path)
+    }
+
     func testSystemSettingsPersistsCodexModelAndReasoning() throws {
         let runtimeRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("CubicleSystemSettingsTests-\(UUID().uuidString)", isDirectory: true)
@@ -2622,6 +2642,64 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
         XCTAssertTrue(detail.contains("Existing Webex evidence."))
     }
 
+    func testPersonFocusNativeRefreshRepairsStaleIMessageUnavailableBadge() throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubiclePersonIMessageUnavailableRepairTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
+        let nativeDirectory = knowledgeDirectory.appendingPathComponent("native", isDirectory: true)
+        try FileManager.default.createDirectory(at: nativeDirectory, withIntermediateDirectories: true)
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
+        var settings = SystemSettings()
+        settings.personFocusDays = 21
+        try ConfigStore(configuration: configuration).saveSystemSettings(settings)
+
+        let liveCache = FocusCache(
+            focusDays: 21,
+            items: [
+                FocusItem(
+                    id: "anil@cisco.com",
+                    title: "Anil Nair",
+                    subtitle: "Webex message from Anil.",
+                    meta: "auto-reply=no | messages=1",
+                    timestamp: "2026-05-15T19:00:00.000Z",
+                    badge: "person",
+                    statusBadge: "live-webex+imessage-configured",
+                    detailLines: [
+                        "Space Name: Anil Nair",
+                        "Person Name: Anil Nair",
+                        "Live Webex Sync: 2026-05-15T19:00:00.000Z",
+                        "Room ID: Y2lzY29zcGFyazovL3VzL1JPT00vQU5JTA",
+                        "Recent messages indexed: 1",
+                        "iMessage handles: +14085550123",
+                        "iMessage messages indexed: 0",
+                        "iMessage unavailable: Could not open iMessage database: authorization denied",
+                        "",
+                        "Recent conversations (last 21 days):",
+                        "Webex webex-1: 2026-05-15T19:00:00.000Z | Anil Nair | Anil Direct | Webex message from Anil."
+                    ],
+                    detailIntroLines: [],
+                    detailSections: [],
+                    detailTailLines: []
+                )
+            ],
+            updatedAt: "2026-05-15T19:00:00.000Z",
+            countLabel: "1",
+            recentMessages: 1,
+            summaryGenerationInProgress: false,
+            subjectsProcessed: 1,
+            subjectsTotal: 1
+        )
+        try writeFocusCache(liveCache, to: nativeDirectory.appendingPathComponent("live_person_focus_cache_21d.json"))
+
+        let outcome = try NativeRuntimeStore(configuration: configuration).refreshPersonFocusCache(forceRebuild: true)
+        let repaired = try readFocusCache(from: outcome.outputSnapshotURL)
+        let item = try XCTUnwrap(repaired.items.first)
+
+        XCTAssertEqual(item.subtitle, "iMessage unavailable; latest Webex: Webex message from Anil.")
+        XCTAssertEqual(item.statusBadge, "live-webex+imessage-unavailable")
+    }
+
     func testPersonFocusMergeDropsStaleIMessageDeniedLineFromPreservedIntro() throws {
         let runtimeRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("CubiclePersonIntroMergeTests-\(UUID().uuidString)", isDirectory: true)
@@ -3520,6 +3598,69 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
         XCTAssertTrue(detail.contains("iMessage imessage-1: \(iMessageCreatedAt) | Me | iMessage - Anil Nair | Outbound iMessage reply."))
     }
 
+    func testPersonFocusCacheMarksIMessageUnavailableWhenConfiguredHandleCannotLoad() throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubiclePersonIMessageUnavailableTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
+        let knowledgeStore = KnowledgeStore(configuration: configuration)
+        try knowledgeStore.bootstrap()
+        let roomID = "Y2lzY29zcGFyazovL3VzL1JPT00vQU5JTA"
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let webexDate = Date().addingTimeInterval(-3_600)
+        let webexCreatedAt = formatter.string(from: webexDate)
+        try knowledgeStore.upsertRoom(RoomRecord(id: roomID, title: "Anil Direct", updatedAt: webexCreatedAt))
+        let person = PersonRecord(id: "person-anil", displayName: "Anil Nair", email: "anil@cisco.com", updatedAt: webexCreatedAt)
+        try knowledgeStore.upsertPerson(person)
+        try knowledgeStore.upsertMessage(
+            MessageRecord(
+                id: "webex-1",
+                roomID: roomID,
+                personID: "person-anil",
+                body: "Webex message from Anil.",
+                createdAt: webexCreatedAt,
+                updatedAt: webexCreatedAt
+            )
+        )
+
+        let iMessageService = StubIMessageIngestionService(
+            messages: [],
+            error: StubIMessageLoadError(message: "Could not open iMessage database: authorization denied")
+        )
+        let service = NativeWebexIngestionService(
+            configuration: configuration,
+            knowledgeStore: knowledgeStore,
+            iMessageService: iMessageService
+        )
+        let target = ConfigTarget(
+            kind: .person,
+            label: "Anil Nair",
+            roomID: roomID,
+            roomType: "direct",
+            email: "anil@cisco.com",
+            iMessageHandles: ["+14085550123"]
+        )
+
+        let cache = try service.makePersonFocusCache(
+            targets: [target],
+            trackedRoomIDs: [roomID],
+            roomTitlesByID: [roomID: "Anil Direct"],
+            peopleByID: ["person-anil": person],
+            syncStatesByRoomID: [:],
+            updatedAt: webexCreatedAt,
+            focusDays: 2
+        )
+
+        let item = try XCTUnwrap(cache.items.first)
+        let detail = item.detailLines.joined(separator: "\n")
+        XCTAssertEqual(item.subtitle, "iMessage unavailable; latest Webex: Webex message from Anil.")
+        XCTAssertEqual(item.statusBadge, "live-webex+imessage-unavailable")
+        XCTAssertEqual(item.timestamp, webexCreatedAt)
+        XCTAssertTrue(detail.contains("iMessage messages indexed: 0"))
+        XCTAssertTrue(detail.contains("iMessage unavailable: Could not open iMessage database: authorization denied"))
+    }
+
     func testPersonFocusCacheIncludesEmailOnlySubmittedTranscriptMessages() throws {
         let runtimeRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("CubiclePersonTranscriptTimelineTests-\(UUID().uuidString)", isDirectory: true)
@@ -3730,6 +3871,10 @@ private func writeFocusCache(_ cache: FocusCache, to url: URL) throws {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     try encoder.encode(cache).write(to: url, options: [.atomic])
+}
+
+private func readFocusCache(from url: URL) throws -> FocusCache {
+    try JSONDecoder().decode(FocusCache.self, from: Data(contentsOf: url))
 }
 
 private func decodeTranscriptionJSONObject(_ payload: String) throws -> [String: Any] {
@@ -4026,9 +4171,11 @@ private final class SingleChunkAudioCaptureService: AudioCaptureService {
 
 private final class StubIMessageIngestionService: NativeIMessageIngesting {
     private let messages: [IMessageTimelineMessage]
+    private let error: Error?
 
-    init(messages: [IMessageTimelineMessage]) {
+    init(messages: [IMessageTimelineMessage], error: Error? = nil) {
         self.messages = messages
+        self.error = error
     }
 
     func loadMessages(
@@ -4037,7 +4184,18 @@ private final class StubIMessageIngestionService: NativeIMessageIngesting {
         since: Date,
         limit: Int
     ) throws -> [IMessageTimelineMessage] {
-        Array(messages.filter { $0.sortDate >= since }.prefix(limit))
+        if let error {
+            throw error
+        }
+        return Array(messages.filter { $0.sortDate >= since }.prefix(limit))
+    }
+}
+
+private struct StubIMessageLoadError: LocalizedError {
+    var message: String
+
+    var errorDescription: String? {
+        message
     }
 }
 

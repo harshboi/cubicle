@@ -53,6 +53,30 @@ struct WebexMapRefreshOutcome: Hashable {
     }
 }
 
+/// Result for rebuilding native focus snapshots from stored connector evidence.
+struct WebexFocusSnapshotRefreshOutcome: Hashable {
+    var completedAt: String
+    var spaceTargets: Int
+    var personTargets: Int
+    var supplementalRoomTargets: Int
+
+    var summary: String {
+        "Focus snapshots refreshed: spaces=\(spaceTargets), people=\(personTargets), supplemental=\(supplementalRoomTargets)."
+    }
+}
+
+/// Webex ingestion boundary used by refresh orchestration tests.
+protocol NativeWebexIngesting {
+    func refreshMapFile() async throws -> WebexMapRefreshOutcome
+    func refreshFocusSnapshotsFromKnowledgeStore() throws -> WebexFocusSnapshotRefreshOutcome
+    func syncTrackedTargets(
+        messageLimitPerRoom: Int,
+        mode: WebexSyncMode,
+        trigger: WebexSyncTriggerReason,
+        progress: ((WebexSyncProgress) async -> Void)?
+    ) async throws -> WebexSyncOutcome
+}
+
 /// Progress event emitted while tracked conversations are syncing.
 struct WebexSyncProgress: Hashable {
     var completedRooms: Int
@@ -134,7 +158,7 @@ private enum NativeWebexIngestionError: LocalizedError {
 }
 
 /// Coordinates Webex ingestion, iMessage timeline enrichment, and live focus snapshots.
-final class NativeWebexIngestionService {
+final class NativeWebexIngestionService: NativeWebexIngesting {
     let configuration: RuntimeConfiguration
     let configStore: ConfigStore
     let webexClient: WebexAPIClient
@@ -213,6 +237,28 @@ final class NativeWebexIngestionService {
             rooms: rooms.count,
             spaces: sortedEntries.filter { $0.kind == "space" }.count,
             senders: sortedEntries.filter { $0.kind == "sender" }.count
+        )
+    }
+
+    /// Rebuilds native live focus snapshots from already-stored connector rows.
+    func refreshFocusSnapshotsFromKnowledgeStore() throws -> WebexFocusSnapshotRefreshOutcome {
+        try knowledgeStore.bootstrap()
+        let completedAt = Self.iso8601String(from: Date())
+        let spaceTargets = try configStore.importantSpaces()
+        let personTargets = try configStore.importantPeople()
+        let beliefTargets = try configStore.beliefTargets()
+        try writeFocusSnapshots(
+            spaceTargets: spaceTargets,
+            personTargets: personTargets,
+            supplementalRoomTargets: beliefTargets,
+            roomTitlesByID: [:],
+            updatedAt: completedAt
+        )
+        return WebexFocusSnapshotRefreshOutcome(
+            completedAt: completedAt,
+            spaceTargets: spaceTargets.count,
+            personTargets: personTargets.count,
+            supplementalRoomTargets: beliefTargets.count
         )
     }
 
@@ -1207,7 +1253,7 @@ final class NativeWebexIngestionService {
             return FocusItem(
                 id: targetEmail.isEmpty ? target.id : targetEmail,
                 title: title,
-                subtitle: latestTimelinePreview(timelineEvents.first),
+                subtitle: latestTimelinePreview(timelineEvents.first, iMessageLoadError: iMessageOutcome.error),
                 meta: "\(autoReplyMeta(target)) | messages=\(timelineEvents.count)",
                 timestamp: timelineEvents.first?.createdAt ?? "",
                 badge: "person",
@@ -1216,7 +1262,8 @@ final class NativeWebexIngestionService {
                     webexMessages: matchingMessages,
                     iMessages: iMessageOutcome.messages,
                     target: target,
-                    syncState: syncStatesByRoomID[directRoomID]
+                    syncState: syncStatesByRoomID[directRoomID],
+                    iMessageLoadError: iMessageOutcome.error
                 ),
                 detailLines: detailLines,
                 detailIntroLines: [],
@@ -1338,7 +1385,13 @@ final class NativeWebexIngestionService {
         return lines
     }
 
-    private func latestTimelinePreview(_ event: PersonTimelineEvent?) -> String {
+    private func latestTimelinePreview(_ event: PersonTimelineEvent?, iMessageLoadError: String? = nil) -> String {
+        if iMessageLoadError != nil {
+            guard let event else {
+                return "iMessage unavailable; no Webex messages found."
+            }
+            return "iMessage unavailable; latest \(event.source): \(oneLine(event.body))"
+        }
         guard let event else {
             return "No synced Webex or iMessage messages yet."
         }
@@ -1350,7 +1403,8 @@ final class NativeWebexIngestionService {
         webexMessages: [MessageRecord],
         iMessages: [IMessageTimelineMessage],
         target: ConfigTarget,
-        syncState: WebexConversationSyncStateRecord?
+        syncState: WebexConversationSyncStateRecord?,
+        iMessageLoadError: String? = nil
     ) -> String {
         let hasWebex = !webexMessages.isEmpty
         let hasIMessage = !iMessages.isEmpty
@@ -1359,6 +1413,10 @@ final class NativeWebexIngestionService {
         }
         if hasIMessage {
             return appendSyncStatusBadge(base: "imessage", state: syncState)
+        }
+        if iMessageLoadError != nil, !target.iMessageHandles.isEmpty {
+            let base = directRoomID.isEmpty ? "email-match+imessage-unavailable" : "live-webex+imessage-unavailable"
+            return appendSyncStatusBadge(base: base, state: syncState)
         }
         if !target.iMessageHandles.isEmpty {
             let base = directRoomID.isEmpty ? "email-match+imessage-configured" : "live-webex+imessage-configured"
