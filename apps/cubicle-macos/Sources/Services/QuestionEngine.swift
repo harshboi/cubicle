@@ -41,6 +41,29 @@ final class QuestionCandidateService {
         self.questionSynthesizer = questionSynthesizer
     }
 
+    private func questionGenerationDocument() -> MacAppJSONQuestionGenerationConfiguration? {
+        knowledgeStore.configuration.jsonConfiguration?.questionGeneration
+    }
+
+    private func configuredQuestionInt(
+        _ value: Int?,
+        defaultValue: Int,
+        minimum: Int,
+        maximum: Int
+    ) -> Int {
+        guard let value else { return defaultValue }
+        return min(max(value, minimum), maximum)
+    }
+
+    private func configuredQuestionCategories(_ values: [String]?) -> Set<QuestionCategory> {
+        let fallback: Set<QuestionCategory> = [.behavioral, .diagnostic, .efficiency, .network]
+        guard let values else {
+            return fallback
+        }
+        let categories = Set(values.compactMap { QuestionCategory(rawValue: $0.trimmingCharacters(in: .whitespacesAndNewlines)) })
+        return categories.isEmpty ? fallback : categories
+    }
+
     /// Regenerates active candidates from current space/person focus caches.
     func refreshQuestionCandidates(spaceCache: FocusCache, personCache: FocusCache) async throws -> QuestionRefreshOutcome {
         try knowledgeStore.bootstrap()
@@ -144,7 +167,20 @@ final class QuestionCandidateService {
         let events = item.normalizedEvents(kind: kind).sorted { left, right in
             (parseDate(left.timestampLabel) ?? .distantPast) > (parseDate(right.timestampLabel) ?? .distantPast)
         }
-        let evidence = evidenceRefs(from: events, fallbackItem: item)
+        let cubicleSettings = questionGenerationDocument()?.cubicle
+        let evidenceLimit = configuredQuestionInt(
+            cubicleSettings?.evidenceLimit,
+            defaultValue: 4,
+            minimum: 1,
+            maximum: 20
+        )
+        let fallbackDraftLimit = configuredQuestionInt(
+            cubicleSettings?.fallbackDraftLimit,
+            defaultValue: 4,
+            minimum: 1,
+            maximum: 20
+        )
+        let evidence = evidenceRefs(from: events, fallbackItem: item, limit: evidenceLimit)
         let latestEventDate = parseDate(item.timestamp)
             ?? events.compactMap { parseDate($0.timestampLabel) }.max()
         let analysisGeneratedDate = firstDate(in: item.detailLines, prefixes: ["Analysis Generated:", "Summary generated:"])
@@ -214,7 +250,7 @@ final class QuestionCandidateService {
             }
         }
 
-        return drafts.prefix(4).map { draft in
+        return drafts.prefix(fallbackDraftLimit).map { draft in
             let weakEvidencePenalty = evidence.isEmpty ? 12.0 : 0
             let score = max(
                 1,
@@ -362,24 +398,65 @@ final class QuestionCandidateService {
             return []
         }
 
+        let document = questionGenerationDocument()
+        let coreSettings = document?.core
+        let cubicleSettings = document?.cubicle
+        let generatedQuestionLimit = configuredQuestionInt(
+            cubicleSettings?.generatedQuestionLimit,
+            defaultValue: 12,
+            minimum: 1,
+            maximum: 100
+        )
+        let publishableQuestionLimit = configuredQuestionInt(
+            cubicleSettings?.publishableQuestionLimit,
+            defaultValue: 4,
+            minimum: 1,
+            maximum: 50
+        )
+        let coreEvidenceLimit = configuredQuestionInt(
+            cubicleSettings?.coreEvidenceLimit,
+            defaultValue: 4,
+            minimum: 1,
+            maximum: 20
+        )
+
         var configuration = WebexQGConfiguration.default
-        configuration.privacy.anonymizeUsers = false
-        configuration.privacy.redactURLs = true
-        configuration.privacy.redactEmails = true
-        configuration.topics = TopicConfiguration(enabled: true, numberOfTopics: 8, minimumTopicSize: 1)
+        configuration.privacy.anonymizeUsers = coreSettings?.privacy?.anonymizeUsers ?? false
+        configuration.privacy.redactURLs = coreSettings?.privacy?.redactURLs ?? true
+        configuration.privacy.redactEmails = coreSettings?.privacy?.redactEmails ?? true
+        configuration.topics = TopicConfiguration(
+            enabled: coreSettings?.topics?.enabled ?? true,
+            numberOfTopics: configuredQuestionInt(
+                coreSettings?.topics?.numberOfTopics,
+                defaultValue: 8,
+                minimum: 1,
+                maximum: 50
+            ),
+            minimumTopicSize: configuredQuestionInt(
+                coreSettings?.topics?.minimumTopicSize,
+                defaultValue: 1,
+                minimum: 1,
+                maximum: 500
+            )
+        )
         configuration.questions = QuestionConfiguration(
-            topN: 12,
-            enabledCategories: [.behavioral, .diagnostic, .efficiency, .network]
+            topN: configuredQuestionInt(
+                coreSettings?.questions?.topN,
+                defaultValue: 12,
+                minimum: 1,
+                maximum: 100
+            ),
+            enabledCategories: configuredQuestionCategories(coreSettings?.questions?.enabledCategories)
         )
         configuration.objectives = coreObjectives(item: item, kind: kind)
 
         let generator = WebexQuestionGenerator(configuration: configuration)
         let messages = extractedMessages.map(\.message)
         let analysis = try await generator.analyze(messages: messages)
-        let generatedQuestions = try await generator.generateQuestions(from: analysis, topN: 12)
+        let generatedQuestions = try await generator.generateQuestions(from: analysis, topN: generatedQuestionLimit)
         let publishableQuestions = generatedQuestions
             .filter(Self.isPublishableCoreQuestionForCubicle)
-            .prefix(4)
+            .prefix(publishableQuestionLimit)
         guard !publishableQuestions.isEmpty else {
             return []
         }
@@ -403,6 +480,7 @@ final class QuestionCandidateService {
                 latestEventDate: latestDate,
                 sourceSignature: sourceSignature,
                 priorityScore: corePriorityScore(question: question, recency: recency, importanceBoost: importanceBoost),
+                evidenceLimit: coreEvidenceLimit,
                 now: now
             )
         }
@@ -416,11 +494,12 @@ final class QuestionCandidateService {
         latestEventDate: Date?,
         sourceSignature: String,
         priorityScore: Double,
+        evidenceLimit: Int,
         now: Date
     ) -> QuestionCandidate {
         let normalizedQuestion = normalizedKey(question.text)
         let questionID = "question-\(Self.stableHash([scopeType.rawValue, item.id, "core", normalizedQuestion].joined(separator: "|")))"
-        let evidence = evidenceForCoreQuestion(question, extractedMessages: extractedMessages)
+        let evidence = evidenceForCoreQuestion(question, extractedMessages: extractedMessages, limit: evidenceLimit)
         let whyNowParts = [
             latestEventDate.map { "latest evidence is \(displayDate($0))" },
             "local analytics: \(question.category.rawValue)",
@@ -585,13 +664,17 @@ final class QuestionCandidateService {
 
     private func evidenceForCoreQuestion(
         _ question: GeneratedQuestion,
-        extractedMessages: [CoreFocusMessage]
+        extractedMessages: [CoreFocusMessage],
+        limit: Int
     ) -> [QuestionEvidenceRef] {
         let threadID = question.supportingMetrics["thread_id"]
         let matchingThread = threadID.map { id in
             extractedMessages.filter { $0.threadID == id }
         } ?? []
-        let selected = matchingThread.isEmpty ? Array(extractedMessages.suffix(4)) : Array(matchingThread.prefix(4))
+        let evidenceLimit = max(1, limit)
+        let selected = matchingThread.isEmpty
+            ? Array(extractedMessages.suffix(evidenceLimit))
+            : Array(matchingThread.prefix(evidenceLimit))
         return selected.map(\.evidence)
     }
 
@@ -926,8 +1009,13 @@ final class QuestionCandidateService {
         return String(name).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func evidenceRefs(from events: [FocusNormalizedEvent], fallbackItem item: FocusItem) -> [QuestionEvidenceRef] {
-        let eventRefs = events.prefix(4).map { event in
+    private func evidenceRefs(
+        from events: [FocusNormalizedEvent],
+        fallbackItem item: FocusItem,
+        limit: Int
+    ) -> [QuestionEvidenceRef] {
+        let evidenceLimit = max(1, limit)
+        let eventRefs = events.prefix(evidenceLimit).map { event in
             QuestionEvidenceRef(
                 sourceType: "focus_event",
                 sourceID: event.id,
@@ -939,7 +1027,7 @@ final class QuestionCandidateService {
         if !eventRefs.isEmpty {
             return Array(eventRefs)
         }
-        return item.detailLines.prefix(3).enumerated().compactMap { offset, line in
+        return item.detailLines.prefix(evidenceLimit).enumerated().compactMap { offset, line in
             let preview = normalizeWhitespace(line)
             guard !preview.isEmpty else {
                 return nil

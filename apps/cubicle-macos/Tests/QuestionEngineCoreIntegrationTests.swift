@@ -1411,6 +1411,119 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
         XCTAssertTrue(prompt.contains("Do not treat operator Ask Codex history as evidence"))
     }
 
+    func testQuestionSynthesisRunPolicyOverridesGlobalCodexRunPolicy() async throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleQuestionSynthesisRunPolicyTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        try FileManager.default.createDirectory(at: runtimeRoot, withIntermediateDirectories: true)
+        let fakeCodexURL = runtimeRoot.appendingPathComponent("fake-codex")
+        let attemptCountURL = runtimeRoot.appendingPathComponent("attempt-count.txt")
+        let script = """
+        #!/bin/sh
+        cat >/dev/null
+        output_path=""
+        while [ "$#" -gt 0 ]; do
+          if [ "$1" = "--output-last-message" ]; then
+            shift
+            output_path="$1"
+            break
+          fi
+          shift
+        done
+        attempt_count=0
+        if [ -f "$CODEX_ATTEMPT_COUNT_FILE" ]; then
+          attempt_count="$(cat "$CODEX_ATTEMPT_COUNT_FILE")"
+        fi
+        attempt_count=$((attempt_count + 1))
+        printf '%s\\n' "$attempt_count" > "$CODEX_ATTEMPT_COUNT_FILE"
+        if [ "$attempt_count" -eq 1 ]; then
+          exit 42
+        fi
+        printf '{"questions":[]}\\n' > "$output_path"
+        """
+        try script.write(to: fakeCodexURL, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: NSNumber(value: Int16(0o755))],
+            ofItemAtPath: fakeCodexURL.path
+        )
+        setenv("CODEX_ATTEMPT_COUNT_FILE", attemptCountURL.path, 1)
+        defer { unsetenv("CODEX_ATTEMPT_COUNT_FILE") }
+
+        let jsonConfiguration = try JSONDecoder().decode(
+            MacAppJSONConfigurationDocument.self,
+            from: Data(
+                """
+                {
+                  "codex": {
+                    "run_policy": {
+                      "timeout_seconds": 5,
+                      "max_attempts": 1,
+                      "retry_delay_seconds": 0
+                    },
+                    "question_synthesis": {
+                      "run_policy": {
+                        "timeout_seconds": 5,
+                        "max_attempts": 2,
+                        "retry_delay_seconds": 0
+                      }
+                    }
+                  }
+                }
+                """.utf8
+            )
+        )
+        let configuration = RuntimeConfiguration(
+            runtimeRoot: runtimeRoot,
+            jsonConfiguration: jsonConfiguration,
+            codexExecutable: fakeCodexURL.path,
+            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
+            webexPageSize: 100,
+            webexRetryCount: 0,
+            webexTimeoutSeconds: 1,
+            webexOAuthTokenPathOverride: nil,
+            webexOAuthRefreshSkewSeconds: 300,
+            webexOAuthRefreshTokenSkewSeconds: 86_400
+        )
+        let candidate = QuestionCandidate(
+            id: "seed-run-policy",
+            scopeType: .space,
+            scopeKey: "room-run-policy",
+            scopeLabel: "Run Policy Room",
+            questionText: "Who owns the retry follow-up?",
+            questionType: "space_open_loop",
+            whyNow: "A message needs a resilient synthesis pass.",
+            evidence: [
+                QuestionEvidenceRef(
+                    sourceType: "space",
+                    sourceID: "evidence-run-policy",
+                    createdAt: Date(timeIntervalSince1970: 1_778_859_000),
+                    label: "Recent message",
+                    preview: "The synthesis request should retry once."
+                )
+            ],
+            sourceKind: "webex_qg_core",
+            sourceKey: "seed",
+            tags: ["open-loop"],
+            priorityScore: 80,
+            status: .candidate,
+            answerSnapshotId: nil,
+            createdAt: Date(timeIntervalSince1970: 1_778_859_000),
+            updatedAt: Date(timeIntervalSince1970: 1_778_859_000),
+            expiresAt: nil
+        )
+        let service = CodexPromptOrchestrationService(configuration: configuration)
+
+        let synthesized = try await service.synthesizeQuestionCandidates(
+            from: [candidate],
+            now: Date(timeIntervalSince1970: 1_778_859_000)
+        )
+
+        let attemptCount = try String(contentsOf: attemptCountURL, encoding: .utf8)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        XCTAssertTrue(synthesized.isEmpty)
+        XCTAssertEqual(attemptCount, "2")
+    }
+
     func testCodexRunnerSendsPromptOverStdinNotProcessArguments() async throws {
         let runtimeRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("CubicleCodexRunnerStdinTests-\(UUID().uuidString)", isDirectory: true)
