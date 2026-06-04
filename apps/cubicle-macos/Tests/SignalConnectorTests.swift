@@ -276,6 +276,64 @@ final class SignalConnectorTests: XCTestCase {
 
         XCTAssertEqual(connectors.map(\.descriptor.id), [.webex, .iMessage])
         XCTAssertEqual(connectors.map(\.descriptor.displayName), ["Webex", "iMessage"])
+        XCTAssertNotNil(try factory.makeWebexProductService())
+        XCTAssertNotNil(try factory.makeIMessageProductService())
+    }
+
+    func testSignalConnectorRegistryRejectsDuplicateProviders() throws {
+        let webexClient = StubFactoryWebexClient()
+
+        XCTAssertThrowsError(
+            try SignalConnectorRegistry(
+                providers: [
+                    WebexConnectorProvider(webexClient: webexClient, productClient: webexClient),
+                    WebexConnectorProvider(webexClient: webexClient, productClient: webexClient)
+                ]
+            )
+        ) { error in
+            XCTAssertEqual(
+                error.localizedDescription,
+                "Duplicate signal connector provider: webex"
+            )
+        }
+    }
+
+    func testSignalConnectorFactoryReportsUnsupportedConnectorFromRegistry() throws {
+        let registry = try SignalConnectorRegistry(
+            providers: [
+                MinimalSignalConnectorProvider(
+                    connectorID: .iMessage,
+                    connector: StubSignalConnector(
+                        connectorID: .iMessage,
+                        batch: SignalSyncBatch.empty(connectorID: .iMessage, accountID: "local")
+                    )
+                )
+            ]
+        )
+        let factory = SignalConnectorFactory(registry: registry)
+
+        XCTAssertThrowsError(try factory.makeSignalConnector(id: .webex)) { error in
+            XCTAssertEqual(error.localizedDescription, "Unsupported signal connector: webex")
+        }
+    }
+
+    func testSignalConnectorFactoryReportsMissingProductServiceProvider() throws {
+        let registry = try SignalConnectorRegistry(
+            providers: [
+                MinimalSignalConnectorProvider(
+                    connectorID: .webex,
+                    connector: StubSignalConnector(
+                        connectorID: .webex,
+                        batch: SignalSyncBatch.empty(connectorID: .webex, accountID: "workspace")
+                    )
+                )
+            ]
+        )
+        let factory = SignalConnectorFactory(registry: registry)
+
+        XCTAssertThrowsError(try factory.makeWebexProductService()) { error in
+            XCTAssertEqual(error.localizedDescription, "Unsupported connector product service: webex")
+        }
     }
 
     func testSignalConnectorProcessingServiceBuildsConnectorsAndWritesRoutedBatches() async throws {
@@ -660,6 +718,20 @@ private final class StubSignalConnector: SignalConnector {
     ) async throws -> SignalSyncBatch {
         receivedTargetIDs = request.targets.map(\.id)
         return batch
+    }
+}
+
+private final class MinimalSignalConnectorProvider: SignalConnectorProvider {
+    let connectorID: ConnectorID
+    private let connector: SignalConnector
+
+    init(connectorID: ConnectorID, connector: SignalConnector) {
+        self.connectorID = connectorID
+        self.connector = connector
+    }
+
+    func makeSignalConnector() throws -> SignalConnector {
+        connector
     }
 }
 
