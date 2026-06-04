@@ -97,6 +97,7 @@ enum NativeIMessageIngestionError: LocalizedError {
 /// Reads the user's local `~/Library/Messages/chat.db` without mutating it.
 final class NativeIMessageIngestionService: NativeIMessageIngesting {
     private let chatDatabaseURL: URL
+    private let busyTimeoutMilliseconds: Int32
     private let fileManager: FileManager
     private let timestampFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
@@ -105,9 +106,39 @@ final class NativeIMessageIngestionService: NativeIMessageIngesting {
     }()
 
     /// Allows tests to point at a fixture database instead of the user's chat DB.
-    init(chatDatabaseURL: URL? = nil, fileManager: FileManager = .default) {
-        self.chatDatabaseURL = chatDatabaseURL ?? URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
-            .appendingPathComponent("Library/Messages/chat.db")
+    init(
+        configuration: RuntimeConfiguration = .current,
+        chatDatabaseURL: URL? = nil,
+        busyTimeoutMilliseconds: Int? = nil,
+        fileManager: FileManager = .default
+    ) {
+        let document = configuration.jsonConfiguration
+        let jsonSettings = document?.connectors?.imessage
+        let environmentSettings = document?.environment?.imessage
+        let configDirectory = configuration.jsonConfigurationDirectory
+            ?? configuration.runtimeRoot.appendingPathComponent("config", isDirectory: true)
+        self.chatDatabaseURL = chatDatabaseURL
+            ?? document?.connectorFixtureURL(
+                "imessage",
+                runtimeRoot: configuration.runtimeRoot,
+                configDirectory: configDirectory
+            )
+            ?? jsonSettings?.chatDatabasePath.flatMap { Self.expandedFileURL($0, relativeTo: configuration.runtimeRoot) }
+            ?? environmentSettings?.chatDatabasePath.flatMap { Self.expandedFileURL($0, relativeTo: configuration.runtimeRoot) }
+            ?? URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+                .appendingPathComponent("Library/Messages/chat.db")
+        self.busyTimeoutMilliseconds = Int32(
+            max(
+                1,
+                min(
+                    busyTimeoutMilliseconds
+                        ?? jsonSettings?.busyTimeoutMilliseconds
+                        ?? environmentSettings?.busyTimeoutMilliseconds
+                        ?? 2_000,
+                    60_000
+                )
+            )
+        )
         self.fileManager = fileManager
     }
 
@@ -400,8 +431,21 @@ final class NativeIMessageIngestionService: NativeIMessageIngesting {
             throw NativeIMessageIngestionError.openFailed(chatDatabaseURL, message)
         }
         defer { sqlite3_close(openedDB) }
-        sqlite3_busy_timeout(openedDB, 2_000)
+        sqlite3_busy_timeout(openedDB, busyTimeoutMilliseconds)
         return try body(openedDB)
+    }
+
+    private static func expandedFileURL(_ path: String, relativeTo baseDirectory: URL? = nil) -> URL? {
+        let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let expanded = NSString(string: trimmed).expandingTildeInPath
+        if expanded.hasPrefix("/") {
+            return URL(fileURLWithPath: expanded)
+        }
+        guard let baseDirectory else {
+            return URL(fileURLWithPath: expanded)
+        }
+        return baseDirectory.appendingPathComponent(expanded)
     }
 
     private func tableExists(_ tableName: String, db: OpaquePointer) throws -> Bool {
