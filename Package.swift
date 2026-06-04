@@ -11,13 +11,15 @@ let package = Package(
         .executable(name: "Cubicle", targets: ["GetWebexSpaceMacApp"])
     ],
     dependencies: [
-        .package(path: "packages/webex-question-core")
+        .package(path: "packages/webex-question-core"),
+        .package(url: "https://github.com/SwiftyLab/MetaCodable.git", exact: "1.0.0")
     ],
     targets: [
         .executableTarget(
             name: "GetWebexSpaceMacApp",
             dependencies: [
-                .product(name: "WebexQuestionGeneratorCore", package: "webex-question-core")
+                .product(name: "WebexQuestionGeneratorCore", package: "webex-question-core"),
+                .product(name: "MetaCodable", package: "MetaCodable")
             ],
             path: "apps/cubicle-macos/Sources"
         ),
@@ -28,4 +30,3 @@ let package = Package(
         )
     ]
 )
-

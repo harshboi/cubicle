@@ -1,4 +1,5 @@
 import Foundation
+import MetaCodable
 
 /// File names and document types for optional macOS JSON configuration.
 enum MacAppJSONConfigurationFiles {
@@ -355,159 +356,131 @@ enum MacAppJSONConfigurationValidator {
 }
 
 /// Resolved top-level Cubicle configuration after composition.
-struct MacAppJSONConfigurationDocument: Codable, Equatable {
+@Codable
+struct MacAppJSONConfigurationDocument: Equatable {
     var version: Int?
     var environment: MacAppJSONEnvironmentConfiguration?
     var connectors: MacAppJSONConnectorsConfiguration?
     var codex: MacAppJSONCodexConfiguration?
+    @CodedAt("question_generation")
     var questionGeneration: MacAppJSONQuestionGenerationConfiguration?
+    @CodedAt("test_mode")
     var testMode: MacAppJSONTestModeConfiguration?
-
-    enum CodingKeys: String, CodingKey {
-        case version
-        case environment
-        case connectors
-        case codex
-        case questionGeneration = "question_generation"
-        case testMode = "test_mode"
-    }
 }
 
 /// Reusable policy blocks scoped to one parent section.
-struct MacAppJSONCommonPolicies: Codable, Equatable {
+@Codable
+struct MacAppJSONCommonPolicies: Equatable {
+    @CodedAt("run_policy")
     var runPolicy: MacAppJSONRunPolicy?
+    @CodedAt("network_policy")
     var networkPolicy: MacAppJSONNetworkPolicy?
+    @CodedAt("cache_policy")
     var cachePolicy: MacAppJSONCachePolicy?
+    @CodedAt("sync_policy")
     var syncPolicy: MacAppJSONSyncPolicy?
-
-    enum CodingKeys: String, CodingKey {
-        case runPolicy = "run_policy"
-        case networkPolicy = "network_policy"
-        case cachePolicy = "cache_policy"
-        case syncPolicy = "sync_policy"
-    }
 }
 
 /// Parent defaults applied to child sections before child overrides.
-struct MacAppJSONPolicyDefaults: Codable, Equatable {
+@Codable
+struct MacAppJSONPolicyDefaults: Equatable {
+    @CodedAt("run_policy")
     var runPolicy: MacAppJSONRunPolicy?
+    @CodedAt("network_policy")
     var networkPolicy: MacAppJSONNetworkPolicy?
+    @CodedAt("cache_policy")
     var cachePolicy: MacAppJSONCachePolicy?
+    @CodedAt("sync_policy")
     var syncPolicy: MacAppJSONSyncPolicy?
-
-    enum CodingKeys: String, CodingKey {
-        case runPolicy = "run_policy"
-        case networkPolicy = "network_policy"
-        case cachePolicy = "cache_policy"
-        case syncPolicy = "sync_policy"
-    }
 }
 
 /// Retry and timeout behavior shared by Codex jobs and other runnable work.
-struct MacAppJSONRunPolicy: Codable, Equatable {
+@Codable
+struct MacAppJSONRunPolicy: Equatable {
+    @CodedAt("timeout_seconds")
     var timeoutSeconds: Double?
+    @CodedAt("max_attempts")
     var maxAttempts: Int?
+    @CodedAt("retry_delay_seconds")
     var retryDelaySeconds: Double?
-
-    enum CodingKeys: String, CodingKey {
-        case timeoutSeconds = "timeout_seconds"
-        case maxAttempts = "max_attempts"
-        case retryDelaySeconds = "retry_delay_seconds"
-    }
 }
 
 /// Network request behavior shared by remote connectors.
-struct MacAppJSONNetworkPolicy: Codable, Equatable {
+@Codable
+struct MacAppJSONNetworkPolicy: Equatable {
+    @CodedAt("timeout_seconds")
     var timeoutSeconds: Double?
+    @CodedAt("retry_count")
     var retryCount: Int?
+    @CodedAt("page_size")
     var pageSize: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case timeoutSeconds = "timeout_seconds"
-        case retryCount = "retry_count"
-        case pageSize = "page_size"
-    }
 }
 
 /// Cache freshness behavior shared by generated artifacts.
-struct MacAppJSONCachePolicy: Codable, Equatable {
+@Codable
+struct MacAppJSONCachePolicy: Equatable {
+    @CodedAt("max_age_seconds")
     var maxAgeSeconds: Double?
+    @CodedAt("summary_max_age_seconds")
     var summaryMaxAgeSeconds: Double?
+    @CodedAt("exec_questions_max_age_seconds")
     var execQuestionsMaxAgeSeconds: Double?
-
-    enum CodingKeys: String, CodingKey {
-        case maxAgeSeconds = "max_age_seconds"
-        case summaryMaxAgeSeconds = "summary_max_age_seconds"
-        case execQuestionsMaxAgeSeconds = "exec_questions_max_age_seconds"
-    }
 }
 
 /// Scheduler/concurrency behavior shared by connector sync work.
-struct MacAppJSONSyncPolicy: Codable, Equatable {
+@Codable
+struct MacAppJSONSyncPolicy: Equatable {
+    @CodedAt("concurrency_limit")
     var concurrencyLimit: Int?
+    @CodedAt("adaptive_active_interval_seconds")
     var adaptiveActiveIntervalSeconds: Double?
+    @CodedAt("adaptive_recent_interval_seconds")
     var adaptiveRecentIntervalSeconds: Double?
+    @CodedAt("adaptive_background_interval_seconds")
     var adaptiveBackgroundIntervalSeconds: Double?
+    @CodedAt("adaptive_jitter_percent")
     var adaptiveJitterPercent: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case concurrencyLimit = "concurrency_limit"
-        case adaptiveActiveIntervalSeconds = "adaptive_active_interval_seconds"
-        case adaptiveRecentIntervalSeconds = "adaptive_recent_interval_seconds"
-        case adaptiveBackgroundIntervalSeconds = "adaptive_background_interval_seconds"
-        case adaptiveJitterPercent = "adaptive_jitter_percent"
-    }
 }
 
 /// Env-like non-secret runtime tuning.
-struct MacAppJSONEnvironmentConfiguration: Codable, Equatable {
+@Codable
+struct MacAppJSONEnvironmentConfiguration: Equatable {
     var common: MacAppJSONCommonPolicies?
     var defaults: MacAppJSONPolicyDefaults?
+    @CodedAt("codex_executable")
     var codexExecutable: String?
+    @CodedAt("runtime_root")
     var runtimeRoot: String?
     var webex: MacAppJSONEnvironmentWebexSettings?
     var imessage: MacAppJSONEnvironmentIMessageSettings?
-
-    enum CodingKeys: String, CodingKey {
-        case common
-        case defaults
-        case codexExecutable = "codex_executable"
-        case runtimeRoot = "runtime_root"
-        case webex
-        case imessage
-    }
 }
 
 /// Env-like Webex tuning that is not secret material.
-struct MacAppJSONEnvironmentWebexSettings: Codable, Equatable {
+@Codable
+struct MacAppJSONEnvironmentWebexSettings: Equatable {
+    @CodedAt("api_base_url")
     var apiBaseURL: String?
+    @CodedAt("public_webhook_url")
     var publicWebhookURL: String?
+    @CodedAt("oauth_token_file")
     var oauthTokenFile: String?
+    @CodedAt("oauth_refresh_skew_seconds")
     var oauthRefreshSkewSeconds: Double?
+    @CodedAt("oauth_refresh_token_skew_seconds")
     var oauthRefreshTokenSkewSeconds: Double?
+    @CodedAt("network_policy")
     var networkPolicy: MacAppJSONNetworkPolicy?
+    @CodedAt("sync_policy")
     var syncPolicy: MacAppJSONSyncPolicy?
-
-    enum CodingKeys: String, CodingKey {
-        case apiBaseURL = "api_base_url"
-        case publicWebhookURL = "public_webhook_url"
-        case oauthTokenFile = "oauth_token_file"
-        case oauthRefreshSkewSeconds = "oauth_refresh_skew_seconds"
-        case oauthRefreshTokenSkewSeconds = "oauth_refresh_token_skew_seconds"
-        case networkPolicy = "network_policy"
-        case syncPolicy = "sync_policy"
-    }
 }
 
 /// Env-like iMessage source tuning.
-struct MacAppJSONEnvironmentIMessageSettings: Codable, Equatable {
+@Codable
+struct MacAppJSONEnvironmentIMessageSettings: Equatable {
+    @CodedAt("chat_database_path")
     var chatDatabasePath: String?
+    @CodedAt("busy_timeout_milliseconds")
     var busyTimeoutMilliseconds: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case chatDatabasePath = "chat_database_path"
-        case busyTimeoutMilliseconds = "busy_timeout_milliseconds"
-    }
 }
 
 /// Connector selection and connector-specific non-secret settings.
@@ -517,93 +490,70 @@ struct MacAppJSONConnectorsConfiguration: Codable, Equatable {
     var enabled: [String]?
     var webex: MacAppJSONWebexConnectorConfiguration?
     var imessage: MacAppJSONIMessageConnectorConfiguration?
-
-    enum CodingKeys: String, CodingKey {
-        case common
-        case defaults
-        case enabled
-        case webex
-        case imessage
-    }
 }
 
-struct MacAppJSONWebexConnectorConfiguration: Codable, Equatable {
+@Codable
+struct MacAppJSONWebexConnectorConfiguration: Equatable {
     var enabled: Bool?
+    @CodedAt("network_policy")
     var networkPolicy: MacAppJSONNetworkPolicy?
+    @CodedAt("sync_policy")
     var syncPolicy: MacAppJSONSyncPolicy?
+    @CodedAt("fixture_path")
     var fixturePath: String?
-
-    enum CodingKeys: String, CodingKey {
-        case enabled
-        case networkPolicy = "network_policy"
-        case syncPolicy = "sync_policy"
-        case fixturePath = "fixture_path"
-    }
 }
 
-struct MacAppJSONIMessageConnectorConfiguration: Codable, Equatable {
+@Codable
+struct MacAppJSONIMessageConnectorConfiguration: Equatable {
     var enabled: Bool?
+    @CodedAt("chat_database_path")
     var chatDatabasePath: String?
+    @CodedAt("busy_timeout_milliseconds")
     var busyTimeoutMilliseconds: Int?
+    @CodedAt("fixture_path")
     var fixturePath: String?
-
-    enum CodingKeys: String, CodingKey {
-        case enabled
-        case chatDatabasePath = "chat_database_path"
-        case busyTimeoutMilliseconds = "busy_timeout_milliseconds"
-        case fixturePath = "fixture_path"
-    }
 }
 
 /// Codex execution, cache, belief, and synthesis tuning.
-struct MacAppJSONCodexConfiguration: Codable, Equatable {
+@Codable
+struct MacAppJSONCodexConfiguration: Equatable {
     var common: MacAppJSONCommonPolicies?
     var defaults: MacAppJSONPolicyDefaults?
+    @CodedAt("run_policy")
     var runPolicy: MacAppJSONRunPolicy?
+    @CodedAt("cache_policy")
     var cachePolicy: MacAppJSONCachePolicy?
     var beliefs: MacAppJSONCodexBeliefPolicy?
+    @CodedAt("question_synthesis")
     var questionSynthesis: MacAppJSONCodexQuestionSynthesisPolicy?
-
-    enum CodingKeys: String, CodingKey {
-        case common
-        case defaults
-        case runPolicy = "run_policy"
-        case cachePolicy = "cache_policy"
-        case beliefs
-        case questionSynthesis = "question_synthesis"
-    }
 }
 
 /// Belief reconciliation scheduling and chunking tuning.
-struct MacAppJSONCodexBeliefPolicy: Codable, Equatable {
+@Codable
+struct MacAppJSONCodexBeliefPolicy: Equatable {
+    @CodedAt("stale_hours")
     var staleHours: Int?
+    @CodedAt("evidence_chunk_size")
     var evidenceChunkSize: Int?
+    @CodedAt("max_incremental_window_days")
     var maxIncrementalWindowDays: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case staleHours = "stale_hours"
-        case evidenceChunkSize = "evidence_chunk_size"
-        case maxIncrementalWindowDays = "max_incremental_window_days"
-    }
 }
 
 /// Question-synthesis prompt input sizing and optional run-policy override.
-struct MacAppJSONCodexQuestionSynthesisPolicy: Codable, Equatable {
+@Codable
+struct MacAppJSONCodexQuestionSynthesisPolicy: Equatable {
+    @CodedAt("run_policy")
     var runPolicy: MacAppJSONRunPolicy?
+    @CodedAt("seed_candidate_limit")
     var seedCandidateLimit: Int?
+    @CodedAt("query_history_limit")
     var queryHistoryLimit: Int?
+    @CodedAt("prompt_history_limit")
     var promptHistoryLimit: Int?
+    @CodedAt("candidate_evidence_limit")
     var candidateEvidenceLimit: Int?
+    @CodedAt("output_limit")
     var outputLimit: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case runPolicy = "run_policy"
-        case seedCandidateLimit = "seed_candidate_limit"
-        case queryHistoryLimit = "query_history_limit"
-        case promptHistoryLimit = "prompt_history_limit"
-        case candidateEvidenceLimit = "candidate_evidence_limit"
-        case outputLimit = "output_limit"
-    }
 }
 
 /// Local question generation and filtering tuning.
@@ -622,76 +572,62 @@ struct MacAppJSONQuestionGenerationCoreSettings: Codable, Equatable {
 }
 
 /// Local analytics privacy settings.
-struct MacAppJSONQuestionGenerationPrivacySettings: Codable, Equatable {
+@Codable
+struct MacAppJSONQuestionGenerationPrivacySettings: Equatable {
+    @CodedAt("anonymize_users")
     var anonymizeUsers: Bool?
+    @CodedAt("redact_urls")
     var redactURLs: Bool?
+    @CodedAt("redact_emails")
     var redactEmails: Bool?
-
-    enum CodingKeys: String, CodingKey {
-        case anonymizeUsers = "anonymize_users"
-        case redactURLs = "redact_urls"
-        case redactEmails = "redact_emails"
-    }
 }
 
 /// Local topic extraction settings.
-struct MacAppJSONQuestionGenerationTopicSettings: Codable, Equatable {
+@Codable
+struct MacAppJSONQuestionGenerationTopicSettings: Equatable {
     var enabled: Bool?
+    @CodedAt("number_of_topics")
     var numberOfTopics: Int?
+    @CodedAt("minimum_topic_size")
     var minimumTopicSize: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case enabled
-        case numberOfTopics = "number_of_topics"
-        case minimumTopicSize = "minimum_topic_size"
-    }
 }
 
 /// Local question extraction settings.
-struct MacAppJSONQuestionGenerationQuestionSettings: Codable, Equatable {
+@Codable
+struct MacAppJSONQuestionGenerationQuestionSettings: Equatable {
+    @CodedAt("top_n")
     var topN: Int?
+    @CodedAt("enabled_categories")
     var enabledCategories: [String]?
-
-    enum CodingKeys: String, CodingKey {
-        case topN = "top_n"
-        case enabledCategories = "enabled_categories"
-    }
 }
 
 /// Cubicle-specific fallback and publication thresholds.
-struct MacAppJSONQuestionGenerationCubicleSettings: Codable, Equatable {
+@Codable
+struct MacAppJSONQuestionGenerationCubicleSettings: Equatable {
+    @CodedAt("fallback_draft_limit")
     var fallbackDraftLimit: Int?
+    @CodedAt("generated_question_limit")
     var generatedQuestionLimit: Int?
+    @CodedAt("publishable_question_limit")
     var publishableQuestionLimit: Int?
+    @CodedAt("evidence_limit")
     var evidenceLimit: Int?
+    @CodedAt("core_evidence_limit")
     var coreEvidenceLimit: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case fallbackDraftLimit = "fallback_draft_limit"
-        case generatedQuestionLimit = "generated_question_limit"
-        case publishableQuestionLimit = "publishable_question_limit"
-        case evidenceLimit = "evidence_limit"
-        case coreEvidenceLimit = "core_evidence_limit"
-    }
 }
 
 /// Test-app mode uses stable input files that cleanup must never delete.
-struct MacAppJSONTestModeConfiguration: Codable, Equatable {
+@Codable
+struct MacAppJSONTestModeConfiguration: Equatable {
     var enabled: Bool?
     var profile: String?
+    @CodedAt("fixture_root")
     var fixtureRoot: String?
+    @CodedAt("target_data")
     var targetData: String?
     var settings: String?
+    @CodedAt("protect_paths")
     var protectPaths: [String]?
+    @CodedAt("connector_fixtures")
     var connectorFixtures: [String: String]?
-
-    enum CodingKeys: String, CodingKey {
-        case enabled
-        case profile
-        case fixtureRoot = "fixture_root"
-        case targetData = "target_data"
-        case settings
-        case protectPaths = "protect_paths"
-        case connectorFixtures = "connector_fixtures"
-    }
 }
