@@ -5,20 +5,9 @@ import WebexQuestionGeneratorCore
 
 final class QuestionEngineCoreIntegrationTests: XCTestCase {
     func testOAuthAppSettingsLoadsOutlookRuntimeConfig() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleOAuthSettingsTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "OAuthSettingsTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
         try FileManager.default.createDirectory(
             at: configStore.configDirectory,
@@ -62,20 +51,9 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testSystemSettingsPersistsCodexModelAndReasoning() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleSystemSettingsTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "SystemSettingsTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
         var settings = SystemSettings()
         settings.codexModel = .gpt54Mini
@@ -121,8 +99,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testSystemSettingsPersistsTranscriptionControls() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleTranscriptionSettingsTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "TranscriptionSettingsTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
@@ -669,8 +646,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testFocusAnalysisSettingsNormalizeWindowAndCadenceBounds() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleFocusAnalysisSettingsBoundsTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "FocusAnalysisSettingsBoundsTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
@@ -696,8 +672,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
 
     @MainActor
     func testFocusAnalysisDraftChangesDoNotPersistOrTriggerCodex() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleFocusAnalysisDraftTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "FocusAnalysisDraftTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
@@ -732,8 +707,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testExactFocusAnalysisCacheStatusReusesMatchingManifest() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleExactFocusAnalysisCacheTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "ExactFocusAnalysisCacheTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
@@ -764,8 +738,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testPromptModelMismatchPreventsExactFocusAnalysisReuse() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleFocusAnalysisMismatchTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "FocusAnalysisMismatchTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
@@ -792,8 +765,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testNarrowerWindowDoesNotReuseWiderFocusAnalysisCache() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleFocusAnalysisNarrowerWindowTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "FocusAnalysisNarrowerWindowTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
@@ -821,20 +793,9 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testWebexSyncMinutesControlsRefreshPlanCadenceAndMigratesPollSeconds() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleWebexSyncMinutesTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "WebexSyncMinutesTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
         var settings = SystemSettings()
         settings.webexSyncMinutes = 11
@@ -864,21 +825,10 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testRuntimeStatusDetectsFallbackSnapshotsOutsideConfiguredDays() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleRuntimeStatusFallbackTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "RuntimeStatusFallbackTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
 
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let store = NativeRuntimeStore(configuration: configuration)
         let fallbackPersonCacheURL = runtimeRoot
             .appendingPathComponent("knowledge", isDirectory: true)
@@ -892,21 +842,10 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testRuntimeStatusDetectsConfiguredLiveSnapshots() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleRuntimeStatusLiveSnapshotTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "RuntimeStatusLiveSnapshotTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
 
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
         var settings = configStore.loadSystemSettings()
         settings.personFocusDays = 30
@@ -932,21 +871,10 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testLoadFocusCachePrefersLiveSnapshotWhenFallbackCandidatesAreOversized() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleLargeFallbackSkipTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "LargeFallbackSkipTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
 
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
         var settings = configStore.loadSystemSettings()
         settings.spaceFocusDays = 7
@@ -1013,20 +941,9 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
 
     @MainActor
     func testBackgroundSummariesFlagStopsAutomaticRefreshImmediately() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleBackgroundFlagTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "BackgroundFlagTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let model = AppModel(runtimeStore: NativeRuntimeStore(configuration: configuration))
         model.reloadSystemSettings()
         model.startBackgroundRefreshIfNeeded()
@@ -1041,20 +958,9 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
 
     @MainActor
     func testVisibleRefreshPlansRespectWebexAndCodexFeatureFlags() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleVisibleRefreshPlanTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "VisibleRefreshPlanTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
         var settings = SystemSettings()
         settings.webexSyncEnabled = false
@@ -1083,19 +989,11 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testDisabledWebexSyncSkipsBeforeOAuthOrNetwork() async throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleDisabledWebexSyncTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "DisabledWebexSyncTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = RuntimeConfiguration(
+        let configuration = testRuntimeConfiguration(
             runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://127.0.0.1:9/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
+            webexBaseURL: URL(string: "https://127.0.0.1:9/v1")!
         )
         var settings = SystemSettings()
         settings.webexSyncEnabled = false
@@ -1110,8 +1008,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testDisabledCodexFeatureSwitchesDoNotLaunchCodex() async throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleDisabledCodexFeaturesTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "DisabledCodexFeaturesTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         try FileManager.default.createDirectory(at: runtimeRoot, withIntermediateDirectories: true)
         let fakeCodexURL = runtimeRoot.appendingPathComponent("fake-codex")
@@ -1129,17 +1026,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
         setenv("CODEX_SHOULD_NOT_RUN_FILE", calledURL.path, 1)
         defer { unsetenv("CODEX_SHOULD_NOT_RUN_FILE") }
 
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: fakeCodexURL.path,
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot, codexExecutable: fakeCodexURL.path)
         var settings = SystemSettings()
         settings.codexPersonSummariesEnabled = false
         settings.codexSpaceSummariesEnabled = false
@@ -1245,8 +1132,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testDisabledQuestionSynthesisDoesNotLaunchCodex() async throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleDisabledQuestionSynthesisTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "DisabledQuestionSynthesisTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         try FileManager.default.createDirectory(at: runtimeRoot, withIntermediateDirectories: true)
         let fakeCodexURL = runtimeRoot.appendingPathComponent("fake-codex")
@@ -1264,17 +1150,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
         setenv("CODEX_SHOULD_NOT_RUN_FILE", calledURL.path, 1)
         defer { unsetenv("CODEX_SHOULD_NOT_RUN_FILE") }
 
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: fakeCodexURL.path,
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot, codexExecutable: fakeCodexURL.path)
         var settings = SystemSettings()
         settings.codexQuestionSynthesisEnabled = false
         try ConfigStore(configuration: configuration).saveSystemSettings(settings)
@@ -1318,8 +1194,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testAskCodexQueryHistoryPersistsTargetContextAndFeedsQuestionSynthesis() async throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleAskCodexHistoryTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "AskCodexHistoryTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         try FileManager.default.createDirectory(at: runtimeRoot, withIntermediateDirectories: true)
         let fakeCodexURL = runtimeRoot.appendingPathComponent("fake-codex")
@@ -1346,17 +1221,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
         setenv("CODEX_STDIN_CAPTURE", stdinCaptureURL.path, 1)
         defer { unsetenv("CODEX_STDIN_CAPTURE") }
 
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: fakeCodexURL.path,
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot, codexExecutable: fakeCodexURL.path)
         let configStore = ConfigStore(configuration: configuration)
         let historyEntry = AskCodexQueryHistoryEntry(
             id: "history-1",
@@ -1412,8 +1277,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testCodexRunnerSendsPromptOverStdinNotProcessArguments() async throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleCodexRunnerStdinTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "CodexRunnerStdinTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         try FileManager.default.createDirectory(at: runtimeRoot, withIntermediateDirectories: true)
         let fakeCodexURL = runtimeRoot.appendingPathComponent("fake-codex")
@@ -1445,17 +1309,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
             unsetenv("CODEX_ARGV_CAPTURE")
             unsetenv("CODEX_STDIN_CAPTURE")
         }
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: fakeCodexURL.path,
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot, codexExecutable: fakeCodexURL.path)
         let configStore = ConfigStore(configuration: configuration)
         var settings = SystemSettings()
         settings.codexModel = .gpt54Mini
@@ -1498,24 +1352,13 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testCodexRunnerRejectsComputerUseExecutablePath() async throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleCodexRunnerUnsafePathTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "CodexRunnerUnsafePathTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         try FileManager.default.createDirectory(at: runtimeRoot, withIntermediateDirectories: true)
         let unsafeExecutable = runtimeRoot
             .appendingPathComponent("Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient")
             .path
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: unsafeExecutable,
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot, codexExecutable: unsafeExecutable)
         let runner = CodexRunner(configuration: configuration)
         let jobDirectory = runtimeRoot.appendingPathComponent("job", isDirectory: true)
         let job = CodexPromptJob(
@@ -1549,21 +1392,9 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testBeliefUpsertHandlesPrimaryKeyCollisionWithoutRuntimeError() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleBeliefUpsertCollisionTests-\(UUID().uuidString)", isDirectory: true)
-        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
-        let store = KnowledgeStore(configuration: configuration)
+        let harness = TestRuntimeHarness(label: "BeliefUpsertCollisionTests")
+        defer { harness.cleanup() }
+        let store = harness.knowledgeStore
         let first = BeliefRecord(
             id: "auto-space-room-1-colliding",
             scope: KnowledgeBeliefScope.space.rawValue,
@@ -1627,10 +1458,9 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testKnowledgeStoreConnectorBatchRollsBackOnEvidenceFailure() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleConnectorBatchRollback-\(UUID().uuidString)", isDirectory: true)
-        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let store = KnowledgeStore(configuration: testRuntimeConfiguration(runtimeRoot: runtimeRoot))
+        let harness = TestRuntimeHarness(label: "ConnectorBatchRollback")
+        defer { harness.cleanup() }
+        let store = harness.knowledgeStore
         let now = "2026-06-01T00:00:00.000Z"
 
         XCTAssertThrowsError(
@@ -1683,8 +1513,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testTopicUpsertHandlesMigratedLegacyRequiredColumns() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleTopicLegacyUpsertTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "TopicLegacyUpsertTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         try FileManager.default.createDirectory(at: knowledgeDirectory, withIntermediateDirectories: true)
@@ -1703,17 +1532,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
             """,
             databaseURL: databaseURL
         )
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let store = KnowledgeStore(configuration: configuration)
 
         try store.upsertTopic(
@@ -1752,22 +1571,10 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
 
     @MainActor
     func testAskCodexAllTrackedContextIncludesFocusEvidenceAndQuestions() async throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleAskCodexContextTests-\(UUID().uuidString)", isDirectory: true)
-        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
-        let runtimeStore = NativeRuntimeStore(configuration: configuration)
-        let store = KnowledgeStore(configuration: configuration)
+        let harness = TestRuntimeHarness(label: "AskCodexContextTests")
+        defer { harness.cleanup() }
+        let runtimeStore = harness.runtimeStore
+        let store = harness.knowledgeStore
         try store.bootstrap()
         try store.upsertQuestionCandidates([
             QuestionCandidate(
@@ -1922,23 +1729,12 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testSpaceFocusCacheDropsStaleCodexSummaryWhenNewerEvidenceExists() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleFocusFreshnessTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "FocusFreshnessTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         let nativeDirectory = knowledgeDirectory.appendingPathComponent("native", isDirectory: true)
         try FileManager.default.createDirectory(at: nativeDirectory, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
 
         let roomID = "room-prabhat-staff"
         let freshCache = FocusCache(
@@ -2054,23 +1850,12 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testConfiguredLiveSnapshotWinsOverOlderMismatchedDaySnapshot() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleFocusSnapshotPriorityTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "FocusSnapshotPriorityTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         let nativeDirectory = knowledgeDirectory.appendingPathComponent("native", isDirectory: true)
         try FileManager.default.createDirectory(at: nativeDirectory, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         var settings = SystemSettings()
         settings.spaceFocusDays = 10
         try ConfigStore(configuration: configuration).saveSystemSettings(settings)
@@ -2193,23 +1978,12 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testSparseLiveSnapshotDoesNotReplaceRicherNativeCache() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleFocusSparseLiveTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "FocusSparseLiveTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         let nativeDirectory = knowledgeDirectory.appendingPathComponent("native", isDirectory: true)
         try FileManager.default.createDirectory(at: nativeDirectory, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         var settings = SystemSettings()
         settings.spaceFocusDays = 10
         try ConfigStore(configuration: configuration).saveSystemSettings(settings)
@@ -2301,23 +2075,12 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testSparseLiveSnapshotPreservesPreviousMessageOnlyRows() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleSparseLiveMessageOnlyTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "SparseLiveMessageOnlyTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         let nativeDirectory = knowledgeDirectory.appendingPathComponent("native", isDirectory: true)
         try FileManager.default.createDirectory(at: nativeDirectory, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         var settings = SystemSettings()
         settings.spaceFocusDays = 10
         try ConfigStore(configuration: configuration).saveSystemSettings(settings)
@@ -2403,23 +2166,12 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testSparseLiveSnapshotDoesNotFallBackToSelfSourcedNativeCache() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleSelfSourcedNativeCacheTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "SelfSourcedNativeCacheTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         let nativeDirectory = knowledgeDirectory.appendingPathComponent("native", isDirectory: true)
         try FileManager.default.createDirectory(at: nativeDirectory, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         var settings = SystemSettings()
         settings.spaceFocusDays = 7
         try ConfigStore(configuration: configuration).saveSystemSettings(settings)
@@ -2524,23 +2276,12 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testSparsePersonLiveSnapshotWithIMessageEmptySubtitleKeepsPreviousEvidence() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubiclePersonSparseIMessageTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "PersonSparseIMessageTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         let nativeDirectory = knowledgeDirectory.appendingPathComponent("native", isDirectory: true)
         try FileManager.default.createDirectory(at: nativeDirectory, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         var settings = SystemSettings()
         settings.personFocusDays = 10
         try ConfigStore(configuration: configuration).saveSystemSettings(settings)
@@ -2623,23 +2364,12 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testPersonFocusMergeDropsStaleIMessageDeniedLineFromPreservedIntro() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubiclePersonIntroMergeTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "PersonIntroMergeTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         let nativeDirectory = knowledgeDirectory.appendingPathComponent("native", isDirectory: true)
         try FileManager.default.createDirectory(at: nativeDirectory, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         var settings = SystemSettings()
         settings.personFocusDays = 21
         try ConfigStore(configuration: configuration).saveSystemSettings(settings)
@@ -2758,23 +2488,12 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testFocusWindowDoesNotReuseEnrichmentFromDifferentLookback() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleFocusWindowIsolationTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "FocusWindowIsolationTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         let nativeDirectory = knowledgeDirectory.appendingPathComponent("native", isDirectory: true)
         try FileManager.default.createDirectory(at: nativeDirectory, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         var settings = SystemSettings()
         settings.personFocusDays = 7
         try ConfigStore(configuration: configuration).saveSystemSettings(settings)
@@ -2883,22 +2602,11 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
 
     @MainActor
     func testChangingPersonFocusDaysReloadsAskCodexContextImmediately() async throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleAskCodexWindowReloadTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "AskCodexWindowReloadTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         try FileManager.default.createDirectory(at: knowledgeDirectory, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         var settings = SystemSettings()
         settings.personFocusDays = 90
         settings.spaceFocusDays = 60
@@ -3008,23 +2716,12 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testCodexEnrichedSnapshotPublishesAsNativeCacheSource() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleCodexEnrichedPublishTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "CodexEnrichedPublishTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         let knowledgeDirectory = runtimeRoot.appendingPathComponent("knowledge", isDirectory: true)
         let nativeDirectory = knowledgeDirectory.appendingPathComponent("native", isDirectory: true)
         try FileManager.default.createDirectory(at: nativeDirectory, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         var settings = SystemSettings()
         settings.spaceFocusDays = 10
         try ConfigStore(configuration: configuration).saveSystemSettings(settings)
@@ -3147,21 +2844,10 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testQuestionRefreshDoesNotPublishDeterministicQuestionsWithoutSynthesizer() async throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleQuestionEngineTests-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: runtimeRoot, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
-        let store = KnowledgeStore(configuration: configuration)
+        let harness = TestRuntimeHarness(label: "QuestionEngineTests")
+        defer { harness.cleanup() }
+        try FileManager.default.createDirectory(at: harness.runtimeRoot, withIntermediateDirectories: true)
+        let store = harness.knowledgeStore
         let service = QuestionCandidateService(knowledgeStore: store)
 
         let spaceCache = FocusCache(
@@ -3193,22 +2879,10 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testQuestionRefreshPreservesExistingRowsWhenCodexSynthesizerReturnsEmpty() async throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleQuestionEngineEmptyCodexTests-\(UUID().uuidString)", isDirectory: true)
-        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        try FileManager.default.createDirectory(at: runtimeRoot, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
-        let store = KnowledgeStore(configuration: configuration)
+        let harness = TestRuntimeHarness(label: "QuestionEngineEmptyCodexTests")
+        defer { harness.cleanup() }
+        try FileManager.default.createDirectory(at: harness.runtimeRoot, withIntermediateDirectories: true)
+        let store = harness.knowledgeStore
         let service = QuestionCandidateService(
             knowledgeStore: store,
             questionSynthesizer: EmptyQuestionSynthesizer()
@@ -3297,21 +2971,10 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testQuestionRefreshAddsCodexSynthesisCandidatesWhenProviderIsAvailable() async throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleQuestionEngineCodexTests-\(UUID().uuidString)", isDirectory: true)
-        try FileManager.default.createDirectory(at: runtimeRoot, withIntermediateDirectories: true)
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
-        let store = KnowledgeStore(configuration: configuration)
+        let harness = TestRuntimeHarness(label: "QuestionEngineCodexTests")
+        defer { harness.cleanup() }
+        try FileManager.default.createDirectory(at: harness.runtimeRoot, withIntermediateDirectories: true)
+        let store = harness.knowledgeStore
         let synthesizer = StubQuestionSynthesizer()
         let service = QuestionCandidateService(
             knowledgeStore: store,
@@ -3355,20 +3018,9 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testPersonFocusPreferencesPersistIMessageHandles() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubiclePersonIMessagePreferenceTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "PersonIMessagePreferenceTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
+        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
         let configStore = ConfigStore(configuration: configuration)
         try FileManager.default.createDirectory(at: configStore.configDirectory, withIntermediateDirectories: true)
         try """
@@ -3388,8 +3040,7 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testNativeIMessageIngestionIncludesOutboundRepliesInMatchedThread() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubicleIMessageThreadTests-\(UUID().uuidString)", isDirectory: true)
+        let runtimeRoot = temporaryRuntimeRoot(label: "IMessageThreadTests")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         try FileManager.default.createDirectory(at: runtimeRoot, withIntermediateDirectories: true)
         let databaseURL = runtimeRoot.appendingPathComponent("chat.db")
@@ -3434,21 +3085,10 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testPersonFocusCacheCombinesWebexAndIMessageTimeline() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubiclePersonTimelineMergeTests-\(UUID().uuidString)", isDirectory: true)
-        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = RuntimeConfiguration(
-            runtimeRoot: runtimeRoot,
-            codexExecutable: "codex",
-            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-            webexPageSize: 100,
-            webexRetryCount: 0,
-            webexTimeoutSeconds: 1,
-            webexOAuthTokenPathOverride: nil,
-            webexOAuthRefreshSkewSeconds: 300,
-            webexOAuthRefreshTokenSkewSeconds: 86_400
-        )
-        let knowledgeStore = KnowledgeStore(configuration: configuration)
+        let harness = TestRuntimeHarness(label: "PersonTimelineMergeTests")
+        defer { harness.cleanup() }
+        let configuration = harness.configuration
+        let knowledgeStore = harness.knowledgeStore
         try knowledgeStore.bootstrap()
         let roomID = "Y2lzY29zcGFyazovL3VzL1JPT00vQU5JTA"
         let formatter = ISO8601DateFormatter()
@@ -3521,11 +3161,10 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
     }
 
     func testPersonFocusCacheIncludesEmailOnlySubmittedTranscriptMessages() throws {
-        let runtimeRoot = FileManager.default.temporaryDirectory
-            .appendingPathComponent("CubiclePersonTranscriptTimelineTests-\(UUID().uuidString)", isDirectory: true)
-        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = testRuntimeConfiguration(runtimeRoot: runtimeRoot)
-        let knowledgeStore = KnowledgeStore(configuration: configuration)
+        let harness = TestRuntimeHarness(label: "PersonTranscriptTimelineTests")
+        defer { harness.cleanup() }
+        let configuration = harness.configuration
+        let knowledgeStore = harness.knowledgeStore
         try knowledgeStore.bootstrap()
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

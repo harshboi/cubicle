@@ -30,12 +30,13 @@ final class TestRuntimeHarness {
 
 func testRuntimeConfiguration(
     runtimeRoot: URL,
-    codexExecutable: String = "codex"
+    codexExecutable: String = "codex",
+    webexBaseURL: URL = URL(string: "https://webexapis.com/v1")!
 ) -> RuntimeConfiguration {
     RuntimeConfiguration(
         runtimeRoot: runtimeRoot,
         codexExecutable: codexExecutable,
-        webexBaseURL: URL(string: "https://webexapis.com/v1")!,
+        webexBaseURL: webexBaseURL,
         webexPageSize: 100,
         webexRetryCount: 0,
         webexTimeoutSeconds: 1,

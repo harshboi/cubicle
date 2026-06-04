@@ -4,9 +4,9 @@ import XCTest
 
 final class ConnectorCheckpointDAOTests: XCTestCase {
     func testConnectorCheckpointDAORoundTripsIndependentKeysForOneTarget() throws {
-        let runtimeRoot = temporaryRuntimeRoot(label: "checkpoint-roundtrip")
-        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let dao = ConnectorCheckpointDAO(configuration: testConfiguration(runtimeRoot: runtimeRoot))
+        let harness = TestRuntimeHarness(label: "checkpoint-roundtrip")
+        defer { harness.cleanup() }
+        let dao = ConnectorCheckpointDAO(configuration: harness.configuration)
 
         try dao.upsert(
             ConnectorCheckpointRecord(
@@ -40,9 +40,9 @@ final class ConnectorCheckpointDAOTests: XCTestCase {
     }
 
     func testConnectorCheckpointDAOIsolatesConnectorNamespaces() throws {
-        let runtimeRoot = temporaryRuntimeRoot(label: "checkpoint-namespace")
-        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let dao = ConnectorCheckpointDAO(configuration: testConfiguration(runtimeRoot: runtimeRoot))
+        let harness = TestRuntimeHarness(label: "checkpoint-namespace")
+        defer { harness.cleanup() }
+        let dao = ConnectorCheckpointDAO(configuration: harness.configuration)
 
         try dao.upsert(
             ConnectorCheckpointRecord(
@@ -76,9 +76,9 @@ final class ConnectorCheckpointDAOTests: XCTestCase {
     }
 
     func testConnectorCheckpointDAOUpsertReplacesSingleCheckpoint() throws {
-        let runtimeRoot = temporaryRuntimeRoot(label: "checkpoint-upsert")
-        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let dao = ConnectorCheckpointDAO(configuration: testConfiguration(runtimeRoot: runtimeRoot))
+        let harness = TestRuntimeHarness(label: "checkpoint-upsert")
+        defer { harness.cleanup() }
+        let dao = ConnectorCheckpointDAO(configuration: harness.configuration)
 
         try dao.upsert(
             ConnectorCheckpointRecord(
