@@ -1,4 +1,5 @@
 import Foundation
+import MetaCodable
 
 /// Language/translation mode sent to the transcription backend.
 enum TranscriptionLanguageMode: String, CaseIterable, Identifiable, Codable, Hashable, Sendable {
@@ -90,41 +91,34 @@ enum TranscriptionConnectionStatus: Equatable, Sendable {
 }
 
 /// Session-start contract shared by settings, WebSocket codec, and capture runtime.
-struct TranscriptionSessionConfig: Codable, Equatable, Sendable {
-    static let currentProtocolVersion = "transcription.v1"
-    static let defaultSampleRate = 16_000
-    static let defaultChannelCount = 1
-    static let defaultAudioEncoding = "pcm_s16le"
-
+@Codable
+struct TranscriptionSessionConfig: Equatable, Sendable {
+    @CodedAt("protocol_version")
     var protocolVersion: String
+    @CodedAt("app_version")
     var appVersion: String?
+    @CodedAt("session_id")
     var sessionID: String
+    @CodedAt("endpoint_url")
     var endpointURL: String
+    @CodedAt("transcription_enabled")
     var transcriptionEnabled: Bool
+    @CodedAt("diarization_enabled")
     var diarizationEnabled: Bool
+    @CodedAt("language_mode")
     var languageMode: TranscriptionLanguageMode
+    @CodedAt("sample_rate")
     var sampleRate: Int
+    @CodedAt("channel_count")
     var channelCount: Int
+    @CodedAt("audio_encoding")
     var audioEncoding: String
+    @CodedAt("client_timestamp")
     var clientTimestamp: Date
+    @CodedAt("auth_token")
     var authToken: String?
+    @CodedAt("privacy_safe_device_id")
     var privacySafeDeviceID: String?
-
-    enum CodingKeys: String, CodingKey {
-        case protocolVersion = "protocol_version"
-        case appVersion = "app_version"
-        case sessionID = "session_id"
-        case endpointURL = "endpoint_url"
-        case transcriptionEnabled = "transcription_enabled"
-        case diarizationEnabled = "diarization_enabled"
-        case languageMode = "language_mode"
-        case sampleRate = "sample_rate"
-        case channelCount = "channel_count"
-        case audioEncoding = "audio_encoding"
-        case clientTimestamp = "client_timestamp"
-        case authToken = "auth_token"
-        case privacySafeDeviceID = "privacy_safe_device_id"
-    }
 
     /// Builds a backend config from current system settings.
     init(
@@ -153,6 +147,13 @@ struct TranscriptionSessionConfig: Codable, Equatable, Sendable {
         self.authToken = authToken ?? settings.transcriptionAuthToken
         self.privacySafeDeviceID = privacySafeDeviceID
     }
+}
+
+extension TranscriptionSessionConfig {
+    static let currentProtocolVersion = "transcription.v1"
+    static let defaultSampleRate = 16_000
+    static let defaultChannelCount = 1
+    static let defaultAudioEncoding = "pcm_s16le"
 }
 
 /// One transcript span, partial or final, optionally attributed to a speaker.
