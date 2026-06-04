@@ -22,6 +22,42 @@ CUBICLE_JSON_CONFIG_DIR=/path/to/config
 
 ## Composition
 
+`cubicle.json` can include section files. Each key is the destination top-level section; each value is a relative file path. Included files contain the body of that section.
+
+```json
+{
+  "version": 1,
+  "include": {
+    "environment": "environment.json",
+    "connectors": "connectors.json",
+    "codex": "codex.json",
+    "question_generation": "question-generation.json",
+    "test_mode": "test-mode.json"
+  }
+}
+```
+
+```text
+cubicle.json
+ |
+ +-- include.environment
+ |     -> environment.json
+ |
+ +-- include.connectors
+ |     -> connectors.json
+ |
+ +-- include.codex
+ |     -> codex.json
+ |
+ +-- include.question_generation
+ |     -> question-generation.json
+ |
+ +-- include.test_mode
+       -> test-mode.json
+```
+
+Include paths are relative to the file containing `include`. Absolute paths, `~`, and `..` are rejected.
+
 `cubicle.json` can extend one or more JSON files. Paths are relative to the file containing the `extends` entry.
 
 ```json
@@ -92,9 +128,10 @@ Resolution order:
 
 1. Load the entrypoint.
 2. Apply `extends` in order.
-3. Deep-merge the resolved objects.
-4. Resolve `use` references against the merged root object.
-5. Decode into typed Cubicle configuration.
+3. Load `include` section files.
+4. Deep-merge the resolved objects; the current file wins.
+5. Resolve `use` references against the merged root object.
+6. Decode into typed Cubicle configuration.
 
 Invalid `use` references fail visibly.
 
@@ -198,6 +235,10 @@ Invalid `use` references fail visibly.
 {
   "version": 1,
   "extends": ["base.json"],
+  "include": {
+    "environment": "environment.json",
+    "codex": "codex.json"
+  },
   "connectors": {
     "enabled": ["webex", "imessage"],
     "webex": {

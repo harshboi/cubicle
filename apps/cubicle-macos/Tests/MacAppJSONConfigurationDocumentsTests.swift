@@ -221,6 +221,71 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         XCTAssertEqual(document.testMode?.protectPaths, ["test-data", "fixtures"])
     }
 
+    func testComposerLoadsIncludedSectionFilesAndLetsEntrypointOverrideThem() throws {
+        let root = temporaryRuntimeRoot(label: "include")
+        defer { try? FileManager.default.removeItem(at: root) }
+        try writeConfigFile(
+            root: root,
+            filename: "environment.json",
+            contents: """
+            {
+              "webex": {
+                "api_base_url": "https://webexapis.com/v1",
+                "network_policy": {
+                  "retry_count": 5,
+                  "timeout_seconds": 20
+                }
+              },
+              "imessage": {
+                "busy_timeout_milliseconds": 1500
+              }
+            }
+            """
+        )
+        try writeConfigFile(
+            root: root,
+            filename: "codex.json",
+            contents: """
+            {
+              "run_policy": {
+                "max_attempts": 3,
+                "timeout_seconds": 120
+              }
+            }
+            """
+        )
+        try writeConfigFile(
+            root: root,
+            filename: MacAppJSONConfigurationFiles.entrypoint,
+            contents: """
+            {
+              "version": 1,
+              "include": {
+                "environment": "environment.json",
+                "codex": "codex.json"
+              },
+              "environment": {
+                "webex": {
+                  "network_policy": {
+                    "timeout_seconds": 45
+                  }
+                }
+              }
+            }
+            """
+        )
+
+        let document = try MacAppJSONConfigurationComposer()
+            .loadDocument(entrypointURL: root.appendingPathComponent(MacAppJSONConfigurationFiles.entrypoint))
+
+        XCTAssertEqual(document.environment?.webex?.apiBaseURL, "https://webexapis.com/v1")
+        XCTAssertEqual(document.environment?.webex?.networkPolicy?.retryCount, 5)
+        XCTAssertEqual(document.environment?.webex?.networkPolicy?.timeoutSeconds, 45)
+        XCTAssertEqual(document.environment?.imessage?.busyTimeoutMilliseconds, 1500)
+        XCTAssertEqual(document.codex?.runPolicy?.maxAttempts, 3)
+        XCTAssertEqual(document.codex?.runPolicy?.timeoutSeconds, 120)
+    }
+
     func testComposerResolvesParentScopedCommonPolicyUseReferences() throws {
         let root = temporaryRuntimeRoot(label: "use")
         defer { try? FileManager.default.removeItem(at: root) }
@@ -311,6 +376,83 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
                 .loadDocument(entrypointURL: root.appendingPathComponent(MacAppJSONConfigurationFiles.entrypoint))
         ) { error in
             XCTAssertEqual(error as? MacAppJSONConfigurationError, .invalidUseReference("codex.common.missing"))
+        }
+    }
+
+    func testComposerRejectsInvalidIncludeShape() throws {
+        let root = temporaryRuntimeRoot(label: "bad-include-shape")
+        defer { try? FileManager.default.removeItem(at: root) }
+        try writeConfigFile(
+            root: root,
+            filename: MacAppJSONConfigurationFiles.entrypoint,
+            contents: #"{ "include": ["environment.json"] }"#
+        )
+
+        XCTAssertThrowsError(
+            try MacAppJSONConfigurationComposer()
+                .loadDocument(entrypointURL: root.appendingPathComponent(MacAppJSONConfigurationFiles.entrypoint))
+        ) { error in
+            XCTAssertEqual(
+                error as? MacAppJSONConfigurationError,
+                .invalidInclude(root.appendingPathComponent(MacAppJSONConfigurationFiles.entrypoint).standardizedFileURL)
+            )
+        }
+    }
+
+    func testComposerRejectsUnsafeIncludePaths() throws {
+        let paths = [
+            "../environment.json",
+            "/tmp/environment.json",
+            "~/environment.json"
+        ]
+
+        for path in paths {
+            let root = temporaryRuntimeRoot(label: "bad-include-path")
+            defer { try? FileManager.default.removeItem(at: root) }
+            try writeConfigFile(
+                root: root,
+                filename: MacAppJSONConfigurationFiles.entrypoint,
+                contents: """
+                {
+                  "include": {
+                    "environment": "\(path)"
+                  }
+                }
+                """
+            )
+
+            XCTAssertThrowsError(
+                try MacAppJSONConfigurationComposer()
+                    .loadDocument(entrypointURL: root.appendingPathComponent(MacAppJSONConfigurationFiles.entrypoint))
+            ) { error in
+                XCTAssertEqual(
+                    error as? MacAppJSONConfigurationError,
+                    .invalidIncludePath(
+                        root.appendingPathComponent(MacAppJSONConfigurationFiles.entrypoint).standardizedFileURL,
+                        path
+                    )
+                )
+            }
+        }
+    }
+
+    func testComposerRejectsMissingIncludedFile() throws {
+        let root = temporaryRuntimeRoot(label: "missing-include")
+        defer { try? FileManager.default.removeItem(at: root) }
+        try writeConfigFile(
+            root: root,
+            filename: MacAppJSONConfigurationFiles.entrypoint,
+            contents: #"{ "include": { "environment": "missing-environment.json" } }"#
+        )
+
+        XCTAssertThrowsError(
+            try MacAppJSONConfigurationComposer()
+                .loadDocument(entrypointURL: root.appendingPathComponent(MacAppJSONConfigurationFiles.entrypoint))
+        ) { error in
+            XCTAssertEqual(
+                error as? MacAppJSONConfigurationError,
+                .missingFile(root.appendingPathComponent("missing-environment.json").standardizedFileURL)
+            )
         }
     }
 

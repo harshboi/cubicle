@@ -82,6 +82,8 @@ struct MacAppJSONConfigurationComposer {
 
         let extendsValues = try extendsList(in: object, sourceURL: standardizedURL)
         object.removeValue(forKey: "extends")
+        let includeValues = try includeMap(in: object, sourceURL: standardizedURL)
+        object.removeValue(forKey: "include")
 
         var merged: [String: Any] = [:]
         let parentStack = stack + [standardizedURL]
@@ -92,6 +94,15 @@ struct MacAppJSONConfigurationComposer {
             )
             let parent = try loadJSONObject(parentURL, stack: parentStack)
             merged = Self.deepMerging(merged, parent)
+        }
+        for (section, includePath) in includeValues.sorted(by: { $0.key < $1.key }) {
+            let includeURL = try includedFileURL(
+                includePath,
+                baseDirectory: standardizedURL.deletingLastPathComponent(),
+                sourceURL: standardizedURL
+            )
+            let includedObject = try loadJSONObject(includeURL, stack: parentStack)
+            merged = Self.deepMerging(merged, [section: includedObject])
         }
         return Self.deepMerging(merged, object)
     }
@@ -105,6 +116,22 @@ struct MacAppJSONConfigurationComposer {
             return array
         }
         throw MacAppJSONConfigurationError.invalidExtends(sourceURL)
+    }
+
+    private func includeMap(in object: [String: Any], sourceURL: URL) throws -> [String: String] {
+        guard let value = object["include"] else { return [:] }
+        guard let rawMap = value as? [String: Any] else {
+            throw MacAppJSONConfigurationError.invalidInclude(sourceURL)
+        }
+
+        var includes: [String: String] = [:]
+        for (section, path) in rawMap {
+            guard let path = path as? String else {
+                throw MacAppJSONConfigurationError.invalidInclude(sourceURL)
+            }
+            includes[section] = path
+        }
+        return includes
     }
 
     private func resolveUseReferences(
@@ -169,6 +196,17 @@ struct MacAppJSONConfigurationComposer {
         return baseDirectory.appendingPathComponent(expanded)
     }
 
+    private func includedFileURL(_ value: String, baseDirectory: URL, sourceURL: URL) throws -> URL {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              !trimmed.hasPrefix("~"),
+              !trimmed.hasPrefix("/"),
+              !trimmed.split(separator: "/", omittingEmptySubsequences: false).contains("..") else {
+            throw MacAppJSONConfigurationError.invalidIncludePath(sourceURL, value)
+        }
+        return baseDirectory.appendingPathComponent(trimmed)
+    }
+
     static func deepMerging(_ base: [String: Any], _ overlay: [String: Any]) -> [String: Any] {
         var merged = base
         for (key, overlayValue) in overlay {
@@ -206,6 +244,8 @@ enum MacAppJSONConfigurationError: LocalizedError, Equatable {
     case invalidJSON(URL, Error)
     case invalidRootObject(URL)
     case invalidExtends(URL)
+    case invalidInclude(URL)
+    case invalidIncludePath(URL, String)
     case extendCycle([String])
     case invalidUseObject(String)
     case invalidUseReference(String)
@@ -225,6 +265,10 @@ enum MacAppJSONConfigurationError: LocalizedError, Equatable {
             return left == right
         case (.invalidExtends(let left), .invalidExtends(let right)):
             return left == right
+        case (.invalidInclude(let left), .invalidInclude(let right)):
+            return left == right
+        case (.invalidIncludePath(let leftURL, let leftPath), .invalidIncludePath(let rightURL, let rightPath)):
+            return leftURL == rightURL && leftPath == rightPath
         case (.extendCycle(let left), .extendCycle(let right)):
             return left == right
         case (.invalidUseObject(let left), .invalidUseObject(let right)):
@@ -254,6 +298,10 @@ enum MacAppJSONConfigurationError: LocalizedError, Equatable {
             return "Cubicle JSON config root must be an object: \(url.path)"
         case .invalidExtends(let url):
             return "`extends` must be a string or string array in \(url.path)."
+        case .invalidInclude(let url):
+            return "`include` must be an object of top-level section names to relative file paths in \(url.path)."
+        case .invalidIncludePath(let url, let path):
+            return "Cubicle JSON config include path must be relative and stay under \(url.deletingLastPathComponent().path): \(path)"
         case .extendCycle(let paths):
             return "Cubicle JSON config extends cycle: \(paths.joined(separator: " -> "))"
         case .invalidUseObject(let path):
