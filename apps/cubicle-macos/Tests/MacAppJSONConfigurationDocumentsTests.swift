@@ -179,6 +179,8 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         XCTAssertEqual(document.environment?.imessage?.chatDatabasePath, "~/Library/Messages/chat.db")
         XCTAssertEqual(document.connectors?.connectorEnabled("webex"), true)
         XCTAssertEqual(document.connectors?.connectorEnabled("imessage"), true)
+        XCTAssertNil(document.connectors?.webex?.enabled)
+        XCTAssertNil(document.connectors?.imessage?.enabled)
         XCTAssertEqual(document.codex?.runPolicy?.timeoutSeconds, 120)
         XCTAssertEqual(document.codex?.questionSynthesis?.runPolicy?.timeoutSeconds, 120)
         XCTAssertEqual(document.codex?.beliefs?.maxIncrementalWindowDays, 90)

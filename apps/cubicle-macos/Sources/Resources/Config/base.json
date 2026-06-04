@@ -26,12 +26,8 @@
   },
   "connectors": {
     "enabled": ["webex", "imessage"],
-    "webex": {
-      "enabled": true
-    },
-    "imessage": {
-      "enabled": true
-    }
+    "webex": {},
+    "imessage": {}
   },
   "codex": {
     "common": {
