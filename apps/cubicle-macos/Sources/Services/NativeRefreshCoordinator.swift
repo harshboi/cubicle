@@ -119,6 +119,7 @@ final class NativeRefreshCoordinator {
                 iMessageIngestionService: iMessageService
             ),
             writer: SignalKnowledgeWriter(knowledgeStore: knowledgeStore),
+            checkpointStore: SignalCheckpointStore(configuration: configuration),
             connectorIDs: [.iMessage]
         )
     }

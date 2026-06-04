@@ -20,11 +20,11 @@ final class WebexSignalConnector: SignalConnector {
     /// Converts configured Webex selectors into normalized message events.
     func sync(
         request: SignalSyncRequest,
-        checkpoint: ConnectorCheckpoint?
+        checkpoints: ConnectorCheckpointSet
     ) async throws -> SignalSyncBatch {
         // Production Webex cursor/backoff still lives in WebexSyncEngine; this
         // adapter is the signal-shape bridge for the new substrate.
-        _ = checkpoint
+        _ = checkpoints
         var objects: [SignalObject] = []
         var events: [SignalEvent] = []
         var warnings: [ConnectorWarning] = []

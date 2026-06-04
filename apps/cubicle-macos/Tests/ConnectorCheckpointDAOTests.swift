@@ -108,6 +108,35 @@ final class ConnectorCheckpointDAOTests: XCTestCase {
         XCTAssertEqual(checkpoints.first?.metadataJSON, #"{"reason":"scheduled"}"#)
         XCTAssertEqual(checkpoints.first?.updatedAt, "2026-06-01T00:02:00.000Z")
     }
+
+    func testSignalCheckpointStoreRoundTripsTypedCheckpoint() throws {
+        let runtimeRoot = temporaryRuntimeRoot(label: "checkpoint-store-roundtrip")
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let dao = ConnectorCheckpointDAO(configuration: testConfiguration(runtimeRoot: runtimeRoot))
+        let store = SignalCheckpointStore(dao: dao)
+        let checkpoint = ConnectorCheckpoint(
+            connectorID: .webex,
+            accountID: "workspace",
+            targetID: "roomID:room-1",
+            key: "cursor",
+            updatedAt: Date(timeIntervalSince1970: 1_715_000_000),
+            payload: ["messageID": "webex-message-1"],
+            metadata: ["mode": "incremental"]
+        )
+
+        try store.save(checkpoint)
+        let loaded = try store
+            .loadCheckpoints(connectorID: .webex, targetIDs: ["roomID:room-1"])
+            .checkpoint(connectorID: .webex, targetID: "roomID:room-1", key: "cursor")
+
+        XCTAssertEqual(loaded?.connectorID, .webex)
+        XCTAssertEqual(loaded?.accountID, "workspace")
+        XCTAssertEqual(loaded?.targetID, "roomID:room-1")
+        XCTAssertEqual(loaded?.key, "cursor")
+        XCTAssertEqual(loaded?.payload, ["messageID": "webex-message-1"])
+        XCTAssertEqual(loaded?.metadata, ["mode": "incremental"])
+        XCTAssertEqual(loaded?.updatedAt, checkpoint.updatedAt)
+    }
 }
 
 private func testConfiguration(runtimeRoot: URL) -> RuntimeConfiguration {

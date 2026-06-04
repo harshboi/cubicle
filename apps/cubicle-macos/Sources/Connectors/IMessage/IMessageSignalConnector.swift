@@ -23,11 +23,11 @@ final class IMessageSignalConnector: SignalConnector {
     /// Converts matching iMessage rows into thread objects and message events.
     func sync(
         request: SignalSyncRequest,
-        checkpoint: ConnectorCheckpoint?
+        checkpoints: ConnectorCheckpointSet
     ) async throws -> SignalSyncBatch {
         // chat.db has no remote cursor contract; request.since is the replay
         // boundary until we add a local checkpoint payload.
-        _ = checkpoint
+        _ = checkpoints
         let since = request.since ?? Date.distantPast
         var objects: [SignalObject] = []
         var events: [SignalEvent] = []

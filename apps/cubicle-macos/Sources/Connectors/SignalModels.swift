@@ -129,6 +129,13 @@ struct SignalTarget: Identifiable, Hashable {
             selector.connectorID == connectorID && (kind == nil || selector.kind == kind)
         }
     }
+
+    /// Candidate scopes the checkpoint store can load before connector-specific sync.
+    func checkpointTargetIDs(for connectorID: ConnectorID) -> [String] {
+        stableDedupedStrings(
+            [id] + selectors(for: connectorID).map { "\($0.kind.rawValue):\($0.value)" }
+        )
+    }
 }
 
 extension SignalEntityKind {
@@ -196,12 +203,82 @@ struct SignalSyncRequest: Hashable {
     }
 }
 
-/// Connector-owned cursor payload for incremental syncs.
+/// Storage scope for one connector cursor/backoff payload.
+struct ConnectorCheckpointScope: Hashable {
+    var connectorID: ConnectorID
+    var targetID: String
+    var key: String
+
+    init(connectorID: ConnectorID, targetID: String, key: String) {
+        self.connectorID = connectorID
+        self.targetID = normalizedCheckpointComponent(targetID)
+        self.key = normalizedCheckpointComponent(key)
+    }
+}
+
+/// Connector-owned cursor/backoff payload for incremental syncs.
 struct ConnectorCheckpoint: Hashable {
     var connectorID: ConnectorID
     var accountID: String
+    var targetID: String
+    var key: String
     var updatedAt: Date
     var payload: [String: String]
+    var metadata: [String: String]
+
+    var scope: ConnectorCheckpointScope {
+        ConnectorCheckpointScope(connectorID: connectorID, targetID: targetID, key: key)
+    }
+
+    init(
+        connectorID: ConnectorID,
+        accountID: String,
+        targetID: String = "default",
+        key: String = "default",
+        updatedAt: Date,
+        payload: [String: String],
+        metadata: [String: String] = [:]
+    ) {
+        self.connectorID = connectorID
+        self.accountID = normalizedCheckpointComponent(accountID)
+        self.targetID = normalizedCheckpointComponent(targetID)
+        self.key = normalizedCheckpointComponent(key)
+        self.updatedAt = updatedAt
+        self.payload = payload
+        self.metadata = metadata
+    }
+}
+
+/// Loaded checkpoints keyed by connector/target/key for one routed sync call.
+struct ConnectorCheckpointSet: Hashable {
+    private let checkpoints: [ConnectorCheckpoint]
+
+    init(_ checkpoints: [ConnectorCheckpoint] = []) {
+        self.checkpoints = stableDedupedCheckpoints(checkpoints)
+    }
+
+    static let empty = ConnectorCheckpointSet()
+
+    var all: [ConnectorCheckpoint] {
+        checkpoints
+    }
+
+    func checkpoint(connectorID: ConnectorID? = nil, targetID: String, key: String) -> ConnectorCheckpoint? {
+        let scope = ConnectorCheckpointScope(connectorID: connectorID ?? .init(rawValue: ""), targetID: targetID, key: key)
+        return checkpoints.last { checkpoint in
+            (connectorID == nil || checkpoint.connectorID == connectorID)
+                && checkpoint.targetID == scope.targetID
+                && checkpoint.key == scope.key
+        }
+    }
+
+    func filtered(connectorID: ConnectorID) -> ConnectorCheckpointSet {
+        ConnectorCheckpointSet(checkpoints.filter { $0.connectorID == connectorID })
+    }
+
+    func merging(_ other: ConnectorCheckpointSet) -> ConnectorCheckpointSet {
+        ConnectorCheckpointSet(checkpoints + other.checkpoints)
+    }
 }
 
 /// Recoverable connector issue attached to a target when possible.
@@ -229,9 +306,36 @@ struct SignalSyncBatch: Hashable {
     var events: [SignalEvent]
     var relations: [SignalRelation]
     var content: [SignalContentChunk]
-    var checkpoint: ConnectorCheckpoint?
+    var checkpoints: [ConnectorCheckpoint]
     var warnings: [ConnectorWarning]
     var availability: ConnectorAvailability
+
+    var checkpoint: ConnectorCheckpoint? {
+        checkpoints.first
+    }
+
+    init(
+        connectorID: ConnectorID,
+        accountID: String,
+        objects: [SignalObject],
+        events: [SignalEvent],
+        relations: [SignalRelation],
+        content: [SignalContentChunk],
+        checkpoint: ConnectorCheckpoint? = nil,
+        checkpoints: [ConnectorCheckpoint]? = nil,
+        warnings: [ConnectorWarning],
+        availability: ConnectorAvailability
+    ) {
+        self.connectorID = connectorID
+        self.accountID = accountID
+        self.objects = objects
+        self.events = events
+        self.relations = relations
+        self.content = content
+        self.checkpoints = checkpoints ?? checkpoint.map { [$0] } ?? []
+        self.warnings = warnings
+        self.availability = availability
+    }
 
     /// Returns an empty batch without forcing each adapter to spell out all arrays.
     static func empty(
@@ -440,4 +544,45 @@ private func stableDedupedSelectors(_ selectors: [ConnectorSelector]) -> [Connec
         }
     }
     return result
+}
+
+private func normalizedCheckpointComponent(_ value: String) -> String {
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? "default" : trimmed
+}
+
+private func stableDedupedStrings(_ values: [String]) -> [String] {
+    var seen: Set<String> = []
+    var result: [String] = []
+    for value in values {
+        let normalized = normalizedCheckpointComponent(value)
+        if seen.insert(normalized).inserted {
+            result.append(normalized)
+        }
+    }
+    return result
+}
+
+private func stableDedupedCheckpoints(_ checkpoints: [ConnectorCheckpoint]) -> [ConnectorCheckpoint] {
+    var indexesByScope: [ConnectorCheckpointScope: Int] = [:]
+    var result: [ConnectorCheckpoint] = []
+    for checkpoint in checkpoints {
+        if let index = indexesByScope[checkpoint.scope] {
+            result[index] = checkpoint
+        } else {
+            indexesByScope[checkpoint.scope] = result.count
+            result.append(checkpoint)
+        }
+    }
+    return result.sorted(by: checkpointSort)
+}
+
+private func checkpointSort(_ lhs: ConnectorCheckpoint, _ rhs: ConnectorCheckpoint) -> Bool {
+    if lhs.connectorID.rawValue != rhs.connectorID.rawValue {
+        return lhs.connectorID.rawValue < rhs.connectorID.rawValue
+    }
+    if lhs.targetID != rhs.targetID {
+        return lhs.targetID < rhs.targetID
+    }
+    return lhs.key < rhs.key
 }
