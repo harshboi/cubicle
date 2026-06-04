@@ -503,6 +503,26 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         }
     }
 
+    func testComposerRejectsGenericAPIKeySecretBearingKeys() throws {
+        let root = temporaryRuntimeRoot(label: "api-key-secret")
+        defer { try? FileManager.default.removeItem(at: root) }
+        try writeConfigFile(
+            root: root,
+            filename: MacAppJSONConfigurationFiles.entrypoint,
+            contents: #"{ "connectors": { "webex": { "api_key": "do-not-store" } } }"#
+        )
+
+        XCTAssertThrowsError(
+            try MacAppJSONConfigurationComposer()
+                .loadDocument(entrypointURL: root.appendingPathComponent(MacAppJSONConfigurationFiles.entrypoint))
+        ) { error in
+            XCTAssertEqual(
+                error as? MacAppJSONConfigurationError,
+                .secretKeyNotAllowed("connectors.webex.api_key")
+            )
+        }
+    }
+
     func testRuntimeConfigurationIgnoresComposedJSONWhenFeatureFlagIsOff() throws {
         let runtimeRoot = temporaryRuntimeRoot(label: "json-off")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
@@ -630,6 +650,172 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         XCTAssertEqual(configuration.codexExecutable, "/tmp/env-codex")
         XCTAssertEqual(configuration.webexPageSize, 77)
         XCTAssertEqual(configuration.webexRetryCount, 1)
+    }
+
+    func testRuntimeConfigurationAppliesJSONRuntimeRootWithEnvPrecedence() throws {
+        let configRoot = temporaryRuntimeRoot(label: "json-runtime-root-config")
+        let jsonRuntimeRoot = temporaryRuntimeRoot(label: "json-runtime-root-json")
+        let envRuntimeRoot = temporaryRuntimeRoot(label: "json-runtime-root-env")
+        defer {
+            try? FileManager.default.removeItem(at: configRoot)
+            try? FileManager.default.removeItem(at: jsonRuntimeRoot)
+            try? FileManager.default.removeItem(at: envRuntimeRoot)
+        }
+        let configDirectory = configRoot.appendingPathComponent("operator-config", isDirectory: true)
+        try writeConfigFile(
+            root: configDirectory,
+            filename: MacAppJSONConfigurationFiles.entrypoint,
+            contents: """
+            {
+              "environment": {
+                "runtime_root": "\(jsonRuntimeRoot.path)"
+              }
+            }
+            """
+        )
+
+        let jsonConfiguration = RuntimeConfiguration.resolved(environment: [
+            MacAppJSONConfigurationEnvironment.enabled: "true",
+            MacAppJSONConfigurationEnvironment.directory: configDirectory.path
+        ])
+        XCTAssertEqual(jsonConfiguration.runtimeRoot.standardizedFileURL, jsonRuntimeRoot.standardizedFileURL)
+        XCTAssertEqual(jsonConfiguration.jsonConfigurationDirectory?.standardizedFileURL, configDirectory.standardizedFileURL)
+
+        let envConfiguration = RuntimeConfiguration.resolved(environment: [
+            "GETWEBEXSPACE_RUNTIME_ROOT": envRuntimeRoot.path,
+            MacAppJSONConfigurationEnvironment.enabled: "true",
+            MacAppJSONConfigurationEnvironment.directory: configDirectory.path
+        ])
+        XCTAssertEqual(envConfiguration.runtimeRoot.standardizedFileURL, envRuntimeRoot.standardizedFileURL)
+        XCTAssertEqual(envConfiguration.jsonConfigurationDirectory?.standardizedFileURL, configDirectory.standardizedFileURL)
+    }
+
+    func testRuntimeConfigurationUsesBundledDefaultsWhenEnabledWithoutOperatorConfig() throws {
+        let runtimeRoot = temporaryRuntimeRoot(label: "json-defaults-only")
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+
+        let configuration = RuntimeConfiguration.resolved(environment: [
+            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
+            MacAppJSONConfigurationEnvironment.enabled: "true"
+        ])
+
+        XCTAssertEqual(configuration.webexBaseURL, URL(string: "https://webexapis.com/v1")!)
+        XCTAssertEqual(configuration.webexPageSize, 100)
+        XCTAssertEqual(configuration.webexRetryCount, 5)
+        XCTAssertEqual(configuration.webexTimeoutSeconds, 20)
+        XCTAssertEqual(configuration.webexSyncConcurrencyLimit, 3)
+        XCTAssertEqual(configuration.jsonConfiguration?.testMode?.enabled, false)
+        XCTAssertEqual(configuration.jsonConfiguration?.codex?.runPolicy?.timeoutSeconds, 120)
+    }
+
+    func testRuntimeConfigurationTreatsNullOperatorValuesAsDefaultFallbacks() throws {
+        let runtimeRoot = temporaryRuntimeRoot(label: "json-null-defaults")
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        try writeRuntimeConfigFile(
+            root: runtimeRoot,
+            contents: """
+            {
+              "environment": {
+                "codex_executable": null,
+                "webex": {
+                  "network_policy": {
+                    "retry_count": null,
+                    "timeout_seconds": 11
+                  }
+                }
+              },
+              "codex": {
+                "run_policy": {
+                  "max_attempts": null
+                }
+              }
+            }
+            """
+        )
+
+        let configuration = RuntimeConfiguration.resolved(environment: [
+            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
+            MacAppJSONConfigurationEnvironment.enabled: "true"
+        ])
+
+        XCTAssertEqual(configuration.webexRetryCount, 5)
+        XCTAssertEqual(configuration.webexTimeoutSeconds, 11)
+        XCTAssertEqual(configuration.jsonConfiguration?.codex?.runPolicy?.maxAttempts, 2)
+    }
+
+    func testRuntimeConfigurationAppliesConnectorWebexPolicyOverEnvironmentPolicy() throws {
+        let runtimeRoot = temporaryRuntimeRoot(label: "json-connector-policy")
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        try writeRuntimeConfigFile(
+            root: runtimeRoot,
+            contents: """
+            {
+              "environment": {
+                "webex": {
+                  "network_policy": {
+                    "page_size": 50,
+                    "retry_count": 1,
+                    "timeout_seconds": 30
+                  },
+                  "sync_policy": {
+                    "concurrency_limit": 2,
+                    "adaptive_jitter_percent": 5
+                  }
+                }
+              },
+              "connectors": {
+                "webex": {
+                  "network_policy": {
+                    "retry_count": 4
+                  },
+                  "sync_policy": {
+                    "concurrency_limit": 6
+                  }
+                }
+              }
+            }
+            """
+        )
+
+        let configuration = RuntimeConfiguration.resolved(environment: [
+            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
+            MacAppJSONConfigurationEnvironment.enabled: "true"
+        ])
+
+        XCTAssertEqual(configuration.webexPageSize, 50)
+        XCTAssertEqual(configuration.webexRetryCount, 4)
+        XCTAssertEqual(configuration.webexTimeoutSeconds, 30)
+        XCTAssertEqual(configuration.webexSyncConcurrencyLimit, 6)
+        XCTAssertEqual(configuration.webexAdaptiveJitterRatio, 0.05)
+    }
+
+    func testRuntimeConfigurationConnectorEnabledListIsAuthoritative() throws {
+        let runtimeRoot = temporaryRuntimeRoot(label: "json-connector-enabled")
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        try writeRuntimeConfigFile(
+            root: runtimeRoot,
+            contents: """
+            {
+              "connectors": {
+                "enabled": ["imessage"],
+                "webex": {
+                  "enabled": true
+                },
+                "imessage": {
+                  "enabled": false
+                }
+              }
+            }
+            """
+        )
+
+        let configuration = RuntimeConfiguration.resolved(environment: [
+            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
+            MacAppJSONConfigurationEnvironment.enabled: "true"
+        ])
+
+        XCTAssertEqual(configuration.jsonConfiguration?.connectors?.connectorEnabled("webex"), false)
+        XCTAssertEqual(configuration.jsonConfiguration?.connectors?.connectorEnabled("imessage"), true)
     }
 
     private func decode<T: Decodable>(_ type: T.Type, from json: String) throws -> T {

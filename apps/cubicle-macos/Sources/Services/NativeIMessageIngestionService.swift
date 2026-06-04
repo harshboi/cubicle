@@ -115,9 +115,16 @@ final class NativeIMessageIngestionService: NativeIMessageIngesting {
         let document = configuration.jsonConfiguration
         let jsonSettings = document?.connectors?.imessage
         let environmentSettings = document?.environment?.imessage
+        let configDirectory = configuration.jsonConfigurationDirectory
+            ?? configuration.runtimeRoot.appendingPathComponent("config", isDirectory: true)
         self.chatDatabaseURL = chatDatabaseURL
-            ?? jsonSettings?.chatDatabasePath.flatMap(Self.expandedFileURL)
-            ?? environmentSettings?.chatDatabasePath.flatMap(Self.expandedFileURL)
+            ?? document?.connectorFixtureURL(
+                "imessage",
+                runtimeRoot: configuration.runtimeRoot,
+                configDirectory: configDirectory
+            )
+            ?? jsonSettings?.chatDatabasePath.flatMap { Self.expandedFileURL($0, relativeTo: configuration.runtimeRoot) }
+            ?? environmentSettings?.chatDatabasePath.flatMap { Self.expandedFileURL($0, relativeTo: configuration.runtimeRoot) }
             ?? URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
                 .appendingPathComponent("Library/Messages/chat.db")
         self.busyTimeoutMilliseconds = Int32(
@@ -428,10 +435,17 @@ final class NativeIMessageIngestionService: NativeIMessageIngesting {
         return try body(openedDB)
     }
 
-    private static func expandedFileURL(_ path: String) -> URL? {
+    private static func expandedFileURL(_ path: String, relativeTo baseDirectory: URL? = nil) -> URL? {
         let trimmed = path.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
-        return URL(fileURLWithPath: NSString(string: trimmed).expandingTildeInPath)
+        let expanded = NSString(string: trimmed).expandingTildeInPath
+        if expanded.hasPrefix("/") {
+            return URL(fileURLWithPath: expanded)
+        }
+        guard let baseDirectory else {
+            return URL(fileURLWithPath: expanded)
+        }
+        return baseDirectory.appendingPathComponent(expanded)
     }
 
     private func tableExists(_ tableName: String, db: OpaquePointer) throws -> Bool {

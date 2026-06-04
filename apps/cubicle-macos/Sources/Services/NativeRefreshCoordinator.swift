@@ -73,7 +73,7 @@ private struct FocusCodexRefreshOutcome {
 final class NativeRefreshCoordinator {
     let configuration: RuntimeConfiguration
     let configStore: ConfigStore
-    let webexClient: WebexAPIClient
+    let webexClient: NativeWebexClienting
     let knowledgeStore: KnowledgeStore
     let codexRunner: CodexRunner
     let runtimeStore: NativeRuntimeStore
@@ -85,7 +85,7 @@ final class NativeRefreshCoordinator {
     init(configuration: RuntimeConfiguration = .current) {
         self.configuration = configuration
         self.configStore = ConfigStore(configuration: configuration)
-        self.webexClient = WebexAPIClient(configuration: configuration)
+        self.webexClient = NativeWebexIngestionService.makeWebexClient(configuration: configuration)
         self.knowledgeStore = KnowledgeStore(configuration: configuration)
         self.codexRunner = CodexRunner(configuration: configuration)
         self.runtimeStore = NativeRuntimeStore(configuration: configuration)

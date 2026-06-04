@@ -462,6 +462,15 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         )
     }
 
+    private func configuredMaxBeliefIncrementalWindowDays() -> Int {
+        configuredInt(
+            configuredCodexDocument()?.beliefs?.maxIncrementalWindowDays,
+            defaultValue: Self.maxBeliefIncrementalWindowDays,
+            minimum: 1,
+            maximum: 3_650
+        )
+    }
+
     private func configuredInt(
         _ value: Int?,
         defaultValue: Int,
@@ -1098,7 +1107,8 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         let deepContexts = deepBeliefContexts(
             for: baseContext,
             now: now,
-            maxChunkSize: configuredBeliefEvidenceChunkSize()
+            maxChunkSize: configuredBeliefEvidenceChunkSize(),
+            maxWindowDays: configuredMaxBeliefIncrementalWindowDays()
         )
         var chunkResults: [BeliefReconciliationResult] = []
         chunkResults.reserveCapacity(deepContexts.count)
@@ -1237,9 +1247,13 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
     private func deepBeliefContexts(
         for context: BeliefReconciliationContext,
         now: Date,
-        maxChunkSize: Int
+        maxChunkSize: Int,
+        maxWindowDays: Int
     ) -> [BeliefReconciliationContext] {
-        let incrementalWindows = deepBeliefIncrementalWindows(baseDays: context.incrementalWindowDays)
+        let incrementalWindows = deepBeliefIncrementalWindows(
+            baseDays: context.incrementalWindowDays,
+            maxWindowDays: maxWindowDays
+        )
         var contexts: [BeliefReconciliationContext] = []
         var seenHashes = Set<String>()
 
@@ -1268,12 +1282,13 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         return contexts
     }
 
-    private func deepBeliefIncrementalWindows(baseDays: Int) -> [Int] {
-        let base = max(1, baseDays)
+    private func deepBeliefIncrementalWindows(baseDays: Int, maxWindowDays: Int) -> [Int] {
+        let cap = max(1, maxWindowDays)
+        let base = min(max(1, baseDays), cap)
         let candidates = [
             base,
-            min(Self.maxBeliefIncrementalWindowDays, max(base + 1, base * 2)),
-            min(Self.maxBeliefIncrementalWindowDays, max(base + 2, base * 4))
+            min(cap, max(base + 1, base * 2)),
+            min(cap, max(base + 2, base * 4))
         ]
         var seen = Set<Int>()
         return candidates.filter { seen.insert($0).inserted }.sorted()

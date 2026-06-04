@@ -87,7 +87,26 @@ protocol WebexClienting {
     func fetchDirectMessages(personEmail: String?, personID: String?, max: Int) async throws -> [WebexMessage]
 }
 
-extension WebexAPIClient: WebexClienting {
+/// Full Webex client surface used by native ingestion orchestration.
+protocol NativeWebexClienting: WebexClienting {
+    func currentUser() async throws -> WebexPerson
+    func rooms() async throws -> [WebexRoom]
+    func room(id roomID: String) async throws -> WebexRoom
+    func memberships(roomID: String) async throws -> [WebexMembership]
+    func messages(roomID: String, max: Int) async throws -> [WebexMessage]
+    func messagesAfter(
+        roomID: String,
+        lastMessageID: String,
+        lastMessageCreated: String,
+        max: Int
+    ) async throws -> [WebexMessage]
+}
+
+extension WebexAPIClient: NativeWebexClienting {
+    func messages(roomID: String, max: Int) async throws -> [WebexMessage] {
+        try await messages(roomID: roomID, before: nil, max: max)
+    }
+
     func fetchLatestMessage(roomID: String) async throws -> WebexMessage? {
         try await latestMessage(roomID: roomID)
     }

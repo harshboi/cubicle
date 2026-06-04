@@ -165,6 +165,318 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
         XCTAssertTrue(payload.contains(#""codex_question_synthesis_enabled" : false"#))
     }
 
+    func testJSONTestModeRedirectsSettingsAndTargetData() throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleJSONTestModeTargets-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let configDirectory = runtimeRoot.appendingPathComponent("config", isDirectory: true)
+        let testDataDirectory = configDirectory.appendingPathComponent("test-data", isDirectory: true)
+        try FileManager.default.createDirectory(at: testDataDirectory, withIntermediateDirectories: true)
+        let settingsURL = testDataDirectory.appendingPathComponent("settings.json")
+        let targetDataURL = testDataDirectory.appendingPathComponent("targets.json")
+        try """
+        {
+          "settings": {
+            "webex_sync_enabled": false,
+            "codex_enabled": false,
+            "webex_sync_minutes": 9
+          }
+        }
+        """.write(to: settingsURL, atomically: true, encoding: .utf8)
+        try """
+        {
+          "groups": {
+            "important": {
+              "Y2lzY29zcGFyazovL3VzL1JPT00vVEVTVFNQQUNF": {
+                "label": "Test Space",
+                "room_type": "group"
+              },
+              "person@example.com": {
+                "label": "Person Example",
+                "email": "person@example.com",
+                "auto_reply": true,
+                "imessage_handles": ["408-555-0123"]
+              }
+            },
+            "beliefs": {
+              "Y2lzY29zcGFyazovL3VzL1JPT00vQkVMSUVG": {
+                "label": "Belief Space",
+                "room_type": "group"
+              }
+            },
+            "executives": [
+              {
+                "label": "Exec Example",
+                "email": "exec@example.com"
+              }
+            ]
+          }
+        }
+        """.write(to: targetDataURL, atomically: true, encoding: .utf8)
+        try """
+        {
+          "people": {
+            "person@example.com": {
+              "label": "Leaked Preference Person",
+              "auto_reply": false,
+              "imessage_handles": []
+            }
+          }
+        }
+        """.write(to: configDirectory.appendingPathComponent("person-focus-people.json"), atomically: true, encoding: .utf8)
+        try """
+        {
+          "spaces": {
+            "Y2lzY29zcGFyazovL3VzL1JPT00vVEVTVFNQQUNF": {
+              "label": "Leaked Preference Space"
+            }
+          }
+        }
+        """.write(to: configDirectory.appendingPathComponent("space-focus-spaces.json"), atomically: true, encoding: .utf8)
+
+        let configuration = testRuntimeConfiguration(
+            runtimeRoot: runtimeRoot,
+            jsonConfiguration: MacAppJSONConfigurationDocument(
+                version: 1,
+                environment: nil,
+                connectors: nil,
+                codex: nil,
+                questionGeneration: nil,
+                testMode: MacAppJSONTestModeConfiguration(
+                    enabled: true,
+                    profile: "integration",
+                    fixtureRoot: nil,
+                    targetData: "test-data/targets.json",
+                    settings: "test-data/settings.json",
+                    protectPaths: ["test-data"],
+                    connectorFixtures: nil
+                )
+            )
+        )
+        let configStore = ConfigStore(configuration: configuration)
+
+        XCTAssertEqual(configStore.systemSettingsURL.standardizedFileURL, settingsURL.standardizedFileURL)
+        let settings = configStore.loadSystemSettings()
+        XCTAssertFalse(settings.webexSyncEnabled)
+        XCTAssertFalse(settings.codexEnabled)
+        XCTAssertEqual(settings.webexSyncMinutes, 9)
+
+        let importantTargets = try configStore.importantTargets()
+        XCTAssertEqual(importantTargets.map(\.label).sorted(), ["Person Example", "Test Space"])
+        let space = try XCTUnwrap(importantTargets.first { $0.kind == .space })
+        XCTAssertEqual(space.roomID, "Y2lzY29zcGFyazovL3VzL1JPT00vVEVTVFNQQUNF")
+        XCTAssertEqual(space.roomType, "group")
+        let person = try XCTUnwrap(importantTargets.first { $0.kind == .person })
+        XCTAssertEqual(person.email, "person@example.com")
+        XCTAssertTrue(person.autoReply)
+        XCTAssertEqual(person.iMessageHandles, ["+14085550123"])
+        XCTAssertEqual(try configStore.beliefTargets().map(\.label), ["Belief Space"])
+        XCTAssertEqual(try configStore.importantExecutives().map(\.email), ["exec@example.com"])
+        XCTAssertEqual(try configStore.importantPeople().map(\.label), ["Person Example"])
+        XCTAssertEqual(try configStore.importantPeople().first?.autoReply, true)
+        XCTAssertEqual(try configStore.importantPeople().first?.iMessageHandles, ["+14085550123"])
+        XCTAssertEqual(try configStore.importantSpaces().map(\.label), ["Test Space"])
+    }
+
+    func testJSONTestModeSystemSettingsSaveCreatesConfiguredParentDirectory() throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleJSONTestModeSettingsSave-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let configuration = testRuntimeConfiguration(
+            runtimeRoot: runtimeRoot,
+            jsonConfiguration: MacAppJSONConfigurationDocument(
+                version: 1,
+                environment: nil,
+                connectors: nil,
+                codex: nil,
+                questionGeneration: nil,
+                testMode: MacAppJSONTestModeConfiguration(
+                    enabled: true,
+                    profile: "integration",
+                    fixtureRoot: nil,
+                    targetData: nil,
+                    settings: "test-data/settings.json",
+                    protectPaths: ["test-data"],
+                    connectorFixtures: nil
+                )
+            )
+        )
+        let configStore = ConfigStore(configuration: configuration)
+        var settings = SystemSettings()
+        settings.webexSyncEnabled = false
+
+        try configStore.saveSystemSettings(settings)
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: configStore.systemSettingsURL.path))
+        XCTAssertFalse(configStore.loadSystemSettings().webexSyncEnabled)
+    }
+
+    func testJSONConfigDirectoryOverrideFeedsConfigStoreTestModePaths() throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleJSONConfigDirectory-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let configDirectory = runtimeRoot.appendingPathComponent("operator-config", isDirectory: true)
+        let testDataDirectory = configDirectory.appendingPathComponent("test-data", isDirectory: true)
+        try FileManager.default.createDirectory(at: testDataDirectory, withIntermediateDirectories: true)
+        let settingsURL = testDataDirectory.appendingPathComponent("settings.json")
+        let targetsURL = testDataDirectory.appendingPathComponent("targets.json")
+        try #"{ "settings": { "webex_sync_enabled": false } }"#
+            .write(to: settingsURL, atomically: true, encoding: .utf8)
+        try """
+        {
+          "important": {
+            "override@example.com": {
+              "label": "Override Person"
+            }
+          }
+        }
+        """.write(to: targetsURL, atomically: true, encoding: .utf8)
+        try """
+        {
+          "test_mode": {
+            "enabled": true,
+            "target_data": "test-data/targets.json",
+            "settings": "test-data/settings.json",
+            "protect_paths": ["test-data"]
+          }
+        }
+        """.write(
+            to: configDirectory.appendingPathComponent(MacAppJSONConfigurationFiles.entrypoint),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let configuration = RuntimeConfiguration.resolved(environment: [
+            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
+            MacAppJSONConfigurationEnvironment.enabled: "true",
+            MacAppJSONConfigurationEnvironment.directory: configDirectory.path
+        ])
+        let configStore = ConfigStore(configuration: configuration)
+
+        XCTAssertEqual(configuration.jsonConfigurationDirectory?.standardizedFileURL, configDirectory.standardizedFileURL)
+        XCTAssertEqual(configStore.systemSettingsURL.standardizedFileURL, settingsURL.standardizedFileURL)
+        XCTAssertFalse(configStore.loadSystemSettings().webexSyncEnabled)
+        XCTAssertEqual(try configStore.importantTargets().map(\.label), ["Override Person"])
+    }
+
+    func testJSONTestModeProtectsConfiguredFilesFromCleanup() throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleJSONTestModeProtect-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let configuration = testRuntimeConfiguration(
+            runtimeRoot: runtimeRoot,
+            jsonConfiguration: MacAppJSONConfigurationDocument(
+                version: 1,
+                environment: nil,
+                connectors: nil,
+                codex: nil,
+                questionGeneration: nil,
+                testMode: MacAppJSONTestModeConfiguration(
+                    enabled: true,
+                    profile: "integration",
+                    fixtureRoot: nil,
+                    targetData: nil,
+                    settings: nil,
+                    protectPaths: [".webex_oauth_tokens.json", "refresh-checkpoint.json"],
+                    connectorFixtures: nil
+                )
+            )
+        )
+        let configStore = ConfigStore(configuration: configuration)
+        try FileManager.default.createDirectory(at: configStore.configDirectory, withIntermediateDirectories: true)
+        let tokenURL = configStore.configDirectory.appendingPathComponent(".webex_oauth_tokens.json")
+        try #"{"access_token":"fixture"}"#.write(to: tokenURL, atomically: true, encoding: .utf8)
+        try configStore.saveRefreshCheckpointData(Data(#"{"cursor":"fixture"}"#.utf8))
+
+        let removed = try configStore.deleteOAuthTokenFiles(provider: .webex)
+        try configStore.clearRefreshCheckpoint()
+
+        XCTAssertTrue(removed.isEmpty)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: tokenURL.path))
+        XCTAssertNotNil(configStore.loadRefreshCheckpointData())
+    }
+
+    func testJSONTestModeUsesWebexConnectorFixtureForMapRefresh() async throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleJSONWebexFixture-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let configDirectory = runtimeRoot.appendingPathComponent("alt-config", isDirectory: true)
+        let fixtureDirectory = configDirectory
+            .appendingPathComponent("fixtures", isDirectory: true)
+            .appendingPathComponent("connectors", isDirectory: true)
+        try FileManager.default.createDirectory(at: fixtureDirectory, withIntermediateDirectories: true)
+        try """
+        {
+          "current_user": {
+            "id": "me",
+            "displayName": "Me User",
+            "emails": ["me@example.com"]
+          },
+          "rooms": [
+            {
+              "id": "Y2lzY29zcGFyazovL3VzL1JPT00vRklYVFVSRVNQQUNF",
+              "title": "Fixture Space",
+              "type": "group",
+              "lastActivity": "2026-05-16T20:00:00Z"
+            },
+            {
+              "id": "Y2lzY29zcGFyazovL3VzL1JPT00vRklYVFVSRURJUkVDVA",
+              "title": "Direct Fixture",
+              "type": "direct",
+              "lastActivity": "2026-05-16T20:00:00Z"
+            }
+          ],
+          "memberships": {
+            "Y2lzY29zcGFyazovL3VzL1JPT00vRklYVFVSRURJUkVDVA": [
+              {
+                "id": "member-me",
+                "roomId": "Y2lzY29zcGFyazovL3VzL1JPT00vRklYVFVSRURJUkVDVA",
+                "personId": "me",
+                "personEmail": "me@example.com",
+                "personDisplayName": "Me User"
+              },
+              {
+                "id": "member-other",
+                "roomId": "Y2lzY29zcGFyazovL3VzL1JPT00vRklYVFVSRURJUkVDVA",
+                "personId": "other",
+                "personEmail": "other@example.com",
+                "personDisplayName": "Other User"
+              }
+            ]
+          }
+        }
+        """.write(to: fixtureDirectory.appendingPathComponent("webex.json"), atomically: true, encoding: .utf8)
+        let configuration = testRuntimeConfiguration(
+            runtimeRoot: runtimeRoot,
+            jsonConfigurationDirectory: configDirectory,
+            jsonConfiguration: MacAppJSONConfigurationDocument(
+                version: 1,
+                environment: nil,
+                connectors: nil,
+                codex: nil,
+                questionGeneration: nil,
+                testMode: MacAppJSONTestModeConfiguration(
+                    enabled: true,
+                    profile: "integration",
+                    fixtureRoot: "fixtures",
+                    targetData: nil,
+                    settings: nil,
+                    protectPaths: ["fixtures"],
+                    connectorFixtures: ["webex": "connectors/webex.json"]
+                )
+            )
+        )
+
+        let outcome = try await NativeRefreshCoordinator(configuration: configuration).refreshWebexMapFile()
+        let map = try String(contentsOf: ConfigStore(configuration: configuration).mapFileURL, encoding: .utf8)
+
+        XCTAssertEqual(outcome.rooms, 2)
+        XCTAssertEqual(outcome.spaces, 1)
+        XCTAssertEqual(outcome.senders, 2)
+        XCTAssertTrue(map.contains("Fixture Space"))
+        XCTAssertTrue(map.contains("other@example.com"))
+    }
+
     func testSystemSettingsPersistsTranscriptionControls() throws {
         let runtimeRoot = FileManager.default.temporaryDirectory
             .appendingPathComponent("CubicleTranscriptionSettingsTests-\(UUID().uuidString)", isDirectory: true)
@@ -3827,10 +4139,14 @@ private func querySQLiteText(
 
 private func testRuntimeConfiguration(
     runtimeRoot: URL,
-    codexExecutable: String = "codex"
+    codexExecutable: String = "codex",
+    jsonConfigurationDirectory: URL? = nil,
+    jsonConfiguration: MacAppJSONConfigurationDocument? = nil
 ) -> RuntimeConfiguration {
     RuntimeConfiguration(
         runtimeRoot: runtimeRoot,
+        jsonConfiguration: jsonConfiguration,
+        jsonConfigurationDirectory: jsonConfigurationDirectory,
         codexExecutable: codexExecutable,
         webexBaseURL: URL(string: "https://webexapis.com/v1")!,
         webexPageSize: 100,

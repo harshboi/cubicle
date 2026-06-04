@@ -4,6 +4,7 @@ import Foundation
 struct RuntimeConfiguration: Equatable {
     var runtimeRoot: URL
     var jsonConfiguration: MacAppJSONConfigurationDocument? = nil
+    var jsonConfigurationDirectory: URL? = nil
     var codexExecutable: String
     var webexBaseURL: URL
     var webexPageSize: Int
@@ -29,18 +30,26 @@ struct RuntimeConfiguration: Equatable {
         environment: [String: String],
         fileManager: FileManager = .default
     ) -> RuntimeConfiguration {
-        let rootPath = environment["GETWEBEXSPACE_RUNTIME_ROOT"]?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let resolvedRoot = rootPath?.isEmpty == false ? rootPath! : "/Volumes/Webex/getwebexspace-data"
-        let runtimeRootURL = URL(fileURLWithPath: resolvedRoot, isDirectory: true)
-        let jsonDocument = MacAppJSONConfigurationLoader(
-            runtimeRoot: runtimeRootURL,
+        let environmentRootPath = trimToNil(environment["GETWEBEXSPACE_RUNTIME_ROOT"])
+        let bootstrapRootPath = environmentRootPath ?? "/Volumes/Webex/getwebexspace-data"
+        let bootstrapRootURL = rootURL(from: bootstrapRootPath)
+        let jsonLoader = MacAppJSONConfigurationLoader(
+            runtimeRoot: bootstrapRootURL,
             environment: environment,
             fileManager: fileManager
-        ).configurationDocument()
+        )
+        let jsonDocument = jsonLoader.configurationDocument()
         let environmentJSON = jsonDocument?.environment
         let webexJSON = environmentJSON?.webex
-        let webexNetworkJSON = webexJSON?.networkPolicy
-        let webexSyncJSON = webexJSON?.syncPolicy
+        let connectorWebexJSON = jsonDocument?.connectors?.webex
+        let webexNetworkJSON = mergedNetworkPolicy(
+            base: webexJSON?.networkPolicy,
+            overlay: connectorWebexJSON?.networkPolicy
+        )
+        let webexSyncJSON = mergedSyncPolicy(
+            base: webexJSON?.syncPolicy,
+            overlay: connectorWebexJSON?.syncPolicy
+        )
 
         let baseURLString = trimToNil(environment["WEBEX_API_BASE_URL"])
             ?? trimToNil(webexJSON?.apiBaseURL)
@@ -130,9 +139,15 @@ struct RuntimeConfiguration: Equatable {
             .flatMap(URL.init(string:))
         let oauthTokenPath = trimToNil(environment["WEBEX_OAUTH_TOKEN_FILE"])
             ?? trimToNil(webexJSON?.oauthTokenFile)
+        let runtimeRootURL = environmentRootPath
+            .map { rootURL(from: $0) }
+            ?? trimToNil(environmentJSON?.runtimeRoot)
+                .map { rootURL(from: $0, relativeTo: bootstrapRootURL) }
+            ?? bootstrapRootURL
         return RuntimeConfiguration(
             runtimeRoot: runtimeRootURL,
             jsonConfiguration: jsonDocument,
+            jsonConfigurationDirectory: jsonDocument == nil ? nil : jsonLoader.configDirectory,
             codexExecutable: resolvedCodexExecutable(
                 trimToNil(environment["CODEX_BIN"]) ?? trimToNil(environmentJSON?.codexExecutable)
             ),
@@ -150,6 +165,17 @@ struct RuntimeConfiguration: Equatable {
             webexSyncConcurrencyLimit: syncConcurrencyLimit,
             webexPublicWebhookURL: publicWebhookURL
         )
+    }
+
+    private static func rootURL(from path: String, relativeTo baseDirectory: URL? = nil) -> URL {
+        let expanded = NSString(string: path).expandingTildeInPath
+        if expanded.hasPrefix("/") {
+            return URL(fileURLWithPath: expanded, isDirectory: true)
+        }
+        if let baseDirectory {
+            return baseDirectory.appendingPathComponent(expanded, isDirectory: true)
+        }
+        return URL(fileURLWithPath: expanded, isDirectory: true)
     }
 
     private static func parseTimeInterval(
@@ -184,6 +210,32 @@ struct RuntimeConfiguration: Equatable {
     ) -> TimeInterval {
         guard let value else { return defaultValue }
         return min(max(TimeInterval(value), minimum), maximum)
+    }
+
+    private static func mergedNetworkPolicy(
+        base: MacAppJSONNetworkPolicy?,
+        overlay: MacAppJSONNetworkPolicy?
+    ) -> MacAppJSONNetworkPolicy? {
+        guard base != nil || overlay != nil else { return nil }
+        return MacAppJSONNetworkPolicy(
+            timeoutSeconds: overlay?.timeoutSeconds ?? base?.timeoutSeconds,
+            retryCount: overlay?.retryCount ?? base?.retryCount,
+            pageSize: overlay?.pageSize ?? base?.pageSize
+        )
+    }
+
+    private static func mergedSyncPolicy(
+        base: MacAppJSONSyncPolicy?,
+        overlay: MacAppJSONSyncPolicy?
+    ) -> MacAppJSONSyncPolicy? {
+        guard base != nil || overlay != nil else { return nil }
+        return MacAppJSONSyncPolicy(
+            concurrencyLimit: overlay?.concurrencyLimit ?? base?.concurrencyLimit,
+            adaptiveActiveIntervalSeconds: overlay?.adaptiveActiveIntervalSeconds ?? base?.adaptiveActiveIntervalSeconds,
+            adaptiveRecentIntervalSeconds: overlay?.adaptiveRecentIntervalSeconds ?? base?.adaptiveRecentIntervalSeconds,
+            adaptiveBackgroundIntervalSeconds: overlay?.adaptiveBackgroundIntervalSeconds ?? base?.adaptiveBackgroundIntervalSeconds,
+            adaptiveJitterPercent: overlay?.adaptiveJitterPercent ?? base?.adaptiveJitterPercent
+        )
     }
 
     private static func parseInt(
