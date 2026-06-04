@@ -44,14 +44,17 @@ final class AppServicesTests: XCTestCase {
         XCTAssertTrue(coordinator.questionService === services.questionService)
     }
 
-    func testRefreshCoordinatorConvenienceInitializerUsesSharedServices() {
+    func testRefreshCoordinatorConvenienceInitializerUsesSharedServices() throws {
         let harness = TestRuntimeHarness(label: "refresh-services-share")
         defer { harness.cleanup() }
         let coordinator = NativeRefreshCoordinator(configuration: harness.configuration)
+        let webexIngestionService = try XCTUnwrap(
+            coordinator.webexIngestionService as? NativeWebexIngestionService
+        )
 
         XCTAssertEqual(coordinator.configuration.runtimeRoot, harness.runtimeRoot)
-        XCTAssertTrue(coordinator.webexIngestionService.configStore === coordinator.configStore)
-        XCTAssertTrue(coordinator.webexIngestionService.knowledgeStore === coordinator.knowledgeStore)
+        XCTAssertTrue(webexIngestionService.configStore === coordinator.configStore)
+        XCTAssertTrue(webexIngestionService.knowledgeStore === coordinator.knowledgeStore)
         XCTAssertTrue(coordinator.codexOrchestrationService.runner === coordinator.codexRunner)
     }
 }

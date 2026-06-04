@@ -88,7 +88,7 @@ protocol WebexClienting: AnyObject {
 }
 
 /// Full Webex client surface used by native ingestion orchestration.
-protocol NativeWebexClienting: WebexClienting {
+protocol NativeWebexClienting: WebexClienting, WebexProductClienting {
     func currentUser() async throws -> WebexPerson
     func rooms() async throws -> [WebexRoom]
     func room(id roomID: String) async throws -> WebexRoom

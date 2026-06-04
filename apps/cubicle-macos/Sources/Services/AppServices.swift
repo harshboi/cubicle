@@ -7,6 +7,7 @@ struct AppServices {
     let codexRunner: CodexRunner
     let knowledgeStore: KnowledgeStore
     let webexClient: NativeWebexClienting
+    let iMessageService: NativeIMessageIngesting
     let webexIngestionService: NativeWebexIngestionService
     let codexOrchestrationService: CodexPromptOrchestrationService
     let questionService: QuestionCandidateService
@@ -33,12 +34,13 @@ struct AppServices {
             configuration: configuration,
             configStore: resolvedConfigStore
         )
+        let resolvedIMessageService = iMessageService ?? NativeIMessageIngestionService()
         let resolvedWebexIngestionService = NativeWebexIngestionService(
             configuration: configuration,
             configStore: resolvedConfigStore,
             webexClient: resolvedWebexClient,
             knowledgeStore: resolvedKnowledgeStore,
-            iMessageService: iMessageService
+            iMessageService: resolvedIMessageService
         )
         let resolvedCodexOrchestrationService = CodexPromptOrchestrationService(
             configuration: configuration,
@@ -55,6 +57,7 @@ struct AppServices {
         self.codexRunner = resolvedCodexRunner
         self.knowledgeStore = resolvedKnowledgeStore
         self.webexClient = resolvedWebexClient
+        self.iMessageService = resolvedIMessageService
         self.webexIngestionService = resolvedWebexIngestionService
         self.codexOrchestrationService = resolvedCodexOrchestrationService
         self.questionService = resolvedQuestionService

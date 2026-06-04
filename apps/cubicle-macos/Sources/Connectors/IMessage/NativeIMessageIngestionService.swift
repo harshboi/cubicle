@@ -560,14 +560,27 @@ private enum IMessageDateScale {
         let appleSeconds = date.timeIntervalSince1970 - Self.appleEpochOffset
         switch self {
         case .seconds:
-            return Int64(appleSeconds)
+            return Self.clampedInt64(appleSeconds)
         case .milliseconds:
-            return Int64(appleSeconds * 1_000)
+            return Self.clampedInt64(appleSeconds * 1_000)
         case .microseconds:
-            return Int64(appleSeconds * 1_000_000)
+            return Self.clampedInt64(appleSeconds * 1_000_000)
         case .nanoseconds:
-            return Int64(appleSeconds * 1_000_000_000)
+            return Self.clampedInt64(appleSeconds * 1_000_000_000)
         }
+    }
+
+    private static func clampedInt64(_ value: TimeInterval) -> Int64 {
+        guard value.isFinite else {
+            return value.sign == .minus ? Int64.min : Int64.max
+        }
+        if value <= Double(Int64.min) {
+            return Int64.min
+        }
+        if value >= Double(Int64.max) {
+            return Int64.max
+        }
+        return Int64(value)
     }
 }
 
