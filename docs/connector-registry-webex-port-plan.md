@@ -51,6 +51,28 @@ SignalSyncPipeline
        -> advances cursor/backoff only after write succeeds
 ```
 
+## Implemented Webex Connector Engine Slice
+
+```text
+WebexSignalConnector
+ |
+ +-- * WebexSyncEngine
+ |     -> latest-message probe, catch-up, backoff, single-flight
+ |
+ +-- * WebexSignalSyncStateStore
+ |     -> loads ConnectorCheckpointSet / legacy webex_sync_state fallback
+ |     -> records pending state as connector checkpoints
+ |
+ +-- * WebexSignalBatchMessageProcessor
+ |     -> accumulates SignalObject + SignalEvent rows
+ |
+ v
+SignalSyncPipeline
+ |
+ +-- writes batch
+ +-- saves returned checkpoints after write succeeds
+```
+
 ## Adversarial Review
 
 ```text
@@ -62,7 +84,7 @@ Risk: one connector-level checkpoint
  |     -> next_allowed_at
  |
  v
-Do not move production Webex until checkpoint contract is per target/key.
+Covered by ConnectorCheckpointSet target/key contract.
 ```
 
 ```text
@@ -83,7 +105,7 @@ Risk: duplicating WebexSyncEngine
  +-- rate-limit/backoff tests cover old path only
  |
  v
-Port by extracting/reusing engine behavior, not by a shallow fetchRecentMessages adapter.
+Covered by WebexSignalConnector delegating to WebexSyncEngine.
 ```
 
 ## Release Gate
@@ -97,7 +119,7 @@ safe to merge registry
 
 not safe to switch Webex yet
  |
- +-- WebexSyncEngine behavior not extracted
- +-- WebexSignalConnector still shallow-fetches recent messages
- +-- connector checkpoints are not account-scoped in DAO yet
+ +-- NativeRefreshCoordinator still uses NativeWebexIngestionService
+ +-- focus snapshots/status badges still read legacy Webex state
+ +-- production cutover needs snapshot/status bridge
 ```

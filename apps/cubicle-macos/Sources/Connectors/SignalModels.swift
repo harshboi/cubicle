@@ -176,10 +176,21 @@ enum SignalSyncMode: String, Hashable, Codable {
     case incremental
 }
 
+/// Generic sync trigger; connectors may map it to source-specific force rules.
+enum SignalSyncTriggerReason: String, Hashable, Codable {
+    case startup
+    case scheduled
+    case manual
+    case wakeFromSleep
+    case networkReconnect
+    case userOpenedTarget
+}
+
 /// Connector-agnostic input for one signal sync run.
 struct SignalSyncRequest: Hashable {
     var runID: UUID
     var mode: SignalSyncMode
+    var trigger: SignalSyncTriggerReason
     var targets: [SignalTarget]
     var startedAt: Date
     var since: Date?
@@ -189,6 +200,7 @@ struct SignalSyncRequest: Hashable {
     init(
         runID: UUID = UUID(),
         mode: SignalSyncMode,
+        trigger: SignalSyncTriggerReason = .scheduled,
         targets: [SignalTarget],
         startedAt: Date = Date(),
         since: Date? = nil,
@@ -196,6 +208,7 @@ struct SignalSyncRequest: Hashable {
     ) {
         self.runID = runID
         self.mode = mode
+        self.trigger = trigger
         self.targets = targets
         self.startedAt = startedAt
         self.since = since
