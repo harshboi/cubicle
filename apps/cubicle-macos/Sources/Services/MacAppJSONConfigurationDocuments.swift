@@ -29,6 +29,71 @@ enum MacAppJSONConfigurationEnvironment {
     }
 }
 
+/// Feature-flagged reader for the composed macOS JSON configuration document.
+struct MacAppJSONConfigurationLoader {
+    var runtimeRoot: URL
+    var environment: [String: String]
+    var fileManager: FileManager
+
+    init(
+        runtimeRoot: URL,
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        fileManager: FileManager = .default
+    ) {
+        self.runtimeRoot = runtimeRoot
+        self.environment = environment
+        self.fileManager = fileManager
+    }
+
+    init(
+        configuration: RuntimeConfiguration,
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        fileManager: FileManager = .default
+    ) {
+        self.init(runtimeRoot: configuration.runtimeRoot, environment: environment, fileManager: fileManager)
+    }
+
+    var isEnabled: Bool {
+        MacAppJSONConfigurationEnvironment.isEnabled(in: environment)
+    }
+
+    var configDirectory: URL {
+        if let override = MacAppJSONConfigurationEnvironment.trimmed(
+            environment[MacAppJSONConfigurationEnvironment.directory]
+        ) {
+            return expandedFileURL(override, baseDirectory: runtimeRoot)
+        }
+        return runtimeRoot.appendingPathComponent("config", isDirectory: true)
+    }
+
+    var entrypointURL: URL {
+        if let override = MacAppJSONConfigurationEnvironment.trimmed(
+            environment[MacAppJSONConfigurationEnvironment.file]
+        ) {
+            return expandedFileURL(override, baseDirectory: configDirectory)
+        }
+        return configDirectory.appendingPathComponent(MacAppJSONConfigurationFiles.entrypoint)
+    }
+
+    func configurationDocument() -> MacAppJSONConfigurationDocument? {
+        guard isEnabled else { return nil }
+        do {
+            return try MacAppJSONConfigurationComposer(fileManager: fileManager)
+                .loadDocument(entrypointURL: entrypointURL)
+        } catch {
+            preconditionFailure(error.localizedDescription)
+        }
+    }
+
+    private func expandedFileURL(_ value: String, baseDirectory: URL) -> URL {
+        let expanded = NSString(string: value).expandingTildeInPath
+        if expanded.hasPrefix("/") {
+            return URL(fileURLWithPath: expanded)
+        }
+        return baseDirectory.appendingPathComponent(expanded)
+    }
+}
+
 /// HOCON-style JSON composer used before decoding the typed Cubicle config.
 struct MacAppJSONConfigurationComposer {
     var fileManager: FileManager
@@ -490,6 +555,30 @@ struct MacAppJSONConnectorsConfiguration: Codable, Equatable {
     var enabled: [String]?
     var webex: MacAppJSONWebexConnectorConfiguration?
     var imessage: MacAppJSONIMessageConnectorConfiguration?
+}
+
+extension MacAppJSONConnectorsConfiguration {
+    func connectorEnabled(_ connectorID: String, defaultValue: Bool = true) -> Bool {
+        let normalizedID = connectorID
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        switch normalizedID {
+        case "webex":
+            if let enabled = webex?.enabled {
+                return enabled
+            }
+        case "imessage":
+            if let enabled = imessage?.enabled {
+                return enabled
+            }
+        default:
+            break
+        }
+        guard let enabled else { return defaultValue }
+        return enabled
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .contains(normalizedID)
+    }
 }
 
 @Codable

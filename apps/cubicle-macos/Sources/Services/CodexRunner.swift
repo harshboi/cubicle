@@ -33,6 +33,50 @@ struct CodexRunPolicy: Hashable {
         maxAttempts: 2,
         retryDelaySeconds: 1.5
     )
+
+    func applying(_ policy: MacAppJSONRunPolicy?) -> CodexRunPolicy {
+        guard let policy else { return self }
+        return CodexRunPolicy(
+            timeoutSeconds: Self.clampedTimeInterval(
+                policy.timeoutSeconds,
+                defaultValue: timeoutSeconds,
+                minimum: 1,
+                maximum: 3_600
+            ),
+            maxAttempts: Self.clampedInt(
+                policy.maxAttempts,
+                defaultValue: maxAttempts,
+                minimum: 1,
+                maximum: 10
+            ),
+            retryDelaySeconds: Self.clampedTimeInterval(
+                policy.retryDelaySeconds,
+                defaultValue: retryDelaySeconds,
+                minimum: 0,
+                maximum: 300
+            ) ?? retryDelaySeconds
+        )
+    }
+
+    private static func clampedInt(
+        _ value: Int?,
+        defaultValue: Int,
+        minimum: Int,
+        maximum: Int
+    ) -> Int {
+        guard let value else { return defaultValue }
+        return min(max(value, minimum), maximum)
+    }
+
+    private static func clampedTimeInterval(
+        _ value: Double?,
+        defaultValue: TimeInterval?,
+        minimum: TimeInterval,
+        maximum: TimeInterval
+    ) -> TimeInterval? {
+        guard let value else { return defaultValue }
+        return min(max(TimeInterval(value), minimum), maximum)
+    }
 }
 
 /// Complete request for one Codex process run.
@@ -147,14 +191,15 @@ final class CodexRunner {
             prompt: prompt,
             job: job,
             workingDirectory: workingDirectory,
-            policy: .default
+            policy: configuredDefaultRunPolicy()
         )
         return try await run(request: request).output
     }
 
     /// Runs Codex with retry policy and returns output plus artifact metadata.
     func run(request: CodexRunRequest) async throws -> CodexRunResult {
-        let normalizedMaxAttempts = max(1, request.policy.maxAttempts)
+        let policy = effectiveRunPolicy(request.policy)
+        let normalizedMaxAttempts = max(1, policy.maxAttempts)
         let startedAt = Date()
         let promptHash = Self.sha256Hex(request.prompt)
 
@@ -171,7 +216,12 @@ final class CodexRunner {
 
             do {
                 let attemptOutput = try await executeAttempt(
-                    request: request,
+                    request: CodexRunRequest(
+                        prompt: request.prompt,
+                        job: request.job,
+                        workingDirectory: request.workingDirectory,
+                        policy: policy
+                    ),
                     attempt: attemptCount
                 )
 
@@ -234,7 +284,7 @@ final class CodexRunner {
 
                 let canRetry = attemptCount < normalizedMaxAttempts && isRetryable(error: error)
                 if canRetry {
-                    let retryDelay = max(0, request.policy.retryDelaySeconds)
+                    let retryDelay = max(0, policy.retryDelaySeconds)
                     if retryDelay > 0 {
                         try await Task.sleep(nanoseconds: UInt64(retryDelay * 1_000_000_000))
                     }
@@ -348,6 +398,17 @@ final class CodexRunner {
             logPath: attemptLogURL.path,
             error: nil
         )
+    }
+
+    private func effectiveRunPolicy(_ policy: CodexRunPolicy) -> CodexRunPolicy {
+        guard policy == .default else {
+            return policy
+        }
+        return configuredDefaultRunPolicy()
+    }
+
+    private func configuredDefaultRunPolicy() -> CodexRunPolicy {
+        CodexRunPolicy.default.applying(configuration.jsonConfiguration?.codex?.runPolicy)
     }
 
     /// Waits for process exit with optional timeout termination.

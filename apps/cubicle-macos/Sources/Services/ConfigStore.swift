@@ -808,14 +808,19 @@ final class ConfigStore {
     private static let transcriptionAuthTokenKeychainAccount = "transcription.service_token"
 
     let configuration: RuntimeConfiguration
+    private let environment: [String: String]
     private let defaultOAuthTokenFilename = ".webex_oauth_tokens.json"
     private let defaultOutlookOAuthTokenFilename = ".outlook_oauth_tokens.json"
     private let oauthSettingsFilename = "oauth-settings.json"
     private let keychainStore = OAuthKeychainStore()
 
     /// Pins config reads/writes to a runtime root.
-    init(configuration: RuntimeConfiguration = .current) {
+    init(
+        configuration: RuntimeConfiguration = .current,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) {
         self.configuration = configuration
+        self.environment = environment
     }
 
     /// Runtime config directory.
@@ -1060,7 +1065,7 @@ final class ConfigStore {
     func oauthTokenFileCandidates(provider: OAuthProviderKind) -> [URL] {
         var candidates: [URL] = []
 
-        let environment = ProcessInfo.processInfo.environment
+        let environment = self.environment
         let override: String?
         let defaultFilename: String
         switch provider {
@@ -1511,6 +1516,11 @@ final class ConfigStore {
 
     /// Loads de-duplicated targets from a text config file.
     private func loadTargets(filename: String) throws -> [ConfigTarget] {
+        try loadTextTargets(filename: filename)
+    }
+
+    /// Loads de-duplicated targets from a text config file.
+    private func loadTextTargets(filename: String) throws -> [ConfigTarget] {
         let url = configDirectory.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
         let text = try String(contentsOf: url, encoding: .utf8)
@@ -1527,6 +1537,11 @@ final class ConfigStore {
 
     /// Loads representative targets for management UI from text config.
     private func loadManagedTargets(filename: String) throws -> [ConfigTarget] {
+        try loadManagedTextTargets(filename: filename)
+    }
+
+    /// Loads representative targets for management UI from text config.
+    private func loadManagedTextTargets(filename: String) throws -> [ConfigTarget] {
         let url = configDirectory.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
         let text = try String(contentsOf: url, encoding: .utf8)

@@ -155,7 +155,7 @@ final class NativeWebexIngestionService {
         self.configStore = configStore ?? ConfigStore(configuration: configuration)
         self.webexClient = webexClient ?? WebexAPIClient(configuration: configuration)
         self.knowledgeStore = knowledgeStore ?? KnowledgeStore(configuration: configuration)
-        self.iMessageService = iMessageService ?? NativeIMessageIngestionService()
+        self.iMessageService = iMessageService ?? NativeIMessageIngestionService(configuration: configuration)
         self.encoder = JSONEncoder()
         self.encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     }
@@ -554,6 +554,17 @@ final class NativeWebexIngestionService {
 
     private func webexSyncEnabled() -> Bool {
         configStore.loadSystemSettings().webexSyncEnabled
+            && connectorEnabled("webex")
+    }
+
+    private func iMessageConnectorEnabled() -> Bool {
+        connectorEnabled("imessage")
+    }
+
+    private func connectorEnabled(_ connectorID: String) -> Bool {
+        configuration.jsonConfiguration?
+            .connectors?
+            .connectorEnabled(connectorID) ?? true
     }
 
     private func disabledProgress(totalRooms: Int, roomResults: [WebexRoomSyncResult]) -> WebexSyncProgress {
@@ -1244,6 +1255,9 @@ final class NativeWebexIngestionService {
         since: Date
     ) -> (messages: [IMessageTimelineMessage], error: String?) {
         guard !target.iMessageHandles.isEmpty else {
+            return ([], nil)
+        }
+        guard iMessageConnectorEnabled() else {
             return ([], nil)
         }
         do {
