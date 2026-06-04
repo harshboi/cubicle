@@ -1,6 +1,7 @@
 import AppKit
 import CryptoKit
 import Foundation
+import MetaCodable
 import Network
 
 /// Ask Codex context scope selected by the user.
@@ -369,53 +370,42 @@ private struct PagePriorityRefreshRequest: Hashable {
 }
 
 /// Disk checkpoint for restart/resume of a refresh pipeline.
-private struct PersistedRefreshCheckpoint: Codable {
+@Codable
+fileprivate struct PersistedRefreshCheckpoint {
     var version: Int
+    @CodedAt("run_id")
     var runID: String
     var title: String
+    @CodedAt("started_at")
     var startedAt: String
+    @CodedAt("updated_at")
     var updatedAt: String
+    @CodedAt("state_fingerprint")
     var stateFingerprint: String
+    @CodedAt("reload_after_each_scope")
     var reloadAfterEachScope: Bool
+    @CodedAt("is_priority_refresh")
     var isPriorityRefresh: Bool
     var steps: [PersistedRefreshCheckpointStep]
-
-    enum CodingKeys: String, CodingKey {
-        case version
-        case runID = "run_id"
-        case title
-        case startedAt = "started_at"
-        case updatedAt = "updated_at"
-        case stateFingerprint = "state_fingerprint"
-        case reloadAfterEachScope = "reload_after_each_scope"
-        case isPriorityRefresh = "is_priority_refresh"
-        case steps
-    }
 }
 
 /// Disk checkpoint row for one refresh pipeline step.
-private struct PersistedRefreshCheckpointStep: Codable {
+@Codable
+fileprivate struct PersistedRefreshCheckpointStep {
     var id: String
+    @CodedAt("scope")
     var scopeRawValue: String
     var title: String
+    @CodedAt("mode")
     var modeRawValue: String
+    @CodedAt("mark_cadence")
     var markCadence: Bool
+    @CodedAt("skip_when_previous_scope_reused")
     var skipWhenPreviousScopeReusedRawValue: String?
+    @CodedAt("state")
     var stateRawValue: String
     var summary: String?
     var error: String?
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case scopeRawValue = "scope"
-        case title
-        case modeRawValue = "mode"
-        case markCadence = "mark_cadence"
-        case skipWhenPreviousScopeReusedRawValue = "skip_when_previous_scope_reused"
-        case stateRawValue = "state"
-        case summary
-        case error
-    }
 }
 
 /// Main product state store and orchestration layer for the Mac app.

@@ -1,4 +1,5 @@
 import Foundation
+import MetaCodable
 
 /// Provenance for one configured target line/entry.
 struct ConfigTargetSourceMetadata: Hashable {
@@ -2309,96 +2310,85 @@ private extension Array {
 }
 
 /// Versioned settings file payload.
-private struct PersistedSystemSettingsPayload: Codable {
+@Codable
+fileprivate struct PersistedSystemSettingsPayload {
     var version: Int
+    @CodedAt("updated_at")
     var updatedAt: String
     var settings: PersistedSystemSettingsValues
-
-    enum CodingKeys: String, CodingKey {
-        case version
-        case updatedAt = "updated_at"
-        case settings
-    }
 }
 
 /// Versioned Ask Codex history payload.
-private struct PersistedAskCodexQueryHistoryPayload: Codable {
+@Codable
+fileprivate struct PersistedAskCodexQueryHistoryPayload {
     var version: Int
+    @CodedAt("updated_at")
     var updatedAt: String
     var queries: [AskCodexQueryHistoryEntry]
-
-    enum CodingKeys: String, CodingKey {
-        case version
-        case updatedAt = "updated_at"
-        case queries
-    }
 }
 
 /// JSON representation of persisted settings values.
-private struct PersistedSystemSettingsValues: Codable {
+@Codable
+fileprivate struct PersistedSystemSettingsValues {
     var debug: Bool
+    @CodedAt("background_status")
     var backgroundStatus: Bool
+    @CodedAt("webex_sync_enabled")
     var webexSyncEnabled: Bool
+    @CodedAt("auto_query_all_enabled")
     var autoQueryAllEnabled: Bool
+    @CodedAt("priority_refresh_pauses_background")
     var priorityRefreshPausesBackground: Bool
+    @CodedAt("codex_enabled")
     var codexEnabled: Bool
+    @CodedAt("codex_ask_enabled")
     var codexAskEnabled: Bool
+    @CodedAt("codex_question_synthesis_enabled")
     var codexQuestionSynthesisEnabled: Bool
+    @CodedAt("codex_person_summaries_enabled")
     var codexPersonSummariesEnabled: Bool
+    @CodedAt("codex_space_summaries_enabled")
     var codexSpaceSummariesEnabled: Bool
+    @CodedAt("codex_cluster_titles_enabled")
     var codexClusterTitlesEnabled: Bool
+    @CodedAt("codex_exec_questions_enabled")
     var codexExecQuestionsEnabled: Bool
+    @CodedAt("codex_beliefs_enabled")
     var codexBeliefsEnabled: Bool
+    @CodedAt("codex_model")
     var codexModel: String
+    @CodedAt("codex_reasoning_level")
     var codexReasoningLevel: String
+    @CodedAt("webex_sync_minutes")
     var webexSyncMinutes: Int
+    @CodedAt("auto_query_all_minutes")
     var autoQueryAllMinutes: Int
+    @CodedAt("tracked_actions_refresh_minutes")
     var trackedActionsRefreshMinutes: Int
+    @CodedAt("person_focus_refresh_minutes")
     var personFocusRefreshMinutes: Int
+    @CodedAt("person_focus_days")
     var personFocusDays: Int
+    @CodedAt("person_focus_analysis_cadence_hours")
     var personFocusAnalysisCadenceHours: Int
+    @CodedAt("space_focus_refresh_minutes")
     var spaceFocusRefreshMinutes: Int
+    @CodedAt("space_focus_days")
     var spaceFocusDays: Int
+    @CodedAt("space_focus_analysis_cadence_hours")
     var spaceFocusAnalysisCadenceHours: Int
+    @CodedAt("transcription_enabled")
     var transcriptionEnabled: Bool
+    @CodedAt("transcription_diarization_enabled")
     var transcriptionDiarizationEnabled: Bool
+    @CodedAt("transcription_language_mode")
     var transcriptionLanguageMode: String
+    @CodedAt("transcription_microphone_gain")
     var transcriptionMicrophoneGain: Int
+    @CodedAt("transcription_aws_endpoint")
     var transcriptionAWSEndpoint: String
+    @CodedAt("poll_seconds")
     var pollSeconds: Int
-
-    enum CodingKeys: String, CodingKey {
-        case debug
-        case backgroundStatus = "background_status"
-        case webexSyncEnabled = "webex_sync_enabled"
-        case autoQueryAllEnabled = "auto_query_all_enabled"
-        case priorityRefreshPausesBackground = "priority_refresh_pauses_background"
-        case codexEnabled = "codex_enabled"
-        case codexAskEnabled = "codex_ask_enabled"
-        case codexQuestionSynthesisEnabled = "codex_question_synthesis_enabled"
-        case codexPersonSummariesEnabled = "codex_person_summaries_enabled"
-        case codexSpaceSummariesEnabled = "codex_space_summaries_enabled"
-        case codexClusterTitlesEnabled = "codex_cluster_titles_enabled"
-        case codexExecQuestionsEnabled = "codex_exec_questions_enabled"
-        case codexBeliefsEnabled = "codex_beliefs_enabled"
-        case codexModel = "codex_model"
-        case codexReasoningLevel = "codex_reasoning_level"
-        case webexSyncMinutes = "webex_sync_minutes"
-        case autoQueryAllMinutes = "auto_query_all_minutes"
-        case trackedActionsRefreshMinutes = "tracked_actions_refresh_minutes"
-        case personFocusRefreshMinutes = "person_focus_refresh_minutes"
-        case personFocusDays = "person_focus_days"
-        case personFocusAnalysisCadenceHours = "person_focus_analysis_cadence_hours"
-        case spaceFocusRefreshMinutes = "space_focus_refresh_minutes"
-        case spaceFocusDays = "space_focus_days"
-        case spaceFocusAnalysisCadenceHours = "space_focus_analysis_cadence_hours"
-        case transcriptionEnabled = "transcription_enabled"
-        case transcriptionDiarizationEnabled = "transcription_diarization_enabled"
-        case transcriptionLanguageMode = "transcription_language_mode"
-        case transcriptionMicrophoneGain = "transcription_microphone_gain"
-        case transcriptionAWSEndpoint = "transcription_aws_endpoint"
-        case pollSeconds = "poll_seconds"
-    }
 
     /// Converts in-memory settings into the persisted schema.
     init(settings: SystemSettings) {
