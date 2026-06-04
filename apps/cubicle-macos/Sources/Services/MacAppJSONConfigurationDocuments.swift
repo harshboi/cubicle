@@ -7,6 +7,14 @@ enum MacAppJSONConfigurationFiles {
     static let base = "base.json"
 }
 
+/// App-bundled JSON configuration defaults.
+enum MacAppJSONConfigurationDefaults {
+    static var bundledBaseURL: URL? {
+        Bundle.module.url(forResource: "base", withExtension: "json", subdirectory: "Config")
+            ?? Bundle.module.url(forResource: "base", withExtension: "json")
+    }
+}
+
 /// Environment names controlling the optional JSON configuration layer.
 enum MacAppJSONConfigurationEnvironment {
     static let enabled = "CUBICLE_JSON_CONFIG_ENABLED"

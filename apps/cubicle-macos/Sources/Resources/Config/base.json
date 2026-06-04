@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "environment": {
+    "webex": {
+      "api_base_url": "https://webexapis.com/v1",
+      "oauth_token_file": ".webex_oauth_tokens.json",
+      "oauth_refresh_skew_seconds": 300,
+      "oauth_refresh_token_skew_seconds": 86400,
+      "network_policy": {
+        "timeout_seconds": 20,
+        "retry_count": 5,
+        "page_size": 100
+      },
+      "sync_policy": {
+        "concurrency_limit": 3,
+        "adaptive_active_interval_seconds": 20,
+        "adaptive_recent_interval_seconds": 60,
+        "adaptive_background_interval_seconds": 180,
+        "adaptive_jitter_percent": 20
+      }
+    },
+    "imessage": {
+      "chat_database_path": "~/Library/Messages/chat.db",
+      "busy_timeout_milliseconds": 2000
+    }
+  },
+  "connectors": {
+    "enabled": ["webex", "imessage"],
+    "webex": {},
+    "imessage": {}
+  },
+  "codex": {
+    "common": {
+      "run_policy": {
+        "timeout_seconds": 120,
+        "max_attempts": 2,
+        "retry_delay_seconds": 1.5
+      }
+    },
+    "run_policy": {
+      "use": "codex.common.run_policy"
+    },
+    "cache_policy": {
+      "summary_max_age_seconds": 900,
+      "exec_questions_max_age_seconds": 900
+    },
+    "beliefs": {
+      "stale_hours": 24,
+      "evidence_chunk_size": 25,
+      "max_incremental_window_days": 90
+    },
+    "question_synthesis": {
+      "run_policy": {
+        "use": "codex.common.run_policy"
+      },
+      "seed_candidate_limit": 40,
+      "query_history_limit": 40,
+      "prompt_history_limit": 24,
+      "candidate_evidence_limit": 4,
+      "output_limit": 7
+    }
+  },
+  "question_generation": {
+    "core": {
+      "privacy": {
+        "anonymize_users": false,
+        "redact_urls": true,
+        "redact_emails": true
+      },
+      "topics": {
+        "enabled": true,
+        "number_of_topics": 8,
+        "minimum_topic_size": 1
+      },
+      "questions": {
+        "top_n": 12,
+        "enabled_categories": ["behavioral", "diagnostic", "efficiency", "network"]
+      }
+    },
+    "cubicle": {
+      "fallback_draft_limit": 4,
+      "generated_question_limit": 12,
+      "publishable_question_limit": 4,
+      "evidence_limit": 4,
+      "core_evidence_limit": 4
+    }
+  },
+  "test_mode": {
+    "enabled": false,
+    "protect_paths": []
+  }
+}

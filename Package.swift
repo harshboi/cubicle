@@ -21,7 +21,10 @@ let package = Package(
                 .product(name: "WebexQuestionGeneratorCore", package: "webex-question-core"),
                 .product(name: "MetaCodable", package: "MetaCodable")
             ],
-            path: "apps/cubicle-macos/Sources"
+            path: "apps/cubicle-macos/Sources",
+            resources: [
+                .process("Resources")
+            ]
         ),
         .testTarget(
             name: "GetWebexSpaceMacAppTests",
