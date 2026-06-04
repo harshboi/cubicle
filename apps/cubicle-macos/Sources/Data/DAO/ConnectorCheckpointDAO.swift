@@ -1,8 +1,6 @@
 import Foundation
 import SQLite3
 
-private let checkpointSQLiteTransientDestructor = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
-
 /// Persisted cursor/backoff payload for one connector target.
 struct ConnectorCheckpointRecord: Hashable {
     var connectorID: String
@@ -157,65 +155,6 @@ final class ConnectorCheckpointDAO {
         )
     }
 
-    private func execute(sql: String, db: OpaquePointer) throws {
-        var errorMessage: UnsafeMutablePointer<Int8>?
-        if sqlite3_exec(db, sql, nil, nil, &errorMessage) != SQLITE_OK {
-            let message = errorMessage.map { String(cString: $0) } ?? String(cString: sqlite3_errmsg(db))
-            sqlite3_free(errorMessage)
-            throw KnowledgeStoreError.sqliteExecFailed(sql: sql, message: message)
-        }
-        sqlite3_free(errorMessage)
-    }
-
-    private func withPreparedStatement<T>(
-        db: OpaquePointer,
-        sql: String,
-        _ body: (OpaquePointer) throws -> T
-    ) throws -> T {
-        var statement: OpaquePointer?
-        let rc = sqlite3_prepare_v2(db, sql, -1, &statement, nil)
-        guard rc == SQLITE_OK, let statement else {
-            throw KnowledgeStoreError.sqlitePrepareFailed(sql: sql, message: String(cString: sqlite3_errmsg(db)))
-        }
-        defer { sqlite3_finalize(statement) }
-        return try body(statement)
-    }
-
-    private func bindText(_ value: String, at index: Int32, in statement: OpaquePointer, sql: String) throws {
-        let rc = sqlite3_bind_text(statement, index, value, -1, checkpointSQLiteTransientDestructor)
-        guard rc == SQLITE_OK else {
-            throw KnowledgeStoreError.sqliteBindFailed(
-                sql: sql,
-                index: index,
-                code: rc,
-                message: String(cString: sqlite3_errmsg(sqlite3_db_handle(statement)))
-            )
-        }
-    }
-
-    private func stepToDone(_ statement: OpaquePointer, sql: String, db: OpaquePointer) throws {
-        let rc = sqlite3_step(statement)
-        guard rc == SQLITE_DONE else {
-            throw sqliteErrorForStep(sql: sql, db: db, code: rc)
-        }
-    }
-
-    private func stepSelect(_ statement: OpaquePointer, sql: String, db: OpaquePointer) throws -> Int32 {
-        let rc = sqlite3_step(statement)
-        guard rc == SQLITE_ROW || rc == SQLITE_DONE else {
-            throw sqliteErrorForStep(sql: sql, db: db, code: rc)
-        }
-        return rc
-    }
-
-    private func sqliteErrorForStep(sql: String, db: OpaquePointer, code: Int32) -> KnowledgeStoreError {
-        KnowledgeStoreError.sqliteStepFailed(
-            sql: sql,
-            code: code,
-            message: String(cString: sqlite3_errmsg(db))
-        )
-    }
-
     private func decodeCheckpoint(_ statement: OpaquePointer) -> ConnectorCheckpointRecord {
         ConnectorCheckpointRecord(
             connectorID: columnText(statement, index: 0),
@@ -225,13 +164,6 @@ final class ConnectorCheckpointDAO {
             metadataJSON: columnText(statement, index: 4),
             updatedAt: columnText(statement, index: 5)
         )
-    }
-
-    private func columnText(_ statement: OpaquePointer, index: Int32) -> String {
-        guard let cValue = sqlite3_column_text(statement, index) else {
-            return ""
-        }
-        return String(cString: cValue)
     }
 
     private func normalizedNonEmpty(_ value: String) -> String {
