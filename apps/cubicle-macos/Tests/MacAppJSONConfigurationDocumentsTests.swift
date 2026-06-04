@@ -165,6 +165,31 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         XCTAssertEqual(document.testMode?.connectorFixtures?["webex"], "test-data/connectors/webex.json")
     }
 
+    func testBundledBaseDefaultsDecodeAndContainNoUserData() throws {
+        let url = try XCTUnwrap(MacAppJSONConfigurationDefaults.bundledBaseURL)
+
+        let document = try MacAppJSONConfigurationComposer()
+            .loadDocument(entrypointURL: url)
+
+        XCTAssertEqual(document.environment?.webex?.apiBaseURL, "https://webexapis.com/v1")
+        XCTAssertEqual(document.environment?.webex?.networkPolicy?.pageSize, 100)
+        XCTAssertEqual(document.environment?.webex?.networkPolicy?.retryCount, 5)
+        XCTAssertEqual(document.environment?.webex?.networkPolicy?.timeoutSeconds, 20)
+        XCTAssertEqual(document.environment?.webex?.syncPolicy?.concurrencyLimit, 3)
+        XCTAssertEqual(document.environment?.imessage?.chatDatabasePath, "~/Library/Messages/chat.db")
+        XCTAssertEqual(document.connectors?.connectorEnabled("webex"), true)
+        XCTAssertEqual(document.connectors?.connectorEnabled("imessage"), true)
+        XCTAssertEqual(document.codex?.runPolicy?.timeoutSeconds, 120)
+        XCTAssertEqual(document.codex?.questionSynthesis?.runPolicy?.timeoutSeconds, 120)
+        XCTAssertEqual(document.codex?.beliefs?.maxIncrementalWindowDays, 90)
+        XCTAssertEqual(document.questionGeneration?.cubicle?.publishableQuestionLimit, 4)
+        XCTAssertEqual(document.testMode?.enabled, false)
+        XCTAssertTrue(document.testMode?.protectPaths?.isEmpty ?? false)
+        XCTAssertNil(document.testMode?.targetData)
+        XCTAssertNil(document.testMode?.settings)
+        XCTAssertNil(document.testMode?.connectorFixtures)
+    }
+
     func testComposerLoadsBaseExtendsDeepMergesObjectsAndReplacesArrays() throws {
         let root = temporaryRuntimeRoot(label: "compose")
         defer { try? FileManager.default.removeItem(at: root) }
