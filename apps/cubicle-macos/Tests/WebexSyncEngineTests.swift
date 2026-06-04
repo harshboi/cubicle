@@ -109,9 +109,9 @@ final class WebexSyncEngineTests: XCTestCase {
     }
 
     func testProcessingFailureDoesNotAdvanceCursor() async throws {
-        let runtimeRoot = temporaryRuntimeRoot(label: "cursor-failure")
-        let configuration = testConfiguration(runtimeRoot: runtimeRoot)
-        let knowledgeStore = KnowledgeStore(configuration: configuration)
+        let runtime = TestRuntimeHarness(label: "cursor-failure")
+        defer { runtime.cleanup() }
+        let knowledgeStore = runtime.knowledgeStore
         try knowledgeStore.bootstrap()
 
         let clock = TestClock(start: date(minutesFromBase: 0))
@@ -126,7 +126,6 @@ final class WebexSyncEngineTests: XCTestCase {
             now: clock.now,
             randomUnitInterval: { 0.5 }
         )
-        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
 
         let conversation = makeConversation(roomID: "room-fail")
         let m1 = makeMessage(id: "m1", roomID: "room-fail", createdAt: date(minutesFromBase: 1))
@@ -198,10 +197,9 @@ final class WebexSyncEngineTests: XCTestCase {
     }
 
     func testRestartLoadsPersistedCursor() async throws {
-        let runtimeRoot = temporaryRuntimeRoot(label: "restart")
-        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
-        let configuration = testConfiguration(runtimeRoot: runtimeRoot)
-        let knowledgeStore = KnowledgeStore(configuration: configuration)
+        let runtime = TestRuntimeHarness(label: "restart")
+        defer { runtime.cleanup() }
+        let knowledgeStore = runtime.knowledgeStore
         try knowledgeStore.bootstrap()
 
         let clock = TestClock(start: date(minutesFromBase: 0))
@@ -348,14 +346,14 @@ final class WebexSyncEngineTests: XCTestCase {
 }
 
 private struct WebexSyncHarness {
-    var runtimeRoot: URL
+    var runtime: TestRuntimeHarness
     var knowledgeStore: KnowledgeStore
     var clock: TestClock
     var client: FakeWebexClient
     var engine: WebexSyncEngine
 
     func cleanup() {
-        try? FileManager.default.removeItem(at: runtimeRoot)
+        runtime.cleanup()
     }
 }
 
@@ -363,9 +361,8 @@ private func makeHarness(
     jitterRatio: Double = 0,
     maxConcurrentRequests: Int = 3
 ) throws -> WebexSyncHarness {
-    let runtimeRoot = temporaryRuntimeRoot(label: "webex-sync")
-    let configuration = testConfiguration(runtimeRoot: runtimeRoot)
-    let knowledgeStore = KnowledgeStore(configuration: configuration)
+    let runtime = TestRuntimeHarness(label: "webex-sync")
+    let knowledgeStore = runtime.knowledgeStore
     try knowledgeStore.bootstrap()
     let clock = TestClock(start: date(minutesFromBase: 0))
     let stateStore = SyncStateStore(knowledgeStore: knowledgeStore, now: clock.now)
@@ -386,7 +383,7 @@ private func makeHarness(
         randomUnitInterval: { 0.5 }
     )
     return WebexSyncHarness(
-        runtimeRoot: runtimeRoot,
+        runtime: runtime,
         knowledgeStore: knowledgeStore,
         clock: clock,
         client: client,
