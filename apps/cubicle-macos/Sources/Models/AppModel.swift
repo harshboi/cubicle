@@ -524,27 +524,18 @@ final class AppModel: ObservableObject {
 
     /// Wires runtime-backed services and restores persisted UI-adjacent state.
     init(
-        runtimeStore: NativeRuntimeStore = NativeRuntimeStore(),
+        services: AppServices = AppServices(),
         transcriptionClient: TranscriptionClient = TranscriptionWebSocketClient(),
         audioCaptureService: AudioCaptureService = MicrophoneAudioCaptureService()
     ) {
-        self.runtimeStore = runtimeStore
-        self.configStore = ConfigStore(configuration: runtimeStore.configuration)
-        self.codexRunner = CodexRunner(configuration: runtimeStore.configuration)
-        self.knowledgeStore = KnowledgeStore(configuration: runtimeStore.configuration)
-        self.codexOrchestrationService = CodexPromptOrchestrationService(
-            configuration: runtimeStore.configuration,
-            runner: codexRunner
-        )
-        self.questionService = QuestionCandidateService(
-            knowledgeStore: knowledgeStore,
-            questionSynthesizer: codexOrchestrationService
-        )
-        self.refreshCoordinator = NativeRefreshCoordinator(configuration: runtimeStore.configuration)
-        self.oauthService = OAuthService(
-            configuration: runtimeStore.configuration,
-            configStore: configStore
-        )
+        self.runtimeStore = services.runtimeStore
+        self.configStore = services.configStore
+        self.codexRunner = services.codexRunner
+        self.knowledgeStore = services.knowledgeStore
+        self.codexOrchestrationService = services.codexOrchestrationService
+        self.questionService = services.questionService
+        self.refreshCoordinator = NativeRefreshCoordinator(services: services)
+        self.oauthService = services.oauthService
         self.transcriptionViewModel = TranscriptionViewModel(
             client: transcriptionClient,
             audioCaptureService: audioCaptureService,
@@ -565,6 +556,18 @@ final class AppModel: ObservableObject {
         )
         reloadOAuthStatuses()
         ensureBeliefTargetSelection(for: .global)
+    }
+
+    convenience init(
+        runtimeStore: NativeRuntimeStore,
+        transcriptionClient: TranscriptionClient = TranscriptionWebSocketClient(),
+        audioCaptureService: AudioCaptureService = MicrophoneAudioCaptureService()
+    ) {
+        self.init(
+            services: AppServices(runtimeStore: runtimeStore),
+            transcriptionClient: transcriptionClient,
+            audioCaptureService: audioCaptureService
+        )
     }
 
     deinit {

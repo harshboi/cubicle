@@ -109,24 +109,3 @@ final class ConnectorCheckpointDAOTests: XCTestCase {
         XCTAssertEqual(checkpoints.first?.updatedAt, "2026-06-01T00:02:00.000Z")
     }
 }
-
-private func testConfiguration(runtimeRoot: URL) -> RuntimeConfiguration {
-    RuntimeConfiguration(
-        runtimeRoot: runtimeRoot,
-        codexExecutable: "codex",
-        webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-        webexPageSize: 100,
-        webexRetryCount: 0,
-        webexTimeoutSeconds: 1,
-        webexOAuthTokenPathOverride: nil,
-        webexOAuthRefreshSkewSeconds: 300,
-        webexOAuthRefreshTokenSkewSeconds: 86_400
-    )
-}
-
-private func temporaryRuntimeRoot(label: String) -> URL {
-    FileManager.default.temporaryDirectory.appendingPathComponent(
-        "Cubicle-\(label)-\(UUID().uuidString)",
-        isDirectory: true
-    )
-}

@@ -3667,23 +3667,6 @@ private func querySQLiteText(
     return String(cString: text)
 }
 
-private func testRuntimeConfiguration(
-    runtimeRoot: URL,
-    codexExecutable: String = "codex"
-) -> RuntimeConfiguration {
-    RuntimeConfiguration(
-        runtimeRoot: runtimeRoot,
-        codexExecutable: codexExecutable,
-        webexBaseURL: URL(string: "https://webexapis.com/v1")!,
-        webexPageSize: 100,
-        webexRetryCount: 0,
-        webexTimeoutSeconds: 1,
-        webexOAuthTokenPathOverride: nil,
-        webexOAuthRefreshSkewSeconds: 300,
-        webexOAuthRefreshTokenSkewSeconds: 86_400
-    )
-}
-
 private func makeFocusCache(
     kind: FocusKind,
     days: Int,

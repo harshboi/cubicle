@@ -1,4 +1,5 @@
 import Foundation
+import MetaCodable
 
 /// Room payload normalized from the Webex REST API.
 struct WebexRoom: Identifiable, Hashable, Decodable {
@@ -31,20 +32,15 @@ struct WebexPerson: Identifiable, Hashable, Decodable {
 }
 
 /// Room membership payload used to resolve participants and aliases.
-struct WebexMembership: Identifiable, Hashable, Decodable {
+@Codable
+struct WebexMembership: Identifiable, Hashable {
     var id: String
+    @CodedAt("roomId")
     var roomID: String
+    @CodedAt("personId")
     var personID: String
     var personEmail: String
     var personDisplayName: String
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case roomID = "roomId"
-        case personID = "personId"
-        case personEmail
-        case personDisplayName
-    }
 }
 
 /// Message payload normalized across Webex `text` and `markdown` fields.
