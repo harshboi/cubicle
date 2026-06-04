@@ -47,6 +47,51 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
         XCTAssertEqual(settings.tenant, "organizations")
     }
 
+    func testOutlookOAuthTokenCandidatesUseInjectedEnvironment() throws {
+        let runtimeRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CubicleOutlookOAuthTokenEnvironmentTests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: runtimeRoot) }
+        let previousOutlookValue = ProcessInfo.processInfo.environment["OUTLOOK_OAUTH_TOKEN_FILE"]
+        let previousGraphValue = ProcessInfo.processInfo.environment["MS_GRAPH_OAUTH_TOKEN_FILE"]
+        unsetenv("OUTLOOK_OAUTH_TOKEN_FILE")
+        unsetenv("MS_GRAPH_OAUTH_TOKEN_FILE")
+        defer {
+            if let previousOutlookValue {
+                setenv("OUTLOOK_OAUTH_TOKEN_FILE", previousOutlookValue, 1)
+            } else {
+                unsetenv("OUTLOOK_OAUTH_TOKEN_FILE")
+            }
+            if let previousGraphValue {
+                setenv("MS_GRAPH_OAUTH_TOKEN_FILE", previousGraphValue, 1)
+            } else {
+                unsetenv("MS_GRAPH_OAUTH_TOKEN_FILE")
+            }
+        }
+
+        let configuration = RuntimeConfiguration(
+            runtimeRoot: runtimeRoot,
+            codexExecutable: "codex",
+            webexBaseURL: URL(string: "https://webexapis.com/v1")!,
+            webexPageSize: 100,
+            webexRetryCount: 0,
+            webexTimeoutSeconds: 1,
+            webexOAuthTokenPathOverride: nil,
+            webexOAuthRefreshSkewSeconds: 300,
+            webexOAuthRefreshTokenSkewSeconds: 86_400
+        )
+        let configStore = ConfigStore(
+            configuration: configuration,
+            environment: ["OUTLOOK_OAUTH_TOKEN_FILE": "tokens/outlook.json"]
+        )
+
+        let candidates = configStore.oauthTokenFileCandidates(provider: .outlook)
+
+        XCTAssertEqual(
+            candidates.first,
+            runtimeRoot.appendingPathComponent("tokens/outlook.json")
+        )
+    }
+
     func testRuntimeConfigurationResolvesCodexExecutableOverride() throws {
         let previousValue = ProcessInfo.processInfo.environment["CODEX_BIN"]
         setenv("CODEX_BIN", "/tmp/cubicle-codex", 1)

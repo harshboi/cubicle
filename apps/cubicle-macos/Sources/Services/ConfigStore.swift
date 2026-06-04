@@ -1065,7 +1065,7 @@ final class ConfigStore {
     func oauthTokenFileCandidates(provider: OAuthProviderKind) -> [URL] {
         var candidates: [URL] = []
 
-        let environment = ProcessInfo.processInfo.environment
+        let environment = self.environment
         let override: String?
         let defaultFilename: String
         switch provider {
