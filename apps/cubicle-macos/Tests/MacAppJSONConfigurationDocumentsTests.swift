@@ -480,11 +480,6 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         try decoder.decode(T.self, from: XCTUnwrap(json.data(using: .utf8)))
     }
 
-    private func temporaryRuntimeRoot(label: String) -> URL {
-        FileManager.default.temporaryDirectory
-            .appendingPathComponent("Cubicle-\(label)-\(UUID().uuidString)", isDirectory: true)
-    }
-
     private func writeConfigFile(root: URL, filename: String, contents: String) throws {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         try contents.write(

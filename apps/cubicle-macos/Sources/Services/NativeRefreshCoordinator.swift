@@ -82,27 +82,21 @@ final class NativeRefreshCoordinator {
     let questionService: QuestionCandidateService
 
     /// Wires runtime services for a single runtime root.
-    init(configuration: RuntimeConfiguration = .current) {
-        self.configuration = configuration
-        self.configStore = ConfigStore(configuration: configuration)
-        self.webexClient = WebexAPIClient(configuration: configuration)
-        self.knowledgeStore = KnowledgeStore(configuration: configuration)
-        self.codexRunner = CodexRunner(configuration: configuration)
-        self.runtimeStore = NativeRuntimeStore(configuration: configuration)
-        self.webexIngestionService = NativeWebexIngestionService(
-            configuration: configuration,
-            configStore: configStore,
-            webexClient: webexClient,
-            knowledgeStore: knowledgeStore
-        )
-        self.codexOrchestrationService = CodexPromptOrchestrationService(
-            configuration: configuration,
-            runner: codexRunner
-        )
-        self.questionService = QuestionCandidateService(
-            knowledgeStore: knowledgeStore,
-            questionSynthesizer: codexOrchestrationService
-        )
+    convenience init(configuration: RuntimeConfiguration = .current) {
+        self.init(services: AppServices(runtimeStore: NativeRuntimeStore(configuration: configuration)))
+    }
+
+    /// Reuses an already-built app service graph.
+    init(services: AppServices) {
+        self.configuration = services.configuration
+        self.configStore = services.configStore
+        self.webexClient = services.webexClient
+        self.knowledgeStore = services.knowledgeStore
+        self.codexRunner = services.codexRunner
+        self.runtimeStore = services.runtimeStore
+        self.webexIngestionService = services.webexIngestionService
+        self.codexOrchestrationService = services.codexOrchestrationService
+        self.questionService = services.questionService
     }
 
     /// Builds scheduler plans from current user settings.

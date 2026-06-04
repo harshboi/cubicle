@@ -386,21 +386,26 @@ struct CodexFeatureDisabledError: LocalizedError {
 final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
     let configuration: RuntimeConfiguration
     let runner: CodexRunner
+    private let configStore: ConfigStore
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
 
     /// Injects runner/config and sets stable JSON output formatting.
-    init(configuration: RuntimeConfiguration = .current, runner: CodexRunner? = nil) {
+    init(
+        configuration: RuntimeConfiguration = .current,
+        runner: CodexRunner? = nil,
+        configStore: ConfigStore? = nil
+    ) {
         self.configuration = configuration
         self.runner = runner ?? CodexRunner(configuration: configuration)
+        self.configStore = configStore ?? ConfigStore(configuration: configuration)
         self.decoder = JSONDecoder()
         self.encoder = JSONEncoder()
         self.encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     }
 
     private func codexFeatureEnabled(_ feature: CodexFeatureToggle) -> Bool {
-        ConfigStore(configuration: configuration)
-            .loadSystemSettings()
+        configStore.loadSystemSettings()
             .codexFeatureEnabled(feature)
     }
 
@@ -428,7 +433,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         }
 
         let promptVersion = CodexPromptVersionRegistry.questionSynthesis
-        let queryHistory = ConfigStore(configuration: configuration).loadAskCodexQueryHistory(limit: 40)
+        let queryHistory = configStore.loadAskCodexQueryHistory(limit: 40)
         let inputHash = hashForQuestionSynthesisCandidates(seedCandidates, queryHistory: queryHistory)
         let cacheURL = cacheFileURL(kind: "question-synthesis", key: inputHash)
 
