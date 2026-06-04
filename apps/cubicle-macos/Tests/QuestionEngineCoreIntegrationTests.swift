@@ -348,7 +348,6 @@ final class QuestionEngineCoreIntegrationTests: XCTestCase {
 
         let configuration = RuntimeConfiguration.resolved(environment: [
             "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
-            MacAppJSONConfigurationEnvironment.enabled: "true",
             MacAppJSONConfigurationEnvironment.directory: configDirectory.path
         ])
         let configStore = ConfigStore(configuration: configuration)

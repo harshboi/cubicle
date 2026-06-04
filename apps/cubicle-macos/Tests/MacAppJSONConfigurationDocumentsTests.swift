@@ -523,8 +523,8 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         }
     }
 
-    func testRuntimeConfigurationIgnoresComposedJSONWhenFeatureFlagIsOff() throws {
-        let runtimeRoot = temporaryRuntimeRoot(label: "json-off")
+    func testRuntimeConfigurationAppliesComposedJSONWithoutOptInEnv() throws {
+        let runtimeRoot = temporaryRuntimeRoot(label: "json-safe-on")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         try writeRuntimeConfigFile(
             root: runtimeRoot,
@@ -547,13 +547,14 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
             "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path
         ])
 
-        XCTAssertEqual(configuration.webexPageSize, 100)
-        XCTAssertEqual(configuration.webexRetryCount, 5)
-        XCTAssertNotEqual(configuration.codexExecutable, "/tmp/json-codex")
+        XCTAssertEqual(configuration.webexPageSize, 25)
+        XCTAssertEqual(configuration.webexRetryCount, 1)
+        XCTAssertEqual(configuration.codexExecutable, "/tmp/json-codex")
+        XCTAssertNotNil(configuration.jsonConfiguration)
     }
 
-    func testRuntimeConfigurationAppliesComposedJSONWhenEnabled() throws {
-        let runtimeRoot = temporaryRuntimeRoot(label: "json-on")
+    func testRuntimeConfigurationAppliesComposedJSONWithBundledAndOperatorConfig() throws {
+        let runtimeRoot = temporaryRuntimeRoot(label: "json-composed")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         try writeRuntimeConfigFile(
             root: runtimeRoot,
@@ -601,8 +602,7 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         )
 
         let configuration = RuntimeConfiguration.resolved(environment: [
-            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
-            MacAppJSONConfigurationEnvironment.enabled: "true"
+            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path
         ])
 
         XCTAssertEqual(configuration.webexBaseURL, URL(string: "https://example.com/webex")!)
@@ -620,7 +620,7 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         XCTAssertEqual(configuration.codexExecutable, "/tmp/json-codex")
     }
 
-    func testRuntimeConfigurationEnvOverridesComposedJSONWhenEnabled() throws {
+    func testRuntimeConfigurationEnvOverridesComposedJSON() throws {
         let runtimeRoot = temporaryRuntimeRoot(label: "json-env-wins")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
         try writeRuntimeConfigFile(
@@ -642,7 +642,6 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
 
         let configuration = RuntimeConfiguration.resolved(environment: [
             "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
-            MacAppJSONConfigurationEnvironment.enabled: "on",
             "CODEX_BIN": "/tmp/env-codex",
             "WEBEX_API_PAGE_SIZE": "77"
         ])
@@ -675,7 +674,6 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         )
 
         let jsonConfiguration = RuntimeConfiguration.resolved(environment: [
-            MacAppJSONConfigurationEnvironment.enabled: "true",
             MacAppJSONConfigurationEnvironment.directory: configDirectory.path
         ])
         XCTAssertEqual(jsonConfiguration.runtimeRoot.standardizedFileURL, jsonRuntimeRoot.standardizedFileURL)
@@ -683,20 +681,18 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
 
         let envConfiguration = RuntimeConfiguration.resolved(environment: [
             "GETWEBEXSPACE_RUNTIME_ROOT": envRuntimeRoot.path,
-            MacAppJSONConfigurationEnvironment.enabled: "true",
             MacAppJSONConfigurationEnvironment.directory: configDirectory.path
         ])
         XCTAssertEqual(envConfiguration.runtimeRoot.standardizedFileURL, envRuntimeRoot.standardizedFileURL)
         XCTAssertEqual(envConfiguration.jsonConfigurationDirectory?.standardizedFileURL, configDirectory.standardizedFileURL)
     }
 
-    func testRuntimeConfigurationUsesBundledDefaultsWhenEnabledWithoutOperatorConfig() throws {
+    func testRuntimeConfigurationUsesBundledDefaultsWithoutOperatorConfig() throws {
         let runtimeRoot = temporaryRuntimeRoot(label: "json-defaults-only")
         defer { try? FileManager.default.removeItem(at: runtimeRoot) }
 
         let configuration = RuntimeConfiguration.resolved(environment: [
-            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
-            MacAppJSONConfigurationEnvironment.enabled: "true"
+            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path
         ])
 
         XCTAssertEqual(configuration.webexBaseURL, URL(string: "https://webexapis.com/v1")!)
@@ -734,8 +730,7 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         )
 
         let configuration = RuntimeConfiguration.resolved(environment: [
-            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
-            MacAppJSONConfigurationEnvironment.enabled: "true"
+            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path
         ])
 
         XCTAssertEqual(configuration.webexRetryCount, 5)
@@ -778,8 +773,7 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         )
 
         let configuration = RuntimeConfiguration.resolved(environment: [
-            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
-            MacAppJSONConfigurationEnvironment.enabled: "true"
+            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path
         ])
 
         XCTAssertEqual(configuration.webexPageSize, 50)
@@ -810,8 +804,7 @@ final class MacAppJSONConfigurationDocumentsTests: XCTestCase {
         )
 
         let configuration = RuntimeConfiguration.resolved(environment: [
-            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path,
-            MacAppJSONConfigurationEnvironment.enabled: "true"
+            "GETWEBEXSPACE_RUNTIME_ROOT": runtimeRoot.path
         ])
 
         XCTAssertEqual(configuration.jsonConfiguration?.connectors?.connectorEnabled("webex"), false)

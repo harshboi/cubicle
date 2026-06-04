@@ -10,7 +10,7 @@ repo checkout
   |
   +-- set GUI runtime env
   |     -> GETWEBEXSPACE_RUNTIME_ROOT
-  |     -> optional CUBICLE_JSON_CONFIG_ENABLED
+  |     -> optional CUBICLE_CONFIG_FILE / CUBICLE_JSON_CONFIG_DIR
   |
   +-- grant macOS access
   |     -> Full Disk Access for /Applications/Cubicle.app
@@ -51,12 +51,6 @@ GUI apps do not inherit shell env automatically. Set runtime env with `launchctl
 launchctl setenv GETWEBEXSPACE_RUNTIME_ROOT "$HOME/Desktop/getwebexspace-data"
 ```
 
-Enable JSON config defaults/overlay support:
-
-```bash
-launchctl setenv CUBICLE_JSON_CONFIG_ENABLED 1
-```
-
 Optional operator config:
 
 ```bash
@@ -77,14 +71,13 @@ Verify the running process inherited env:
 
 ```bash
 pid=$(pgrep -n -f '/Applications/Cubicle.app/Contents/MacOS/Cubicle')
-ps eww -p "$pid" | tr ' ' '\n' | rg 'GETWEBEXSPACE_RUNTIME_ROOT|CUBICLE_JSON_CONFIG'
+ps eww -p "$pid" | tr ' ' '\n' | rg 'GETWEBEXSPACE_RUNTIME_ROOT|CUBICLE_CONFIG_FILE|CUBICLE_JSON_CONFIG_DIR'
 ```
 
 Expected:
 
 ```text
 GETWEBEXSPACE_RUNTIME_ROOT=/Users/prabhat/Desktop/getwebexspace-data
-CUBICLE_JSON_CONFIG_ENABLED=1
 ```
 
 ## macOS Permissions
@@ -128,7 +121,6 @@ Do not put secrets in JSON config. Secret-bearing keys are rejected.
 Useful env vars:
 
 ```text
-CUBICLE_JSON_CONFIG_ENABLED -> turns JSON config on
 CUBICLE_JSON_CONFIG_DIR     -> base directory for config-relative paths
 CUBICLE_CONFIG_FILE         -> explicit cubicle.json path
 GETWEBEXSPACE_RUNTIME_ROOT  -> local runtime data root
@@ -180,4 +172,3 @@ logs/
 *.tfstate*
 *.tfvars*
 ```
-

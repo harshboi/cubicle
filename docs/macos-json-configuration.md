@@ -1,6 +1,6 @@
 # macOS JSON Configuration
 
-Cubicle's macOS app keeps existing defaults, UI settings, DB-backed state, generated caches, and secret stores. The optional JSON configuration layer is a control plane for non-secret runtime tuning, connector selection, Codex/question behavior, and test-app fixture locations.
+Cubicle's macOS app keeps existing defaults, UI settings, DB-backed state, generated caches, and secret stores. The safe-on JSON configuration layer is a control plane for non-secret runtime tuning, connector selection, Codex/question behavior, and test-app fixture locations.
 
 ## Entry Point
 
@@ -13,14 +13,11 @@ $GETWEBEXSPACE_RUNTIME_ROOT/config/cubicle.json
 Operators can override the entrypoint with:
 
 ```text
-CUBICLE_JSON_CONFIG_ENABLED=true
 CUBICLE_CONFIG_FILE=/path/to/cubicle.json
 CUBICLE_JSON_CONFIG_DIR=/path/to/config
 ```
 
-`CUBICLE_JSON_CONFIG_ENABLED` defaults to `false`. Accepted truthy values are `1`, `true`, `yes`, and `on`. When disabled, the app should not read these files or start file watchers.
-
-When enabled, the app always loads the bundled `base.json` defaults first. If no operator `cubicle.json` exists, those defaults are the complete JSON config. If `CUBICLE_CONFIG_FILE` points at a missing file, startup fails visibly instead of silently falling back.
+The app always loads the bundled `base.json` defaults first. If no operator `cubicle.json` exists, those defaults are the complete JSON config. If `CUBICLE_CONFIG_FILE` points at a missing file, startup fails visibly instead of silently falling back.
 
 `environment.runtime_root` can set the runtime root after the JSON document is loaded. `GETWEBEXSPACE_RUNTIME_ROOT` still wins when both are present, and the JSON config directory remains the directory that loaded `cubicle.json`.
 
@@ -85,7 +82,7 @@ Merge rules are intentionally small and deterministic:
 - `null` keeps the bundled/default value when a default exists.
 - Arrays replace.
 - Extend cycles fail visibly.
-- Missing or malformed files fail visibly when JSON config is enabled.
+- Explicitly selected, extended, or included missing/malformed files fail visibly.
 
 ## Reusable Policy Blocks
 

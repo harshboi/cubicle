@@ -1,7 +1,7 @@
 import Foundation
 import MetaCodable
 
-/// File names and document types for optional macOS JSON configuration.
+/// File names and document types for macOS JSON configuration.
 enum MacAppJSONConfigurationFiles {
     static let entrypoint = "cubicle.json"
     static let base = "base.json"
@@ -106,18 +106,10 @@ extension MacAppJSONConfigurationDocument {
     }
 }
 
-/// Environment names controlling the optional JSON configuration layer.
+/// Environment names controlling JSON configuration selection.
 enum MacAppJSONConfigurationEnvironment {
-    static let enabled = "CUBICLE_JSON_CONFIG_ENABLED"
     static let file = "CUBICLE_CONFIG_FILE"
     static let directory = "CUBICLE_JSON_CONFIG_DIR"
-
-    static func isEnabled(in environment: [String: String]) -> Bool {
-        guard let value = trimmed(environment[enabled])?.lowercased() else {
-            return false
-        }
-        return ["1", "true", "yes", "on"].contains(value)
-    }
 
     static func trimmed(_ value: String?) -> String? {
         guard let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -128,7 +120,7 @@ enum MacAppJSONConfigurationEnvironment {
     }
 }
 
-/// Feature-flagged reader for the composed macOS JSON configuration document.
+/// Reader for the composed macOS JSON configuration document.
 struct MacAppJSONConfigurationLoader {
     var runtimeRoot: URL
     var environment: [String: String]
@@ -150,10 +142,6 @@ struct MacAppJSONConfigurationLoader {
         fileManager: FileManager = .default
     ) {
         self.init(runtimeRoot: configuration.runtimeRoot, environment: environment, fileManager: fileManager)
-    }
-
-    var isEnabled: Bool {
-        MacAppJSONConfigurationEnvironment.isEnabled(in: environment)
     }
 
     var configDirectory: URL {
@@ -181,7 +169,6 @@ struct MacAppJSONConfigurationLoader {
     }
 
     func configurationDocument() -> MacAppJSONConfigurationDocument? {
-        guard isEnabled else { return nil }
         do {
             let composer = MacAppJSONConfigurationComposer(
                 fileManager: fileManager,
