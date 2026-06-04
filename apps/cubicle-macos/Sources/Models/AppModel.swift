@@ -524,7 +524,7 @@ final class AppModel: ObservableObject {
         self.knowledgeStore = services.knowledgeStore
         self.codexOrchestrationService = services.codexOrchestrationService
         self.questionService = services.questionService
-        self.refreshCoordinator = NativeRefreshCoordinator(services: services)
+        self.refreshCoordinator = services.makeRefreshCoordinator()
         self.oauthService = services.oauthService
         self.transcriptionViewModel = TranscriptionViewModel(
             client: transcriptionClient,

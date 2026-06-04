@@ -5,11 +5,13 @@ import SwiftUI
 /// SwiftUI app entry point plus hidden CLI refresh entry points.
 @main
 struct GetWebexSpaceMacApp: App {
-    @StateObject private var model = AppModel()
+    @StateObject private var model: AppModel
 
     /// Handles runtime-only CLI commands before SwiftUI launches.
     init() {
-        RuntimeCommandLine.runAndExitIfRequested()
+        let services = AppServices()
+        RuntimeCommandLine.runAndExitIfRequested(services: services)
+        _model = StateObject(wrappedValue: AppModel(services: services))
     }
 
     /// Main app window and command menu wiring.
@@ -38,7 +40,7 @@ struct GetWebexSpaceMacApp: App {
 /// Bridges packaged app code to scriptable refresh commands.
 private enum RuntimeCommandLine {
     /// Runs the requested refresh command and exits without opening the UI.
-    static func runAndExitIfRequested() {
+    static func runAndExitIfRequested(services: AppServices) {
         let arguments = Set(CommandLine.arguments.dropFirst())
         guard arguments.contains("--refresh-space-focus-cache")
             || arguments.contains("--refresh-person-focus-cache")
@@ -49,7 +51,7 @@ private enum RuntimeCommandLine {
         }
 
         do {
-            let store = NativeRuntimeStore()
+            let store = services.runtimeStore
             if arguments.contains("--refresh-space-focus-cache") {
                 let outcome = try store.refreshSpaceFocusCache(forceRebuild: true)
                 print(summary(label: "space", outcome: outcome))
@@ -59,15 +61,15 @@ private enum RuntimeCommandLine {
                 print(summary(label: "person", outcome: outcome))
             }
             if arguments.contains("--refresh-space-focus-with-codex") {
-                let result = try runAsyncRefresh(scope: .spaceFocus, mode: .full)
+                let result = try runAsyncRefresh(services: services, scope: .spaceFocus, mode: .full)
                 print(result.summary)
             }
             if arguments.contains("--refresh-person-focus-with-codex") {
-                let result = try runAsyncRefresh(scope: .personFocus, mode: .full)
+                let result = try runAsyncRefresh(services: services, scope: .personFocus, mode: .full)
                 print(result.summary)
             }
             if arguments.contains("--sync-webex-now") {
-                let result = try runAsyncRefresh(scope: .webexSync, mode: .full)
+                let result = try runAsyncRefresh(services: services, scope: .webexSync, mode: .full)
                 print(result.summary)
             }
             exit(0)
@@ -84,6 +86,7 @@ private enum RuntimeCommandLine {
 
     /// Runs async refresh code from the synchronous CLI startup path.
     private static func runAsyncRefresh(
+        services: AppServices,
         scope: RefreshScope,
         mode: RefreshExecutionMode
     ) throws -> RefreshExecutionResult {
@@ -91,7 +94,7 @@ private enum RuntimeCommandLine {
         var capturedResult: Result<RefreshExecutionResult, Error>?
         Task {
             do {
-                let result = try await NativeRefreshCoordinator().refresh(scope, mode: mode)
+                let result = try await services.makeRefreshCoordinator().refresh(scope, mode: mode)
                 capturedResult = .success(result)
             } catch {
                 capturedResult = .failure(error)

@@ -63,4 +63,9 @@ struct AppServices {
             configStore: resolvedConfigStore
         )
     }
+
+    /// Builds a refresh coordinator from this shared service graph.
+    func makeRefreshCoordinator() -> NativeRefreshCoordinator {
+        NativeRefreshCoordinator(services: self)
+    }
 }

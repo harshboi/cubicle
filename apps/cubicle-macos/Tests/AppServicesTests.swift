@@ -26,6 +26,24 @@ final class AppServicesTests: XCTestCase {
         XCTAssertTrue(model.refreshCoordinator.webexIngestionService === services.webexIngestionService)
     }
 
+    func testAppServicesBuildsRefreshCoordinatorFromSharedGraph() {
+        let harness = TestRuntimeHarness(label: "app-services-coordinator")
+        defer { harness.cleanup() }
+        let services = AppServices(runtimeStore: harness.runtimeStore)
+
+        let coordinator = services.makeRefreshCoordinator()
+
+        XCTAssertEqual(coordinator.configuration.runtimeRoot, harness.runtimeRoot)
+        XCTAssertTrue(coordinator.runtimeStore === services.runtimeStore)
+        XCTAssertTrue(coordinator.configStore === services.configStore)
+        XCTAssertTrue(coordinator.webexClient === services.webexClient)
+        XCTAssertTrue(coordinator.knowledgeStore === services.knowledgeStore)
+        XCTAssertTrue(coordinator.codexRunner === services.codexRunner)
+        XCTAssertTrue(coordinator.webexIngestionService === services.webexIngestionService)
+        XCTAssertTrue(coordinator.codexOrchestrationService === services.codexOrchestrationService)
+        XCTAssertTrue(coordinator.questionService === services.questionService)
+    }
+
     func testRefreshCoordinatorConvenienceInitializerUsesSharedServices() {
         let harness = TestRuntimeHarness(label: "refresh-services-share")
         defer { harness.cleanup() }
