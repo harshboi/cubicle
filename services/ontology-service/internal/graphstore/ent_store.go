@@ -25,10 +25,14 @@ func NewEntStore(client *ent.Client) *EntStore {
 }
 
 func (s *EntStore) UpsertObject(ctx context.Context, object domain.Object) error {
+	return upsertObject(ctx, s.client, object)
+}
+
+func upsertObject(ctx context.Context, client *ent.Client, object domain.Object) error {
 	if object.ObjectType == "" || object.Key == "" {
 		return fmt.Errorf("%w: object_type and key are required", ErrMissingObject)
 	}
-	existing, err := s.client.Object.Query().
+	existing, err := client.Object.Query().
 		Where(entobject.KeyEQ(object.Key)).
 		Only(ctx)
 	if err == nil {
@@ -51,7 +55,7 @@ func (s *EntStore) UpsertObject(ctx context.Context, object domain.Object) error
 	if !ent.IsNotFound(err) {
 		return err
 	}
-	return s.client.Object.Create().
+	return client.Object.Create().
 		SetKey(object.Key).
 		SetObjectType(string(object.ObjectType)).
 		SetTitle(object.Title).
@@ -70,19 +74,23 @@ func (s *EntStore) UpsertObject(ctx context.Context, object domain.Object) error
 }
 
 func (s *EntStore) UpsertAssociation(ctx context.Context, association domain.Association) error {
+	return upsertAssociation(ctx, s.client, association)
+}
+
+func upsertAssociation(ctx context.Context, client *ent.Client, association domain.Association) error {
 	if association.From.Key == "" || association.To.Key == "" || association.AssociationType == "" {
 		return fmt.Errorf("%w: from, to, and association_type are required", ErrInvalidExpansion)
 	}
-	if _, err := s.objectByKey(ctx, association.From.Key); err != nil {
+	if _, err := objectByKeyWithClient(ctx, client, association.From.Key); err != nil {
 		return err
 	}
-	if _, err := s.objectByKey(ctx, association.To.Key); err != nil {
+	if _, err := objectByKeyWithClient(ctx, client, association.To.Key); err != nil {
 		return err
 	}
 	if association.Key == "" {
 		association.Key = associationKey(association)
 	}
-	existing, err := s.client.Association.Query().
+	existing, err := client.Association.Query().
 		Where(entassociation.KeyEQ(association.Key)).
 		Only(ctx)
 	if err == nil {
@@ -109,7 +117,7 @@ func (s *EntStore) UpsertAssociation(ctx context.Context, association domain.Ass
 	if !ent.IsNotFound(err) {
 		return err
 	}
-	return s.client.Association.Create().
+	return client.Association.Create().
 		SetKey(association.Key).
 		SetFromObjectType(string(association.From.ObjectType)).
 		SetFromObjectKey(association.From.Key).
@@ -190,7 +198,11 @@ func (s *EntStore) Expand(ctx context.Context, req domain.ExpandRequest) (domain
 }
 
 func (s *EntStore) objectByKey(ctx context.Context, key string) (*ent.Object, error) {
-	storedObject, err := s.client.Object.Query().
+	return objectByKeyWithClient(ctx, s.client, key)
+}
+
+func objectByKeyWithClient(ctx context.Context, client *ent.Client, key string) (*ent.Object, error) {
+	storedObject, err := client.Object.Query().
 		Where(entobject.KeyEQ(key)).
 		Only(ctx)
 	if ent.IsNotFound(err) {
