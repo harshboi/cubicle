@@ -112,6 +112,31 @@ future Ent client
 future AssociationStore
 ```
 
+The Ent graphstore slice adds generated code under `ent/`:
+
+```text
+ent/schema
+ |
+ +-- ontologynode.go
+ |     -> source-neutral graph object
+ |
+ +-- graphedge.go
+       -> metadata-rich association between graph objects
+
+internal/graphstore
+ |
+ +-- ent_store.go
+       -> Ent-backed implementation of bounded graph expansion
+```
+
+Regenerate Ent code after schema edits:
+
+```bash
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
+go generate ./ent
+go test ./...
+```
+
 Default local paths come from `internal/config`:
 
 ```text
@@ -214,7 +239,7 @@ PR 3: Gin + Huma HTTP server
 PR 4: SQLite storage foundation
  |
  v
-PR 5: Ent + SQLite AssociationStore
+PR 5: Ent-backed graphstore
  |
  v
 PR 6: product query endpoints
