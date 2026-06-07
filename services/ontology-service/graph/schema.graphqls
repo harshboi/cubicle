@@ -1,0 +1,12 @@
+schema {
+  query: Query
+}
+
+type Query {
+  health: Health!
+}
+
+type Health {
+  ok: Boolean!
+  service: String!
+}
