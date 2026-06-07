@@ -48,19 +48,22 @@ The Swift app should not know about Ent schemas, SQLite tables, crawler snapshot
 ## Requirements
 
 - Go `1.25.1`
+- CGO enabled for `github.com/mattn/go-sqlite3`
 - macOS or Linux shell
-- No database dependency for the current server slice
+- Local SQLite database created under `.data/graph.db` by default
 
 Check your Go version:
 
 ```bash
 go version
+go env CGO_ENABLED
 ```
 
 Expected shape:
 
 ```text
 go version go1.25.1 ...
+1
 ```
 
 ## Setup
@@ -78,6 +81,7 @@ This downloads the HTTP framework dependencies used by the server slice:
 ```text
 Gin   -> server framework: routing, middleware, recovery
 Huma  -> typed REST operations, validation, OpenAPI, docs
+SQLite -> local graph database foundation
 ```
 
 ## Run Tests
@@ -88,6 +92,42 @@ go test ./...
 ```
 
 The current tests validate that the in-memory graphstore can expand a bounded workstream graph and that invalid expansion requests fail.
+
+## Storage
+
+The service now has a SQLite storage foundation under `internal/storage`.
+It is intentionally lower-level than Ent:
+
+```text
+internal/storage
+ |
+ +-- opens database/sql SQLite handle
+ +-- applies local-first PRAGMAs
+ +-- owns transaction commit/rollback
+ |
+ v
+future Ent client
+ |
+ v
+future AssociationStore
+```
+
+Default local paths come from `internal/config`:
+
+```text
+CUBICLE_ONTOLOGY_LISTEN_ADDR   default: 127.0.0.1:48080
+CUBICLE_ONTOLOGY_DATA_ROOT     default: .data
+CUBICLE_ONTOLOGY_DATABASE_PATH default: .data/graph.db
+```
+
+SQLite settings enforced by tests:
+
+```text
+foreign_keys=ON
+journal_mode=WAL
+busy_timeout>=5000ms
+synchronous=NORMAL
+```
 
 ## Run Server
 
@@ -176,8 +216,11 @@ PR 2: ontology-service scaffold and README
 PR 3: Gin + Huma HTTP server
  |
  v
-PR 4: Ent + SQLite AssociationStore
+PR 4: SQLite storage foundation
  |
  v
-PR 5: product query endpoints
+PR 5: Ent + SQLite AssociationStore
+ |
+ v
+PR 6: product query endpoints
 ```
