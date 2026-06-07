@@ -12,6 +12,10 @@ import (
 var (
 	ErrMissingNode      = errors.New("missing node")
 	ErrInvalidExpansion = errors.New("invalid expansion request")
+	ErrInvalidIngest    = errors.New("invalid ingest request")
+	ErrIngestConflict   = errors.New("ingest conflict")
+	ErrRunNotOpen       = errors.New("ingest run is not open")
+	ErrSnapshotNotFound = errors.New("source snapshot not found")
 )
 
 type MemoryStore struct {

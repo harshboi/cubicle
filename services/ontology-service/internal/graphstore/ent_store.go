@@ -25,10 +25,14 @@ func NewEntStore(client *ent.Client) *EntStore {
 }
 
 func (s *EntStore) UpsertNode(ctx context.Context, node domain.Node) error {
+	return upsertNode(ctx, s.client, node)
+}
+
+func upsertNode(ctx context.Context, client *ent.Client, node domain.Node) error {
 	if node.Kind == "" || node.Key == "" {
 		return fmt.Errorf("%w: kind and key are required", ErrMissingNode)
 	}
-	existing, err := s.client.OntologyNode.Query().
+	existing, err := client.OntologyNode.Query().
 		Where(ontologynode.KeyEQ(node.Key)).
 		Only(ctx)
 	if err == nil {
@@ -51,7 +55,7 @@ func (s *EntStore) UpsertNode(ctx context.Context, node domain.Node) error {
 	if !ent.IsNotFound(err) {
 		return err
 	}
-	return s.client.OntologyNode.Create().
+	return client.OntologyNode.Create().
 		SetKey(node.Key).
 		SetKind(string(node.Kind)).
 		SetTitle(node.Title).
@@ -70,19 +74,23 @@ func (s *EntStore) UpsertNode(ctx context.Context, node domain.Node) error {
 }
 
 func (s *EntStore) UpsertEdge(ctx context.Context, edge domain.Edge) error {
+	return upsertEdge(ctx, s.client, edge)
+}
+
+func upsertEdge(ctx context.Context, client *ent.Client, edge domain.Edge) error {
 	if edge.From.Key == "" || edge.To.Key == "" || edge.Metadata.Predicate == "" {
 		return fmt.Errorf("%w: from, to, and predicate are required", ErrInvalidExpansion)
 	}
-	if _, err := s.nodeByKey(ctx, edge.From.Key); err != nil {
+	if _, err := nodeByKeyWithClient(ctx, client, edge.From.Key); err != nil {
 		return err
 	}
-	if _, err := s.nodeByKey(ctx, edge.To.Key); err != nil {
+	if _, err := nodeByKeyWithClient(ctx, client, edge.To.Key); err != nil {
 		return err
 	}
 	if edge.Key == "" {
 		edge.Key = edgeKey(edge)
 	}
-	existing, err := s.client.GraphEdge.Query().
+	existing, err := client.GraphEdge.Query().
 		Where(graphedge.KeyEQ(edge.Key)).
 		Only(ctx)
 	if err == nil {
@@ -109,7 +117,7 @@ func (s *EntStore) UpsertEdge(ctx context.Context, edge domain.Edge) error {
 	if !ent.IsNotFound(err) {
 		return err
 	}
-	return s.client.GraphEdge.Create().
+	return client.GraphEdge.Create().
 		SetKey(edge.Key).
 		SetFromKind(string(edge.From.Kind)).
 		SetFromKey(edge.From.Key).
@@ -190,7 +198,11 @@ func (s *EntStore) Expand(ctx context.Context, req domain.ExpandRequest) (domain
 }
 
 func (s *EntStore) nodeByKey(ctx context.Context, key string) (*ent.OntologyNode, error) {
-	node, err := s.client.OntologyNode.Query().
+	return nodeByKeyWithClient(ctx, s.client, key)
+}
+
+func nodeByKeyWithClient(ctx context.Context, client *ent.Client, key string) (*ent.OntologyNode, error) {
+	node, err := client.OntologyNode.Query().
 		Where(ontologynode.KeyEQ(key)).
 		Only(ctx)
 	if ent.IsNotFound(err) {

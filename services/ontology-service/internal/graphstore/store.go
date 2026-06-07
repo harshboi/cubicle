@@ -35,3 +35,19 @@ type Store interface {
 	Expander
 	Writer
 }
+
+// IngestWriter is the durable boundary crawlers use after mapping source data
+// into generic ontology facts.
+//
+// The important rule is that callers provide source-neutral DTOs from
+// internal/domain. Jira, GitHub, docs, or Flink-specific parsing stays in the
+// crawler/mapper layer; graphstore only validates and persists the resulting
+// facts.
+type IngestWriter interface {
+	BeginIngestRun(context.Context, domain.IngestRunStart) (domain.IngestRun, error)
+	WriteSnapshot(context.Context, domain.SourceSnapshotWrite) (domain.SourceSnapshot, error)
+	WriteMappedBatch(context.Context, domain.IngestBatch) (domain.IngestBatchResult, error)
+	CompleteIngestRun(context.Context, domain.IngestRunComplete) (domain.IngestRun, error)
+	GetIngestRun(context.Context, string) (domain.IngestRun, error)
+	ListSourceStatus(context.Context) ([]domain.SourceStatus, error)
+}
