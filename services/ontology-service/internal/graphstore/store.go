@@ -32,7 +32,11 @@ type Writer interface {
 	UpsertAssociation(context.Context, domain.Association) error
 }
 
-// Store is the full local graph boundary used by server composition.
+// Store is the full local graph boundary used by HTTP composition.
+//
+// Query-only code should still prefer Expander, and ingestion-only code should
+// prefer Writer. The server needs both so crawlers can insert graph facts and
+// clients can query them through the same process.
 type Store interface {
 	// Expander gives server/query code the read side of the graph contract.
 	Expander

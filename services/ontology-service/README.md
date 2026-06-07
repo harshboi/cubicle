@@ -176,6 +176,9 @@ In another terminal:
 curl -s http://127.0.0.1:48080/healthz
 curl -s http://127.0.0.1:48080/openapi.json
 curl -s http://127.0.0.1:48080/v1/workstreams/flink-autoscaler/overview
+curl -s -X POST http://127.0.0.1:48080/v1/graph/upsert \
+  -H 'Content-Type: application/json' \
+  -d '{"objects":[{"object_type":"workstream","key":"workstream:test","title":"Test Workstream"},{"object_type":"ticket","key":"ticket:TEST-1","title":"Imported ticket"}],"associations":[{"from":{"object_type":"workstream","key":"workstream:test"},"to":{"object_type":"ticket","key":"ticket:TEST-1"},"association_type":"contains","metadata":{"evidence_key":"evidence:test","source":"crawler","confidence":1}}]}'
 curl -s -X POST http://127.0.0.1:48080/v1/graph/expand \
   -H 'Content-Type: application/json' \
   -d '{"start":{"object_type":"workstream","key":"workstream:flink-autoscaler"},"depth":2,"limit_per_object":10}'
@@ -232,6 +235,9 @@ internal/httpapi
  +-- graph.go
  |     -> POST /v1/graph/expand
  |
+ +-- graph_upsert.go
+ |     -> POST /v1/graph/upsert for simple crawler/import batches
+ |
  +-- workstream.go
        -> GET /v1/workstreams/{slug}/overview
 
@@ -274,5 +280,8 @@ PR 6: Ent-backed server startup
 PR 7: workstream overview query endpoint
  |
  v
-PR 8: crawler/import endpoints
+PR 8: graph upsert endpoint
+ |
+ v
+PR 9: crawler commands and source connectors
 ```

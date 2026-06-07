@@ -21,7 +21,7 @@ import (
 //
 // That shape keeps framework code thin and prevents product/query logic from
 // being embedded inside Gin handlers.
-func NewRouter(store graphstore.Expander, logger *slog.Logger) http.Handler {
+func NewRouter(store graphstore.Store, logger *slog.Logger) http.Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
@@ -44,6 +44,7 @@ func NewRouter(store graphstore.Expander, logger *slog.Logger) http.Handler {
 	api := humagin.New(router, config)
 	registerHealth(api)
 	registerGraph(api, store)
+	registerGraphUpsert(api, store)
 	registerWorkstreams(api, store)
 
 	return router
