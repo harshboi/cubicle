@@ -1,6 +1,6 @@
 # macOS JSON Configuration
 
-Cubicle's macOS app keeps existing defaults, UI settings, DB-backed state, generated caches, and secret stores. The optional JSON configuration layer is a control plane for non-secret runtime tuning, connector selection, Codex/question behavior, and test-app fixture locations.
+Cubicle's macOS app keeps existing defaults, UI settings, DB-backed state, generated caches, and secret stores. The safe-on JSON configuration layer is a control plane for non-secret runtime tuning, connector selection, Codex/question behavior, and test-app fixture locations.
 
 ## Entry Point
 
@@ -13,12 +13,13 @@ $GETWEBEXSPACE_RUNTIME_ROOT/config/cubicle.json
 Operators can override the entrypoint with:
 
 ```text
-CUBICLE_JSON_CONFIG_ENABLED=false
 CUBICLE_CONFIG_FILE=/path/to/cubicle.json
 CUBICLE_JSON_CONFIG_DIR=/path/to/config
 ```
 
-`CUBICLE_JSON_CONFIG_ENABLED` defaults to `false`. Accepted truthy values are `1`, `true`, `yes`, and `on`. When disabled, the app should not read these files or start file watchers.
+The app always loads the bundled `base.json` defaults first. If no operator `cubicle.json` exists, those defaults are the complete JSON config. If `CUBICLE_CONFIG_FILE` points at a missing file, startup fails visibly instead of silently falling back.
+
+`environment.runtime_root` can set the runtime root after the JSON document is loaded. `GETWEBEXSPACE_RUNTIME_ROOT` still wins when both are present, and the JSON config directory remains the directory that loaded `cubicle.json`.
 
 ## Composition
 
@@ -78,9 +79,10 @@ Merge rules are intentionally small and deterministic:
 - The current file overrides all extended files.
 - Objects deep-merge.
 - Scalars replace.
+- `null` keeps the bundled/default value when a default exists.
 - Arrays replace.
 - Extend cycles fail visibly.
-- Missing or malformed files fail visibly when JSON config is enabled.
+- Explicitly selected, extended, or included missing/malformed files fail visibly.
 
 ## Reusable Policy Blocks
 
@@ -166,12 +168,8 @@ Invalid `use` references fail visibly.
   },
   "connectors": {
     "enabled": ["webex", "imessage"],
-    "webex": {
-      "enabled": true
-    },
-    "imessage": {
-      "enabled": true
-    }
+    "webex": {},
+    "imessage": {}
   },
   "codex": {
     "common": {
@@ -194,6 +192,9 @@ Invalid `use` references fail visibly.
       "max_incremental_window_days": 90
     },
     "question_synthesis": {
+      "run_policy": {
+        "use": "codex.common.run_policy"
+      },
       "seed_candidate_limit": 40,
       "query_history_limit": 40,
       "prompt_history_limit": 24,
@@ -250,9 +251,21 @@ Invalid `use` references fail visibly.
 }
 ```
 
+Connector-local Webex policies override `environment.webex` policies field-by-field. Environment variables still override both JSON layers.
+
+`connectors.enabled` is the authoritative connector selection list. If the list is omitted, connector-local `enabled` booleans are accepted as a fallback. Connector-local objects otherwise hold connector-specific tuning such as policies and fixture paths.
+
 ## Test Mode
 
-Test-app mode points to stable input files. These are source data and must not be deleted by runtime cleanup.
+Test-app mode points to stable input files. These are source data and must not be deleted by runtime cleanup. When `test_mode.enabled` is true:
+
+- `settings` replaces the normal persisted settings file.
+- `target_data` replaces important people/spaces, executives, and belief targets for read paths.
+- `connector_fixtures.webex` or `connectors.webex.fixture_path` selects a file-backed Webex client.
+- `connector_fixtures.imessage` or `connectors.imessage.fixture_path` selects a fixture `chat.db`.
+- `protect_paths` prevents configured files/directories from cleanup paths such as OAuth token deletion and refresh-checkpoint clearing.
+
+`target_data`, `settings`, and `protect_paths` resolve relative to the JSON config directory. Connector fixture paths resolve relative to `fixture_root` when it is set.
 
 ```json
 {
@@ -264,12 +277,14 @@ Test-app mode points to stable input files. These are source data and must not b
     "settings": "test-data/settings.json",
     "protect_paths": ["test-data"],
     "connector_fixtures": {
-      "webex": "test-data/connectors/webex.json",
-      "imessage": "test-data/connectors/imessage-chat.db"
+      "webex": "connectors/webex.json",
+      "imessage": "connectors/imessage-chat.db"
     }
   }
 }
 ```
+
+`target_data` may be either a root object with `important`, `executives`, and `beliefs`, or a `{ "groups": ... }` wrapper. Map keys can provide the stable person email or Webex room ID when the target object does not repeat it; mixed `important` maps infer person/space kind from those keys when possible.
 
 ## What Belongs Here
 

@@ -50,6 +50,11 @@ struct CodexPromptCachePolicy: Hashable {
 
     static let summary = CodexPromptCachePolicy(maxAgeSeconds: 15 * 60)
     static let execQuestions = CodexPromptCachePolicy(maxAgeSeconds: 15 * 60)
+
+    func applying(maxAgeSeconds: Double?) -> CodexPromptCachePolicy {
+        guard let maxAgeSeconds else { return self }
+        return CodexPromptCachePolicy(maxAgeSeconds: min(max(TimeInterval(maxAgeSeconds), 1), 86_400))
+    }
 }
 
 /// Conversation cluster passed into space/exec prompts.
@@ -415,6 +420,72 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         }
     }
 
+    private func configuredCodexDocument() -> MacAppJSONCodexConfiguration? {
+        configuration.jsonConfiguration?.codex
+    }
+
+    private func configuredCodexRunPolicy(overrides: MacAppJSONRunPolicy? = nil) -> CodexRunPolicy {
+        CodexRunPolicy.default
+            .applying(configuredCodexDocument()?.runPolicy)
+            .applying(overrides)
+    }
+
+    private func configuredSummaryCachePolicy() -> CodexPromptCachePolicy {
+        CodexPromptCachePolicy.summary.applying(
+            maxAgeSeconds: configuredCodexDocument()?.cachePolicy?.summaryMaxAgeSeconds
+        )
+    }
+
+    private func configuredExecQuestionsCachePolicy() -> CodexPromptCachePolicy {
+        CodexPromptCachePolicy.execQuestions.applying(
+            maxAgeSeconds: configuredCodexDocument()?.cachePolicy?.execQuestionsMaxAgeSeconds
+        )
+    }
+
+    private func codexQuestionSynthesisPolicy() -> MacAppJSONCodexQuestionSynthesisPolicy? {
+        configuredCodexDocument()?.questionSynthesis
+    }
+
+    private func configuredBeliefStaleHours(_ staleHours: Int) -> Int {
+        guard staleHours == 24 else {
+            return max(1, staleHours)
+        }
+        return configuredInt(
+            configuredCodexDocument()?.beliefs?.staleHours,
+            defaultValue: 24,
+            minimum: 1,
+            maximum: 8_760
+        )
+    }
+
+    private func configuredBeliefEvidenceChunkSize() -> Int {
+        configuredInt(
+            configuredCodexDocument()?.beliefs?.evidenceChunkSize,
+            defaultValue: Self.defaultBeliefEvidenceChunkSize,
+            minimum: 1,
+            maximum: 500
+        )
+    }
+
+    private func configuredMaxBeliefIncrementalWindowDays() -> Int {
+        configuredInt(
+            configuredCodexDocument()?.beliefs?.maxIncrementalWindowDays,
+            defaultValue: Self.maxBeliefIncrementalWindowDays,
+            minimum: 1,
+            maximum: 3_650
+        )
+    }
+
+    private func configuredInt(
+        _ value: Int?,
+        defaultValue: Int,
+        minimum: Int,
+        maximum: Int
+    ) -> Int {
+        guard let value else { return defaultValue }
+        return min(max(value, minimum), maximum)
+    }
+
     /// Synthesizes publishable question candidates from deterministic candidates.
     func synthesizeQuestionCandidates(
         from candidates: [QuestionCandidate],
@@ -423,18 +494,54 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         guard codexFeatureEnabled(.questionSynthesis) else {
             return []
         }
+        let synthesisPolicy = codexQuestionSynthesisPolicy()
+        let seedCandidateLimit = configuredInt(
+            synthesisPolicy?.seedCandidateLimit,
+            defaultValue: 40,
+            minimum: 1,
+            maximum: 200
+        )
+        let queryHistoryLimit = configuredInt(
+            synthesisPolicy?.queryHistoryLimit,
+            defaultValue: 40,
+            minimum: 0,
+            maximum: 500
+        )
+        let promptHistoryLimit = configuredInt(
+            synthesisPolicy?.promptHistoryLimit,
+            defaultValue: 24,
+            minimum: 0,
+            maximum: 100
+        )
+        let candidateEvidenceLimit = configuredInt(
+            synthesisPolicy?.candidateEvidenceLimit,
+            defaultValue: 4,
+            minimum: 1,
+            maximum: 20
+        )
+        let outputLimit = configuredInt(
+            synthesisPolicy?.outputLimit,
+            defaultValue: 7,
+            minimum: 1,
+            maximum: 24
+        )
+
         let seedCandidates = Array(
             candidates
                 .filter { $0.status == .candidate || $0.status == .surfaced }
-                .prefix(40)
+                .prefix(seedCandidateLimit)
         )
         guard !seedCandidates.isEmpty else {
             return []
         }
 
         let promptVersion = CodexPromptVersionRegistry.questionSynthesis
-        let queryHistory = configStore.loadAskCodexQueryHistory(limit: 40)
-        let inputHash = hashForQuestionSynthesisCandidates(seedCandidates, queryHistory: queryHistory)
+        let queryHistory = configStore.loadAskCodexQueryHistory(limit: queryHistoryLimit)
+        let inputHash = hashForQuestionSynthesisCandidates(
+            seedCandidates,
+            queryHistory: queryHistory,
+            evidenceLimit: candidateEvidenceLimit
+        )
         let cacheURL = cacheFileURL(kind: "question-synthesis", key: inputHash)
 
         let result: CodexQuestionSynthesisResult
@@ -446,7 +553,9 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
             let prompt = questionSynthesisPrompt(
                 candidates: seedCandidates,
                 queryHistory: queryHistory,
-                promptVersion: promptVersion
+                promptVersion: promptVersion,
+                historyLimit: promptHistoryLimit,
+                candidateEvidenceLimit: candidateEvidenceLimit
             )
             let job = makeJob(
                 kind: "question-synthesis",
@@ -460,10 +569,10 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
                     prompt: prompt,
                     job: job,
                     workingDirectory: configuration.runtimeRoot,
-                    policy: .default
+                    policy: configuredCodexRunPolicy(overrides: synthesisPolicy?.runPolicy)
                 )
             ).output
-            let parsed = parseQuestionSynthesisOutput(output)
+            let parsed = parseQuestionSynthesisOutput(output, limit: outputLimit)
             result = CodexQuestionSynthesisResult(
                 questions: parsed,
                 source: "Codex",
@@ -477,6 +586,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         return makeSynthesizedQuestionCandidates(
             from: result,
             seedCandidates: seedCandidates,
+            evidenceLimit: candidateEvidenceLimit,
             now: now
         )
     }
@@ -490,6 +600,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         now: Date = Date()
     ) async throws -> PersonClusterSummaryResult {
         try requireCodexFeature(.personFocusSummaries)
+        let effectiveCachePolicy = cachePolicy == .summary ? configuredSummaryCachePolicy() : cachePolicy
         let promptContract = clusterPromptContract(for: .personSummary)
         let promptVersion = promptContract.promptVersion
         let inputHash = hashForPersonClusterSummaryContext(context)
@@ -499,7 +610,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
            let cached = try loadCache(url: cacheURL, as: PersonClusterSummaryResult.self),
            cached.promptVersion == promptVersion,
            cached.inputHash == inputHash,
-           isFresh(timestamp: cached.generatedAt, maxAgeSeconds: cachePolicy.maxAgeSeconds, now: now) {
+           isFresh(timestamp: cached.generatedAt, maxAgeSeconds: effectiveCachePolicy.maxAgeSeconds, now: now) {
             var fromCache = cached
             fromCache.source = "Codex cache"
             return fromCache
@@ -518,7 +629,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
                 prompt: prompt,
                 job: job,
                 workingDirectory: workingDirectory,
-                policy: .default
+                policy: configuredCodexRunPolicy()
             )
         ).output
 
@@ -545,6 +656,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         now: Date = Date()
     ) async throws -> ClusterTitleResult {
         try requireCodexFeature(.clusterTitles)
+        let effectiveCachePolicy = cachePolicy == .summary ? configuredSummaryCachePolicy() : cachePolicy
         let promptContract = clusterPromptContract(for: clusterPromptKindForTitle(context.focusKind))
         let promptVersion = promptContract.promptVersion
         let inputHash = hashForClusterTitleContext(context)
@@ -555,7 +667,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
            let cached = try loadCache(url: cacheURL, as: ClusterTitleResult.self),
            cached.promptVersion == promptVersion,
            cached.inputHash == inputHash,
-           isFresh(timestamp: cached.generatedAt, maxAgeSeconds: cachePolicy.maxAgeSeconds, now: now) {
+           isFresh(timestamp: cached.generatedAt, maxAgeSeconds: effectiveCachePolicy.maxAgeSeconds, now: now) {
             var fromCache = cached
             fromCache.source = "Codex cache"
             return fromCache
@@ -574,7 +686,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
                 prompt: prompt,
                 job: job,
                 workingDirectory: workingDirectory,
-                policy: .default
+                policy: configuredCodexRunPolicy()
             )
         ).output
 
@@ -602,6 +714,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         now: Date = Date()
     ) async throws -> SpaceSummaryResult {
         try requireCodexFeature(.spaceFocusSummaries)
+        let effectiveCachePolicy = cachePolicy == .summary ? configuredSummaryCachePolicy() : cachePolicy
         let promptVersion = CodexPromptVersionRegistry.spaceFocusSummary
         let inputHash = hashForSpaceSummaryContext(context)
         let cacheURL = cacheFileURL(kind: "space-summary", key: context.roomID)
@@ -610,7 +723,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
            let cached = try loadCache(url: cacheURL, as: SpaceSummaryResult.self),
            cached.promptVersion == promptVersion,
            cached.inputHash == inputHash,
-           isFresh(timestamp: cached.generatedAt, maxAgeSeconds: cachePolicy.maxAgeSeconds, now: now) {
+           isFresh(timestamp: cached.generatedAt, maxAgeSeconds: effectiveCachePolicy.maxAgeSeconds, now: now) {
             var fromCache = cached
             fromCache.source = "Codex cache"
             return fromCache
@@ -629,7 +742,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
                 prompt: prompt,
                 job: job,
                 workingDirectory: workingDirectory,
-                policy: .default
+                policy: configuredCodexRunPolicy()
             )
         ).output
 
@@ -657,6 +770,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         now: Date = Date()
     ) async throws -> ExecQuestionsResult {
         try requireCodexFeature(.execQuestions)
+        let effectiveCachePolicy = cachePolicy == .execQuestions ? configuredExecQuestionsCachePolicy() : cachePolicy
         let promptVersion = CodexPromptVersionRegistry.spaceFocusExecQuestions
         let inputHash = hashForExecQuestionsContext(context)
         let cacheKey = "\(context.roomID)-\(context.execEmail)-\(context.execName)"
@@ -666,7 +780,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
            let cached = try loadCache(url: cacheURL, as: ExecQuestionsResult.self),
            cached.promptVersion == promptVersion,
            cached.inputHash == inputHash,
-           isFresh(timestamp: cached.generatedAt, maxAgeSeconds: cachePolicy.maxAgeSeconds, now: now) {
+           isFresh(timestamp: cached.generatedAt, maxAgeSeconds: effectiveCachePolicy.maxAgeSeconds, now: now) {
             var fromCache = cached
             fromCache.source = "Codex cache"
             return fromCache
@@ -685,7 +799,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
                 prompt: prompt,
                 job: job,
                 workingDirectory: workingDirectory,
-                policy: .default
+                policy: configuredCodexRunPolicy()
             )
         ).output
 
@@ -789,6 +903,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         staleHours: Int = 24,
         now: Date = Date()
     ) -> BeliefReconciliationDecision {
+        let effectiveStaleHours = configuredBeliefStaleHours(staleHours)
         guard let normalizedContext = normalizedBeliefContext(context) else {
             return BeliefReconciliationDecision(
                 shouldRun: false,
@@ -799,7 +914,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         }
 
         let evidenceHash = hashForBeliefContext(normalizedContext)
-        let staleInterval = TimeInterval(max(1, staleHours) * 3600)
+        let staleInterval = TimeInterval(max(1, effectiveStaleHours) * 3600)
 
         if normalizedContext.forceRefresh {
             return BeliefReconciliationDecision(
@@ -855,7 +970,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         let decision = evaluateBeliefReconciliation(
             context: effectiveContext,
             state: state,
-            staleHours: staleHours,
+            staleHours: configuredBeliefStaleHours(staleHours),
             now: now
         )
         let nextState = BeliefReconciliationState(
@@ -882,7 +997,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
                 prompt: prompt,
                 job: job,
                 workingDirectory: workingDirectory,
-                policy: .default
+                policy: configuredCodexRunPolicy()
             )
         ).output
         let parsed = parseBeliefReconciliationOutput(output)
@@ -930,7 +1045,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
             let outcome = try await runDeepBeliefReconciliation(
                 target: target,
                 workingDirectory: workingDirectory,
-                staleHours: staleHours,
+                staleHours: configuredBeliefStaleHours(staleHours),
                 now: now
             )
             outcomes.append(
@@ -965,7 +1080,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
                 context: target.context,
                 state: target.state,
                 workingDirectory: workingDirectory,
-                staleHours: staleHours,
+                staleHours: configuredBeliefStaleHours(staleHours),
                 now: now
             )
         }
@@ -977,7 +1092,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         let baseDecision = evaluateBeliefReconciliation(
             context: baseContext,
             state: target.state,
-            staleHours: staleHours,
+            staleHours: configuredBeliefStaleHours(staleHours),
             now: now
         )
         let baseHash = baseDecision.evidenceHash
@@ -997,7 +1112,8 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         let deepContexts = deepBeliefContexts(
             for: baseContext,
             now: now,
-            maxChunkSize: Self.defaultBeliefEvidenceChunkSize
+            maxChunkSize: configuredBeliefEvidenceChunkSize(),
+            maxWindowDays: configuredMaxBeliefIncrementalWindowDays()
         )
         var chunkResults: [BeliefReconciliationResult] = []
         chunkResults.reserveCapacity(deepContexts.count)
@@ -1011,7 +1127,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
                 context: chunkContext,
                 state: workingState,
                 workingDirectory: workingDirectory,
-                staleHours: staleHours,
+                staleHours: configuredBeliefStaleHours(staleHours),
                 now: now
             )
             if let result = chunkOutcome.result {
@@ -1136,9 +1252,13 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
     private func deepBeliefContexts(
         for context: BeliefReconciliationContext,
         now: Date,
-        maxChunkSize: Int
+        maxChunkSize: Int,
+        maxWindowDays: Int
     ) -> [BeliefReconciliationContext] {
-        let incrementalWindows = deepBeliefIncrementalWindows(baseDays: context.incrementalWindowDays)
+        let incrementalWindows = deepBeliefIncrementalWindows(
+            baseDays: context.incrementalWindowDays,
+            maxWindowDays: maxWindowDays
+        )
         var contexts: [BeliefReconciliationContext] = []
         var seenHashes = Set<String>()
 
@@ -1167,12 +1287,13 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         return contexts
     }
 
-    private func deepBeliefIncrementalWindows(baseDays: Int) -> [Int] {
-        let base = max(1, baseDays)
+    private func deepBeliefIncrementalWindows(baseDays: Int, maxWindowDays: Int) -> [Int] {
+        let cap = max(1, maxWindowDays)
+        let base = min(max(1, baseDays), cap)
         let candidates = [
             base,
-            min(Self.maxBeliefIncrementalWindowDays, max(base + 1, base * 2)),
-            min(Self.maxBeliefIncrementalWindowDays, max(base + 2, base * 4))
+            min(cap, max(base + 1, base * 2)),
+            min(cap, max(base + 2, base * 4))
         ]
         var seen = Set<Int>()
         return candidates.filter { seen.insert($0).inserted }.sorted()
@@ -1434,7 +1555,8 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
 
     private func hashForQuestionSynthesisCandidates(
         _ candidates: [QuestionCandidate],
-        queryHistory: [AskCodexQueryHistoryEntry]
+        queryHistory: [AskCodexQueryHistoryEntry],
+        evidenceLimit: Int
     ) -> String {
         let candidateSource = candidates.map { candidate in
             [
@@ -1444,7 +1566,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
                 candidate.questionText,
                 candidate.whyNow,
                 candidate.evidence
-                    .prefix(4)
+                    .prefix(max(1, evidenceLimit))
                     .map { "\($0.sourceType)|\($0.sourceID)|\($0.label)|\($0.preview)" }
                     .joined(separator: "\n")
             ].joined(separator: "\n")
@@ -1464,10 +1586,15 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
     private func questionSynthesisPrompt(
         candidates: [QuestionCandidate],
         queryHistory: [AskCodexQueryHistoryEntry],
-        promptVersion: String
+        promptVersion: String,
+        historyLimit: Int,
+        candidateEvidenceLimit: Int
     ) -> String {
         let candidateBlocks = candidates.enumerated().map { index, candidate in
-            let evidence = candidate.evidence.prefix(4).enumerated().map { evidenceIndex, ref in
+            let evidence = candidate.evidence
+                .prefix(max(1, candidateEvidenceLimit))
+                .enumerated()
+                .map { evidenceIndex, ref in
                 """
                 Evidence \(evidenceIndex + 1):
                 - source_id: \(ref.sourceID)
@@ -1487,7 +1614,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
             \(evidence.isEmpty ? "Evidence: none" : evidence)
             """
         }.joined(separator: "\n\n")
-        let historyBlocks = queryHistory.prefix(24).enumerated().map { index, entry in
+        let historyBlocks = queryHistory.prefix(max(0, historyLimit)).enumerated().map { index, entry in
             """
             Prior Question \(index + 1):
             - target_scope: \(entry.targetScope.rawValue)
@@ -1543,6 +1670,7 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
     private func makeSynthesizedQuestionCandidates(
         from result: CodexQuestionSynthesisResult,
         seedCandidates: [QuestionCandidate],
+        evidenceLimit: Int,
         now: Date
     ) -> [QuestionCandidate] {
         let candidatesByScope = Dictionary(grouping: seedCandidates) { candidate in
@@ -1581,7 +1709,8 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
             let evidence = selectedEvidence(
                 sourceIDs: draft.evidenceSourceIDs,
                 evidenceByID: evidenceByID,
-                fallbackCandidates: scopeSeeds
+                fallbackCandidates: scopeSeeds,
+                limit: evidenceLimit
             )
             guard !evidence.isEmpty else {
                 continue
@@ -1625,13 +1754,15 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
     private func selectedEvidence(
         sourceIDs: [String],
         evidenceByID: [String: QuestionEvidenceRef],
-        fallbackCandidates: [QuestionCandidate]
+        fallbackCandidates: [QuestionCandidate],
+        limit: Int
     ) -> [QuestionEvidenceRef] {
+        let evidenceLimit = max(1, limit)
         let selected = sourceIDs.compactMap { evidenceByID[$0] }
         if !selected.isEmpty {
-            return Array(selected.prefix(4))
+            return Array(selected.prefix(evidenceLimit))
         }
-        return Array(fallbackCandidates.flatMap(\.evidence).prefix(4))
+        return Array(fallbackCandidates.flatMap(\.evidence).prefix(evidenceLimit))
     }
 
     private func synthesizedQuestionTags(_ tags: [String]) -> [String] {
@@ -1641,13 +1772,13 @@ final class CodexPromptOrchestrationService: QuestionCandidateSynthesizing {
         return output.filter { seen.insert($0).inserted }
     }
 
-    private func parseQuestionSynthesisOutput(_ output: String) -> [CodexQuestionSynthesisDraft] {
+    private func parseQuestionSynthesisOutput(_ output: String, limit: Int = 7) -> [CodexQuestionSynthesisDraft] {
         guard let json = extractJSONObject(from: output),
               let data = json.data(using: .utf8),
               let payload = try? decoder.decode(CodexQuestionSynthesisPayload.self, from: data) else {
             return []
         }
-        return payload.questions
+        return Array(payload.questions.prefix(max(0, limit)))
     }
 
     private func spaceSummaryPrompt(context: SpaceSummaryContext, promptVersion: String) -> String {

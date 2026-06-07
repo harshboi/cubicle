@@ -73,7 +73,7 @@ private struct FocusCodexRefreshOutcome {
 final class NativeRefreshCoordinator {
     let configuration: RuntimeConfiguration
     let configStore: ConfigStore
-    let webexClient: WebexAPIClient
+    let webexClient: NativeWebexClienting
     let knowledgeStore: KnowledgeStore
     let codexRunner: CodexRunner
     let runtimeStore: NativeRuntimeStore

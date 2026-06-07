@@ -809,24 +809,33 @@ final class ConfigStore {
     private static let transcriptionAuthTokenKeychainAccount = "transcription.service_token"
 
     let configuration: RuntimeConfiguration
+    private let environment: [String: String]
     private let defaultOAuthTokenFilename = ".webex_oauth_tokens.json"
     private let defaultOutlookOAuthTokenFilename = ".outlook_oauth_tokens.json"
     private let oauthSettingsFilename = "oauth-settings.json"
     private let keychainStore = OAuthKeychainStore()
 
     /// Pins config reads/writes to a runtime root.
-    init(configuration: RuntimeConfiguration = .current) {
+    init(
+        configuration: RuntimeConfiguration = .current,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) {
         self.configuration = configuration
+        self.environment = environment
     }
 
     /// Runtime config directory.
     var configDirectory: URL {
-        configuration.runtimeRoot.appendingPathComponent("config", isDirectory: true)
+        configuration.jsonConfigurationDirectory
+            ?? configuration.runtimeRoot.appendingPathComponent("config", isDirectory: true)
     }
 
     /// Persisted system settings file.
     var systemSettingsURL: URL {
-        configDirectory.appendingPathComponent("pine-ui-settings.json")
+        if let testSettingsURL = testModeURL(for: configuration.jsonConfiguration?.testMode?.settings) {
+            return testSettingsURL
+        }
+        return configDirectory.appendingPathComponent("pine-ui-settings.json")
     }
 
     /// Persisted Ask Codex history file.
@@ -879,37 +888,57 @@ final class ConfigStore {
 
     /// Loads configured executive targets.
     func importantExecutives() throws -> [ConfigTarget] {
-        try loadTargets(filename: "importantexec.txt")
+        if let targets = try loadTestModeTargets(group: "executives", defaultKind: .person) {
+            return targets
+        }
+        return try loadTargets(filename: "importantexec.txt")
     }
 
     /// Loads configured belief targets.
     func beliefTargets() throws -> [ConfigTarget] {
-        try loadTargets(filename: "belieftargets.txt")
+        if let targets = try loadTestModeTargets(group: "beliefs", defaultKind: .space) {
+            return targets
+        }
+        return try loadTargets(filename: "belieftargets.txt")
     }
 
     /// Loads all important sender targets.
     func importantTargets() throws -> [ConfigTarget] {
-        try loadTargets(filename: "important-senders.txt")
+        if let targets = try loadTestModeTargets(group: "important", defaultKind: nil) {
+            return targets
+        }
+        return try loadTargets(filename: "important-senders.txt")
     }
 
     /// Loads space targets with space-focus preferences applied.
     func importantSpaces() throws -> [ConfigTarget] {
-        let preferences = try loadJSONFocusPreferences(filename: "space-focus-spaces.json", mapKey: "spaces")
-        return try importantTargets()
+        let targets = try importantTargets()
             .filter { $0.kind == .space }
-            .map { applyFocusPreference(to: $0, preferences: preferences, key: normalizeRoomID($0.roomID)) }
+        guard !testModeTargetDataConfigured else {
+            return targets
+        }
+        let preferences = try loadJSONFocusPreferences(filename: "space-focus-spaces.json", mapKey: "spaces")
+        return targets.map { applyFocusPreference(to: $0, preferences: preferences, key: normalizeRoomID($0.roomID)) }
     }
 
     /// Loads person targets with person-focus preferences applied.
     func importantPeople() throws -> [ConfigTarget] {
-        let preferences = try loadJSONFocusPreferences(filename: "person-focus-people.json", mapKey: "people")
-        return try importantTargets()
+        let targets = try importantTargets()
             .filter { $0.kind == .person }
-            .map { applyFocusPreference(to: $0, preferences: preferences, key: normalizeEmail($0.email)) }
+        guard !testModeTargetDataConfigured else {
+            return targets
+        }
+        let preferences = try loadJSONFocusPreferences(filename: "person-focus-people.json", mapKey: "people")
+        return targets.map { applyFocusPreference(to: $0, preferences: preferences, key: normalizeEmail($0.email)) }
     }
 
     /// Configured person-focus targets for management UI.
     func personFocusManagementTargets() throws -> [ConfigTarget] {
+        if let targets = try loadTestModeTargets(group: "important", defaultKind: nil) {
+            return targets
+                .filter { $0.kind == .person }
+                .sorted(by: targetDisplaySort)
+        }
         let preferences = try loadJSONFocusPreferences(filename: "person-focus-people.json", mapKey: "people")
         return try loadManagedTargets(filename: "important-senders.txt")
             .filter { $0.kind == .person }
@@ -919,6 +948,11 @@ final class ConfigStore {
 
     /// Configured space-focus targets for management UI.
     func spaceFocusManagementTargets() throws -> [ConfigTarget] {
+        if let targets = try loadTestModeTargets(group: "important", defaultKind: nil) {
+            return targets
+                .filter { $0.kind == .space }
+                .sorted(by: targetDisplaySort)
+        }
         let preferences = try loadJSONFocusPreferences(filename: "space-focus-spaces.json", mapKey: "spaces")
         return try loadManagedTargets(filename: "important-senders.txt")
             .filter { $0.kind == .space }
@@ -928,7 +962,12 @@ final class ConfigStore {
 
     /// Configured exec-focus targets for management UI.
     func execFocusManagementTargets() throws -> [ConfigTarget] {
-        try loadManagedTargets(filename: "importantexec.txt")
+        if let targets = try loadTestModeTargets(group: "executives", defaultKind: .person) {
+            return targets
+                .filter { $0.kind == .person }
+                .sorted(by: targetDisplaySort)
+        }
+        return try loadManagedTargets(filename: "importantexec.txt")
             .filter { $0.kind == .person }
             .sorted(by: targetDisplaySort)
     }
@@ -1061,7 +1100,7 @@ final class ConfigStore {
     func oauthTokenFileCandidates(provider: OAuthProviderKind) -> [URL] {
         var candidates: [URL] = []
 
-        let environment = ProcessInfo.processInfo.environment
+        let environment = self.environment
         let override: String?
         let defaultFilename: String
         switch provider {
@@ -1328,6 +1367,9 @@ final class ConfigStore {
         let candidates = oauthTokenFileCandidates(provider: provider)
         var removed: [URL] = []
         for candidate in candidates where FileManager.default.fileExists(atPath: candidate.path) {
+            guard !isProtectedByTestMode(candidate) else {
+                continue
+            }
             try FileManager.default.removeItem(at: candidate)
             removed.append(candidate)
         }
@@ -1414,7 +1456,10 @@ final class ConfigStore {
 
     /// Saves persisted settings as versioned JSON.
     func saveSystemSettings(_ settings: SystemSettings) throws {
-        try FileManager.default.createDirectory(at: configDirectory, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(
+            at: systemSettingsURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
         let payload = PersistedSystemSettingsPayload(
             version: SystemSettings.persistedVersion,
             updatedAt: Self.iso8601String(from: Date()),
@@ -1507,11 +1552,44 @@ final class ConfigStore {
         guard FileManager.default.fileExists(atPath: refreshCheckpointURL.path) else {
             return
         }
+        guard !isProtectedByTestMode(refreshCheckpointURL) else {
+            return
+        }
         try FileManager.default.removeItem(at: refreshCheckpointURL)
+    }
+
+    private func testModeURL(for path: String?) -> URL? {
+        guard let document = configuration.jsonConfiguration,
+              document.testModeEnabled else {
+            return nil
+        }
+        return document.testModeURL(
+            for: path,
+            runtimeRoot: configuration.runtimeRoot,
+            configDirectory: configDirectory,
+            preferFixtureRoot: false
+        )
+    }
+
+    private func isProtectedByTestMode(_ url: URL) -> Bool {
+        configuration.jsonConfiguration?.isProtectedURL(
+            url,
+            runtimeRoot: configuration.runtimeRoot,
+            configDirectory: configDirectory
+        ) ?? false
+    }
+
+    private var testModeTargetDataConfigured: Bool {
+        testModeURL(for: configuration.jsonConfiguration?.testMode?.targetData) != nil
     }
 
     /// Loads de-duplicated targets from a text config file.
     private func loadTargets(filename: String) throws -> [ConfigTarget] {
+        try loadTextTargets(filename: filename)
+    }
+
+    /// Loads de-duplicated targets from a text config file.
+    private func loadTextTargets(filename: String) throws -> [ConfigTarget] {
         let url = configDirectory.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
         let text = try String(contentsOf: url, encoding: .utf8)
@@ -1528,6 +1606,11 @@ final class ConfigStore {
 
     /// Loads representative targets for management UI from text config.
     private func loadManagedTargets(filename: String) throws -> [ConfigTarget] {
+        try loadManagedTextTargets(filename: filename)
+    }
+
+    /// Loads representative targets for management UI from text config.
+    private func loadManagedTextTargets(filename: String) throws -> [ConfigTarget] {
         let url = configDirectory.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: url.path) else { return [] }
         let text = try String(contentsOf: url, encoding: .utf8)
@@ -1540,6 +1623,138 @@ final class ConfigStore {
             )
         }
         return representativeTargets(parsedTargets)
+    }
+
+    private func loadTestModeTargets(
+        group: String,
+        defaultKind: ConfigTarget.Kind?
+    ) throws -> [ConfigTarget]? {
+        guard let url = testModeURL(for: configuration.jsonConfiguration?.testMode?.targetData) else {
+            return nil
+        }
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            return []
+        }
+        let data = try Data(contentsOf: url)
+        let raw = try JSONSerialization.jsonObject(with: data)
+        guard let root = raw as? [String: Any] else {
+            return []
+        }
+        let groups = root["groups"] as? [String: Any] ?? root
+        guard let value = groups[group] else {
+            return []
+        }
+        return deduplicateTargets(testModeTargets(from: value, group: group, defaultKind: defaultKind))
+    }
+
+    private func testModeTargets(
+        from value: Any,
+        group: String,
+        defaultKind: ConfigTarget.Kind?
+    ) -> [ConfigTarget] {
+        if let values = value as? [[String: Any]] {
+            return values.enumerated().compactMap { index, payload in
+                testModeTarget(
+                    payload: payload,
+                    fallbackKey: "",
+                    sourceFile: group,
+                    entryKey: "\(group)[\(index)]",
+                    defaultKind: defaultKind
+                )
+            }
+        }
+        if let values = value as? [Any] {
+            return values.enumerated().compactMap { index, entry in
+                guard let payload = entry as? [String: Any] else { return nil }
+                return testModeTarget(
+                    payload: payload,
+                    fallbackKey: "",
+                    sourceFile: group,
+                    entryKey: "\(group)[\(index)]",
+                    defaultKind: defaultKind
+                )
+            }
+        }
+        if let values = value as? [String: Any] {
+            return values.keys.sorted().compactMap { key in
+                let payload = values[key] as? [String: Any] ?? [:]
+                return testModeTarget(
+                    payload: payload,
+                    fallbackKey: key,
+                    sourceFile: group,
+                    entryKey: "\(group).\(key)",
+                    defaultKind: defaultKind
+                )
+            }
+        }
+        return []
+    }
+
+    private func testModeTarget(
+        payload: [String: Any],
+        fallbackKey: String,
+        sourceFile: String,
+        entryKey: String,
+        defaultKind: ConfigTarget.Kind?
+    ) -> ConfigTarget? {
+        var kind = testModeTargetKind(payload["kind"], defaultKind: defaultKind)
+        if kind == .unknown {
+            if isValidEmail(fallbackKey) {
+                kind = .person
+            } else if isLikelyWebexRoomID(fallbackKey) {
+                kind = .space
+            }
+        }
+        guard kind != .unknown else { return nil }
+
+        let label = normalizeLabel(
+            stringValue(payload["label"] ?? payload["title"] ?? payload["name"] ?? fallbackKey)
+        )
+        let roomID = normalizeRoomID(
+            stringValue(payload["room_id"] ?? payload["roomID"] ?? payload["id"] ?? (kind == .space ? fallbackKey : ""))
+        )
+        let email = normalizeEmail(
+            stringValue(payload["email"] ?? payload["person_email"] ?? (kind == .person ? fallbackKey : ""))
+        )
+        let roomType = normalizeRoomType(
+            stringValue(payload["room_type"] ?? payload["roomType"])
+        )
+
+        switch kind {
+        case .person:
+            guard isValidEmail(email), !label.isEmpty else { return nil }
+        case .space:
+            guard isLikelyWebexRoomID(roomID), !label.isEmpty else { return nil }
+        case .unknown:
+            return nil
+        }
+
+        return ConfigTarget(
+            kind: kind,
+            label: label,
+            roomID: roomID,
+            roomType: roomType,
+            email: email,
+            autoReply: boolValue(payload["auto_reply"] ?? payload["autoReply"]),
+            iMessageHandles: iMessageHandles(from: payload),
+            sourceMetadata: ConfigTargetSourceMetadata(
+                fileName: sourceFile,
+                lineNumber: nil,
+                entryKey: entryKey,
+                parseMode: "test-mode-json"
+            )
+        )
+    }
+
+    private func testModeTargetKind(
+        _ rawValue: Any?,
+        defaultKind: ConfigTarget.Kind?
+    ) -> ConfigTarget.Kind {
+        let rawKind = stringValue(rawValue).lowercased()
+        if let kind = ConfigTarget.Kind(rawValue: rawKind), kind != .unknown {
+            return kind
+        }
+        return defaultKind ?? .unknown
     }
 
     /// Parses strict target rows used by runtime focus input.

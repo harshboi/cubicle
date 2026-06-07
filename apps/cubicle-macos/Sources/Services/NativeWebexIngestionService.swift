@@ -137,7 +137,7 @@ private enum NativeWebexIngestionError: LocalizedError {
 final class NativeWebexIngestionService {
     let configuration: RuntimeConfiguration
     let configStore: ConfigStore
-    let webexClient: WebexAPIClient
+    let webexClient: NativeWebexClienting
     let knowledgeStore: KnowledgeStore
     let iMessageService: NativeIMessageIngesting
 
@@ -147,17 +147,37 @@ final class NativeWebexIngestionService {
     init(
         configuration: RuntimeConfiguration = .current,
         configStore: ConfigStore? = nil,
-        webexClient: WebexAPIClient? = nil,
+        webexClient: NativeWebexClienting? = nil,
         knowledgeStore: KnowledgeStore? = nil,
         iMessageService: NativeIMessageIngesting? = nil
     ) {
         self.configuration = configuration
         self.configStore = configStore ?? ConfigStore(configuration: configuration)
-        self.webexClient = webexClient ?? WebexAPIClient(configuration: configuration)
+        self.webexClient = webexClient ?? Self.makeWebexClient(configuration: configuration)
         self.knowledgeStore = knowledgeStore ?? KnowledgeStore(configuration: configuration)
-        self.iMessageService = iMessageService ?? NativeIMessageIngestionService()
+        self.iMessageService = iMessageService ?? NativeIMessageIngestionService(configuration: configuration)
         self.encoder = JSONEncoder()
         self.encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+    }
+
+    static func makeWebexClient(
+        configuration: RuntimeConfiguration,
+        configStore: ConfigStore? = nil
+    ) -> NativeWebexClienting {
+        let configDirectory = configuration.jsonConfigurationDirectory
+            ?? configuration.runtimeRoot.appendingPathComponent("config", isDirectory: true)
+        guard let fixtureURL = configuration.jsonConfiguration?.connectorFixtureURL(
+            "webex",
+            runtimeRoot: configuration.runtimeRoot,
+            configDirectory: configDirectory
+        ) else {
+            return WebexAPIClient(configuration: configuration, configStore: configStore)
+        }
+        do {
+            return try FixtureWebexAPIClient(fixtureURL: fixtureURL)
+        } catch {
+            preconditionFailure(error.localizedDescription)
+        }
     }
 
     /// Writes the local Webex map file used to configure important people/spaces.
@@ -554,6 +574,17 @@ final class NativeWebexIngestionService {
 
     private func webexSyncEnabled() -> Bool {
         configStore.loadSystemSettings().webexSyncEnabled
+            && connectorEnabled("webex")
+    }
+
+    private func iMessageConnectorEnabled() -> Bool {
+        connectorEnabled("imessage")
+    }
+
+    private func connectorEnabled(_ connectorID: String) -> Bool {
+        configuration.jsonConfiguration?
+            .connectors?
+            .connectorEnabled(connectorID) ?? true
     }
 
     private func disabledProgress(totalRooms: Int, roomResults: [WebexRoomSyncResult]) -> WebexSyncProgress {
@@ -1244,6 +1275,9 @@ final class NativeWebexIngestionService {
         since: Date
     ) -> (messages: [IMessageTimelineMessage], error: String?) {
         guard !target.iMessageHandles.isEmpty else {
+            return ([], nil)
+        }
+        guard iMessageConnectorEnabled() else {
             return ([], nil)
         }
         do {

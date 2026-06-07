@@ -6,7 +6,7 @@ struct AppServices {
     let configStore: ConfigStore
     let codexRunner: CodexRunner
     let knowledgeStore: KnowledgeStore
-    let webexClient: WebexAPIClient
+    let webexClient: NativeWebexClienting
     let webexIngestionService: NativeWebexIngestionService
     let codexOrchestrationService: CodexPromptOrchestrationService
     let questionService: QuestionCandidateService
@@ -22,14 +22,14 @@ struct AppServices {
         configStore: ConfigStore? = nil,
         codexRunner: CodexRunner? = nil,
         knowledgeStore: KnowledgeStore? = nil,
-        webexClient: WebexAPIClient? = nil,
+        webexClient: NativeWebexClienting? = nil,
         iMessageService: NativeIMessageIngesting? = nil
     ) {
         let configuration = runtimeStore.configuration
         let resolvedConfigStore = configStore ?? ConfigStore(configuration: configuration)
         let resolvedCodexRunner = codexRunner ?? CodexRunner(configuration: configuration)
         let resolvedKnowledgeStore = knowledgeStore ?? KnowledgeStore(configuration: configuration)
-        let resolvedWebexClient = webexClient ?? WebexAPIClient(
+        let resolvedWebexClient = webexClient ?? NativeWebexIngestionService.makeWebexClient(
             configuration: configuration,
             configStore: resolvedConfigStore
         )

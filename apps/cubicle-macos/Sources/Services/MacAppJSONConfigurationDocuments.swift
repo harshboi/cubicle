@@ -1,24 +1,115 @@
 import Foundation
 import MetaCodable
 
-/// File names and document types for optional macOS JSON configuration.
+/// File names and document types for macOS JSON configuration.
 enum MacAppJSONConfigurationFiles {
     static let entrypoint = "cubicle.json"
     static let base = "base.json"
 }
 
-/// Environment names controlling the optional JSON configuration layer.
-enum MacAppJSONConfigurationEnvironment {
-    static let enabled = "CUBICLE_JSON_CONFIG_ENABLED"
-    static let file = "CUBICLE_CONFIG_FILE"
-    static let directory = "CUBICLE_JSON_CONFIG_DIR"
+/// App-bundled JSON configuration defaults.
+enum MacAppJSONConfigurationDefaults {
+    static var bundledBaseURL: URL? {
+        Bundle.module.url(forResource: "base", withExtension: "json", subdirectory: "Config")
+            ?? Bundle.module.url(forResource: "base", withExtension: "json")
+    }
+}
 
-    static func isEnabled(in environment: [String: String]) -> Bool {
-        guard let value = trimmed(environment[enabled])?.lowercased() else {
+/// Resolves relative JSON configuration paths consistently.
+enum MacAppJSONConfigurationPathResolver {
+    static func url(for path: String?, relativeTo baseDirectory: URL) -> URL? {
+        guard let trimmed = path?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !trimmed.isEmpty else {
+            return nil
+        }
+        let expanded = NSString(string: trimmed).expandingTildeInPath
+        if expanded.hasPrefix("/") {
+            return URL(fileURLWithPath: expanded)
+        }
+        return baseDirectory.appendingPathComponent(expanded)
+    }
+}
+
+extension MacAppJSONConfigurationDocument {
+    var testModeEnabled: Bool {
+        testMode?.enabled == true
+    }
+
+    func testModeURL(
+        for path: String?,
+        runtimeRoot: URL,
+        configDirectory: URL,
+        preferFixtureRoot: Bool = false
+    ) -> URL? {
+        let baseDirectory: URL
+        if preferFixtureRoot,
+           let fixtureRoot = MacAppJSONConfigurationPathResolver.url(
+            for: testMode?.fixtureRoot,
+            relativeTo: configDirectory
+           ) {
+            baseDirectory = fixtureRoot
+        } else {
+            baseDirectory = configDirectory
+        }
+        return MacAppJSONConfigurationPathResolver.url(for: path, relativeTo: baseDirectory)
+    }
+
+    func connectorFixtureURL(
+        _ connectorID: String,
+        runtimeRoot: URL,
+        configDirectory: URL
+    ) -> URL? {
+        guard testModeEnabled else { return nil }
+        let normalizedID = connectorID.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let configuredPath = testMode?.connectorFixtures?[normalizedID] ?? connectorFixturePath(normalizedID)
+        return testModeURL(
+            for: configuredPath,
+            runtimeRoot: runtimeRoot,
+            configDirectory: configDirectory,
+            preferFixtureRoot: true
+        )
+    }
+
+    func isProtectedURL(_ url: URL, runtimeRoot: URL, configDirectory: URL) -> Bool {
+        guard testModeEnabled,
+              let protectPaths = testMode?.protectPaths,
+              !protectPaths.isEmpty else {
             return false
         }
-        return ["1", "true", "yes", "on"].contains(value)
+        let candidatePath = url.standardizedFileURL.path
+        for protectPath in protectPaths {
+            guard let protectedURL = testModeURL(
+                for: protectPath,
+                runtimeRoot: runtimeRoot,
+                configDirectory: configDirectory,
+                preferFixtureRoot: false
+            ) else {
+                continue
+            }
+            let protectedPath = protectedURL.standardizedFileURL.path
+            if candidatePath == protectedPath || candidatePath.hasPrefix(protectedPath + "/") {
+                return true
+            }
+        }
+        return false
     }
+
+    private func connectorFixturePath(_ normalizedID: String) -> String? {
+        switch normalizedID {
+        case "webex":
+            return connectors?.webex?.fixturePath
+        case "imessage":
+            return connectors?.imessage?.fixturePath
+        default:
+            return nil
+        }
+    }
+}
+
+/// Environment names controlling JSON configuration selection.
+enum MacAppJSONConfigurationEnvironment {
+    static let file = "CUBICLE_CONFIG_FILE"
+    static let directory = "CUBICLE_JSON_CONFIG_DIR"
 
     static func trimmed(_ value: String?) -> String? {
         guard let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -29,29 +120,136 @@ enum MacAppJSONConfigurationEnvironment {
     }
 }
 
+/// Reader for the composed macOS JSON configuration document.
+struct MacAppJSONConfigurationLoader {
+    var runtimeRoot: URL
+    var environment: [String: String]
+    var fileManager: FileManager
+
+    init(
+        runtimeRoot: URL,
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        fileManager: FileManager = .default
+    ) {
+        self.runtimeRoot = runtimeRoot
+        self.environment = environment
+        self.fileManager = fileManager
+    }
+
+    init(
+        configuration: RuntimeConfiguration,
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        fileManager: FileManager = .default
+    ) {
+        self.init(runtimeRoot: configuration.runtimeRoot, environment: environment, fileManager: fileManager)
+    }
+
+    var configDirectory: URL {
+        if let override = MacAppJSONConfigurationEnvironment.trimmed(
+            environment[MacAppJSONConfigurationEnvironment.directory]
+        ) {
+            return expandedFileURL(override, baseDirectory: runtimeRoot)
+        }
+        return runtimeRoot.appendingPathComponent("config", isDirectory: true)
+    }
+
+    var entrypointURL: URL {
+        if let override = MacAppJSONConfigurationEnvironment.trimmed(
+            environment[MacAppJSONConfigurationEnvironment.file]
+        ) {
+            return expandedFileURL(override, baseDirectory: configDirectory)
+        }
+        return configDirectory.appendingPathComponent(MacAppJSONConfigurationFiles.entrypoint)
+    }
+
+    var hasExplicitEntrypoint: Bool {
+        MacAppJSONConfigurationEnvironment.trimmed(
+            environment[MacAppJSONConfigurationEnvironment.file]
+        ) != nil
+    }
+
+    func configurationDocument() -> MacAppJSONConfigurationDocument? {
+        do {
+            let composer = MacAppJSONConfigurationComposer(
+                fileManager: fileManager,
+                fallbackBaseURL: MacAppJSONConfigurationDefaults.bundledBaseURL
+            )
+            guard let bundledBaseURL = MacAppJSONConfigurationDefaults.bundledBaseURL else {
+                throw MacAppJSONConfigurationError.missingBundledDefaults
+            }
+            let defaults = try composer.composedJSONObject(entrypointURL: bundledBaseURL)
+
+            let operatorURL = entrypointURL
+            let operatorExists = fileManager.fileExists(atPath: operatorURL.standardizedFileURL.path)
+            if hasExplicitEntrypoint, !operatorExists {
+                throw MacAppJSONConfigurationError.missingFile(operatorURL)
+            }
+
+            let merged: [String: Any]
+            let sourceURL: URL
+            if operatorExists {
+                let operatorConfig = try composer.composedJSONObject(entrypointURL: operatorURL)
+                merged = MacAppJSONConfigurationComposer.deepMerging(defaults, operatorConfig)
+                sourceURL = operatorURL
+            } else {
+                merged = defaults
+                sourceURL = bundledBaseURL
+            }
+
+            return try composer.decodeDocument(fromJSONObject: merged, sourceURL: sourceURL)
+        } catch {
+            preconditionFailure(error.localizedDescription)
+        }
+    }
+
+    private func expandedFileURL(_ value: String, baseDirectory: URL) -> URL {
+        let expanded = NSString(string: value).expandingTildeInPath
+        if expanded.hasPrefix("/") {
+            return URL(fileURLWithPath: expanded)
+        }
+        return baseDirectory.appendingPathComponent(expanded)
+    }
+}
+
 /// HOCON-style JSON composer used before decoding the typed Cubicle config.
 struct MacAppJSONConfigurationComposer {
     var fileManager: FileManager
+    var fallbackBaseURL: URL?
 
-    init(fileManager: FileManager = .default) {
+    init(fileManager: FileManager = .default, fallbackBaseURL: URL? = nil) {
         self.fileManager = fileManager
+        self.fallbackBaseURL = fallbackBaseURL
     }
 
     /// Loads one entrypoint, applies `extends`, resolves `use` references, and decodes the typed document.
     func loadDocument(entrypointURL: URL) throws -> MacAppJSONConfigurationDocument {
-        let object = try resolvedJSONObject(entrypointURL: entrypointURL)
+        let object = try composedJSONObject(entrypointURL: entrypointURL)
+        return try decodeDocument(fromJSONObject: object, sourceURL: entrypointURL)
+    }
+
+    /// Decodes a raw composed object after resolving `use` references and validating policy.
+    func decodeDocument(
+        fromJSONObject object: [String: Any],
+        sourceURL: URL
+    ) throws -> MacAppJSONConfigurationDocument {
+        let object = try resolveUseReferences(in: object, root: object, path: [], stack: [])
         try MacAppJSONConfigurationValidator.validateNoSecrets(in: object)
         let data = try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys])
         do {
             return try JSONDecoder().decode(MacAppJSONConfigurationDocument.self, from: data)
         } catch {
-            throw MacAppJSONConfigurationError.decodeFailed(entrypointURL, error)
+            throw MacAppJSONConfigurationError.decodeFailed(sourceURL, error)
         }
+    }
+
+    /// Loads one entrypoint, applies `extends`, and returns the unresolved raw object.
+    func composedJSONObject(entrypointURL: URL) throws -> [String: Any] {
+        try loadJSONObject(entrypointURL, stack: [])
     }
 
     /// Loads one entrypoint and returns the resolved raw object for diagnostics and tests.
     func resolvedJSONObject(entrypointURL: URL) throws -> [String: Any] {
-        let loaded = try loadJSONObject(entrypointURL, stack: [])
+        let loaded = try composedJSONObject(entrypointURL: entrypointURL)
         return try resolveUseReferences(in: loaded, root: loaded, path: [], stack: [])
     }
 
@@ -61,6 +259,11 @@ struct MacAppJSONConfigurationComposer {
             throw MacAppJSONConfigurationError.extendCycle((stack + [standardizedURL]).map(\.path))
         }
         guard fileManager.fileExists(atPath: standardizedURL.path) else {
+            if standardizedURL.lastPathComponent == MacAppJSONConfigurationFiles.base,
+               let fallbackBaseURL,
+               fallbackBaseURL.standardizedFileURL != standardizedURL {
+                return try loadJSONObject(fallbackBaseURL, stack: stack)
+            }
             throw MacAppJSONConfigurationError.missingFile(standardizedURL)
         }
 
@@ -211,6 +414,9 @@ struct MacAppJSONConfigurationComposer {
     static func deepMerging(_ base: [String: Any], _ overlay: [String: Any]) -> [String: Any] {
         var merged = base
         for (key, overlayValue) in overlay {
+            if overlayValue is NSNull, merged[key] != nil {
+                continue
+            }
             if let baseObject = merged[key] as? [String: Any],
                let overlayObject = overlayValue as? [String: Any] {
                 merged[key] = deepMerging(baseObject, overlayObject)
@@ -253,6 +459,7 @@ enum MacAppJSONConfigurationError: LocalizedError, Equatable {
     case useCycle([String])
     case secretKeyNotAllowed(String)
     case decodeFailed(URL, Error)
+    case missingBundledDefaults
 
     static func == (lhs: MacAppJSONConfigurationError, rhs: MacAppJSONConfigurationError) -> Bool {
         switch (lhs, rhs) {
@@ -282,6 +489,8 @@ enum MacAppJSONConfigurationError: LocalizedError, Equatable {
             return left == right
         case (.decodeFailed(let left, _), .decodeFailed(let right, _)):
             return left == right
+        case (.missingBundledDefaults, .missingBundledDefaults):
+            return true
         default:
             return false
         }
@@ -315,6 +524,8 @@ enum MacAppJSONConfigurationError: LocalizedError, Equatable {
             return "Secret-bearing key is not allowed in Cubicle JSON config: \(keyPath)"
         case .decodeFailed(let url, let error):
             return "Could not decode resolved Cubicle JSON config from \(url.path): \(error.localizedDescription)"
+        case .missingBundledDefaults:
+            return "Missing bundled Cubicle JSON defaults file."
         }
     }
 }
@@ -325,10 +536,16 @@ enum MacAppJSONConfigurationValidator {
         "accesstoken",
         "auth_token",
         "authtoken",
+        "api_key",
+        "apikey",
         "client_secret",
         "clientsecret",
+        "password",
+        "private_key",
+        "privatekey",
         "refresh_token",
-        "refreshtoken"
+        "refreshtoken",
+        "secret"
     ]
 
     static func validateNoSecrets(in object: [String: Any]) throws {
@@ -371,19 +588,6 @@ struct MacAppJSONConfigurationDocument: Equatable {
 /// Reusable policy blocks scoped to one parent section.
 @Codable
 struct MacAppJSONCommonPolicies: Equatable {
-    @CodedAt("run_policy")
-    var runPolicy: MacAppJSONRunPolicy?
-    @CodedAt("network_policy")
-    var networkPolicy: MacAppJSONNetworkPolicy?
-    @CodedAt("cache_policy")
-    var cachePolicy: MacAppJSONCachePolicy?
-    @CodedAt("sync_policy")
-    var syncPolicy: MacAppJSONSyncPolicy?
-}
-
-/// Parent defaults applied to child sections before child overrides.
-@Codable
-struct MacAppJSONPolicyDefaults: Equatable {
     @CodedAt("run_policy")
     var runPolicy: MacAppJSONRunPolicy?
     @CodedAt("network_policy")
@@ -446,7 +650,6 @@ struct MacAppJSONSyncPolicy: Equatable {
 @Codable
 struct MacAppJSONEnvironmentConfiguration: Equatable {
     var common: MacAppJSONCommonPolicies?
-    var defaults: MacAppJSONPolicyDefaults?
     @CodedAt("codex_executable")
     var codexExecutable: String?
     @CodedAt("runtime_root")
@@ -486,10 +689,35 @@ struct MacAppJSONEnvironmentIMessageSettings: Equatable {
 /// Connector selection and connector-specific non-secret settings.
 struct MacAppJSONConnectorsConfiguration: Codable, Equatable {
     var common: MacAppJSONCommonPolicies?
-    var defaults: MacAppJSONPolicyDefaults?
     var enabled: [String]?
     var webex: MacAppJSONWebexConnectorConfiguration?
     var imessage: MacAppJSONIMessageConnectorConfiguration?
+}
+
+extension MacAppJSONConnectorsConfiguration {
+    func connectorEnabled(_ connectorID: String, defaultValue: Bool = true) -> Bool {
+        let normalizedID = connectorID
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        if let enabled {
+            return enabled
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+                .contains(normalizedID)
+        }
+        switch normalizedID {
+        case "webex":
+            if let enabled = webex?.enabled {
+                return enabled
+            }
+        case "imessage":
+            if let enabled = imessage?.enabled {
+                return enabled
+            }
+        default:
+            break
+        }
+        return defaultValue
+    }
 }
 
 @Codable
@@ -518,7 +746,6 @@ struct MacAppJSONIMessageConnectorConfiguration: Equatable {
 @Codable
 struct MacAppJSONCodexConfiguration: Equatable {
     var common: MacAppJSONCommonPolicies?
-    var defaults: MacAppJSONPolicyDefaults?
     @CodedAt("run_policy")
     var runPolicy: MacAppJSONRunPolicy?
     @CodedAt("cache_policy")
@@ -559,7 +786,6 @@ struct MacAppJSONCodexQuestionSynthesisPolicy: Equatable {
 /// Local question generation and filtering tuning.
 struct MacAppJSONQuestionGenerationConfiguration: Codable, Equatable {
     var common: MacAppJSONCommonPolicies?
-    var defaults: MacAppJSONPolicyDefaults?
     var core: MacAppJSONQuestionGenerationCoreSettings?
     var cubicle: MacAppJSONQuestionGenerationCubicleSettings?
 }
