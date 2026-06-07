@@ -84,6 +84,20 @@ func (_u *ObjectUpdate) SetNillableSource(v *string) *ObjectUpdate {
 	return _u
 }
 
+// SetSourceInstance sets the "source_instance" field.
+func (_u *ObjectUpdate) SetSourceInstance(v string) *ObjectUpdate {
+	_u.mutation.SetSourceInstance(v)
+	return _u
+}
+
+// SetNillableSourceInstance sets the "source_instance" field if the given value is not nil.
+func (_u *ObjectUpdate) SetNillableSourceInstance(v *string) *ObjectUpdate {
+	if v != nil {
+		_u.SetSourceInstance(*v)
+	}
+	return _u
+}
+
 // SetExternalID sets the "external_id" field.
 func (_u *ObjectUpdate) SetExternalID(v string) *ObjectUpdate {
 	_u.mutation.SetExternalID(v)
@@ -94,6 +108,48 @@ func (_u *ObjectUpdate) SetExternalID(v string) *ObjectUpdate {
 func (_u *ObjectUpdate) SetNillableExternalID(v *string) *ObjectUpdate {
 	if v != nil {
 		_u.SetExternalID(*v)
+	}
+	return _u
+}
+
+// SetSourceURL sets the "source_url" field.
+func (_u *ObjectUpdate) SetSourceURL(v string) *ObjectUpdate {
+	_u.mutation.SetSourceURL(v)
+	return _u
+}
+
+// SetNillableSourceURL sets the "source_url" field if the given value is not nil.
+func (_u *ObjectUpdate) SetNillableSourceURL(v *string) *ObjectUpdate {
+	if v != nil {
+		_u.SetSourceURL(*v)
+	}
+	return _u
+}
+
+// SetSnapshotKey sets the "snapshot_key" field.
+func (_u *ObjectUpdate) SetSnapshotKey(v string) *ObjectUpdate {
+	_u.mutation.SetSnapshotKey(v)
+	return _u
+}
+
+// SetNillableSnapshotKey sets the "snapshot_key" field if the given value is not nil.
+func (_u *ObjectUpdate) SetNillableSnapshotKey(v *string) *ObjectUpdate {
+	if v != nil {
+		_u.SetSnapshotKey(*v)
+	}
+	return _u
+}
+
+// SetMapperVersion sets the "mapper_version" field.
+func (_u *ObjectUpdate) SetMapperVersion(v string) *ObjectUpdate {
+	_u.mutation.SetMapperVersion(v)
+	return _u
+}
+
+// SetNillableMapperVersion sets the "mapper_version" field if the given value is not nil.
+func (_u *ObjectUpdate) SetNillableMapperVersion(v *string) *ObjectUpdate {
+	if v != nil {
+		_u.SetMapperVersion(*v)
 	}
 	return _u
 }
@@ -136,6 +192,40 @@ func (_u *ObjectUpdate) SetObservedAt(v time.Time) *ObjectUpdate {
 func (_u *ObjectUpdate) SetNillableObservedAt(v *time.Time) *ObjectUpdate {
 	if v != nil {
 		_u.SetObservedAt(*v)
+	}
+	return _u
+}
+
+// SetSourceUpdatedAt sets the "source_updated_at" field.
+func (_u *ObjectUpdate) SetSourceUpdatedAt(v time.Time) *ObjectUpdate {
+	_u.mutation.SetSourceUpdatedAt(v)
+	return _u
+}
+
+// SetNillableSourceUpdatedAt sets the "source_updated_at" field if the given value is not nil.
+func (_u *ObjectUpdate) SetNillableSourceUpdatedAt(v *time.Time) *ObjectUpdate {
+	if v != nil {
+		_u.SetSourceUpdatedAt(*v)
+	}
+	return _u
+}
+
+// ClearSourceUpdatedAt clears the value of the "source_updated_at" field.
+func (_u *ObjectUpdate) ClearSourceUpdatedAt() *ObjectUpdate {
+	_u.mutation.ClearSourceUpdatedAt()
+	return _u
+}
+
+// SetPropertiesJSON sets the "properties_json" field.
+func (_u *ObjectUpdate) SetPropertiesJSON(v string) *ObjectUpdate {
+	_u.mutation.SetPropertiesJSON(v)
+	return _u
+}
+
+// SetNillablePropertiesJSON sets the "properties_json" field if the given value is not nil.
+func (_u *ObjectUpdate) SetNillablePropertiesJSON(v *string) *ObjectUpdate {
+	if v != nil {
+		_u.SetPropertiesJSON(*v)
 	}
 	return _u
 }
@@ -211,8 +301,20 @@ func (_u *ObjectUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Source(); ok {
 		_spec.SetField(object.FieldSource, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.SourceInstance(); ok {
+		_spec.SetField(object.FieldSourceInstance, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.ExternalID(); ok {
 		_spec.SetField(object.FieldExternalID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SourceURL(); ok {
+		_spec.SetField(object.FieldSourceURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SnapshotKey(); ok {
+		_spec.SetField(object.FieldSnapshotKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.MapperVersion(); ok {
+		_spec.SetField(object.FieldMapperVersion, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Visibility(); ok {
 		_spec.SetField(object.FieldVisibility, field.TypeString, value)
@@ -222,6 +324,15 @@ func (_u *ObjectUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.ObservedAt(); ok {
 		_spec.SetField(object.FieldObservedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.SourceUpdatedAt(); ok {
+		_spec.SetField(object.FieldSourceUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SourceUpdatedAtCleared() {
+		_spec.ClearField(object.FieldSourceUpdatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PropertiesJSON(); ok {
+		_spec.SetField(object.FieldPropertiesJSON, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -299,6 +410,20 @@ func (_u *ObjectUpdateOne) SetNillableSource(v *string) *ObjectUpdateOne {
 	return _u
 }
 
+// SetSourceInstance sets the "source_instance" field.
+func (_u *ObjectUpdateOne) SetSourceInstance(v string) *ObjectUpdateOne {
+	_u.mutation.SetSourceInstance(v)
+	return _u
+}
+
+// SetNillableSourceInstance sets the "source_instance" field if the given value is not nil.
+func (_u *ObjectUpdateOne) SetNillableSourceInstance(v *string) *ObjectUpdateOne {
+	if v != nil {
+		_u.SetSourceInstance(*v)
+	}
+	return _u
+}
+
 // SetExternalID sets the "external_id" field.
 func (_u *ObjectUpdateOne) SetExternalID(v string) *ObjectUpdateOne {
 	_u.mutation.SetExternalID(v)
@@ -309,6 +434,48 @@ func (_u *ObjectUpdateOne) SetExternalID(v string) *ObjectUpdateOne {
 func (_u *ObjectUpdateOne) SetNillableExternalID(v *string) *ObjectUpdateOne {
 	if v != nil {
 		_u.SetExternalID(*v)
+	}
+	return _u
+}
+
+// SetSourceURL sets the "source_url" field.
+func (_u *ObjectUpdateOne) SetSourceURL(v string) *ObjectUpdateOne {
+	_u.mutation.SetSourceURL(v)
+	return _u
+}
+
+// SetNillableSourceURL sets the "source_url" field if the given value is not nil.
+func (_u *ObjectUpdateOne) SetNillableSourceURL(v *string) *ObjectUpdateOne {
+	if v != nil {
+		_u.SetSourceURL(*v)
+	}
+	return _u
+}
+
+// SetSnapshotKey sets the "snapshot_key" field.
+func (_u *ObjectUpdateOne) SetSnapshotKey(v string) *ObjectUpdateOne {
+	_u.mutation.SetSnapshotKey(v)
+	return _u
+}
+
+// SetNillableSnapshotKey sets the "snapshot_key" field if the given value is not nil.
+func (_u *ObjectUpdateOne) SetNillableSnapshotKey(v *string) *ObjectUpdateOne {
+	if v != nil {
+		_u.SetSnapshotKey(*v)
+	}
+	return _u
+}
+
+// SetMapperVersion sets the "mapper_version" field.
+func (_u *ObjectUpdateOne) SetMapperVersion(v string) *ObjectUpdateOne {
+	_u.mutation.SetMapperVersion(v)
+	return _u
+}
+
+// SetNillableMapperVersion sets the "mapper_version" field if the given value is not nil.
+func (_u *ObjectUpdateOne) SetNillableMapperVersion(v *string) *ObjectUpdateOne {
+	if v != nil {
+		_u.SetMapperVersion(*v)
 	}
 	return _u
 }
@@ -351,6 +518,40 @@ func (_u *ObjectUpdateOne) SetObservedAt(v time.Time) *ObjectUpdateOne {
 func (_u *ObjectUpdateOne) SetNillableObservedAt(v *time.Time) *ObjectUpdateOne {
 	if v != nil {
 		_u.SetObservedAt(*v)
+	}
+	return _u
+}
+
+// SetSourceUpdatedAt sets the "source_updated_at" field.
+func (_u *ObjectUpdateOne) SetSourceUpdatedAt(v time.Time) *ObjectUpdateOne {
+	_u.mutation.SetSourceUpdatedAt(v)
+	return _u
+}
+
+// SetNillableSourceUpdatedAt sets the "source_updated_at" field if the given value is not nil.
+func (_u *ObjectUpdateOne) SetNillableSourceUpdatedAt(v *time.Time) *ObjectUpdateOne {
+	if v != nil {
+		_u.SetSourceUpdatedAt(*v)
+	}
+	return _u
+}
+
+// ClearSourceUpdatedAt clears the value of the "source_updated_at" field.
+func (_u *ObjectUpdateOne) ClearSourceUpdatedAt() *ObjectUpdateOne {
+	_u.mutation.ClearSourceUpdatedAt()
+	return _u
+}
+
+// SetPropertiesJSON sets the "properties_json" field.
+func (_u *ObjectUpdateOne) SetPropertiesJSON(v string) *ObjectUpdateOne {
+	_u.mutation.SetPropertiesJSON(v)
+	return _u
+}
+
+// SetNillablePropertiesJSON sets the "properties_json" field if the given value is not nil.
+func (_u *ObjectUpdateOne) SetNillablePropertiesJSON(v *string) *ObjectUpdateOne {
+	if v != nil {
+		_u.SetPropertiesJSON(*v)
 	}
 	return _u
 }
@@ -456,8 +657,20 @@ func (_u *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err erro
 	if value, ok := _u.mutation.Source(); ok {
 		_spec.SetField(object.FieldSource, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.SourceInstance(); ok {
+		_spec.SetField(object.FieldSourceInstance, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.ExternalID(); ok {
 		_spec.SetField(object.FieldExternalID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SourceURL(); ok {
+		_spec.SetField(object.FieldSourceURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SnapshotKey(); ok {
+		_spec.SetField(object.FieldSnapshotKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.MapperVersion(); ok {
+		_spec.SetField(object.FieldMapperVersion, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Visibility(); ok {
 		_spec.SetField(object.FieldVisibility, field.TypeString, value)
@@ -467,6 +680,15 @@ func (_u *ObjectUpdateOne) sqlSave(ctx context.Context) (_node *Object, err erro
 	}
 	if value, ok := _u.mutation.ObservedAt(); ok {
 		_spec.SetField(object.FieldObservedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.SourceUpdatedAt(); ok {
+		_spec.SetField(object.FieldSourceUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SourceUpdatedAtCleared() {
+		_spec.ClearField(object.FieldSourceUpdatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PropertiesJSON(); ok {
+		_spec.SetField(object.FieldPropertiesJSON, field.TypeString, value)
 	}
 	_node = &Object{config: _u.config}
 	_spec.Assign = _node.assignValues

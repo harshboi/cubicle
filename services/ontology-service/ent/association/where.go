@@ -94,6 +94,26 @@ func Source(v string) predicate.Association {
 	return predicate.Association(sql.FieldEQ(FieldSource, v))
 }
 
+// SourceInstance applies equality check predicate on the "source_instance" field. It's identical to SourceInstanceEQ.
+func SourceInstance(v string) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldSourceInstance, v))
+}
+
+// SourceURL applies equality check predicate on the "source_url" field. It's identical to SourceURLEQ.
+func SourceURL(v string) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldSourceURL, v))
+}
+
+// SnapshotKey applies equality check predicate on the "snapshot_key" field. It's identical to SnapshotKeyEQ.
+func SnapshotKey(v string) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldSnapshotKey, v))
+}
+
+// MapperVersion applies equality check predicate on the "mapper_version" field. It's identical to MapperVersionEQ.
+func MapperVersion(v string) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldMapperVersion, v))
+}
+
 // Confidence applies equality check predicate on the "confidence" field. It's identical to ConfidenceEQ.
 func Confidence(v float64) predicate.Association {
 	return predicate.Association(sql.FieldEQ(FieldConfidence, v))
@@ -112,6 +132,16 @@ func FreshnessState(v string) predicate.Association {
 // ObservedAt applies equality check predicate on the "observed_at" field. It's identical to ObservedAtEQ.
 func ObservedAt(v time.Time) predicate.Association {
 	return predicate.Association(sql.FieldEQ(FieldObservedAt, v))
+}
+
+// SourceUpdatedAt applies equality check predicate on the "source_updated_at" field. It's identical to SourceUpdatedAtEQ.
+func SourceUpdatedAt(v time.Time) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldSourceUpdatedAt, v))
+}
+
+// PropertiesJSON applies equality check predicate on the "properties_json" field. It's identical to PropertiesJSONEQ.
+func PropertiesJSON(v string) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldPropertiesJSON, v))
 }
 
 // KeyEQ applies the EQ predicate on the "key" field.
@@ -634,6 +664,266 @@ func SourceContainsFold(v string) predicate.Association {
 	return predicate.Association(sql.FieldContainsFold(FieldSource, v))
 }
 
+// SourceInstanceEQ applies the EQ predicate on the "source_instance" field.
+func SourceInstanceEQ(v string) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldSourceInstance, v))
+}
+
+// SourceInstanceNEQ applies the NEQ predicate on the "source_instance" field.
+func SourceInstanceNEQ(v string) predicate.Association {
+	return predicate.Association(sql.FieldNEQ(FieldSourceInstance, v))
+}
+
+// SourceInstanceIn applies the In predicate on the "source_instance" field.
+func SourceInstanceIn(vs ...string) predicate.Association {
+	return predicate.Association(sql.FieldIn(FieldSourceInstance, vs...))
+}
+
+// SourceInstanceNotIn applies the NotIn predicate on the "source_instance" field.
+func SourceInstanceNotIn(vs ...string) predicate.Association {
+	return predicate.Association(sql.FieldNotIn(FieldSourceInstance, vs...))
+}
+
+// SourceInstanceGT applies the GT predicate on the "source_instance" field.
+func SourceInstanceGT(v string) predicate.Association {
+	return predicate.Association(sql.FieldGT(FieldSourceInstance, v))
+}
+
+// SourceInstanceGTE applies the GTE predicate on the "source_instance" field.
+func SourceInstanceGTE(v string) predicate.Association {
+	return predicate.Association(sql.FieldGTE(FieldSourceInstance, v))
+}
+
+// SourceInstanceLT applies the LT predicate on the "source_instance" field.
+func SourceInstanceLT(v string) predicate.Association {
+	return predicate.Association(sql.FieldLT(FieldSourceInstance, v))
+}
+
+// SourceInstanceLTE applies the LTE predicate on the "source_instance" field.
+func SourceInstanceLTE(v string) predicate.Association {
+	return predicate.Association(sql.FieldLTE(FieldSourceInstance, v))
+}
+
+// SourceInstanceContains applies the Contains predicate on the "source_instance" field.
+func SourceInstanceContains(v string) predicate.Association {
+	return predicate.Association(sql.FieldContains(FieldSourceInstance, v))
+}
+
+// SourceInstanceHasPrefix applies the HasPrefix predicate on the "source_instance" field.
+func SourceInstanceHasPrefix(v string) predicate.Association {
+	return predicate.Association(sql.FieldHasPrefix(FieldSourceInstance, v))
+}
+
+// SourceInstanceHasSuffix applies the HasSuffix predicate on the "source_instance" field.
+func SourceInstanceHasSuffix(v string) predicate.Association {
+	return predicate.Association(sql.FieldHasSuffix(FieldSourceInstance, v))
+}
+
+// SourceInstanceEqualFold applies the EqualFold predicate on the "source_instance" field.
+func SourceInstanceEqualFold(v string) predicate.Association {
+	return predicate.Association(sql.FieldEqualFold(FieldSourceInstance, v))
+}
+
+// SourceInstanceContainsFold applies the ContainsFold predicate on the "source_instance" field.
+func SourceInstanceContainsFold(v string) predicate.Association {
+	return predicate.Association(sql.FieldContainsFold(FieldSourceInstance, v))
+}
+
+// SourceURLEQ applies the EQ predicate on the "source_url" field.
+func SourceURLEQ(v string) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldSourceURL, v))
+}
+
+// SourceURLNEQ applies the NEQ predicate on the "source_url" field.
+func SourceURLNEQ(v string) predicate.Association {
+	return predicate.Association(sql.FieldNEQ(FieldSourceURL, v))
+}
+
+// SourceURLIn applies the In predicate on the "source_url" field.
+func SourceURLIn(vs ...string) predicate.Association {
+	return predicate.Association(sql.FieldIn(FieldSourceURL, vs...))
+}
+
+// SourceURLNotIn applies the NotIn predicate on the "source_url" field.
+func SourceURLNotIn(vs ...string) predicate.Association {
+	return predicate.Association(sql.FieldNotIn(FieldSourceURL, vs...))
+}
+
+// SourceURLGT applies the GT predicate on the "source_url" field.
+func SourceURLGT(v string) predicate.Association {
+	return predicate.Association(sql.FieldGT(FieldSourceURL, v))
+}
+
+// SourceURLGTE applies the GTE predicate on the "source_url" field.
+func SourceURLGTE(v string) predicate.Association {
+	return predicate.Association(sql.FieldGTE(FieldSourceURL, v))
+}
+
+// SourceURLLT applies the LT predicate on the "source_url" field.
+func SourceURLLT(v string) predicate.Association {
+	return predicate.Association(sql.FieldLT(FieldSourceURL, v))
+}
+
+// SourceURLLTE applies the LTE predicate on the "source_url" field.
+func SourceURLLTE(v string) predicate.Association {
+	return predicate.Association(sql.FieldLTE(FieldSourceURL, v))
+}
+
+// SourceURLContains applies the Contains predicate on the "source_url" field.
+func SourceURLContains(v string) predicate.Association {
+	return predicate.Association(sql.FieldContains(FieldSourceURL, v))
+}
+
+// SourceURLHasPrefix applies the HasPrefix predicate on the "source_url" field.
+func SourceURLHasPrefix(v string) predicate.Association {
+	return predicate.Association(sql.FieldHasPrefix(FieldSourceURL, v))
+}
+
+// SourceURLHasSuffix applies the HasSuffix predicate on the "source_url" field.
+func SourceURLHasSuffix(v string) predicate.Association {
+	return predicate.Association(sql.FieldHasSuffix(FieldSourceURL, v))
+}
+
+// SourceURLEqualFold applies the EqualFold predicate on the "source_url" field.
+func SourceURLEqualFold(v string) predicate.Association {
+	return predicate.Association(sql.FieldEqualFold(FieldSourceURL, v))
+}
+
+// SourceURLContainsFold applies the ContainsFold predicate on the "source_url" field.
+func SourceURLContainsFold(v string) predicate.Association {
+	return predicate.Association(sql.FieldContainsFold(FieldSourceURL, v))
+}
+
+// SnapshotKeyEQ applies the EQ predicate on the "snapshot_key" field.
+func SnapshotKeyEQ(v string) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldSnapshotKey, v))
+}
+
+// SnapshotKeyNEQ applies the NEQ predicate on the "snapshot_key" field.
+func SnapshotKeyNEQ(v string) predicate.Association {
+	return predicate.Association(sql.FieldNEQ(FieldSnapshotKey, v))
+}
+
+// SnapshotKeyIn applies the In predicate on the "snapshot_key" field.
+func SnapshotKeyIn(vs ...string) predicate.Association {
+	return predicate.Association(sql.FieldIn(FieldSnapshotKey, vs...))
+}
+
+// SnapshotKeyNotIn applies the NotIn predicate on the "snapshot_key" field.
+func SnapshotKeyNotIn(vs ...string) predicate.Association {
+	return predicate.Association(sql.FieldNotIn(FieldSnapshotKey, vs...))
+}
+
+// SnapshotKeyGT applies the GT predicate on the "snapshot_key" field.
+func SnapshotKeyGT(v string) predicate.Association {
+	return predicate.Association(sql.FieldGT(FieldSnapshotKey, v))
+}
+
+// SnapshotKeyGTE applies the GTE predicate on the "snapshot_key" field.
+func SnapshotKeyGTE(v string) predicate.Association {
+	return predicate.Association(sql.FieldGTE(FieldSnapshotKey, v))
+}
+
+// SnapshotKeyLT applies the LT predicate on the "snapshot_key" field.
+func SnapshotKeyLT(v string) predicate.Association {
+	return predicate.Association(sql.FieldLT(FieldSnapshotKey, v))
+}
+
+// SnapshotKeyLTE applies the LTE predicate on the "snapshot_key" field.
+func SnapshotKeyLTE(v string) predicate.Association {
+	return predicate.Association(sql.FieldLTE(FieldSnapshotKey, v))
+}
+
+// SnapshotKeyContains applies the Contains predicate on the "snapshot_key" field.
+func SnapshotKeyContains(v string) predicate.Association {
+	return predicate.Association(sql.FieldContains(FieldSnapshotKey, v))
+}
+
+// SnapshotKeyHasPrefix applies the HasPrefix predicate on the "snapshot_key" field.
+func SnapshotKeyHasPrefix(v string) predicate.Association {
+	return predicate.Association(sql.FieldHasPrefix(FieldSnapshotKey, v))
+}
+
+// SnapshotKeyHasSuffix applies the HasSuffix predicate on the "snapshot_key" field.
+func SnapshotKeyHasSuffix(v string) predicate.Association {
+	return predicate.Association(sql.FieldHasSuffix(FieldSnapshotKey, v))
+}
+
+// SnapshotKeyEqualFold applies the EqualFold predicate on the "snapshot_key" field.
+func SnapshotKeyEqualFold(v string) predicate.Association {
+	return predicate.Association(sql.FieldEqualFold(FieldSnapshotKey, v))
+}
+
+// SnapshotKeyContainsFold applies the ContainsFold predicate on the "snapshot_key" field.
+func SnapshotKeyContainsFold(v string) predicate.Association {
+	return predicate.Association(sql.FieldContainsFold(FieldSnapshotKey, v))
+}
+
+// MapperVersionEQ applies the EQ predicate on the "mapper_version" field.
+func MapperVersionEQ(v string) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldMapperVersion, v))
+}
+
+// MapperVersionNEQ applies the NEQ predicate on the "mapper_version" field.
+func MapperVersionNEQ(v string) predicate.Association {
+	return predicate.Association(sql.FieldNEQ(FieldMapperVersion, v))
+}
+
+// MapperVersionIn applies the In predicate on the "mapper_version" field.
+func MapperVersionIn(vs ...string) predicate.Association {
+	return predicate.Association(sql.FieldIn(FieldMapperVersion, vs...))
+}
+
+// MapperVersionNotIn applies the NotIn predicate on the "mapper_version" field.
+func MapperVersionNotIn(vs ...string) predicate.Association {
+	return predicate.Association(sql.FieldNotIn(FieldMapperVersion, vs...))
+}
+
+// MapperVersionGT applies the GT predicate on the "mapper_version" field.
+func MapperVersionGT(v string) predicate.Association {
+	return predicate.Association(sql.FieldGT(FieldMapperVersion, v))
+}
+
+// MapperVersionGTE applies the GTE predicate on the "mapper_version" field.
+func MapperVersionGTE(v string) predicate.Association {
+	return predicate.Association(sql.FieldGTE(FieldMapperVersion, v))
+}
+
+// MapperVersionLT applies the LT predicate on the "mapper_version" field.
+func MapperVersionLT(v string) predicate.Association {
+	return predicate.Association(sql.FieldLT(FieldMapperVersion, v))
+}
+
+// MapperVersionLTE applies the LTE predicate on the "mapper_version" field.
+func MapperVersionLTE(v string) predicate.Association {
+	return predicate.Association(sql.FieldLTE(FieldMapperVersion, v))
+}
+
+// MapperVersionContains applies the Contains predicate on the "mapper_version" field.
+func MapperVersionContains(v string) predicate.Association {
+	return predicate.Association(sql.FieldContains(FieldMapperVersion, v))
+}
+
+// MapperVersionHasPrefix applies the HasPrefix predicate on the "mapper_version" field.
+func MapperVersionHasPrefix(v string) predicate.Association {
+	return predicate.Association(sql.FieldHasPrefix(FieldMapperVersion, v))
+}
+
+// MapperVersionHasSuffix applies the HasSuffix predicate on the "mapper_version" field.
+func MapperVersionHasSuffix(v string) predicate.Association {
+	return predicate.Association(sql.FieldHasSuffix(FieldMapperVersion, v))
+}
+
+// MapperVersionEqualFold applies the EqualFold predicate on the "mapper_version" field.
+func MapperVersionEqualFold(v string) predicate.Association {
+	return predicate.Association(sql.FieldEqualFold(FieldMapperVersion, v))
+}
+
+// MapperVersionContainsFold applies the ContainsFold predicate on the "mapper_version" field.
+func MapperVersionContainsFold(v string) predicate.Association {
+	return predicate.Association(sql.FieldContainsFold(FieldMapperVersion, v))
+}
+
 // ConfidenceEQ applies the EQ predicate on the "confidence" field.
 func ConfidenceEQ(v float64) predicate.Association {
 	return predicate.Association(sql.FieldEQ(FieldConfidence, v))
@@ -842,6 +1132,121 @@ func ObservedAtLT(v time.Time) predicate.Association {
 // ObservedAtLTE applies the LTE predicate on the "observed_at" field.
 func ObservedAtLTE(v time.Time) predicate.Association {
 	return predicate.Association(sql.FieldLTE(FieldObservedAt, v))
+}
+
+// SourceUpdatedAtEQ applies the EQ predicate on the "source_updated_at" field.
+func SourceUpdatedAtEQ(v time.Time) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldSourceUpdatedAt, v))
+}
+
+// SourceUpdatedAtNEQ applies the NEQ predicate on the "source_updated_at" field.
+func SourceUpdatedAtNEQ(v time.Time) predicate.Association {
+	return predicate.Association(sql.FieldNEQ(FieldSourceUpdatedAt, v))
+}
+
+// SourceUpdatedAtIn applies the In predicate on the "source_updated_at" field.
+func SourceUpdatedAtIn(vs ...time.Time) predicate.Association {
+	return predicate.Association(sql.FieldIn(FieldSourceUpdatedAt, vs...))
+}
+
+// SourceUpdatedAtNotIn applies the NotIn predicate on the "source_updated_at" field.
+func SourceUpdatedAtNotIn(vs ...time.Time) predicate.Association {
+	return predicate.Association(sql.FieldNotIn(FieldSourceUpdatedAt, vs...))
+}
+
+// SourceUpdatedAtGT applies the GT predicate on the "source_updated_at" field.
+func SourceUpdatedAtGT(v time.Time) predicate.Association {
+	return predicate.Association(sql.FieldGT(FieldSourceUpdatedAt, v))
+}
+
+// SourceUpdatedAtGTE applies the GTE predicate on the "source_updated_at" field.
+func SourceUpdatedAtGTE(v time.Time) predicate.Association {
+	return predicate.Association(sql.FieldGTE(FieldSourceUpdatedAt, v))
+}
+
+// SourceUpdatedAtLT applies the LT predicate on the "source_updated_at" field.
+func SourceUpdatedAtLT(v time.Time) predicate.Association {
+	return predicate.Association(sql.FieldLT(FieldSourceUpdatedAt, v))
+}
+
+// SourceUpdatedAtLTE applies the LTE predicate on the "source_updated_at" field.
+func SourceUpdatedAtLTE(v time.Time) predicate.Association {
+	return predicate.Association(sql.FieldLTE(FieldSourceUpdatedAt, v))
+}
+
+// SourceUpdatedAtIsNil applies the IsNil predicate on the "source_updated_at" field.
+func SourceUpdatedAtIsNil() predicate.Association {
+	return predicate.Association(sql.FieldIsNull(FieldSourceUpdatedAt))
+}
+
+// SourceUpdatedAtNotNil applies the NotNil predicate on the "source_updated_at" field.
+func SourceUpdatedAtNotNil() predicate.Association {
+	return predicate.Association(sql.FieldNotNull(FieldSourceUpdatedAt))
+}
+
+// PropertiesJSONEQ applies the EQ predicate on the "properties_json" field.
+func PropertiesJSONEQ(v string) predicate.Association {
+	return predicate.Association(sql.FieldEQ(FieldPropertiesJSON, v))
+}
+
+// PropertiesJSONNEQ applies the NEQ predicate on the "properties_json" field.
+func PropertiesJSONNEQ(v string) predicate.Association {
+	return predicate.Association(sql.FieldNEQ(FieldPropertiesJSON, v))
+}
+
+// PropertiesJSONIn applies the In predicate on the "properties_json" field.
+func PropertiesJSONIn(vs ...string) predicate.Association {
+	return predicate.Association(sql.FieldIn(FieldPropertiesJSON, vs...))
+}
+
+// PropertiesJSONNotIn applies the NotIn predicate on the "properties_json" field.
+func PropertiesJSONNotIn(vs ...string) predicate.Association {
+	return predicate.Association(sql.FieldNotIn(FieldPropertiesJSON, vs...))
+}
+
+// PropertiesJSONGT applies the GT predicate on the "properties_json" field.
+func PropertiesJSONGT(v string) predicate.Association {
+	return predicate.Association(sql.FieldGT(FieldPropertiesJSON, v))
+}
+
+// PropertiesJSONGTE applies the GTE predicate on the "properties_json" field.
+func PropertiesJSONGTE(v string) predicate.Association {
+	return predicate.Association(sql.FieldGTE(FieldPropertiesJSON, v))
+}
+
+// PropertiesJSONLT applies the LT predicate on the "properties_json" field.
+func PropertiesJSONLT(v string) predicate.Association {
+	return predicate.Association(sql.FieldLT(FieldPropertiesJSON, v))
+}
+
+// PropertiesJSONLTE applies the LTE predicate on the "properties_json" field.
+func PropertiesJSONLTE(v string) predicate.Association {
+	return predicate.Association(sql.FieldLTE(FieldPropertiesJSON, v))
+}
+
+// PropertiesJSONContains applies the Contains predicate on the "properties_json" field.
+func PropertiesJSONContains(v string) predicate.Association {
+	return predicate.Association(sql.FieldContains(FieldPropertiesJSON, v))
+}
+
+// PropertiesJSONHasPrefix applies the HasPrefix predicate on the "properties_json" field.
+func PropertiesJSONHasPrefix(v string) predicate.Association {
+	return predicate.Association(sql.FieldHasPrefix(FieldPropertiesJSON, v))
+}
+
+// PropertiesJSONHasSuffix applies the HasSuffix predicate on the "properties_json" field.
+func PropertiesJSONHasSuffix(v string) predicate.Association {
+	return predicate.Association(sql.FieldHasSuffix(FieldPropertiesJSON, v))
+}
+
+// PropertiesJSONEqualFold applies the EqualFold predicate on the "properties_json" field.
+func PropertiesJSONEqualFold(v string) predicate.Association {
+	return predicate.Association(sql.FieldEqualFold(FieldPropertiesJSON, v))
+}
+
+// PropertiesJSONContainsFold applies the ContainsFold predicate on the "properties_json" field.
+func PropertiesJSONContainsFold(v string) predicate.Association {
+	return predicate.Association(sql.FieldContainsFold(FieldPropertiesJSON, v))
 }
 
 // And groups predicates with the AND operator between them.

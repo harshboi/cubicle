@@ -9,5 +9,26 @@ import (
 // Association is the predicate function for association builders.
 type Association func(*sql.Selector)
 
+// ConnectorCapability is the predicate function for connectorcapability builders.
+type ConnectorCapability func(*sql.Selector)
+
+// Evidence is the predicate function for evidence builders.
+type Evidence func(*sql.Selector)
+
+// IngestRun is the predicate function for ingestrun builders.
+type IngestRun func(*sql.Selector)
+
 // Object is the predicate function for object builders.
 type Object func(*sql.Selector)
+
+// SourceCheckpoint is the predicate function for sourcecheckpoint builders.
+type SourceCheckpoint func(*sql.Selector)
+
+// SourceError is the predicate function for sourceerror builders.
+type SourceError func(*sql.Selector)
+
+// SourceEvent is the predicate function for sourceevent builders.
+type SourceEvent func(*sql.Selector)
+
+// SourceSnapshot is the predicate function for sourcesnapshot builders.
+type SourceSnapshot func(*sql.Selector)

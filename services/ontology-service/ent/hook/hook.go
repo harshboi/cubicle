@@ -20,6 +20,42 @@ func (f AssociationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AssociationMutation", m)
 }
 
+// The ConnectorCapabilityFunc type is an adapter to allow the use of ordinary
+// function as ConnectorCapability mutator.
+type ConnectorCapabilityFunc func(context.Context, *ent.ConnectorCapabilityMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ConnectorCapabilityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ConnectorCapabilityMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ConnectorCapabilityMutation", m)
+}
+
+// The EvidenceFunc type is an adapter to allow the use of ordinary
+// function as Evidence mutator.
+type EvidenceFunc func(context.Context, *ent.EvidenceMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EvidenceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EvidenceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EvidenceMutation", m)
+}
+
+// The IngestRunFunc type is an adapter to allow the use of ordinary
+// function as IngestRun mutator.
+type IngestRunFunc func(context.Context, *ent.IngestRunMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f IngestRunFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.IngestRunMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.IngestRunMutation", m)
+}
+
 // The ObjectFunc type is an adapter to allow the use of ordinary
 // function as Object mutator.
 type ObjectFunc func(context.Context, *ent.ObjectMutation) (ent.Value, error)
@@ -30,6 +66,54 @@ func (f ObjectFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ObjectMutation", m)
+}
+
+// The SourceCheckpointFunc type is an adapter to allow the use of ordinary
+// function as SourceCheckpoint mutator.
+type SourceCheckpointFunc func(context.Context, *ent.SourceCheckpointMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SourceCheckpointFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SourceCheckpointMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SourceCheckpointMutation", m)
+}
+
+// The SourceErrorFunc type is an adapter to allow the use of ordinary
+// function as SourceError mutator.
+type SourceErrorFunc func(context.Context, *ent.SourceErrorMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SourceErrorFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SourceErrorMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SourceErrorMutation", m)
+}
+
+// The SourceEventFunc type is an adapter to allow the use of ordinary
+// function as SourceEvent mutator.
+type SourceEventFunc func(context.Context, *ent.SourceEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SourceEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SourceEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SourceEventMutation", m)
+}
+
+// The SourceSnapshotFunc type is an adapter to allow the use of ordinary
+// function as SourceSnapshot mutator.
+type SourceSnapshotFunc func(context.Context, *ent.SourceSnapshotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SourceSnapshotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SourceSnapshotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SourceSnapshotMutation", m)
 }
 
 // Condition is a hook condition function.

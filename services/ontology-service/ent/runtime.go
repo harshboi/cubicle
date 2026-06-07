@@ -4,8 +4,15 @@ package ent
 
 import (
 	"cubicle/services/ontology-service/ent/association"
+	"cubicle/services/ontology-service/ent/connectorcapability"
+	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/ingestrun"
 	"cubicle/services/ontology-service/ent/object"
 	"cubicle/services/ontology-service/ent/schema"
+	"cubicle/services/ontology-service/ent/sourcecheckpoint"
+	"cubicle/services/ontology-service/ent/sourceerror"
+	"cubicle/services/ontology-service/ent/sourceevent"
+	"cubicle/services/ontology-service/ent/sourcesnapshot"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -46,18 +53,144 @@ func init() {
 	associationDescSource := associationFields[7].Descriptor()
 	// association.DefaultSource holds the default value on creation for the source field.
 	association.DefaultSource = associationDescSource.Default.(string)
+	// associationDescSourceInstance is the schema descriptor for source_instance field.
+	associationDescSourceInstance := associationFields[8].Descriptor()
+	// association.DefaultSourceInstance holds the default value on creation for the source_instance field.
+	association.DefaultSourceInstance = associationDescSourceInstance.Default.(string)
+	// associationDescSourceURL is the schema descriptor for source_url field.
+	associationDescSourceURL := associationFields[9].Descriptor()
+	// association.DefaultSourceURL holds the default value on creation for the source_url field.
+	association.DefaultSourceURL = associationDescSourceURL.Default.(string)
+	// associationDescSnapshotKey is the schema descriptor for snapshot_key field.
+	associationDescSnapshotKey := associationFields[10].Descriptor()
+	// association.DefaultSnapshotKey holds the default value on creation for the snapshot_key field.
+	association.DefaultSnapshotKey = associationDescSnapshotKey.Default.(string)
+	// associationDescMapperVersion is the schema descriptor for mapper_version field.
+	associationDescMapperVersion := associationFields[11].Descriptor()
+	// association.DefaultMapperVersion holds the default value on creation for the mapper_version field.
+	association.DefaultMapperVersion = associationDescMapperVersion.Default.(string)
 	// associationDescConfidence is the schema descriptor for confidence field.
-	associationDescConfidence := associationFields[8].Descriptor()
+	associationDescConfidence := associationFields[12].Descriptor()
 	// association.DefaultConfidence holds the default value on creation for the confidence field.
 	association.DefaultConfidence = associationDescConfidence.Default.(float64)
 	// associationDescVisibility is the schema descriptor for visibility field.
-	associationDescVisibility := associationFields[9].Descriptor()
+	associationDescVisibility := associationFields[13].Descriptor()
 	// association.DefaultVisibility holds the default value on creation for the visibility field.
 	association.DefaultVisibility = associationDescVisibility.Default.(string)
 	// associationDescFreshnessState is the schema descriptor for freshness_state field.
-	associationDescFreshnessState := associationFields[10].Descriptor()
+	associationDescFreshnessState := associationFields[14].Descriptor()
 	// association.DefaultFreshnessState holds the default value on creation for the freshness_state field.
 	association.DefaultFreshnessState = associationDescFreshnessState.Default.(string)
+	// associationDescPropertiesJSON is the schema descriptor for properties_json field.
+	associationDescPropertiesJSON := associationFields[17].Descriptor()
+	// association.DefaultPropertiesJSON holds the default value on creation for the properties_json field.
+	association.DefaultPropertiesJSON = associationDescPropertiesJSON.Default.(string)
+	connectorcapabilityFields := schema.ConnectorCapability{}.Fields()
+	_ = connectorcapabilityFields
+	// connectorcapabilityDescSource is the schema descriptor for source field.
+	connectorcapabilityDescSource := connectorcapabilityFields[0].Descriptor()
+	// connectorcapability.SourceValidator is a validator for the "source" field. It is called by the builders before save.
+	connectorcapability.SourceValidator = connectorcapabilityDescSource.Validators[0].(func(string) error)
+	// connectorcapabilityDescSourceInstance is the schema descriptor for source_instance field.
+	connectorcapabilityDescSourceInstance := connectorcapabilityFields[1].Descriptor()
+	// connectorcapability.SourceInstanceValidator is a validator for the "source_instance" field. It is called by the builders before save.
+	connectorcapability.SourceInstanceValidator = connectorcapabilityDescSourceInstance.Validators[0].(func(string) error)
+	// connectorcapabilityDescSlice is the schema descriptor for slice field.
+	connectorcapabilityDescSlice := connectorcapabilityFields[2].Descriptor()
+	// connectorcapability.DefaultSlice holds the default value on creation for the slice field.
+	connectorcapability.DefaultSlice = connectorcapabilityDescSlice.Default.(string)
+	// connectorcapabilityDescStatus is the schema descriptor for status field.
+	connectorcapabilityDescStatus := connectorcapabilityFields[3].Descriptor()
+	// connectorcapability.DefaultStatus holds the default value on creation for the status field.
+	connectorcapability.DefaultStatus = connectorcapabilityDescStatus.Default.(string)
+	// connectorcapabilityDescDisplayName is the schema descriptor for display_name field.
+	connectorcapabilityDescDisplayName := connectorcapabilityFields[4].Descriptor()
+	// connectorcapability.DefaultDisplayName holds the default value on creation for the display_name field.
+	connectorcapability.DefaultDisplayName = connectorcapabilityDescDisplayName.Default.(string)
+	// connectorcapabilityDescObjectKindsJSON is the schema descriptor for object_kinds_json field.
+	connectorcapabilityDescObjectKindsJSON := connectorcapabilityFields[5].Descriptor()
+	// connectorcapability.DefaultObjectKindsJSON holds the default value on creation for the object_kinds_json field.
+	connectorcapability.DefaultObjectKindsJSON = connectorcapabilityDescObjectKindsJSON.Default.(string)
+	// connectorcapabilityDescNotes is the schema descriptor for notes field.
+	connectorcapabilityDescNotes := connectorcapabilityFields[7].Descriptor()
+	// connectorcapability.DefaultNotes holds the default value on creation for the notes field.
+	connectorcapability.DefaultNotes = connectorcapabilityDescNotes.Default.(string)
+	evidenceFields := schema.Evidence{}.Fields()
+	_ = evidenceFields
+	// evidenceDescEvidenceKey is the schema descriptor for evidence_key field.
+	evidenceDescEvidenceKey := evidenceFields[0].Descriptor()
+	// evidence.EvidenceKeyValidator is a validator for the "evidence_key" field. It is called by the builders before save.
+	evidence.EvidenceKeyValidator = evidenceDescEvidenceKey.Validators[0].(func(string) error)
+	// evidenceDescRunKey is the schema descriptor for run_key field.
+	evidenceDescRunKey := evidenceFields[1].Descriptor()
+	// evidence.RunKeyValidator is a validator for the "run_key" field. It is called by the builders before save.
+	evidence.RunKeyValidator = evidenceDescRunKey.Validators[0].(func(string) error)
+	// evidenceDescSource is the schema descriptor for source field.
+	evidenceDescSource := evidenceFields[2].Descriptor()
+	// evidence.SourceValidator is a validator for the "source" field. It is called by the builders before save.
+	evidence.SourceValidator = evidenceDescSource.Validators[0].(func(string) error)
+	// evidenceDescSourceInstance is the schema descriptor for source_instance field.
+	evidenceDescSourceInstance := evidenceFields[3].Descriptor()
+	// evidence.SourceInstanceValidator is a validator for the "source_instance" field. It is called by the builders before save.
+	evidence.SourceInstanceValidator = evidenceDescSourceInstance.Validators[0].(func(string) error)
+	// evidenceDescSnapshotKey is the schema descriptor for snapshot_key field.
+	evidenceDescSnapshotKey := evidenceFields[4].Descriptor()
+	// evidence.DefaultSnapshotKey holds the default value on creation for the snapshot_key field.
+	evidence.DefaultSnapshotKey = evidenceDescSnapshotKey.Default.(string)
+	// evidenceDescSourceURL is the schema descriptor for source_url field.
+	evidenceDescSourceURL := evidenceFields[5].Descriptor()
+	// evidence.DefaultSourceURL holds the default value on creation for the source_url field.
+	evidence.DefaultSourceURL = evidenceDescSourceURL.Default.(string)
+	// evidenceDescTextHash is the schema descriptor for text_hash field.
+	evidenceDescTextHash := evidenceFields[6].Descriptor()
+	// evidence.TextHashValidator is a validator for the "text_hash" field. It is called by the builders before save.
+	evidence.TextHashValidator = evidenceDescTextHash.Validators[0].(func(string) error)
+	// evidenceDescSummary is the schema descriptor for summary field.
+	evidenceDescSummary := evidenceFields[7].Descriptor()
+	// evidence.DefaultSummary holds the default value on creation for the summary field.
+	evidence.DefaultSummary = evidenceDescSummary.Default.(string)
+	// evidenceDescQuotedText is the schema descriptor for quoted_text field.
+	evidenceDescQuotedText := evidenceFields[8].Descriptor()
+	// evidence.DefaultQuotedText holds the default value on creation for the quoted_text field.
+	evidence.DefaultQuotedText = evidenceDescQuotedText.Default.(string)
+	// evidenceDescConfidence is the schema descriptor for confidence field.
+	evidenceDescConfidence := evidenceFields[9].Descriptor()
+	// evidence.DefaultConfidence holds the default value on creation for the confidence field.
+	evidence.DefaultConfidence = evidenceDescConfidence.Default.(float64)
+	ingestrunFields := schema.IngestRun{}.Fields()
+	_ = ingestrunFields
+	// ingestrunDescRunKey is the schema descriptor for run_key field.
+	ingestrunDescRunKey := ingestrunFields[0].Descriptor()
+	// ingestrun.RunKeyValidator is a validator for the "run_key" field. It is called by the builders before save.
+	ingestrun.RunKeyValidator = ingestrunDescRunKey.Validators[0].(func(string) error)
+	// ingestrunDescSource is the schema descriptor for source field.
+	ingestrunDescSource := ingestrunFields[1].Descriptor()
+	// ingestrun.SourceValidator is a validator for the "source" field. It is called by the builders before save.
+	ingestrun.SourceValidator = ingestrunDescSource.Validators[0].(func(string) error)
+	// ingestrunDescSourceInstance is the schema descriptor for source_instance field.
+	ingestrunDescSourceInstance := ingestrunFields[2].Descriptor()
+	// ingestrun.SourceInstanceValidator is a validator for the "source_instance" field. It is called by the builders before save.
+	ingestrun.SourceInstanceValidator = ingestrunDescSourceInstance.Validators[0].(func(string) error)
+	// ingestrunDescSlice is the schema descriptor for slice field.
+	ingestrunDescSlice := ingestrunFields[3].Descriptor()
+	// ingestrun.DefaultSlice holds the default value on creation for the slice field.
+	ingestrun.DefaultSlice = ingestrunDescSlice.Default.(string)
+	// ingestrunDescMapperVersion is the schema descriptor for mapper_version field.
+	ingestrunDescMapperVersion := ingestrunFields[4].Descriptor()
+	// ingestrun.DefaultMapperVersion holds the default value on creation for the mapper_version field.
+	ingestrun.DefaultMapperVersion = ingestrunDescMapperVersion.Default.(string)
+	// ingestrunDescStatus is the schema descriptor for status field.
+	ingestrunDescStatus := ingestrunFields[5].Descriptor()
+	// ingestrun.StatusValidator is a validator for the "status" field. It is called by the builders before save.
+	ingestrun.StatusValidator = ingestrunDescStatus.Validators[0].(func(string) error)
+	// ingestrunDescErrorCode is the schema descriptor for error_code field.
+	ingestrunDescErrorCode := ingestrunFields[8].Descriptor()
+	// ingestrun.DefaultErrorCode holds the default value on creation for the error_code field.
+	ingestrun.DefaultErrorCode = ingestrunDescErrorCode.Default.(string)
+	// ingestrunDescErrorMessage is the schema descriptor for error_message field.
+	ingestrunDescErrorMessage := ingestrunFields[9].Descriptor()
+	// ingestrun.DefaultErrorMessage holds the default value on creation for the error_message field.
+	ingestrun.DefaultErrorMessage = ingestrunDescErrorMessage.Default.(string)
 	objectFields := schema.Object{}.Fields()
 	_ = objectFields
 	// objectDescKey is the schema descriptor for key field.
@@ -76,16 +209,200 @@ func init() {
 	objectDescSource := objectFields[3].Descriptor()
 	// object.DefaultSource holds the default value on creation for the source field.
 	object.DefaultSource = objectDescSource.Default.(string)
+	// objectDescSourceInstance is the schema descriptor for source_instance field.
+	objectDescSourceInstance := objectFields[4].Descriptor()
+	// object.DefaultSourceInstance holds the default value on creation for the source_instance field.
+	object.DefaultSourceInstance = objectDescSourceInstance.Default.(string)
 	// objectDescExternalID is the schema descriptor for external_id field.
-	objectDescExternalID := objectFields[4].Descriptor()
+	objectDescExternalID := objectFields[5].Descriptor()
 	// object.DefaultExternalID holds the default value on creation for the external_id field.
 	object.DefaultExternalID = objectDescExternalID.Default.(string)
+	// objectDescSourceURL is the schema descriptor for source_url field.
+	objectDescSourceURL := objectFields[6].Descriptor()
+	// object.DefaultSourceURL holds the default value on creation for the source_url field.
+	object.DefaultSourceURL = objectDescSourceURL.Default.(string)
+	// objectDescSnapshotKey is the schema descriptor for snapshot_key field.
+	objectDescSnapshotKey := objectFields[7].Descriptor()
+	// object.DefaultSnapshotKey holds the default value on creation for the snapshot_key field.
+	object.DefaultSnapshotKey = objectDescSnapshotKey.Default.(string)
+	// objectDescMapperVersion is the schema descriptor for mapper_version field.
+	objectDescMapperVersion := objectFields[8].Descriptor()
+	// object.DefaultMapperVersion holds the default value on creation for the mapper_version field.
+	object.DefaultMapperVersion = objectDescMapperVersion.Default.(string)
 	// objectDescVisibility is the schema descriptor for visibility field.
-	objectDescVisibility := objectFields[5].Descriptor()
+	objectDescVisibility := objectFields[9].Descriptor()
 	// object.DefaultVisibility holds the default value on creation for the visibility field.
 	object.DefaultVisibility = objectDescVisibility.Default.(string)
 	// objectDescFreshnessState is the schema descriptor for freshness_state field.
-	objectDescFreshnessState := objectFields[6].Descriptor()
+	objectDescFreshnessState := objectFields[10].Descriptor()
 	// object.DefaultFreshnessState holds the default value on creation for the freshness_state field.
 	object.DefaultFreshnessState = objectDescFreshnessState.Default.(string)
+	// objectDescPropertiesJSON is the schema descriptor for properties_json field.
+	objectDescPropertiesJSON := objectFields[13].Descriptor()
+	// object.DefaultPropertiesJSON holds the default value on creation for the properties_json field.
+	object.DefaultPropertiesJSON = objectDescPropertiesJSON.Default.(string)
+	sourcecheckpointFields := schema.SourceCheckpoint{}.Fields()
+	_ = sourcecheckpointFields
+	// sourcecheckpointDescSource is the schema descriptor for source field.
+	sourcecheckpointDescSource := sourcecheckpointFields[0].Descriptor()
+	// sourcecheckpoint.SourceValidator is a validator for the "source" field. It is called by the builders before save.
+	sourcecheckpoint.SourceValidator = sourcecheckpointDescSource.Validators[0].(func(string) error)
+	// sourcecheckpointDescSourceInstance is the schema descriptor for source_instance field.
+	sourcecheckpointDescSourceInstance := sourcecheckpointFields[1].Descriptor()
+	// sourcecheckpoint.SourceInstanceValidator is a validator for the "source_instance" field. It is called by the builders before save.
+	sourcecheckpoint.SourceInstanceValidator = sourcecheckpointDescSourceInstance.Validators[0].(func(string) error)
+	// sourcecheckpointDescSlice is the schema descriptor for slice field.
+	sourcecheckpointDescSlice := sourcecheckpointFields[2].Descriptor()
+	// sourcecheckpoint.DefaultSlice holds the default value on creation for the slice field.
+	sourcecheckpoint.DefaultSlice = sourcecheckpointDescSlice.Default.(string)
+	// sourcecheckpointDescStatus is the schema descriptor for status field.
+	sourcecheckpointDescStatus := sourcecheckpointFields[3].Descriptor()
+	// sourcecheckpoint.DefaultStatus holds the default value on creation for the status field.
+	sourcecheckpoint.DefaultStatus = sourcecheckpointDescStatus.Default.(string)
+	// sourcecheckpointDescCheckpointKey is the schema descriptor for checkpoint_key field.
+	sourcecheckpointDescCheckpointKey := sourcecheckpointFields[4].Descriptor()
+	// sourcecheckpoint.DefaultCheckpointKey holds the default value on creation for the checkpoint_key field.
+	sourcecheckpoint.DefaultCheckpointKey = sourcecheckpointDescCheckpointKey.Default.(string)
+	// sourcecheckpointDescCheckpointValue is the schema descriptor for checkpoint_value field.
+	sourcecheckpointDescCheckpointValue := sourcecheckpointFields[5].Descriptor()
+	// sourcecheckpoint.DefaultCheckpointValue holds the default value on creation for the checkpoint_value field.
+	sourcecheckpoint.DefaultCheckpointValue = sourcecheckpointDescCheckpointValue.Default.(string)
+	// sourcecheckpointDescLastSuccessfulRunKey is the schema descriptor for last_successful_run_key field.
+	sourcecheckpointDescLastSuccessfulRunKey := sourcecheckpointFields[6].Descriptor()
+	// sourcecheckpoint.DefaultLastSuccessfulRunKey holds the default value on creation for the last_successful_run_key field.
+	sourcecheckpoint.DefaultLastSuccessfulRunKey = sourcecheckpointDescLastSuccessfulRunKey.Default.(string)
+	// sourcecheckpointDescLastAttemptedRunKey is the schema descriptor for last_attempted_run_key field.
+	sourcecheckpointDescLastAttemptedRunKey := sourcecheckpointFields[7].Descriptor()
+	// sourcecheckpoint.DefaultLastAttemptedRunKey holds the default value on creation for the last_attempted_run_key field.
+	sourcecheckpoint.DefaultLastAttemptedRunKey = sourcecheckpointDescLastAttemptedRunKey.Default.(string)
+	// sourcecheckpointDescLastErrorKey is the schema descriptor for last_error_key field.
+	sourcecheckpointDescLastErrorKey := sourcecheckpointFields[8].Descriptor()
+	// sourcecheckpoint.DefaultLastErrorKey holds the default value on creation for the last_error_key field.
+	sourcecheckpoint.DefaultLastErrorKey = sourcecheckpointDescLastErrorKey.Default.(string)
+	// sourcecheckpointDescObjectCountsJSON is the schema descriptor for object_counts_json field.
+	sourcecheckpointDescObjectCountsJSON := sourcecheckpointFields[10].Descriptor()
+	// sourcecheckpoint.DefaultObjectCountsJSON holds the default value on creation for the object_counts_json field.
+	sourcecheckpoint.DefaultObjectCountsJSON = sourcecheckpointDescObjectCountsJSON.Default.(string)
+	sourceerrorFields := schema.SourceError{}.Fields()
+	_ = sourceerrorFields
+	// sourceerrorDescErrorKey is the schema descriptor for error_key field.
+	sourceerrorDescErrorKey := sourceerrorFields[0].Descriptor()
+	// sourceerror.ErrorKeyValidator is a validator for the "error_key" field. It is called by the builders before save.
+	sourceerror.ErrorKeyValidator = sourceerrorDescErrorKey.Validators[0].(func(string) error)
+	// sourceerrorDescRunKey is the schema descriptor for run_key field.
+	sourceerrorDescRunKey := sourceerrorFields[1].Descriptor()
+	// sourceerror.DefaultRunKey holds the default value on creation for the run_key field.
+	sourceerror.DefaultRunKey = sourceerrorDescRunKey.Default.(string)
+	// sourceerrorDescSource is the schema descriptor for source field.
+	sourceerrorDescSource := sourceerrorFields[2].Descriptor()
+	// sourceerror.SourceValidator is a validator for the "source" field. It is called by the builders before save.
+	sourceerror.SourceValidator = sourceerrorDescSource.Validators[0].(func(string) error)
+	// sourceerrorDescSourceInstance is the schema descriptor for source_instance field.
+	sourceerrorDescSourceInstance := sourceerrorFields[3].Descriptor()
+	// sourceerror.SourceInstanceValidator is a validator for the "source_instance" field. It is called by the builders before save.
+	sourceerror.SourceInstanceValidator = sourceerrorDescSourceInstance.Validators[0].(func(string) error)
+	// sourceerrorDescSlice is the schema descriptor for slice field.
+	sourceerrorDescSlice := sourceerrorFields[4].Descriptor()
+	// sourceerror.DefaultSlice holds the default value on creation for the slice field.
+	sourceerror.DefaultSlice = sourceerrorDescSlice.Default.(string)
+	// sourceerrorDescCategory is the schema descriptor for category field.
+	sourceerrorDescCategory := sourceerrorFields[5].Descriptor()
+	// sourceerror.CategoryValidator is a validator for the "category" field. It is called by the builders before save.
+	sourceerror.CategoryValidator = sourceerrorDescCategory.Validators[0].(func(string) error)
+	// sourceerrorDescMessage is the schema descriptor for message field.
+	sourceerrorDescMessage := sourceerrorFields[6].Descriptor()
+	// sourceerror.DefaultMessage holds the default value on creation for the message field.
+	sourceerror.DefaultMessage = sourceerrorDescMessage.Default.(string)
+	// sourceerrorDescSourceURL is the schema descriptor for source_url field.
+	sourceerrorDescSourceURL := sourceerrorFields[7].Descriptor()
+	// sourceerror.DefaultSourceURL holds the default value on creation for the source_url field.
+	sourceerror.DefaultSourceURL = sourceerrorDescSourceURL.Default.(string)
+	// sourceerrorDescRetriable is the schema descriptor for retriable field.
+	sourceerrorDescRetriable := sourceerrorFields[8].Descriptor()
+	// sourceerror.DefaultRetriable holds the default value on creation for the retriable field.
+	sourceerror.DefaultRetriable = sourceerrorDescRetriable.Default.(bool)
+	// sourceerrorDescPayloadJSON is the schema descriptor for payload_json field.
+	sourceerrorDescPayloadJSON := sourceerrorFields[10].Descriptor()
+	// sourceerror.DefaultPayloadJSON holds the default value on creation for the payload_json field.
+	sourceerror.DefaultPayloadJSON = sourceerrorDescPayloadJSON.Default.(string)
+	sourceeventFields := schema.SourceEvent{}.Fields()
+	_ = sourceeventFields
+	// sourceeventDescEventKey is the schema descriptor for event_key field.
+	sourceeventDescEventKey := sourceeventFields[0].Descriptor()
+	// sourceevent.EventKeyValidator is a validator for the "event_key" field. It is called by the builders before save.
+	sourceevent.EventKeyValidator = sourceeventDescEventKey.Validators[0].(func(string) error)
+	// sourceeventDescRunKey is the schema descriptor for run_key field.
+	sourceeventDescRunKey := sourceeventFields[1].Descriptor()
+	// sourceevent.RunKeyValidator is a validator for the "run_key" field. It is called by the builders before save.
+	sourceevent.RunKeyValidator = sourceeventDescRunKey.Validators[0].(func(string) error)
+	// sourceeventDescSource is the schema descriptor for source field.
+	sourceeventDescSource := sourceeventFields[2].Descriptor()
+	// sourceevent.SourceValidator is a validator for the "source" field. It is called by the builders before save.
+	sourceevent.SourceValidator = sourceeventDescSource.Validators[0].(func(string) error)
+	// sourceeventDescSourceInstance is the schema descriptor for source_instance field.
+	sourceeventDescSourceInstance := sourceeventFields[3].Descriptor()
+	// sourceevent.SourceInstanceValidator is a validator for the "source_instance" field. It is called by the builders before save.
+	sourceevent.SourceInstanceValidator = sourceeventDescSourceInstance.Validators[0].(func(string) error)
+	// sourceeventDescSnapshotKey is the schema descriptor for snapshot_key field.
+	sourceeventDescSnapshotKey := sourceeventFields[4].Descriptor()
+	// sourceevent.DefaultSnapshotKey holds the default value on creation for the snapshot_key field.
+	sourceevent.DefaultSnapshotKey = sourceeventDescSnapshotKey.Default.(string)
+	// sourceeventDescSourceObjectType is the schema descriptor for source_object_type field.
+	sourceeventDescSourceObjectType := sourceeventFields[5].Descriptor()
+	// sourceevent.DefaultSourceObjectType holds the default value on creation for the source_object_type field.
+	sourceevent.DefaultSourceObjectType = sourceeventDescSourceObjectType.Default.(string)
+	// sourceeventDescSourceObjectID is the schema descriptor for source_object_id field.
+	sourceeventDescSourceObjectID := sourceeventFields[6].Descriptor()
+	// sourceevent.DefaultSourceObjectID holds the default value on creation for the source_object_id field.
+	sourceevent.DefaultSourceObjectID = sourceeventDescSourceObjectID.Default.(string)
+	// sourceeventDescEventType is the schema descriptor for event_type field.
+	sourceeventDescEventType := sourceeventFields[7].Descriptor()
+	// sourceevent.EventTypeValidator is a validator for the "event_type" field. It is called by the builders before save.
+	sourceevent.EventTypeValidator = sourceeventDescEventType.Validators[0].(func(string) error)
+	// sourceeventDescPayloadJSON is the schema descriptor for payload_json field.
+	sourceeventDescPayloadJSON := sourceeventFields[9].Descriptor()
+	// sourceevent.DefaultPayloadJSON holds the default value on creation for the payload_json field.
+	sourceevent.DefaultPayloadJSON = sourceeventDescPayloadJSON.Default.(string)
+	sourcesnapshotFields := schema.SourceSnapshot{}.Fields()
+	_ = sourcesnapshotFields
+	// sourcesnapshotDescSnapshotKey is the schema descriptor for snapshot_key field.
+	sourcesnapshotDescSnapshotKey := sourcesnapshotFields[0].Descriptor()
+	// sourcesnapshot.SnapshotKeyValidator is a validator for the "snapshot_key" field. It is called by the builders before save.
+	sourcesnapshot.SnapshotKeyValidator = sourcesnapshotDescSnapshotKey.Validators[0].(func(string) error)
+	// sourcesnapshotDescRunKey is the schema descriptor for run_key field.
+	sourcesnapshotDescRunKey := sourcesnapshotFields[1].Descriptor()
+	// sourcesnapshot.RunKeyValidator is a validator for the "run_key" field. It is called by the builders before save.
+	sourcesnapshot.RunKeyValidator = sourcesnapshotDescRunKey.Validators[0].(func(string) error)
+	// sourcesnapshotDescSource is the schema descriptor for source field.
+	sourcesnapshotDescSource := sourcesnapshotFields[2].Descriptor()
+	// sourcesnapshot.SourceValidator is a validator for the "source" field. It is called by the builders before save.
+	sourcesnapshot.SourceValidator = sourcesnapshotDescSource.Validators[0].(func(string) error)
+	// sourcesnapshotDescSourceInstance is the schema descriptor for source_instance field.
+	sourcesnapshotDescSourceInstance := sourcesnapshotFields[3].Descriptor()
+	// sourcesnapshot.SourceInstanceValidator is a validator for the "source_instance" field. It is called by the builders before save.
+	sourcesnapshot.SourceInstanceValidator = sourcesnapshotDescSourceInstance.Validators[0].(func(string) error)
+	// sourcesnapshotDescSourceObjectType is the schema descriptor for source_object_type field.
+	sourcesnapshotDescSourceObjectType := sourcesnapshotFields[4].Descriptor()
+	// sourcesnapshot.DefaultSourceObjectType holds the default value on creation for the source_object_type field.
+	sourcesnapshot.DefaultSourceObjectType = sourcesnapshotDescSourceObjectType.Default.(string)
+	// sourcesnapshotDescSourceObjectID is the schema descriptor for source_object_id field.
+	sourcesnapshotDescSourceObjectID := sourcesnapshotFields[5].Descriptor()
+	// sourcesnapshot.DefaultSourceObjectID holds the default value on creation for the source_object_id field.
+	sourcesnapshot.DefaultSourceObjectID = sourcesnapshotDescSourceObjectID.Default.(string)
+	// sourcesnapshotDescBodySha256 is the schema descriptor for body_sha256 field.
+	sourcesnapshotDescBodySha256 := sourcesnapshotFields[6].Descriptor()
+	// sourcesnapshot.BodySha256Validator is a validator for the "body_sha256" field. It is called by the builders before save.
+	sourcesnapshot.BodySha256Validator = sourcesnapshotDescBodySha256.Validators[0].(func(string) error)
+	// sourcesnapshotDescBodyRef is the schema descriptor for body_ref field.
+	sourcesnapshotDescBodyRef := sourcesnapshotFields[7].Descriptor()
+	// sourcesnapshot.BodyRefValidator is a validator for the "body_ref" field. It is called by the builders before save.
+	sourcesnapshot.BodyRefValidator = sourcesnapshotDescBodyRef.Validators[0].(func(string) error)
+	// sourcesnapshotDescSourceURL is the schema descriptor for source_url field.
+	sourcesnapshotDescSourceURL := sourcesnapshotFields[8].Descriptor()
+	// sourcesnapshot.DefaultSourceURL holds the default value on creation for the source_url field.
+	sourcesnapshot.DefaultSourceURL = sourcesnapshotDescSourceURL.Default.(string)
+	// sourcesnapshotDescHeadersJSON is the schema descriptor for headers_json field.
+	sourcesnapshotDescHeadersJSON := sourcesnapshotFields[10].Descriptor()
+	// sourcesnapshot.DefaultHeadersJSON holds the default value on creation for the headers_json field.
+	sourcesnapshot.DefaultHeadersJSON = sourcesnapshotDescHeadersJSON.Default.(string)
 }

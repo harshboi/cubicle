@@ -60,6 +60,20 @@ func (_c *ObjectCreate) SetNillableSource(v *string) *ObjectCreate {
 	return _c
 }
 
+// SetSourceInstance sets the "source_instance" field.
+func (_c *ObjectCreate) SetSourceInstance(v string) *ObjectCreate {
+	_c.mutation.SetSourceInstance(v)
+	return _c
+}
+
+// SetNillableSourceInstance sets the "source_instance" field if the given value is not nil.
+func (_c *ObjectCreate) SetNillableSourceInstance(v *string) *ObjectCreate {
+	if v != nil {
+		_c.SetSourceInstance(*v)
+	}
+	return _c
+}
+
 // SetExternalID sets the "external_id" field.
 func (_c *ObjectCreate) SetExternalID(v string) *ObjectCreate {
 	_c.mutation.SetExternalID(v)
@@ -70,6 +84,48 @@ func (_c *ObjectCreate) SetExternalID(v string) *ObjectCreate {
 func (_c *ObjectCreate) SetNillableExternalID(v *string) *ObjectCreate {
 	if v != nil {
 		_c.SetExternalID(*v)
+	}
+	return _c
+}
+
+// SetSourceURL sets the "source_url" field.
+func (_c *ObjectCreate) SetSourceURL(v string) *ObjectCreate {
+	_c.mutation.SetSourceURL(v)
+	return _c
+}
+
+// SetNillableSourceURL sets the "source_url" field if the given value is not nil.
+func (_c *ObjectCreate) SetNillableSourceURL(v *string) *ObjectCreate {
+	if v != nil {
+		_c.SetSourceURL(*v)
+	}
+	return _c
+}
+
+// SetSnapshotKey sets the "snapshot_key" field.
+func (_c *ObjectCreate) SetSnapshotKey(v string) *ObjectCreate {
+	_c.mutation.SetSnapshotKey(v)
+	return _c
+}
+
+// SetNillableSnapshotKey sets the "snapshot_key" field if the given value is not nil.
+func (_c *ObjectCreate) SetNillableSnapshotKey(v *string) *ObjectCreate {
+	if v != nil {
+		_c.SetSnapshotKey(*v)
+	}
+	return _c
+}
+
+// SetMapperVersion sets the "mapper_version" field.
+func (_c *ObjectCreate) SetMapperVersion(v string) *ObjectCreate {
+	_c.mutation.SetMapperVersion(v)
+	return _c
+}
+
+// SetNillableMapperVersion sets the "mapper_version" field if the given value is not nil.
+func (_c *ObjectCreate) SetNillableMapperVersion(v *string) *ObjectCreate {
+	if v != nil {
+		_c.SetMapperVersion(*v)
 	}
 	return _c
 }
@@ -105,6 +161,34 @@ func (_c *ObjectCreate) SetNillableFreshnessState(v *string) *ObjectCreate {
 // SetObservedAt sets the "observed_at" field.
 func (_c *ObjectCreate) SetObservedAt(v time.Time) *ObjectCreate {
 	_c.mutation.SetObservedAt(v)
+	return _c
+}
+
+// SetSourceUpdatedAt sets the "source_updated_at" field.
+func (_c *ObjectCreate) SetSourceUpdatedAt(v time.Time) *ObjectCreate {
+	_c.mutation.SetSourceUpdatedAt(v)
+	return _c
+}
+
+// SetNillableSourceUpdatedAt sets the "source_updated_at" field if the given value is not nil.
+func (_c *ObjectCreate) SetNillableSourceUpdatedAt(v *time.Time) *ObjectCreate {
+	if v != nil {
+		_c.SetSourceUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetPropertiesJSON sets the "properties_json" field.
+func (_c *ObjectCreate) SetPropertiesJSON(v string) *ObjectCreate {
+	_c.mutation.SetPropertiesJSON(v)
+	return _c
+}
+
+// SetNillablePropertiesJSON sets the "properties_json" field if the given value is not nil.
+func (_c *ObjectCreate) SetNillablePropertiesJSON(v *string) *ObjectCreate {
+	if v != nil {
+		_c.SetPropertiesJSON(*v)
+	}
 	return _c
 }
 
@@ -151,9 +235,25 @@ func (_c *ObjectCreate) defaults() {
 		v := object.DefaultSource
 		_c.mutation.SetSource(v)
 	}
+	if _, ok := _c.mutation.SourceInstance(); !ok {
+		v := object.DefaultSourceInstance
+		_c.mutation.SetSourceInstance(v)
+	}
 	if _, ok := _c.mutation.ExternalID(); !ok {
 		v := object.DefaultExternalID
 		_c.mutation.SetExternalID(v)
+	}
+	if _, ok := _c.mutation.SourceURL(); !ok {
+		v := object.DefaultSourceURL
+		_c.mutation.SetSourceURL(v)
+	}
+	if _, ok := _c.mutation.SnapshotKey(); !ok {
+		v := object.DefaultSnapshotKey
+		_c.mutation.SetSnapshotKey(v)
+	}
+	if _, ok := _c.mutation.MapperVersion(); !ok {
+		v := object.DefaultMapperVersion
+		_c.mutation.SetMapperVersion(v)
 	}
 	if _, ok := _c.mutation.Visibility(); !ok {
 		v := object.DefaultVisibility
@@ -162,6 +262,10 @@ func (_c *ObjectCreate) defaults() {
 	if _, ok := _c.mutation.FreshnessState(); !ok {
 		v := object.DefaultFreshnessState
 		_c.mutation.SetFreshnessState(v)
+	}
+	if _, ok := _c.mutation.PropertiesJSON(); !ok {
+		v := object.DefaultPropertiesJSON
+		_c.mutation.SetPropertiesJSON(v)
 	}
 }
 
@@ -189,8 +293,20 @@ func (_c *ObjectCreate) check() error {
 	if _, ok := _c.mutation.Source(); !ok {
 		return &ValidationError{Name: "source", err: errors.New(`ent: missing required field "Object.source"`)}
 	}
+	if _, ok := _c.mutation.SourceInstance(); !ok {
+		return &ValidationError{Name: "source_instance", err: errors.New(`ent: missing required field "Object.source_instance"`)}
+	}
 	if _, ok := _c.mutation.ExternalID(); !ok {
 		return &ValidationError{Name: "external_id", err: errors.New(`ent: missing required field "Object.external_id"`)}
+	}
+	if _, ok := _c.mutation.SourceURL(); !ok {
+		return &ValidationError{Name: "source_url", err: errors.New(`ent: missing required field "Object.source_url"`)}
+	}
+	if _, ok := _c.mutation.SnapshotKey(); !ok {
+		return &ValidationError{Name: "snapshot_key", err: errors.New(`ent: missing required field "Object.snapshot_key"`)}
+	}
+	if _, ok := _c.mutation.MapperVersion(); !ok {
+		return &ValidationError{Name: "mapper_version", err: errors.New(`ent: missing required field "Object.mapper_version"`)}
 	}
 	if _, ok := _c.mutation.Visibility(); !ok {
 		return &ValidationError{Name: "visibility", err: errors.New(`ent: missing required field "Object.visibility"`)}
@@ -200,6 +316,9 @@ func (_c *ObjectCreate) check() error {
 	}
 	if _, ok := _c.mutation.ObservedAt(); !ok {
 		return &ValidationError{Name: "observed_at", err: errors.New(`ent: missing required field "Object.observed_at"`)}
+	}
+	if _, ok := _c.mutation.PropertiesJSON(); !ok {
+		return &ValidationError{Name: "properties_json", err: errors.New(`ent: missing required field "Object.properties_json"`)}
 	}
 	return nil
 }
@@ -243,9 +362,25 @@ func (_c *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 		_spec.SetField(object.FieldSource, field.TypeString, value)
 		_node.Source = value
 	}
+	if value, ok := _c.mutation.SourceInstance(); ok {
+		_spec.SetField(object.FieldSourceInstance, field.TypeString, value)
+		_node.SourceInstance = value
+	}
 	if value, ok := _c.mutation.ExternalID(); ok {
 		_spec.SetField(object.FieldExternalID, field.TypeString, value)
 		_node.ExternalID = value
+	}
+	if value, ok := _c.mutation.SourceURL(); ok {
+		_spec.SetField(object.FieldSourceURL, field.TypeString, value)
+		_node.SourceURL = value
+	}
+	if value, ok := _c.mutation.SnapshotKey(); ok {
+		_spec.SetField(object.FieldSnapshotKey, field.TypeString, value)
+		_node.SnapshotKey = value
+	}
+	if value, ok := _c.mutation.MapperVersion(); ok {
+		_spec.SetField(object.FieldMapperVersion, field.TypeString, value)
+		_node.MapperVersion = value
 	}
 	if value, ok := _c.mutation.Visibility(); ok {
 		_spec.SetField(object.FieldVisibility, field.TypeString, value)
@@ -258,6 +393,14 @@ func (_c *ObjectCreate) createSpec() (*Object, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ObservedAt(); ok {
 		_spec.SetField(object.FieldObservedAt, field.TypeTime, value)
 		_node.ObservedAt = value
+	}
+	if value, ok := _c.mutation.SourceUpdatedAt(); ok {
+		_spec.SetField(object.FieldSourceUpdatedAt, field.TypeTime, value)
+		_node.SourceUpdatedAt = value
+	}
+	if value, ok := _c.mutation.PropertiesJSON(); ok {
+		_spec.SetField(object.FieldPropertiesJSON, field.TypeString, value)
+		_node.PropertiesJSON = value
 	}
 	return _node, _spec
 }

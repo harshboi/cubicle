@@ -60,6 +60,113 @@ func TestEntStoreExpandReturnsPersistedGraphWithEvidence(t *testing.T) {
 	assertAssociation(t, graph, "pr:apache/flink-kubernetes-operator#1127", ontology.AssocChangesFile, "file:JobVertexScaler.java")
 }
 
+func TestEntStoreRoundTripsIngestFactMetadata(t *testing.T) {
+	ctx := context.Background()
+	client := openEntClient(t, ctx)
+	store := NewEntStore(client)
+	observedAt := time.Date(2026, 6, 7, 10, 0, 0, 0, time.UTC)
+	sourceUpdatedAt := time.Date(2026, 6, 6, 18, 30, 0, 0, time.UTC)
+
+	if err := store.UpsertObject(ctx, domain.Object{
+		ObjectType:     ontology.ObjectWorkstream,
+		Key:            "workstream:flink-autoscaler",
+		Title:          "Flink Autoscaler",
+		Source:         "fixture",
+		Visibility:     domain.VisibilityPublic,
+		FreshnessState: domain.FreshnessFresh,
+		ObservedAt:     observedAt,
+	}); err != nil {
+		t.Fatalf("upsert workstream: %v", err)
+	}
+	if err := store.UpsertObject(ctx, domain.Object{
+		ObjectType:      ontology.ObjectTicket,
+		Key:             "ticket:FLINK-39743",
+		Title:           "Autoscaler bug",
+		Source:          "jira",
+		SourceInstance:  "apache-jira",
+		ExternalID:      "FLINK-39743",
+		SourceURL:       "https://issues.apache.org/jira/browse/FLINK-39743",
+		SnapshotKey:     "snapshot:jira:FLINK-39743",
+		MapperVersion:   "flink-fixture/v1",
+		Visibility:      domain.VisibilityPublic,
+		FreshnessState:  domain.FreshnessFresh,
+		ObservedAt:      observedAt,
+		SourceUpdatedAt: sourceUpdatedAt,
+		PropertiesJSON:  `{"priority":"major"}`,
+	}); err != nil {
+		t.Fatalf("upsert ticket: %v", err)
+	}
+	if err := store.UpsertAssociation(ctx, domain.Association{
+		From:            domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		To:              domain.ObjectRef{ObjectType: ontology.ObjectTicket, Key: "ticket:FLINK-39743"},
+		AssociationType: ontology.AssocContains,
+		Metadata: domain.AssociationMetadata{
+			EvidenceKey:     "evidence:jira:FLINK-39743",
+			Source:          "jira",
+			SourceInstance:  "apache-jira",
+			SourceURL:       "https://issues.apache.org/jira/browse/FLINK-39743",
+			SnapshotKey:     "snapshot:jira:FLINK-39743",
+			MapperVersion:   "flink-fixture/v1",
+			Confidence:      0.92,
+			Visibility:      domain.VisibilityPublic,
+			FreshnessState:  domain.FreshnessFresh,
+			ObservedAt:      observedAt,
+			SourceUpdatedAt: sourceUpdatedAt,
+			PropertiesJSON:  `{"relationship":"component"}`,
+		},
+	}); err != nil {
+		t.Fatalf("upsert association: %v", err)
+	}
+
+	graph, err := store.Expand(ctx, domain.ExpandRequest{
+		Start:          domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:          1,
+		LimitPerObject: 10,
+	})
+	if err != nil {
+		t.Fatalf("expand persisted graph: %v", err)
+	}
+
+	object := objectByKey(t, graph, "ticket:FLINK-39743")
+	if object.SourceInstance != "apache-jira" || object.SourceURL == "" || object.SnapshotKey == "" || object.MapperVersion == "" {
+		t.Fatalf("object ingest metadata was not preserved: %#v", object)
+	}
+	if !object.SourceUpdatedAt.Equal(sourceUpdatedAt) || object.PropertiesJSON != `{"priority":"major"}` {
+		t.Fatalf("object source details were not preserved: %#v", object)
+	}
+
+	graphAssociation := associationByType(t, graph, ontology.AssocContains)
+	metadata := graphAssociation.Metadata
+	if metadata.SourceInstance != "apache-jira" || metadata.SourceURL == "" || metadata.SnapshotKey == "" || metadata.MapperVersion == "" {
+		t.Fatalf("association ingest metadata was not preserved: %#v", metadata)
+	}
+	if !metadata.SourceUpdatedAt.Equal(sourceUpdatedAt) || metadata.PropertiesJSON != `{"relationship":"component"}` {
+		t.Fatalf("association source details were not preserved: %#v", metadata)
+	}
+}
+
+func objectByKey(t *testing.T, graph domain.Neighborhood, key string) domain.Object {
+	t.Helper()
+	for _, object := range graph.Objects {
+		if object.Key == key {
+			return object
+		}
+	}
+	t.Fatalf("expected object %q in graph; got %#v", key, graph.Objects)
+	return domain.Object{}
+}
+
+func associationByType(t *testing.T, graph domain.Neighborhood, associationType domain.AssociationType) domain.Association {
+	t.Helper()
+	for _, association := range graph.Associations {
+		if association.AssociationType == associationType {
+			return association
+		}
+	}
+	t.Fatalf("expected association with type %q in graph; got %#v", associationType, graph.Associations)
+	return domain.Association{}
+}
+
 func openEntClient(t *testing.T, ctx context.Context) *ent.Client {
 	t.Helper()
 	store, err := storage.Open(ctx, storage.Config{

@@ -140,6 +140,62 @@ func (_u *AssociationUpdate) SetNillableSource(v *string) *AssociationUpdate {
 	return _u
 }
 
+// SetSourceInstance sets the "source_instance" field.
+func (_u *AssociationUpdate) SetSourceInstance(v string) *AssociationUpdate {
+	_u.mutation.SetSourceInstance(v)
+	return _u
+}
+
+// SetNillableSourceInstance sets the "source_instance" field if the given value is not nil.
+func (_u *AssociationUpdate) SetNillableSourceInstance(v *string) *AssociationUpdate {
+	if v != nil {
+		_u.SetSourceInstance(*v)
+	}
+	return _u
+}
+
+// SetSourceURL sets the "source_url" field.
+func (_u *AssociationUpdate) SetSourceURL(v string) *AssociationUpdate {
+	_u.mutation.SetSourceURL(v)
+	return _u
+}
+
+// SetNillableSourceURL sets the "source_url" field if the given value is not nil.
+func (_u *AssociationUpdate) SetNillableSourceURL(v *string) *AssociationUpdate {
+	if v != nil {
+		_u.SetSourceURL(*v)
+	}
+	return _u
+}
+
+// SetSnapshotKey sets the "snapshot_key" field.
+func (_u *AssociationUpdate) SetSnapshotKey(v string) *AssociationUpdate {
+	_u.mutation.SetSnapshotKey(v)
+	return _u
+}
+
+// SetNillableSnapshotKey sets the "snapshot_key" field if the given value is not nil.
+func (_u *AssociationUpdate) SetNillableSnapshotKey(v *string) *AssociationUpdate {
+	if v != nil {
+		_u.SetSnapshotKey(*v)
+	}
+	return _u
+}
+
+// SetMapperVersion sets the "mapper_version" field.
+func (_u *AssociationUpdate) SetMapperVersion(v string) *AssociationUpdate {
+	_u.mutation.SetMapperVersion(v)
+	return _u
+}
+
+// SetNillableMapperVersion sets the "mapper_version" field if the given value is not nil.
+func (_u *AssociationUpdate) SetNillableMapperVersion(v *string) *AssociationUpdate {
+	if v != nil {
+		_u.SetMapperVersion(*v)
+	}
+	return _u
+}
+
 // SetConfidence sets the "confidence" field.
 func (_u *AssociationUpdate) SetConfidence(v float64) *AssociationUpdate {
 	_u.mutation.ResetConfidence()
@@ -199,6 +255,40 @@ func (_u *AssociationUpdate) SetObservedAt(v time.Time) *AssociationUpdate {
 func (_u *AssociationUpdate) SetNillableObservedAt(v *time.Time) *AssociationUpdate {
 	if v != nil {
 		_u.SetObservedAt(*v)
+	}
+	return _u
+}
+
+// SetSourceUpdatedAt sets the "source_updated_at" field.
+func (_u *AssociationUpdate) SetSourceUpdatedAt(v time.Time) *AssociationUpdate {
+	_u.mutation.SetSourceUpdatedAt(v)
+	return _u
+}
+
+// SetNillableSourceUpdatedAt sets the "source_updated_at" field if the given value is not nil.
+func (_u *AssociationUpdate) SetNillableSourceUpdatedAt(v *time.Time) *AssociationUpdate {
+	if v != nil {
+		_u.SetSourceUpdatedAt(*v)
+	}
+	return _u
+}
+
+// ClearSourceUpdatedAt clears the value of the "source_updated_at" field.
+func (_u *AssociationUpdate) ClearSourceUpdatedAt() *AssociationUpdate {
+	_u.mutation.ClearSourceUpdatedAt()
+	return _u
+}
+
+// SetPropertiesJSON sets the "properties_json" field.
+func (_u *AssociationUpdate) SetPropertiesJSON(v string) *AssociationUpdate {
+	_u.mutation.SetPropertiesJSON(v)
+	return _u
+}
+
+// SetNillablePropertiesJSON sets the "properties_json" field if the given value is not nil.
+func (_u *AssociationUpdate) SetNillablePropertiesJSON(v *string) *AssociationUpdate {
+	if v != nil {
+		_u.SetPropertiesJSON(*v)
 	}
 	return _u
 }
@@ -311,6 +401,18 @@ func (_u *AssociationUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.Source(); ok {
 		_spec.SetField(association.FieldSource, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.SourceInstance(); ok {
+		_spec.SetField(association.FieldSourceInstance, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SourceURL(); ok {
+		_spec.SetField(association.FieldSourceURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SnapshotKey(); ok {
+		_spec.SetField(association.FieldSnapshotKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.MapperVersion(); ok {
+		_spec.SetField(association.FieldMapperVersion, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.Confidence(); ok {
 		_spec.SetField(association.FieldConfidence, field.TypeFloat64, value)
 	}
@@ -325,6 +427,15 @@ func (_u *AssociationUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.ObservedAt(); ok {
 		_spec.SetField(association.FieldObservedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.SourceUpdatedAt(); ok {
+		_spec.SetField(association.FieldSourceUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SourceUpdatedAtCleared() {
+		_spec.ClearField(association.FieldSourceUpdatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PropertiesJSON(); ok {
+		_spec.SetField(association.FieldPropertiesJSON, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -458,6 +569,62 @@ func (_u *AssociationUpdateOne) SetNillableSource(v *string) *AssociationUpdateO
 	return _u
 }
 
+// SetSourceInstance sets the "source_instance" field.
+func (_u *AssociationUpdateOne) SetSourceInstance(v string) *AssociationUpdateOne {
+	_u.mutation.SetSourceInstance(v)
+	return _u
+}
+
+// SetNillableSourceInstance sets the "source_instance" field if the given value is not nil.
+func (_u *AssociationUpdateOne) SetNillableSourceInstance(v *string) *AssociationUpdateOne {
+	if v != nil {
+		_u.SetSourceInstance(*v)
+	}
+	return _u
+}
+
+// SetSourceURL sets the "source_url" field.
+func (_u *AssociationUpdateOne) SetSourceURL(v string) *AssociationUpdateOne {
+	_u.mutation.SetSourceURL(v)
+	return _u
+}
+
+// SetNillableSourceURL sets the "source_url" field if the given value is not nil.
+func (_u *AssociationUpdateOne) SetNillableSourceURL(v *string) *AssociationUpdateOne {
+	if v != nil {
+		_u.SetSourceURL(*v)
+	}
+	return _u
+}
+
+// SetSnapshotKey sets the "snapshot_key" field.
+func (_u *AssociationUpdateOne) SetSnapshotKey(v string) *AssociationUpdateOne {
+	_u.mutation.SetSnapshotKey(v)
+	return _u
+}
+
+// SetNillableSnapshotKey sets the "snapshot_key" field if the given value is not nil.
+func (_u *AssociationUpdateOne) SetNillableSnapshotKey(v *string) *AssociationUpdateOne {
+	if v != nil {
+		_u.SetSnapshotKey(*v)
+	}
+	return _u
+}
+
+// SetMapperVersion sets the "mapper_version" field.
+func (_u *AssociationUpdateOne) SetMapperVersion(v string) *AssociationUpdateOne {
+	_u.mutation.SetMapperVersion(v)
+	return _u
+}
+
+// SetNillableMapperVersion sets the "mapper_version" field if the given value is not nil.
+func (_u *AssociationUpdateOne) SetNillableMapperVersion(v *string) *AssociationUpdateOne {
+	if v != nil {
+		_u.SetMapperVersion(*v)
+	}
+	return _u
+}
+
 // SetConfidence sets the "confidence" field.
 func (_u *AssociationUpdateOne) SetConfidence(v float64) *AssociationUpdateOne {
 	_u.mutation.ResetConfidence()
@@ -517,6 +684,40 @@ func (_u *AssociationUpdateOne) SetObservedAt(v time.Time) *AssociationUpdateOne
 func (_u *AssociationUpdateOne) SetNillableObservedAt(v *time.Time) *AssociationUpdateOne {
 	if v != nil {
 		_u.SetObservedAt(*v)
+	}
+	return _u
+}
+
+// SetSourceUpdatedAt sets the "source_updated_at" field.
+func (_u *AssociationUpdateOne) SetSourceUpdatedAt(v time.Time) *AssociationUpdateOne {
+	_u.mutation.SetSourceUpdatedAt(v)
+	return _u
+}
+
+// SetNillableSourceUpdatedAt sets the "source_updated_at" field if the given value is not nil.
+func (_u *AssociationUpdateOne) SetNillableSourceUpdatedAt(v *time.Time) *AssociationUpdateOne {
+	if v != nil {
+		_u.SetSourceUpdatedAt(*v)
+	}
+	return _u
+}
+
+// ClearSourceUpdatedAt clears the value of the "source_updated_at" field.
+func (_u *AssociationUpdateOne) ClearSourceUpdatedAt() *AssociationUpdateOne {
+	_u.mutation.ClearSourceUpdatedAt()
+	return _u
+}
+
+// SetPropertiesJSON sets the "properties_json" field.
+func (_u *AssociationUpdateOne) SetPropertiesJSON(v string) *AssociationUpdateOne {
+	_u.mutation.SetPropertiesJSON(v)
+	return _u
+}
+
+// SetNillablePropertiesJSON sets the "properties_json" field if the given value is not nil.
+func (_u *AssociationUpdateOne) SetNillablePropertiesJSON(v *string) *AssociationUpdateOne {
+	if v != nil {
+		_u.SetPropertiesJSON(*v)
 	}
 	return _u
 }
@@ -659,6 +860,18 @@ func (_u *AssociationUpdateOne) sqlSave(ctx context.Context) (_node *Association
 	if value, ok := _u.mutation.Source(); ok {
 		_spec.SetField(association.FieldSource, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.SourceInstance(); ok {
+		_spec.SetField(association.FieldSourceInstance, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SourceURL(); ok {
+		_spec.SetField(association.FieldSourceURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SnapshotKey(); ok {
+		_spec.SetField(association.FieldSnapshotKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.MapperVersion(); ok {
+		_spec.SetField(association.FieldMapperVersion, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.Confidence(); ok {
 		_spec.SetField(association.FieldConfidence, field.TypeFloat64, value)
 	}
@@ -673,6 +886,15 @@ func (_u *AssociationUpdateOne) sqlSave(ctx context.Context) (_node *Association
 	}
 	if value, ok := _u.mutation.ObservedAt(); ok {
 		_spec.SetField(association.FieldObservedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.SourceUpdatedAt(); ok {
+		_spec.SetField(association.FieldSourceUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SourceUpdatedAtCleared() {
+		_spec.ClearField(association.FieldSourceUpdatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PropertiesJSON(); ok {
+		_spec.SetField(association.FieldPropertiesJSON, field.TypeString, value)
 	}
 	_node = &Association{config: _u.config}
 	_spec.Assign = _node.assignValues

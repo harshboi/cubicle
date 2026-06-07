@@ -36,10 +36,16 @@ func (s *EntStore) UpsertObject(ctx context.Context, object domain.Object) error
 			SetObjectType(string(object.ObjectType)).
 			SetTitle(object.Title).
 			SetSource(object.Source).
+			SetSourceInstance(object.SourceInstance).
 			SetExternalID(object.ExternalID).
+			SetSourceURL(object.SourceURL).
+			SetSnapshotKey(object.SnapshotKey).
+			SetMapperVersion(object.MapperVersion).
 			SetVisibility(object.Visibility).
 			SetFreshnessState(object.FreshnessState).
 			SetObservedAt(object.ObservedAt).
+			SetSourceUpdatedAt(object.SourceUpdatedAt).
+			SetPropertiesJSON(object.PropertiesJSON).
 			Exec(ctx)
 	}
 	if !ent.IsNotFound(err) {
@@ -50,10 +56,16 @@ func (s *EntStore) UpsertObject(ctx context.Context, object domain.Object) error
 		SetObjectType(string(object.ObjectType)).
 		SetTitle(object.Title).
 		SetSource(object.Source).
+		SetSourceInstance(object.SourceInstance).
 		SetExternalID(object.ExternalID).
+		SetSourceURL(object.SourceURL).
+		SetSnapshotKey(object.SnapshotKey).
+		SetMapperVersion(object.MapperVersion).
 		SetVisibility(object.Visibility).
 		SetFreshnessState(object.FreshnessState).
 		SetObservedAt(object.ObservedAt).
+		SetSourceUpdatedAt(object.SourceUpdatedAt).
+		SetPropertiesJSON(object.PropertiesJSON).
 		Exec(ctx)
 }
 
@@ -82,10 +94,16 @@ func (s *EntStore) UpsertAssociation(ctx context.Context, association domain.Ass
 			SetAssociationType(string(association.AssociationType)).
 			SetEvidenceKey(association.Metadata.EvidenceKey).
 			SetSource(association.Metadata.Source).
+			SetSourceInstance(association.Metadata.SourceInstance).
+			SetSourceURL(association.Metadata.SourceURL).
+			SetSnapshotKey(association.Metadata.SnapshotKey).
+			SetMapperVersion(association.Metadata.MapperVersion).
 			SetConfidence(association.Metadata.Confidence).
 			SetVisibility(association.Metadata.Visibility).
 			SetFreshnessState(association.Metadata.FreshnessState).
 			SetObservedAt(association.Metadata.ObservedAt).
+			SetSourceUpdatedAt(association.Metadata.SourceUpdatedAt).
+			SetPropertiesJSON(association.Metadata.PropertiesJSON).
 			Exec(ctx)
 	}
 	if !ent.IsNotFound(err) {
@@ -100,10 +118,16 @@ func (s *EntStore) UpsertAssociation(ctx context.Context, association domain.Ass
 		SetAssociationType(string(association.AssociationType)).
 		SetEvidenceKey(association.Metadata.EvidenceKey).
 		SetSource(association.Metadata.Source).
+		SetSourceInstance(association.Metadata.SourceInstance).
+		SetSourceURL(association.Metadata.SourceURL).
+		SetSnapshotKey(association.Metadata.SnapshotKey).
+		SetMapperVersion(association.Metadata.MapperVersion).
 		SetConfidence(association.Metadata.Confidence).
 		SetVisibility(association.Metadata.Visibility).
 		SetFreshnessState(association.Metadata.FreshnessState).
 		SetObservedAt(association.Metadata.ObservedAt).
+		SetSourceUpdatedAt(association.Metadata.SourceUpdatedAt).
+		SetPropertiesJSON(association.Metadata.PropertiesJSON).
 		Exec(ctx)
 }
 
@@ -177,14 +201,20 @@ func (s *EntStore) objectByKey(ctx context.Context, key string) (*ent.Object, er
 
 func objectToDomain(storedObject *ent.Object) domain.Object {
 	return domain.Object{
-		ObjectType:     domain.ObjectType(storedObject.ObjectType),
-		Key:            storedObject.Key,
-		Title:          storedObject.Title,
-		Source:         storedObject.Source,
-		ExternalID:     storedObject.ExternalID,
-		Visibility:     storedObject.Visibility,
-		FreshnessState: storedObject.FreshnessState,
-		ObservedAt:     storedObject.ObservedAt,
+		ObjectType:      domain.ObjectType(storedObject.ObjectType),
+		Key:             storedObject.Key,
+		Title:           storedObject.Title,
+		Source:          storedObject.Source,
+		SourceInstance:  storedObject.SourceInstance,
+		ExternalID:      storedObject.ExternalID,
+		SourceURL:       storedObject.SourceURL,
+		SnapshotKey:     storedObject.SnapshotKey,
+		MapperVersion:   storedObject.MapperVersion,
+		Visibility:      storedObject.Visibility,
+		FreshnessState:  storedObject.FreshnessState,
+		ObservedAt:      storedObject.ObservedAt,
+		SourceUpdatedAt: storedObject.SourceUpdatedAt,
+		PropertiesJSON:  storedObject.PropertiesJSON,
 	}
 }
 
@@ -195,12 +225,18 @@ func associationToDomain(storedAssociation *ent.Association) domain.Association 
 		To:              domain.ObjectRef{ObjectType: domain.ObjectType(storedAssociation.ToObjectType), Key: storedAssociation.ToObjectKey},
 		AssociationType: domain.AssociationType(storedAssociation.AssociationType),
 		Metadata: domain.AssociationMetadata{
-			EvidenceKey:    storedAssociation.EvidenceKey,
-			Source:         storedAssociation.Source,
-			Confidence:     storedAssociation.Confidence,
-			Visibility:     storedAssociation.Visibility,
-			FreshnessState: storedAssociation.FreshnessState,
-			ObservedAt:     storedAssociation.ObservedAt,
+			EvidenceKey:     storedAssociation.EvidenceKey,
+			Source:          storedAssociation.Source,
+			SourceInstance:  storedAssociation.SourceInstance,
+			SourceURL:       storedAssociation.SourceURL,
+			SnapshotKey:     storedAssociation.SnapshotKey,
+			MapperVersion:   storedAssociation.MapperVersion,
+			Confidence:      storedAssociation.Confidence,
+			Visibility:      storedAssociation.Visibility,
+			FreshnessState:  storedAssociation.FreshnessState,
+			ObservedAt:      storedAssociation.ObservedAt,
+			SourceUpdatedAt: storedAssociation.SourceUpdatedAt,
+			PropertiesJSON:  storedAssociation.PropertiesJSON,
 		},
 	}
 }

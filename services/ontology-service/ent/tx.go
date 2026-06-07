@@ -14,8 +14,22 @@ type Tx struct {
 	config
 	// Association is the client for interacting with the Association builders.
 	Association *AssociationClient
+	// ConnectorCapability is the client for interacting with the ConnectorCapability builders.
+	ConnectorCapability *ConnectorCapabilityClient
+	// Evidence is the client for interacting with the Evidence builders.
+	Evidence *EvidenceClient
+	// IngestRun is the client for interacting with the IngestRun builders.
+	IngestRun *IngestRunClient
 	// Object is the client for interacting with the Object builders.
 	Object *ObjectClient
+	// SourceCheckpoint is the client for interacting with the SourceCheckpoint builders.
+	SourceCheckpoint *SourceCheckpointClient
+	// SourceError is the client for interacting with the SourceError builders.
+	SourceError *SourceErrorClient
+	// SourceEvent is the client for interacting with the SourceEvent builders.
+	SourceEvent *SourceEventClient
+	// SourceSnapshot is the client for interacting with the SourceSnapshot builders.
+	SourceSnapshot *SourceSnapshotClient
 
 	// lazily loaded.
 	client     *Client
@@ -148,7 +162,14 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Association = NewAssociationClient(tx.config)
+	tx.ConnectorCapability = NewConnectorCapabilityClient(tx.config)
+	tx.Evidence = NewEvidenceClient(tx.config)
+	tx.IngestRun = NewIngestRunClient(tx.config)
 	tx.Object = NewObjectClient(tx.config)
+	tx.SourceCheckpoint = NewSourceCheckpointClient(tx.config)
+	tx.SourceError = NewSourceErrorClient(tx.config)
+	tx.SourceEvent = NewSourceEventClient(tx.config)
+	tx.SourceSnapshot = NewSourceSnapshotClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

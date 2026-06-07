@@ -12,7 +12,14 @@ import (
 	"cubicle/services/ontology-service/ent/migrate"
 
 	"cubicle/services/ontology-service/ent/association"
+	"cubicle/services/ontology-service/ent/connectorcapability"
+	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/ingestrun"
 	"cubicle/services/ontology-service/ent/object"
+	"cubicle/services/ontology-service/ent/sourcecheckpoint"
+	"cubicle/services/ontology-service/ent/sourceerror"
+	"cubicle/services/ontology-service/ent/sourceevent"
+	"cubicle/services/ontology-service/ent/sourcesnapshot"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -26,8 +33,22 @@ type Client struct {
 	Schema *migrate.Schema
 	// Association is the client for interacting with the Association builders.
 	Association *AssociationClient
+	// ConnectorCapability is the client for interacting with the ConnectorCapability builders.
+	ConnectorCapability *ConnectorCapabilityClient
+	// Evidence is the client for interacting with the Evidence builders.
+	Evidence *EvidenceClient
+	// IngestRun is the client for interacting with the IngestRun builders.
+	IngestRun *IngestRunClient
 	// Object is the client for interacting with the Object builders.
 	Object *ObjectClient
+	// SourceCheckpoint is the client for interacting with the SourceCheckpoint builders.
+	SourceCheckpoint *SourceCheckpointClient
+	// SourceError is the client for interacting with the SourceError builders.
+	SourceError *SourceErrorClient
+	// SourceEvent is the client for interacting with the SourceEvent builders.
+	SourceEvent *SourceEventClient
+	// SourceSnapshot is the client for interacting with the SourceSnapshot builders.
+	SourceSnapshot *SourceSnapshotClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -40,7 +61,14 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Association = NewAssociationClient(c.config)
+	c.ConnectorCapability = NewConnectorCapabilityClient(c.config)
+	c.Evidence = NewEvidenceClient(c.config)
+	c.IngestRun = NewIngestRunClient(c.config)
 	c.Object = NewObjectClient(c.config)
+	c.SourceCheckpoint = NewSourceCheckpointClient(c.config)
+	c.SourceError = NewSourceErrorClient(c.config)
+	c.SourceEvent = NewSourceEventClient(c.config)
+	c.SourceSnapshot = NewSourceSnapshotClient(c.config)
 }
 
 type (
@@ -131,10 +159,17 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:         ctx,
-		config:      cfg,
-		Association: NewAssociationClient(cfg),
-		Object:      NewObjectClient(cfg),
+		ctx:                 ctx,
+		config:              cfg,
+		Association:         NewAssociationClient(cfg),
+		ConnectorCapability: NewConnectorCapabilityClient(cfg),
+		Evidence:            NewEvidenceClient(cfg),
+		IngestRun:           NewIngestRunClient(cfg),
+		Object:              NewObjectClient(cfg),
+		SourceCheckpoint:    NewSourceCheckpointClient(cfg),
+		SourceError:         NewSourceErrorClient(cfg),
+		SourceEvent:         NewSourceEventClient(cfg),
+		SourceSnapshot:      NewSourceSnapshotClient(cfg),
 	}, nil
 }
 
@@ -152,10 +187,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:         ctx,
-		config:      cfg,
-		Association: NewAssociationClient(cfg),
-		Object:      NewObjectClient(cfg),
+		ctx:                 ctx,
+		config:              cfg,
+		Association:         NewAssociationClient(cfg),
+		ConnectorCapability: NewConnectorCapabilityClient(cfg),
+		Evidence:            NewEvidenceClient(cfg),
+		IngestRun:           NewIngestRunClient(cfg),
+		Object:              NewObjectClient(cfg),
+		SourceCheckpoint:    NewSourceCheckpointClient(cfg),
+		SourceError:         NewSourceErrorClient(cfg),
+		SourceEvent:         NewSourceEventClient(cfg),
+		SourceSnapshot:      NewSourceSnapshotClient(cfg),
 	}, nil
 }
 
@@ -184,15 +226,23 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Association.Use(hooks...)
-	c.Object.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.Association, c.ConnectorCapability, c.Evidence, c.IngestRun, c.Object,
+		c.SourceCheckpoint, c.SourceError, c.SourceEvent, c.SourceSnapshot,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Association.Intercept(interceptors...)
-	c.Object.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.Association, c.ConnectorCapability, c.Evidence, c.IngestRun, c.Object,
+		c.SourceCheckpoint, c.SourceError, c.SourceEvent, c.SourceSnapshot,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -200,8 +250,22 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *AssociationMutation:
 		return c.Association.mutate(ctx, m)
+	case *ConnectorCapabilityMutation:
+		return c.ConnectorCapability.mutate(ctx, m)
+	case *EvidenceMutation:
+		return c.Evidence.mutate(ctx, m)
+	case *IngestRunMutation:
+		return c.IngestRun.mutate(ctx, m)
 	case *ObjectMutation:
 		return c.Object.mutate(ctx, m)
+	case *SourceCheckpointMutation:
+		return c.SourceCheckpoint.mutate(ctx, m)
+	case *SourceErrorMutation:
+		return c.SourceError.mutate(ctx, m)
+	case *SourceEventMutation:
+		return c.SourceEvent.mutate(ctx, m)
+	case *SourceSnapshotMutation:
+		return c.SourceSnapshot.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -340,6 +404,405 @@ func (c *AssociationClient) mutate(ctx context.Context, m *AssociationMutation) 
 	}
 }
 
+// ConnectorCapabilityClient is a client for the ConnectorCapability schema.
+type ConnectorCapabilityClient struct {
+	config
+}
+
+// NewConnectorCapabilityClient returns a client for the ConnectorCapability from the given config.
+func NewConnectorCapabilityClient(c config) *ConnectorCapabilityClient {
+	return &ConnectorCapabilityClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `connectorcapability.Hooks(f(g(h())))`.
+func (c *ConnectorCapabilityClient) Use(hooks ...Hook) {
+	c.hooks.ConnectorCapability = append(c.hooks.ConnectorCapability, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `connectorcapability.Intercept(f(g(h())))`.
+func (c *ConnectorCapabilityClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ConnectorCapability = append(c.inters.ConnectorCapability, interceptors...)
+}
+
+// Create returns a builder for creating a ConnectorCapability entity.
+func (c *ConnectorCapabilityClient) Create() *ConnectorCapabilityCreate {
+	mutation := newConnectorCapabilityMutation(c.config, OpCreate)
+	return &ConnectorCapabilityCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ConnectorCapability entities.
+func (c *ConnectorCapabilityClient) CreateBulk(builders ...*ConnectorCapabilityCreate) *ConnectorCapabilityCreateBulk {
+	return &ConnectorCapabilityCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ConnectorCapabilityClient) MapCreateBulk(slice any, setFunc func(*ConnectorCapabilityCreate, int)) *ConnectorCapabilityCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ConnectorCapabilityCreateBulk{err: fmt.Errorf("calling to ConnectorCapabilityClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ConnectorCapabilityCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ConnectorCapabilityCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ConnectorCapability.
+func (c *ConnectorCapabilityClient) Update() *ConnectorCapabilityUpdate {
+	mutation := newConnectorCapabilityMutation(c.config, OpUpdate)
+	return &ConnectorCapabilityUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ConnectorCapabilityClient) UpdateOne(_m *ConnectorCapability) *ConnectorCapabilityUpdateOne {
+	mutation := newConnectorCapabilityMutation(c.config, OpUpdateOne, withConnectorCapability(_m))
+	return &ConnectorCapabilityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ConnectorCapabilityClient) UpdateOneID(id int) *ConnectorCapabilityUpdateOne {
+	mutation := newConnectorCapabilityMutation(c.config, OpUpdateOne, withConnectorCapabilityID(id))
+	return &ConnectorCapabilityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ConnectorCapability.
+func (c *ConnectorCapabilityClient) Delete() *ConnectorCapabilityDelete {
+	mutation := newConnectorCapabilityMutation(c.config, OpDelete)
+	return &ConnectorCapabilityDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ConnectorCapabilityClient) DeleteOne(_m *ConnectorCapability) *ConnectorCapabilityDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ConnectorCapabilityClient) DeleteOneID(id int) *ConnectorCapabilityDeleteOne {
+	builder := c.Delete().Where(connectorcapability.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ConnectorCapabilityDeleteOne{builder}
+}
+
+// Query returns a query builder for ConnectorCapability.
+func (c *ConnectorCapabilityClient) Query() *ConnectorCapabilityQuery {
+	return &ConnectorCapabilityQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeConnectorCapability},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ConnectorCapability entity by its id.
+func (c *ConnectorCapabilityClient) Get(ctx context.Context, id int) (*ConnectorCapability, error) {
+	return c.Query().Where(connectorcapability.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ConnectorCapabilityClient) GetX(ctx context.Context, id int) *ConnectorCapability {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ConnectorCapabilityClient) Hooks() []Hook {
+	return c.hooks.ConnectorCapability
+}
+
+// Interceptors returns the client interceptors.
+func (c *ConnectorCapabilityClient) Interceptors() []Interceptor {
+	return c.inters.ConnectorCapability
+}
+
+func (c *ConnectorCapabilityClient) mutate(ctx context.Context, m *ConnectorCapabilityMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ConnectorCapabilityCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ConnectorCapabilityUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ConnectorCapabilityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ConnectorCapabilityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ConnectorCapability mutation op: %q", m.Op())
+	}
+}
+
+// EvidenceClient is a client for the Evidence schema.
+type EvidenceClient struct {
+	config
+}
+
+// NewEvidenceClient returns a client for the Evidence from the given config.
+func NewEvidenceClient(c config) *EvidenceClient {
+	return &EvidenceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `evidence.Hooks(f(g(h())))`.
+func (c *EvidenceClient) Use(hooks ...Hook) {
+	c.hooks.Evidence = append(c.hooks.Evidence, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `evidence.Intercept(f(g(h())))`.
+func (c *EvidenceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Evidence = append(c.inters.Evidence, interceptors...)
+}
+
+// Create returns a builder for creating a Evidence entity.
+func (c *EvidenceClient) Create() *EvidenceCreate {
+	mutation := newEvidenceMutation(c.config, OpCreate)
+	return &EvidenceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Evidence entities.
+func (c *EvidenceClient) CreateBulk(builders ...*EvidenceCreate) *EvidenceCreateBulk {
+	return &EvidenceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EvidenceClient) MapCreateBulk(slice any, setFunc func(*EvidenceCreate, int)) *EvidenceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EvidenceCreateBulk{err: fmt.Errorf("calling to EvidenceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EvidenceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EvidenceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Evidence.
+func (c *EvidenceClient) Update() *EvidenceUpdate {
+	mutation := newEvidenceMutation(c.config, OpUpdate)
+	return &EvidenceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EvidenceClient) UpdateOne(_m *Evidence) *EvidenceUpdateOne {
+	mutation := newEvidenceMutation(c.config, OpUpdateOne, withEvidence(_m))
+	return &EvidenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EvidenceClient) UpdateOneID(id int) *EvidenceUpdateOne {
+	mutation := newEvidenceMutation(c.config, OpUpdateOne, withEvidenceID(id))
+	return &EvidenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Evidence.
+func (c *EvidenceClient) Delete() *EvidenceDelete {
+	mutation := newEvidenceMutation(c.config, OpDelete)
+	return &EvidenceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EvidenceClient) DeleteOne(_m *Evidence) *EvidenceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EvidenceClient) DeleteOneID(id int) *EvidenceDeleteOne {
+	builder := c.Delete().Where(evidence.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EvidenceDeleteOne{builder}
+}
+
+// Query returns a query builder for Evidence.
+func (c *EvidenceClient) Query() *EvidenceQuery {
+	return &EvidenceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEvidence},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Evidence entity by its id.
+func (c *EvidenceClient) Get(ctx context.Context, id int) (*Evidence, error) {
+	return c.Query().Where(evidence.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EvidenceClient) GetX(ctx context.Context, id int) *Evidence {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *EvidenceClient) Hooks() []Hook {
+	return c.hooks.Evidence
+}
+
+// Interceptors returns the client interceptors.
+func (c *EvidenceClient) Interceptors() []Interceptor {
+	return c.inters.Evidence
+}
+
+func (c *EvidenceClient) mutate(ctx context.Context, m *EvidenceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EvidenceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EvidenceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EvidenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EvidenceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Evidence mutation op: %q", m.Op())
+	}
+}
+
+// IngestRunClient is a client for the IngestRun schema.
+type IngestRunClient struct {
+	config
+}
+
+// NewIngestRunClient returns a client for the IngestRun from the given config.
+func NewIngestRunClient(c config) *IngestRunClient {
+	return &IngestRunClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ingestrun.Hooks(f(g(h())))`.
+func (c *IngestRunClient) Use(hooks ...Hook) {
+	c.hooks.IngestRun = append(c.hooks.IngestRun, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ingestrun.Intercept(f(g(h())))`.
+func (c *IngestRunClient) Intercept(interceptors ...Interceptor) {
+	c.inters.IngestRun = append(c.inters.IngestRun, interceptors...)
+}
+
+// Create returns a builder for creating a IngestRun entity.
+func (c *IngestRunClient) Create() *IngestRunCreate {
+	mutation := newIngestRunMutation(c.config, OpCreate)
+	return &IngestRunCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of IngestRun entities.
+func (c *IngestRunClient) CreateBulk(builders ...*IngestRunCreate) *IngestRunCreateBulk {
+	return &IngestRunCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *IngestRunClient) MapCreateBulk(slice any, setFunc func(*IngestRunCreate, int)) *IngestRunCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &IngestRunCreateBulk{err: fmt.Errorf("calling to IngestRunClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*IngestRunCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &IngestRunCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for IngestRun.
+func (c *IngestRunClient) Update() *IngestRunUpdate {
+	mutation := newIngestRunMutation(c.config, OpUpdate)
+	return &IngestRunUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *IngestRunClient) UpdateOne(_m *IngestRun) *IngestRunUpdateOne {
+	mutation := newIngestRunMutation(c.config, OpUpdateOne, withIngestRun(_m))
+	return &IngestRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *IngestRunClient) UpdateOneID(id int) *IngestRunUpdateOne {
+	mutation := newIngestRunMutation(c.config, OpUpdateOne, withIngestRunID(id))
+	return &IngestRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for IngestRun.
+func (c *IngestRunClient) Delete() *IngestRunDelete {
+	mutation := newIngestRunMutation(c.config, OpDelete)
+	return &IngestRunDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *IngestRunClient) DeleteOne(_m *IngestRun) *IngestRunDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *IngestRunClient) DeleteOneID(id int) *IngestRunDeleteOne {
+	builder := c.Delete().Where(ingestrun.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &IngestRunDeleteOne{builder}
+}
+
+// Query returns a query builder for IngestRun.
+func (c *IngestRunClient) Query() *IngestRunQuery {
+	return &IngestRunQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeIngestRun},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a IngestRun entity by its id.
+func (c *IngestRunClient) Get(ctx context.Context, id int) (*IngestRun, error) {
+	return c.Query().Where(ingestrun.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *IngestRunClient) GetX(ctx context.Context, id int) *IngestRun {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *IngestRunClient) Hooks() []Hook {
+	return c.hooks.IngestRun
+}
+
+// Interceptors returns the client interceptors.
+func (c *IngestRunClient) Interceptors() []Interceptor {
+	return c.inters.IngestRun
+}
+
+func (c *IngestRunClient) mutate(ctx context.Context, m *IngestRunMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&IngestRunCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&IngestRunUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&IngestRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&IngestRunDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown IngestRun mutation op: %q", m.Op())
+	}
+}
+
 // ObjectClient is a client for the Object schema.
 type ObjectClient struct {
 	config
@@ -473,12 +936,546 @@ func (c *ObjectClient) mutate(ctx context.Context, m *ObjectMutation) (Value, er
 	}
 }
 
+// SourceCheckpointClient is a client for the SourceCheckpoint schema.
+type SourceCheckpointClient struct {
+	config
+}
+
+// NewSourceCheckpointClient returns a client for the SourceCheckpoint from the given config.
+func NewSourceCheckpointClient(c config) *SourceCheckpointClient {
+	return &SourceCheckpointClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sourcecheckpoint.Hooks(f(g(h())))`.
+func (c *SourceCheckpointClient) Use(hooks ...Hook) {
+	c.hooks.SourceCheckpoint = append(c.hooks.SourceCheckpoint, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sourcecheckpoint.Intercept(f(g(h())))`.
+func (c *SourceCheckpointClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SourceCheckpoint = append(c.inters.SourceCheckpoint, interceptors...)
+}
+
+// Create returns a builder for creating a SourceCheckpoint entity.
+func (c *SourceCheckpointClient) Create() *SourceCheckpointCreate {
+	mutation := newSourceCheckpointMutation(c.config, OpCreate)
+	return &SourceCheckpointCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SourceCheckpoint entities.
+func (c *SourceCheckpointClient) CreateBulk(builders ...*SourceCheckpointCreate) *SourceCheckpointCreateBulk {
+	return &SourceCheckpointCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SourceCheckpointClient) MapCreateBulk(slice any, setFunc func(*SourceCheckpointCreate, int)) *SourceCheckpointCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SourceCheckpointCreateBulk{err: fmt.Errorf("calling to SourceCheckpointClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SourceCheckpointCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SourceCheckpointCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SourceCheckpoint.
+func (c *SourceCheckpointClient) Update() *SourceCheckpointUpdate {
+	mutation := newSourceCheckpointMutation(c.config, OpUpdate)
+	return &SourceCheckpointUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SourceCheckpointClient) UpdateOne(_m *SourceCheckpoint) *SourceCheckpointUpdateOne {
+	mutation := newSourceCheckpointMutation(c.config, OpUpdateOne, withSourceCheckpoint(_m))
+	return &SourceCheckpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SourceCheckpointClient) UpdateOneID(id int) *SourceCheckpointUpdateOne {
+	mutation := newSourceCheckpointMutation(c.config, OpUpdateOne, withSourceCheckpointID(id))
+	return &SourceCheckpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SourceCheckpoint.
+func (c *SourceCheckpointClient) Delete() *SourceCheckpointDelete {
+	mutation := newSourceCheckpointMutation(c.config, OpDelete)
+	return &SourceCheckpointDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SourceCheckpointClient) DeleteOne(_m *SourceCheckpoint) *SourceCheckpointDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SourceCheckpointClient) DeleteOneID(id int) *SourceCheckpointDeleteOne {
+	builder := c.Delete().Where(sourcecheckpoint.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SourceCheckpointDeleteOne{builder}
+}
+
+// Query returns a query builder for SourceCheckpoint.
+func (c *SourceCheckpointClient) Query() *SourceCheckpointQuery {
+	return &SourceCheckpointQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSourceCheckpoint},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SourceCheckpoint entity by its id.
+func (c *SourceCheckpointClient) Get(ctx context.Context, id int) (*SourceCheckpoint, error) {
+	return c.Query().Where(sourcecheckpoint.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SourceCheckpointClient) GetX(ctx context.Context, id int) *SourceCheckpoint {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SourceCheckpointClient) Hooks() []Hook {
+	return c.hooks.SourceCheckpoint
+}
+
+// Interceptors returns the client interceptors.
+func (c *SourceCheckpointClient) Interceptors() []Interceptor {
+	return c.inters.SourceCheckpoint
+}
+
+func (c *SourceCheckpointClient) mutate(ctx context.Context, m *SourceCheckpointMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SourceCheckpointCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SourceCheckpointUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SourceCheckpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SourceCheckpointDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SourceCheckpoint mutation op: %q", m.Op())
+	}
+}
+
+// SourceErrorClient is a client for the SourceError schema.
+type SourceErrorClient struct {
+	config
+}
+
+// NewSourceErrorClient returns a client for the SourceError from the given config.
+func NewSourceErrorClient(c config) *SourceErrorClient {
+	return &SourceErrorClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sourceerror.Hooks(f(g(h())))`.
+func (c *SourceErrorClient) Use(hooks ...Hook) {
+	c.hooks.SourceError = append(c.hooks.SourceError, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sourceerror.Intercept(f(g(h())))`.
+func (c *SourceErrorClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SourceError = append(c.inters.SourceError, interceptors...)
+}
+
+// Create returns a builder for creating a SourceError entity.
+func (c *SourceErrorClient) Create() *SourceErrorCreate {
+	mutation := newSourceErrorMutation(c.config, OpCreate)
+	return &SourceErrorCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SourceError entities.
+func (c *SourceErrorClient) CreateBulk(builders ...*SourceErrorCreate) *SourceErrorCreateBulk {
+	return &SourceErrorCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SourceErrorClient) MapCreateBulk(slice any, setFunc func(*SourceErrorCreate, int)) *SourceErrorCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SourceErrorCreateBulk{err: fmt.Errorf("calling to SourceErrorClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SourceErrorCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SourceErrorCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SourceError.
+func (c *SourceErrorClient) Update() *SourceErrorUpdate {
+	mutation := newSourceErrorMutation(c.config, OpUpdate)
+	return &SourceErrorUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SourceErrorClient) UpdateOne(_m *SourceError) *SourceErrorUpdateOne {
+	mutation := newSourceErrorMutation(c.config, OpUpdateOne, withSourceError(_m))
+	return &SourceErrorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SourceErrorClient) UpdateOneID(id int) *SourceErrorUpdateOne {
+	mutation := newSourceErrorMutation(c.config, OpUpdateOne, withSourceErrorID(id))
+	return &SourceErrorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SourceError.
+func (c *SourceErrorClient) Delete() *SourceErrorDelete {
+	mutation := newSourceErrorMutation(c.config, OpDelete)
+	return &SourceErrorDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SourceErrorClient) DeleteOne(_m *SourceError) *SourceErrorDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SourceErrorClient) DeleteOneID(id int) *SourceErrorDeleteOne {
+	builder := c.Delete().Where(sourceerror.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SourceErrorDeleteOne{builder}
+}
+
+// Query returns a query builder for SourceError.
+func (c *SourceErrorClient) Query() *SourceErrorQuery {
+	return &SourceErrorQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSourceError},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SourceError entity by its id.
+func (c *SourceErrorClient) Get(ctx context.Context, id int) (*SourceError, error) {
+	return c.Query().Where(sourceerror.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SourceErrorClient) GetX(ctx context.Context, id int) *SourceError {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SourceErrorClient) Hooks() []Hook {
+	return c.hooks.SourceError
+}
+
+// Interceptors returns the client interceptors.
+func (c *SourceErrorClient) Interceptors() []Interceptor {
+	return c.inters.SourceError
+}
+
+func (c *SourceErrorClient) mutate(ctx context.Context, m *SourceErrorMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SourceErrorCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SourceErrorUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SourceErrorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SourceErrorDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SourceError mutation op: %q", m.Op())
+	}
+}
+
+// SourceEventClient is a client for the SourceEvent schema.
+type SourceEventClient struct {
+	config
+}
+
+// NewSourceEventClient returns a client for the SourceEvent from the given config.
+func NewSourceEventClient(c config) *SourceEventClient {
+	return &SourceEventClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sourceevent.Hooks(f(g(h())))`.
+func (c *SourceEventClient) Use(hooks ...Hook) {
+	c.hooks.SourceEvent = append(c.hooks.SourceEvent, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sourceevent.Intercept(f(g(h())))`.
+func (c *SourceEventClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SourceEvent = append(c.inters.SourceEvent, interceptors...)
+}
+
+// Create returns a builder for creating a SourceEvent entity.
+func (c *SourceEventClient) Create() *SourceEventCreate {
+	mutation := newSourceEventMutation(c.config, OpCreate)
+	return &SourceEventCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SourceEvent entities.
+func (c *SourceEventClient) CreateBulk(builders ...*SourceEventCreate) *SourceEventCreateBulk {
+	return &SourceEventCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SourceEventClient) MapCreateBulk(slice any, setFunc func(*SourceEventCreate, int)) *SourceEventCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SourceEventCreateBulk{err: fmt.Errorf("calling to SourceEventClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SourceEventCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SourceEventCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SourceEvent.
+func (c *SourceEventClient) Update() *SourceEventUpdate {
+	mutation := newSourceEventMutation(c.config, OpUpdate)
+	return &SourceEventUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SourceEventClient) UpdateOne(_m *SourceEvent) *SourceEventUpdateOne {
+	mutation := newSourceEventMutation(c.config, OpUpdateOne, withSourceEvent(_m))
+	return &SourceEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SourceEventClient) UpdateOneID(id int) *SourceEventUpdateOne {
+	mutation := newSourceEventMutation(c.config, OpUpdateOne, withSourceEventID(id))
+	return &SourceEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SourceEvent.
+func (c *SourceEventClient) Delete() *SourceEventDelete {
+	mutation := newSourceEventMutation(c.config, OpDelete)
+	return &SourceEventDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SourceEventClient) DeleteOne(_m *SourceEvent) *SourceEventDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SourceEventClient) DeleteOneID(id int) *SourceEventDeleteOne {
+	builder := c.Delete().Where(sourceevent.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SourceEventDeleteOne{builder}
+}
+
+// Query returns a query builder for SourceEvent.
+func (c *SourceEventClient) Query() *SourceEventQuery {
+	return &SourceEventQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSourceEvent},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SourceEvent entity by its id.
+func (c *SourceEventClient) Get(ctx context.Context, id int) (*SourceEvent, error) {
+	return c.Query().Where(sourceevent.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SourceEventClient) GetX(ctx context.Context, id int) *SourceEvent {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SourceEventClient) Hooks() []Hook {
+	return c.hooks.SourceEvent
+}
+
+// Interceptors returns the client interceptors.
+func (c *SourceEventClient) Interceptors() []Interceptor {
+	return c.inters.SourceEvent
+}
+
+func (c *SourceEventClient) mutate(ctx context.Context, m *SourceEventMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SourceEventCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SourceEventUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SourceEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SourceEventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SourceEvent mutation op: %q", m.Op())
+	}
+}
+
+// SourceSnapshotClient is a client for the SourceSnapshot schema.
+type SourceSnapshotClient struct {
+	config
+}
+
+// NewSourceSnapshotClient returns a client for the SourceSnapshot from the given config.
+func NewSourceSnapshotClient(c config) *SourceSnapshotClient {
+	return &SourceSnapshotClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sourcesnapshot.Hooks(f(g(h())))`.
+func (c *SourceSnapshotClient) Use(hooks ...Hook) {
+	c.hooks.SourceSnapshot = append(c.hooks.SourceSnapshot, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sourcesnapshot.Intercept(f(g(h())))`.
+func (c *SourceSnapshotClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SourceSnapshot = append(c.inters.SourceSnapshot, interceptors...)
+}
+
+// Create returns a builder for creating a SourceSnapshot entity.
+func (c *SourceSnapshotClient) Create() *SourceSnapshotCreate {
+	mutation := newSourceSnapshotMutation(c.config, OpCreate)
+	return &SourceSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SourceSnapshot entities.
+func (c *SourceSnapshotClient) CreateBulk(builders ...*SourceSnapshotCreate) *SourceSnapshotCreateBulk {
+	return &SourceSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SourceSnapshotClient) MapCreateBulk(slice any, setFunc func(*SourceSnapshotCreate, int)) *SourceSnapshotCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SourceSnapshotCreateBulk{err: fmt.Errorf("calling to SourceSnapshotClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SourceSnapshotCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SourceSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SourceSnapshot.
+func (c *SourceSnapshotClient) Update() *SourceSnapshotUpdate {
+	mutation := newSourceSnapshotMutation(c.config, OpUpdate)
+	return &SourceSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SourceSnapshotClient) UpdateOne(_m *SourceSnapshot) *SourceSnapshotUpdateOne {
+	mutation := newSourceSnapshotMutation(c.config, OpUpdateOne, withSourceSnapshot(_m))
+	return &SourceSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SourceSnapshotClient) UpdateOneID(id int) *SourceSnapshotUpdateOne {
+	mutation := newSourceSnapshotMutation(c.config, OpUpdateOne, withSourceSnapshotID(id))
+	return &SourceSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SourceSnapshot.
+func (c *SourceSnapshotClient) Delete() *SourceSnapshotDelete {
+	mutation := newSourceSnapshotMutation(c.config, OpDelete)
+	return &SourceSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SourceSnapshotClient) DeleteOne(_m *SourceSnapshot) *SourceSnapshotDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SourceSnapshotClient) DeleteOneID(id int) *SourceSnapshotDeleteOne {
+	builder := c.Delete().Where(sourcesnapshot.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SourceSnapshotDeleteOne{builder}
+}
+
+// Query returns a query builder for SourceSnapshot.
+func (c *SourceSnapshotClient) Query() *SourceSnapshotQuery {
+	return &SourceSnapshotQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSourceSnapshot},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SourceSnapshot entity by its id.
+func (c *SourceSnapshotClient) Get(ctx context.Context, id int) (*SourceSnapshot, error) {
+	return c.Query().Where(sourcesnapshot.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SourceSnapshotClient) GetX(ctx context.Context, id int) *SourceSnapshot {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SourceSnapshotClient) Hooks() []Hook {
+	return c.hooks.SourceSnapshot
+}
+
+// Interceptors returns the client interceptors.
+func (c *SourceSnapshotClient) Interceptors() []Interceptor {
+	return c.inters.SourceSnapshot
+}
+
+func (c *SourceSnapshotClient) mutate(ctx context.Context, m *SourceSnapshotMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SourceSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SourceSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SourceSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SourceSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SourceSnapshot mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Association, Object []ent.Hook
+		Association, ConnectorCapability, Evidence, IngestRun, Object, SourceCheckpoint,
+		SourceError, SourceEvent, SourceSnapshot []ent.Hook
 	}
 	inters struct {
-		Association, Object []ent.Interceptor
+		Association, ConnectorCapability, Evidence, IngestRun, Object, SourceCheckpoint,
+		SourceError, SourceEvent, SourceSnapshot []ent.Interceptor
 	}
 )

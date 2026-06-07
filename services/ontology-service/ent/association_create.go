@@ -76,6 +76,62 @@ func (_c *AssociationCreate) SetNillableSource(v *string) *AssociationCreate {
 	return _c
 }
 
+// SetSourceInstance sets the "source_instance" field.
+func (_c *AssociationCreate) SetSourceInstance(v string) *AssociationCreate {
+	_c.mutation.SetSourceInstance(v)
+	return _c
+}
+
+// SetNillableSourceInstance sets the "source_instance" field if the given value is not nil.
+func (_c *AssociationCreate) SetNillableSourceInstance(v *string) *AssociationCreate {
+	if v != nil {
+		_c.SetSourceInstance(*v)
+	}
+	return _c
+}
+
+// SetSourceURL sets the "source_url" field.
+func (_c *AssociationCreate) SetSourceURL(v string) *AssociationCreate {
+	_c.mutation.SetSourceURL(v)
+	return _c
+}
+
+// SetNillableSourceURL sets the "source_url" field if the given value is not nil.
+func (_c *AssociationCreate) SetNillableSourceURL(v *string) *AssociationCreate {
+	if v != nil {
+		_c.SetSourceURL(*v)
+	}
+	return _c
+}
+
+// SetSnapshotKey sets the "snapshot_key" field.
+func (_c *AssociationCreate) SetSnapshotKey(v string) *AssociationCreate {
+	_c.mutation.SetSnapshotKey(v)
+	return _c
+}
+
+// SetNillableSnapshotKey sets the "snapshot_key" field if the given value is not nil.
+func (_c *AssociationCreate) SetNillableSnapshotKey(v *string) *AssociationCreate {
+	if v != nil {
+		_c.SetSnapshotKey(*v)
+	}
+	return _c
+}
+
+// SetMapperVersion sets the "mapper_version" field.
+func (_c *AssociationCreate) SetMapperVersion(v string) *AssociationCreate {
+	_c.mutation.SetMapperVersion(v)
+	return _c
+}
+
+// SetNillableMapperVersion sets the "mapper_version" field if the given value is not nil.
+func (_c *AssociationCreate) SetNillableMapperVersion(v *string) *AssociationCreate {
+	if v != nil {
+		_c.SetMapperVersion(*v)
+	}
+	return _c
+}
+
 // SetConfidence sets the "confidence" field.
 func (_c *AssociationCreate) SetConfidence(v float64) *AssociationCreate {
 	_c.mutation.SetConfidence(v)
@@ -124,6 +180,34 @@ func (_c *AssociationCreate) SetObservedAt(v time.Time) *AssociationCreate {
 	return _c
 }
 
+// SetSourceUpdatedAt sets the "source_updated_at" field.
+func (_c *AssociationCreate) SetSourceUpdatedAt(v time.Time) *AssociationCreate {
+	_c.mutation.SetSourceUpdatedAt(v)
+	return _c
+}
+
+// SetNillableSourceUpdatedAt sets the "source_updated_at" field if the given value is not nil.
+func (_c *AssociationCreate) SetNillableSourceUpdatedAt(v *time.Time) *AssociationCreate {
+	if v != nil {
+		_c.SetSourceUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetPropertiesJSON sets the "properties_json" field.
+func (_c *AssociationCreate) SetPropertiesJSON(v string) *AssociationCreate {
+	_c.mutation.SetPropertiesJSON(v)
+	return _c
+}
+
+// SetNillablePropertiesJSON sets the "properties_json" field if the given value is not nil.
+func (_c *AssociationCreate) SetNillablePropertiesJSON(v *string) *AssociationCreate {
+	if v != nil {
+		_c.SetPropertiesJSON(*v)
+	}
+	return _c
+}
+
 // Mutation returns the AssociationMutation object of the builder.
 func (_c *AssociationCreate) Mutation() *AssociationMutation {
 	return _c.mutation
@@ -163,6 +247,22 @@ func (_c *AssociationCreate) defaults() {
 		v := association.DefaultSource
 		_c.mutation.SetSource(v)
 	}
+	if _, ok := _c.mutation.SourceInstance(); !ok {
+		v := association.DefaultSourceInstance
+		_c.mutation.SetSourceInstance(v)
+	}
+	if _, ok := _c.mutation.SourceURL(); !ok {
+		v := association.DefaultSourceURL
+		_c.mutation.SetSourceURL(v)
+	}
+	if _, ok := _c.mutation.SnapshotKey(); !ok {
+		v := association.DefaultSnapshotKey
+		_c.mutation.SetSnapshotKey(v)
+	}
+	if _, ok := _c.mutation.MapperVersion(); !ok {
+		v := association.DefaultMapperVersion
+		_c.mutation.SetMapperVersion(v)
+	}
 	if _, ok := _c.mutation.Confidence(); !ok {
 		v := association.DefaultConfidence
 		_c.mutation.SetConfidence(v)
@@ -174,6 +274,10 @@ func (_c *AssociationCreate) defaults() {
 	if _, ok := _c.mutation.FreshnessState(); !ok {
 		v := association.DefaultFreshnessState
 		_c.mutation.SetFreshnessState(v)
+	}
+	if _, ok := _c.mutation.PropertiesJSON(); !ok {
+		v := association.DefaultPropertiesJSON
+		_c.mutation.SetPropertiesJSON(v)
 	}
 }
 
@@ -238,6 +342,18 @@ func (_c *AssociationCreate) check() error {
 	if _, ok := _c.mutation.Source(); !ok {
 		return &ValidationError{Name: "source", err: errors.New(`ent: missing required field "Association.source"`)}
 	}
+	if _, ok := _c.mutation.SourceInstance(); !ok {
+		return &ValidationError{Name: "source_instance", err: errors.New(`ent: missing required field "Association.source_instance"`)}
+	}
+	if _, ok := _c.mutation.SourceURL(); !ok {
+		return &ValidationError{Name: "source_url", err: errors.New(`ent: missing required field "Association.source_url"`)}
+	}
+	if _, ok := _c.mutation.SnapshotKey(); !ok {
+		return &ValidationError{Name: "snapshot_key", err: errors.New(`ent: missing required field "Association.snapshot_key"`)}
+	}
+	if _, ok := _c.mutation.MapperVersion(); !ok {
+		return &ValidationError{Name: "mapper_version", err: errors.New(`ent: missing required field "Association.mapper_version"`)}
+	}
 	if _, ok := _c.mutation.Confidence(); !ok {
 		return &ValidationError{Name: "confidence", err: errors.New(`ent: missing required field "Association.confidence"`)}
 	}
@@ -249,6 +365,9 @@ func (_c *AssociationCreate) check() error {
 	}
 	if _, ok := _c.mutation.ObservedAt(); !ok {
 		return &ValidationError{Name: "observed_at", err: errors.New(`ent: missing required field "Association.observed_at"`)}
+	}
+	if _, ok := _c.mutation.PropertiesJSON(); !ok {
+		return &ValidationError{Name: "properties_json", err: errors.New(`ent: missing required field "Association.properties_json"`)}
 	}
 	return nil
 }
@@ -308,6 +427,22 @@ func (_c *AssociationCreate) createSpec() (*Association, *sqlgraph.CreateSpec) {
 		_spec.SetField(association.FieldSource, field.TypeString, value)
 		_node.Source = value
 	}
+	if value, ok := _c.mutation.SourceInstance(); ok {
+		_spec.SetField(association.FieldSourceInstance, field.TypeString, value)
+		_node.SourceInstance = value
+	}
+	if value, ok := _c.mutation.SourceURL(); ok {
+		_spec.SetField(association.FieldSourceURL, field.TypeString, value)
+		_node.SourceURL = value
+	}
+	if value, ok := _c.mutation.SnapshotKey(); ok {
+		_spec.SetField(association.FieldSnapshotKey, field.TypeString, value)
+		_node.SnapshotKey = value
+	}
+	if value, ok := _c.mutation.MapperVersion(); ok {
+		_spec.SetField(association.FieldMapperVersion, field.TypeString, value)
+		_node.MapperVersion = value
+	}
 	if value, ok := _c.mutation.Confidence(); ok {
 		_spec.SetField(association.FieldConfidence, field.TypeFloat64, value)
 		_node.Confidence = value
@@ -323,6 +458,14 @@ func (_c *AssociationCreate) createSpec() (*Association, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ObservedAt(); ok {
 		_spec.SetField(association.FieldObservedAt, field.TypeTime, value)
 		_node.ObservedAt = value
+	}
+	if value, ok := _c.mutation.SourceUpdatedAt(); ok {
+		_spec.SetField(association.FieldSourceUpdatedAt, field.TypeTime, value)
+		_node.SourceUpdatedAt = value
+	}
+	if value, ok := _c.mutation.PropertiesJSON(); ok {
+		_spec.SetField(association.FieldPropertiesJSON, field.TypeString, value)
+		_node.PropertiesJSON = value
 	}
 	return _node, _spec
 }
