@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,12 +11,18 @@ import (
 	"os"
 	"time"
 
+	"cubicle/services/ontology-service/ent"
+	"cubicle/services/ontology-service/internal/config"
 	"cubicle/services/ontology-service/internal/graphstore"
 	"cubicle/services/ontology-service/internal/httpapi"
+	"cubicle/services/ontology-service/internal/storage"
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 )
 
 type serveConfig struct {
 	Listen          string // Listen is the host:port address the local HTTP server binds to.
+	DatabasePath    string // DatabasePath is the SQLite file path used by the Ent-backed ontology store.
 	AllowPublicBind bool   // AllowPublicBind permits non-localhost binds for explicit development use.
 }
 
@@ -59,11 +66,20 @@ func run(args []string, logger *slog.Logger) error {
 }
 
 func parseServeConfig(args []string) (serveConfig, error) {
+	return parseServeConfigWithEnv(args, os.Getenv)
+}
+
+func parseServeConfigWithEnv(args []string, getenv func(string) string) (serveConfig, error) {
 	flags := flag.NewFlagSet("serve", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 
-	cfg := serveConfig{Listen: "127.0.0.1:48080"}
+	appCfg := config.Load(getenv)
+	cfg := serveConfig{
+		Listen:       appCfg.ListenAddr,
+		DatabasePath: appCfg.DatabasePath,
+	}
 	flags.StringVar(&cfg.Listen, "listen", cfg.Listen, "host:port for the local HTTP server")
+	flags.StringVar(&cfg.DatabasePath, "database", cfg.DatabasePath, "SQLite database path for the ontology graph")
 	flags.BoolVar(&cfg.AllowPublicBind, "allow-public-bind", false, "allow binding outside localhost for development")
 	if err := flags.Parse(args[1:]); err != nil {
 		return serveConfig{}, err
@@ -93,7 +109,13 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 		logger = slog.Default()
 	}
 
-	router := httpapi.NewRouter(graphstore.NewMemoryStore(), logger)
+	graph, cleanup, err := openGraphStore(context.Background(), cfg)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	router := httpapi.NewRouter(graph, logger)
 	server := newHTTPServer(cfg, router)
 
 	logger.Info("ontology_service_listening", "url", "http://"+cfg.Listen)
@@ -109,4 +131,25 @@ func newHTTPServer(cfg serveConfig, router http.Handler) *http.Server {
 		WriteTimeout:      serverWriteTimeout,
 		IdleTimeout:       serverIdleTimeout,
 	}
+}
+
+func openGraphStore(ctx context.Context, cfg serveConfig) (graphstore.Expander, func(), error) {
+	store, err := storage.Open(ctx, storage.Config{DatabasePath: cfg.DatabasePath})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	client := ent.NewClient(ent.Driver(entsql.OpenDB(dialect.SQLite, store.DB())))
+	cleanup := func() {
+		_ = client.Close()
+		_ = store.Close()
+	}
+
+	if err := client.Schema.Create(ctx); err != nil {
+		cleanup()
+		return nil, nil, fmt.Errorf("create ontology schema: %w", err)
+	}
+
+	graph := graphstore.NewEntStore(client)
+	return graph, cleanup, nil
 }

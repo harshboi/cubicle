@@ -22,7 +22,7 @@ type Expander interface {
 //
 // Keeping writes separate from reads lets explicit sample-data setup and future
 // crawlers seed the graph without depending on HTTP-only behavior. Both
-// MemoryStore and future EntStore implementations should satisfy this interface.
+// MemoryStore and EntStore implementations should satisfy this interface.
 type Writer interface {
 	// UpsertObject inserts or replaces one object by its stable domain key.
 	UpsertObject(context.Context, domain.Object) error
