@@ -15,3 +15,13 @@ import (
 type Expander interface {
 	Expand(context.Context, domain.ExpandRequest) (domain.Neighborhood, error)
 }
+
+// Writer is the ingestion-side graph boundary.
+//
+// Keeping writes separate from reads lets fixtures and future crawlers seed the
+// graph without depending on HTTP-only behavior. Both MemoryStore and EntStore
+// satisfy this interface.
+type Writer interface {
+	UpsertNode(context.Context, domain.Node) error
+	UpsertEdge(context.Context, domain.Edge) error
+}

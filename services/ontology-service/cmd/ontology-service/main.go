@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -9,12 +10,20 @@ import (
 	"net/http"
 	"os"
 
+	"cubicle/services/ontology-service/ent"
+	"cubicle/services/ontology-service/internal/config"
 	"cubicle/services/ontology-service/internal/fixtures"
+	"cubicle/services/ontology-service/internal/graphstore"
 	"cubicle/services/ontology-service/internal/httpapi"
+	"cubicle/services/ontology-service/internal/storage"
+	"entgo.io/ent/dialect"
+	entsql "entgo.io/ent/dialect/sql"
 )
 
 type serveConfig struct {
 	Listen          string
+	DatabasePath    string
+	SeedFixtures    bool
 	AllowPublicBind bool
 }
 
@@ -44,11 +53,22 @@ func run(args []string, logger *slog.Logger) error {
 }
 
 func parseServeConfig(args []string) (serveConfig, error) {
+	return parseServeConfigWithEnv(args, os.Getenv)
+}
+
+func parseServeConfigWithEnv(args []string, getenv func(string) string) (serveConfig, error) {
 	flags := flag.NewFlagSet("serve", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 
-	cfg := serveConfig{Listen: "127.0.0.1:48080"}
+	appCfg := config.Load(getenv)
+	cfg := serveConfig{
+		Listen:       appCfg.ListenAddr,
+		DatabasePath: appCfg.DatabasePath,
+		SeedFixtures: true,
+	}
 	flags.StringVar(&cfg.Listen, "listen", cfg.Listen, "host:port for the local HTTP server")
+	flags.StringVar(&cfg.DatabasePath, "database", cfg.DatabasePath, "SQLite database path for the ontology graph")
+	flags.BoolVar(&cfg.SeedFixtures, "seed-fixtures", cfg.SeedFixtures, "seed the local Flink demo graph before serving")
 	flags.BoolVar(&cfg.AllowPublicBind, "allow-public-bind", false, "allow binding outside localhost for development")
 	if err := flags.Parse(args[1:]); err != nil {
 		return serveConfig{}, err
@@ -78,10 +98,13 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 		logger = slog.Default()
 	}
 
-	// The fixture store gives the first server a real graph to query without
-	// committing to the Ent schema yet. The next storage PR should replace this
-	// construction with an Ent-backed AssociationStore behind the same boundary.
-	router := httpapi.NewRouter(fixtures.NewFlinkAutoscalerStore(), logger)
+	graph, cleanup, err := openGraphStore(context.Background(), cfg)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	router := httpapi.NewRouter(graph, logger)
 	server := &http.Server{
 		Addr:    cfg.Listen,
 		Handler: router,
@@ -89,4 +112,31 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 
 	logger.Info("ontology_service_listening", "url", "http://"+cfg.Listen)
 	return server.ListenAndServe()
+}
+
+func openGraphStore(ctx context.Context, cfg serveConfig) (graphstore.Expander, func(), error) {
+	store, err := storage.Open(ctx, storage.Config{DatabasePath: cfg.DatabasePath})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	client := ent.NewClient(ent.Driver(entsql.OpenDB(dialect.SQLite, store.DB())))
+	cleanup := func() {
+		_ = client.Close()
+		_ = store.Close()
+	}
+
+	if err := client.Schema.Create(ctx); err != nil {
+		cleanup()
+		return nil, nil, fmt.Errorf("create ontology schema: %w", err)
+	}
+
+	graph := graphstore.NewEntStore(client)
+	if cfg.SeedFixtures {
+		if err := fixtures.SeedFlinkAutoscaler(ctx, graph); err != nil {
+			cleanup()
+			return nil, nil, fmt.Errorf("seed fixture graph: %w", err)
+		}
+	}
+	return graph, cleanup, nil
 }

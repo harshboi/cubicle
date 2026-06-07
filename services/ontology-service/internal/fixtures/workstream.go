@@ -16,6 +16,18 @@ import (
 func NewFlinkAutoscalerStore() *graphstore.MemoryStore {
 	ctx := context.Background()
 	store := graphstore.NewMemoryStore()
+	if err := SeedFlinkAutoscaler(ctx, store); err != nil {
+		panic(err)
+	}
+	return store
+}
+
+// SeedFlinkAutoscaler writes a tiny but realistic workstream graph.
+//
+// The same fixture can now feed MemoryStore tests, Ent-backed server startup,
+// and future crawler replay tests. Treat it as a typed seed dataset: useful for
+// validating graph shape, not a substitute for ingestion coverage.
+func SeedFlinkAutoscaler(ctx context.Context, store graphstore.Writer) error {
 	observedAt := time.Date(2026, 6, 7, 10, 0, 0, 0, time.UTC)
 
 	nodes := []domain.Node{
@@ -28,7 +40,7 @@ func NewFlinkAutoscalerStore() *graphstore.MemoryStore {
 	}
 	for _, node := range nodes {
 		if err := store.UpsertNode(ctx, node); err != nil {
-			panic(err)
+			return err
 		}
 	}
 
@@ -41,11 +53,10 @@ func NewFlinkAutoscalerStore() *graphstore.MemoryStore {
 	}
 	for _, edge := range edges {
 		if err := store.UpsertEdge(ctx, edge); err != nil {
-			panic(err)
+			return err
 		}
 	}
-
-	return store
+	return nil
 }
 
 func fixtureEdge(fromKey string, fromKind domain.Kind, predicate domain.Predicate, toKey string, toKind domain.Kind, evidenceKey string, observedAt time.Time) domain.Edge {

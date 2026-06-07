@@ -1,6 +1,6 @@
 # Ontology Service
 
-`ontology-service` is the Go backend for Cubicle's work graph. The service will own the ontology, graph traversal, source evidence, and eventually the Ent-backed SQLite database that powers Cubicle's local execution context.
+`ontology-service` is the Go backend for Cubicle's work graph. The service owns the ontology, graph traversal, source evidence, and Ent-backed SQLite database that powers Cubicle's local execution context.
 
 The first implementation slice is intentionally small:
 
@@ -8,19 +8,19 @@ The first implementation slice is intentionally small:
 Cubicle Swift app
  |
  v
-localhost REST API          current PR: Gin + Huma + OpenAPI
+localhost REST API          Gin + Huma + OpenAPI
  |
  v
 query services              future PR: readiness, trace, action candidates
  |
  v
-AssociationStore            current PR: graph-facing store boundary
+graphstore boundary         read/write interfaces for graph consumers and seeders
  |
  v
-in-memory graphstore        current PR: deterministic POC graph traversal
+Ent-backed graphstore       generated schema plus domain mapping
  |
  v
-Ent + SQLite                future PR: durable graph database
+SQLite                      local durable graph database
 ```
 
 ## Why This Service Exists
@@ -76,12 +76,13 @@ go mod download
 go test ./...
 ```
 
-This downloads the HTTP framework dependencies used by the server slice:
+This downloads the service dependencies used by the server slice:
 
 ```text
 Gin   -> server framework: routing, middleware, recovery
 Huma  -> typed REST operations, validation, OpenAPI, docs
-SQLite -> local graph database foundation
+Ent   -> generated graph persistence layer
+SQLite -> local graph database
 ```
 
 ## Run Tests
@@ -91,7 +92,7 @@ cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./...
 ```
 
-The current tests validate that the in-memory graphstore can expand a bounded workstream graph and that invalid expansion requests fail.
+The current tests validate bounded graph expansion for both memory and Ent stores, SQLite setup, HTTP/OpenAPI behavior, and command startup composition.
 
 ## Storage
 
@@ -106,10 +107,13 @@ internal/storage
  +-- owns transaction commit/rollback
  |
  v
-future Ent client
+Ent client
  |
  v
-future AssociationStore
+EntStore
+ |
+ v
+graphstore.Expander
 ```
 
 The Ent graphstore slice adds generated code under `ent/`:
@@ -158,7 +162,16 @@ synchronous=NORMAL
 
 ```bash
 cd /Users/prabhat/workspace/cubicle/services/ontology-service
-go run ./cmd/ontology-service serve --listen 127.0.0.1:48080
+go run ./cmd/ontology-service serve \
+  --listen 127.0.0.1:48080 \
+  --database .data/graph.db
+```
+
+The server creates the Ent schema on startup and seeds the local Flink demo
+graph by default. Start with an empty graph by passing:
+
+```bash
+go run ./cmd/ontology-service serve --seed-fixtures=false
 ```
 
 In another terminal:
@@ -190,13 +203,16 @@ internal/graphstore
  +-- memory_store.go
  |     -> deterministic in-memory graph implementation
  |
+ +-- ent_store.go
+ |     -> Ent-backed graph implementation
+ |
  +-- store.go
-       -> small interface boundary for future HTTP/query layers
+       -> small read/write interface boundaries for HTTP, fixtures, and future crawlers
 
 internal/fixtures
  |
  +-- workstream.go
-       -> deterministic Flink Autoscaler graph used by tests and local server
+       -> deterministic Flink Autoscaler graph used by tests and local seeding
 
 internal/httpapi
  |
@@ -212,7 +228,7 @@ internal/httpapi
 cmd/ontology-service
  |
  +-- main.go
-       -> serve command and localhost bind guard
+       -> serve command, localhost bind guard, and Ent-backed startup wiring
 ```
 
 ## Go Design Rules Used Here
@@ -242,5 +258,8 @@ PR 4: SQLite storage foundation
 PR 5: Ent-backed graphstore
  |
  v
-PR 6: product query endpoints
+PR 6: Ent-backed server startup
+ |
+ v
+PR 7: product query endpoints
 ```
