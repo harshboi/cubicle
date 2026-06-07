@@ -11,7 +11,7 @@ Cubicle Swift app
 localhost REST API          Gin + Huma + OpenAPI
  |
  v
-query services              future PR: readiness, trace, action candidates
+query services              workstream overview now; readiness/actions later
  |
  v
 graphstore boundary         read/write interfaces for graph consumers and seeders
@@ -179,6 +179,7 @@ In another terminal:
 ```bash
 curl -s http://127.0.0.1:48080/healthz
 curl -s http://127.0.0.1:48080/openapi.json
+curl -s http://127.0.0.1:48080/v1/workstreams/flink-autoscaler/overview
 curl -s -X POST http://127.0.0.1:48080/v1/graph/expand \
   -H 'Content-Type: application/json' \
   -d '{"start":{"kind":"workstream","key":"workstream:flink-autoscaler"},"depth":2,"limit_per_node":10}'
@@ -214,6 +215,11 @@ internal/fixtures
  +-- workstream.go
        -> deterministic Flink Autoscaler graph used by tests and local seeding
 
+internal/query
+ |
+ +-- workstream.go
+       -> Swift-friendly workstream overview built on bounded graph expansion
+
 internal/httpapi
  |
  +-- router.go
@@ -223,7 +229,10 @@ internal/httpapi
  |     -> GET /healthz
  |
  +-- graph.go
-       -> POST /v1/graph/expand
+ |     -> POST /v1/graph/expand
+ |
+ +-- workstream.go
+       -> GET /v1/workstreams/{slug}/overview
 
 cmd/ontology-service
  |
@@ -261,5 +270,8 @@ PR 5: Ent-backed graphstore
 PR 6: Ent-backed server startup
  |
  v
-PR 7: product query endpoints
+PR 7: workstream overview query endpoint
+ |
+ v
+PR 8: crawler/import endpoints
 ```

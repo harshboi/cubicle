@@ -44,6 +44,7 @@ func NewRouter(store graphstore.Expander, logger *slog.Logger) http.Handler {
 	api := humagin.New(router, config)
 	registerHealth(api)
 	registerGraph(api, store)
+	registerWorkstreams(api, store)
 
 	return router
 }
