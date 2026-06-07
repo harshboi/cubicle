@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"cubicle/services/ontology-service/ent"
@@ -21,6 +22,7 @@ import (
 )
 
 type serveConfig struct {
+	ConfigPath      string // ConfigPath is the optional HOCON file path used to load runtime defaults.
 	Listen          string // Listen is the host:port address the local HTTP server binds to.
 	DatabasePath    string // DatabasePath is the SQLite file path used by the Ent-backed ontology store.
 	AllowPublicBind bool   // AllowPublicBind permits non-localhost binds for explicit development use.
@@ -70,14 +72,27 @@ func parseServeConfig(args []string) (serveConfig, error) {
 }
 
 func parseServeConfigWithEnv(args []string, getenv func(string) string) (serveConfig, error) {
+	configPath, err := configPathFromArgs(args)
+	if err != nil {
+		return serveConfig{}, err
+	}
+	appCfg, err := config.LoadWithOptions(config.LoadOptions{
+		ConfigPath: configPath,
+		Getenv:     getenv,
+	})
+	if err != nil {
+		return serveConfig{}, err
+	}
+
 	flags := flag.NewFlagSet("serve", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 
-	appCfg := config.Load(getenv)
 	cfg := serveConfig{
+		ConfigPath:   appCfg.ConfigPath,
 		Listen:       appCfg.ListenAddr,
 		DatabasePath: appCfg.DatabasePath,
 	}
+	flags.StringVar(&cfg.ConfigPath, "config", cfg.ConfigPath, "HOCON config file path")
 	flags.StringVar(&cfg.Listen, "listen", cfg.Listen, "host:port for the local HTTP server")
 	flags.StringVar(&cfg.DatabasePath, "database", cfg.DatabasePath, "SQLite database path for the ontology graph")
 	flags.BoolVar(&cfg.AllowPublicBind, "allow-public-bind", false, "allow binding outside localhost for development")
@@ -88,6 +103,25 @@ func parseServeConfigWithEnv(args []string, getenv func(string) string) (serveCo
 		return serveConfig{}, err
 	}
 	return cfg, nil
+}
+
+func configPathFromArgs(args []string) (string, error) {
+	for i := 1; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--config" || arg == "-config" {
+			if i+1 >= len(args) {
+				return "", errors.New("missing value for --config")
+			}
+			return args[i+1], nil
+		}
+		if strings.HasPrefix(arg, "--config=") {
+			return strings.TrimPrefix(arg, "--config="), nil
+		}
+		if strings.HasPrefix(arg, "-config=") {
+			return strings.TrimPrefix(arg, "-config="), nil
+		}
+	}
+	return "", nil
 }
 
 func validateListenAddress(listen string, allowPublicBind bool) error {

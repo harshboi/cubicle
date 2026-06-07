@@ -7,12 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"cubicle/services/ontology-service/internal/fixtures"
 	"cubicle/services/ontology-service/internal/query"
+	"cubicle/services/ontology-service/internal/sampledata"
 )
 
 func TestWorkstreamOverviewReturnsClassifiedBuckets(t *testing.T) {
-	router := NewRouter(fixtures.NewFlinkAutoscalerStore(), slog.Default())
+	router := NewRouter(sampledata.NewFakeFlinkAutoscalerMemoryStore(), slog.Default())
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/workstreams/flink-autoscaler/overview", nil)
 	rec := httptest.NewRecorder()

@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"cubicle/services/ontology-service/internal/domain"
-	"cubicle/services/ontology-service/internal/fixtures"
+	"cubicle/services/ontology-service/internal/sampledata"
 )
 
 func TestWorkstreamServiceOverviewClassifiesGraphObjects(t *testing.T) {
-	service := NewWorkstreamService(fixtures.NewFlinkAutoscalerStore())
+	service := NewWorkstreamService(sampledata.NewFakeFlinkAutoscalerMemoryStore())
 
 	overview, err := service.Overview(context.Background(), "flink-autoscaler")
 	if err != nil {

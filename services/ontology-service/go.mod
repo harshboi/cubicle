@@ -8,6 +8,7 @@ require (
 	github.com/danielgtaylor/huma/v2 v2.38.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/mattn/go-sqlite3 v1.14.45
+	github.com/o3co/go.hocon v1.7.0
 )
 
 require (

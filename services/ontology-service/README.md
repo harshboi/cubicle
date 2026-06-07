@@ -144,10 +144,32 @@ go test ./...
 Default local paths come from `internal/config`:
 
 ```text
+CUBICLE_ONTOLOGY_CONFIG_PATH   optional HOCON config file path
 CUBICLE_ONTOLOGY_LISTEN_ADDR   default: 127.0.0.1:48080
 CUBICLE_ONTOLOGY_DATA_ROOT     default: .data
 CUBICLE_ONTOLOGY_DATABASE_PATH default: .data/graph.db
 ```
+
+Config file precedence is:
+
+```text
+defaults < HOCON config file < environment variables < command-line flags
+```
+
+Example config:
+
+```hocon
+server {
+  listen_addr = "127.0.0.1:48080"
+}
+
+storage {
+  data_root = ".data"
+  database_path = ".data/graph.db"
+}
+```
+
+The same example lives at `config/ontology-service.conf.example`.
 
 SQLite settings enforced by tests:
 
@@ -162,9 +184,10 @@ synchronous=NORMAL
 
 ```bash
 cd /Users/prabhat/workspace/cubicle/services/ontology-service
+mkdir -p .data
+cp config/ontology-service.conf.example .data/ontology-service.conf
 go run ./cmd/ontology-service serve \
-  --listen 127.0.0.1:48080 \
-  --database .data/graph.db
+  --config .data/ontology-service.conf
 ```
 
 The server creates the Ent schema on startup. It starts with an empty graph

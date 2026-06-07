@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -38,6 +39,86 @@ func TestParseServeConfigUsesEnvironmentDefaults(t *testing.T) {
 	}
 	if cfg.DatabasePath != "/tmp/cubicle-ontology/env.db" {
 		t.Fatalf("unexpected database path: %s", cfg.DatabasePath)
+	}
+}
+
+func TestParseServeConfigLoadsHOCONFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "ontology-service.conf")
+	if err := os.WriteFile(path, []byte(`
+server.listen_addr = "127.0.0.1:49300"
+storage.database_path = "/tmp/cubicle-config-file.db"
+`), 0o644); err != nil {
+		t.Fatalf("write config file: %v", err)
+	}
+
+	cfg, err := parseServeConfigWithEnv([]string{"serve", "--config", path}, func(string) string { return "" })
+	if err != nil {
+		t.Fatalf("parse config file: %v", err)
+	}
+
+	if cfg.ConfigPath != path {
+		t.Fatalf("ConfigPath = %q", cfg.ConfigPath)
+	}
+	if cfg.Listen != "127.0.0.1:49300" {
+		t.Fatalf("Listen = %q", cfg.Listen)
+	}
+	if cfg.DatabasePath != "/tmp/cubicle-config-file.db" {
+		t.Fatalf("DatabasePath = %q", cfg.DatabasePath)
+	}
+}
+
+func TestParseServeConfigLoadsHOCONPathFromEnv(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "ontology-service.conf")
+	if err := os.WriteFile(path, []byte(`
+server.listen_addr = "127.0.0.1:49350"
+storage.database_path = "/tmp/cubicle-config-env-file.db"
+`), 0o644); err != nil {
+		t.Fatalf("write config file: %v", err)
+	}
+	env := map[string]string{
+		"CUBICLE_ONTOLOGY_CONFIG_PATH": path,
+	}
+
+	cfg, err := parseServeConfigWithEnv([]string{"serve"}, func(key string) string { return env[key] })
+	if err != nil {
+		t.Fatalf("parse config file from env: %v", err)
+	}
+
+	if cfg.ConfigPath != path {
+		t.Fatalf("ConfigPath = %q", cfg.ConfigPath)
+	}
+	if cfg.Listen != "127.0.0.1:49350" {
+		t.Fatalf("Listen = %q", cfg.Listen)
+	}
+	if cfg.DatabasePath != "/tmp/cubicle-config-env-file.db" {
+		t.Fatalf("DatabasePath = %q", cfg.DatabasePath)
+	}
+}
+
+func TestParseServeConfigFlagsOverrideHOCONFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "ontology-service.conf")
+	if err := os.WriteFile(path, []byte(`
+server.listen_addr = "127.0.0.1:49300"
+storage.database_path = "/tmp/from-file.db"
+`), 0o644); err != nil {
+		t.Fatalf("write config file: %v", err)
+	}
+
+	cfg, err := parseServeConfigWithEnv([]string{
+		"serve",
+		"--config", path,
+		"--listen", "127.0.0.1:49400",
+		"--database", "/tmp/from-flag.db",
+	}, func(string) string { return "" })
+	if err != nil {
+		t.Fatalf("parse config file: %v", err)
+	}
+
+	if cfg.Listen != "127.0.0.1:49400" {
+		t.Fatalf("Listen = %q", cfg.Listen)
+	}
+	if cfg.DatabasePath != "/tmp/from-flag.db" {
+		t.Fatalf("DatabasePath = %q", cfg.DatabasePath)
 	}
 }
 
