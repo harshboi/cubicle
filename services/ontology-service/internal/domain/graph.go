@@ -90,7 +90,7 @@ type Edge struct {
 // query must make that fan-out explicit.
 type ExpandRequest struct {
 	Start        NodeRef     `json:"start"`
-	Predicates   []Predicate `json:"predicates"`
+	Predicates   []Predicate `json:"predicates,omitempty"`
 	Depth        int         `json:"depth"`
 	LimitPerNode int         `json:"limit_per_node"`
 }

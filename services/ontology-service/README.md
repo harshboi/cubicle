@@ -8,7 +8,7 @@ The first implementation slice is intentionally small:
 Cubicle Swift app
  |
  v
-localhost REST API          future PR: Gin + Huma + OpenAPI
+localhost REST API          current PR: Gin + Huma + OpenAPI
  |
  v
 query services              future PR: readiness, trace, action candidates
@@ -49,7 +49,7 @@ The Swift app should not know about Ent schemas, SQLite tables, crawler snapshot
 
 - Go `1.25.1`
 - macOS or Linux shell
-- No database dependency for the current scaffold PR
+- No database dependency for the current server slice
 
 Check your Go version:
 
@@ -73,7 +73,12 @@ go mod download
 go test ./...
 ```
 
-The scaffold currently has no third-party runtime dependencies, so `go mod download` should be fast.
+This downloads the HTTP framework dependencies used by the server slice:
+
+```text
+Gin   -> server framework: routing, middleware, recovery
+Huma  -> typed REST operations, validation, OpenAPI, docs
+```
 
 ## Run Tests
 
@@ -83,6 +88,29 @@ go test ./...
 ```
 
 The current tests validate that the in-memory graphstore can expand a bounded workstream graph and that invalid expansion requests fail.
+
+## Run Server
+
+```bash
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
+go run ./cmd/ontology-service serve --listen 127.0.0.1:48080
+```
+
+In another terminal:
+
+```bash
+curl -s http://127.0.0.1:48080/healthz
+curl -s http://127.0.0.1:48080/openapi.json
+curl -s -X POST http://127.0.0.1:48080/v1/graph/expand \
+  -H 'Content-Type: application/json' \
+  -d '{"start":{"kind":"workstream","key":"workstream:flink-autoscaler"},"depth":2,"limit_per_node":10}'
+```
+
+Expected health response:
+
+```json
+{"ok":true}
+```
 
 ## Current Packages
 
@@ -99,6 +127,27 @@ internal/graphstore
  |
  +-- store.go
        -> small interface boundary for future HTTP/query layers
+
+internal/fixtures
+ |
+ +-- workstream.go
+       -> deterministic Flink Autoscaler graph used by tests and local server
+
+internal/httpapi
+ |
+ +-- router.go
+ |     -> Gin engine plus Huma operation registration
+ |
+ +-- health.go
+ |     -> GET /healthz
+ |
+ +-- graph.go
+       -> POST /v1/graph/expand
+
+cmd/ontology-service
+ |
+ +-- main.go
+       -> serve command and localhost bind guard
 ```
 
 ## Go Design Rules Used Here
@@ -126,13 +175,4 @@ PR 4: Ent + SQLite AssociationStore
  |
  v
 PR 5: product query endpoints
-```
-
-After the HTTP PR lands, setup will include:
-
-```bash
-cd /Users/prabhat/workspace/cubicle/services/ontology-service
-go run ./cmd/ontology-service serve --listen 127.0.0.1:48080
-curl -s http://127.0.0.1:48080/healthz
-curl -s http://127.0.0.1:48080/openapi.json
 ```
