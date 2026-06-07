@@ -53,7 +53,7 @@ func TestOpenAPIDocumentIncludesHealthAndGraph(t *testing.T) {
 	if !ok {
 		t.Fatalf("openapi document has no paths: %#v", doc)
 	}
-	for _, path := range []string{"/healthz", "/v1/graph/expand"} {
+	for _, path := range []string{"/healthz", "/v1/graph/expand", "/v1/workstreams/{slug}/overview"} {
 		if _, ok := paths[path]; !ok {
 			t.Fatalf("openapi document missing %s: %#v", path, paths)
 		}
