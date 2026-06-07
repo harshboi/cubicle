@@ -8,6 +8,69 @@ import (
 )
 
 var (
+	// ConnectorCapabilitiesColumns holds the columns for the "connector_capabilities" table.
+	ConnectorCapabilitiesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "source", Type: field.TypeString},
+		{Name: "source_instance", Type: field.TypeString},
+		{Name: "slice", Type: field.TypeString, Default: ""},
+		{Name: "status", Type: field.TypeString, Default: "healthy"},
+		{Name: "display_name", Type: field.TypeString, Default: ""},
+		{Name: "object_kinds_json", Type: field.TypeString, Default: "[]"},
+		{Name: "next_allowed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "notes", Type: field.TypeString, Default: ""},
+	}
+	// ConnectorCapabilitiesTable holds the schema information for the "connector_capabilities" table.
+	ConnectorCapabilitiesTable = &schema.Table{
+		Name:       "connector_capabilities",
+		Columns:    ConnectorCapabilitiesColumns,
+		PrimaryKey: []*schema.Column{ConnectorCapabilitiesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "connectorcapability_source_source_instance_slice",
+				Unique:  true,
+				Columns: []*schema.Column{ConnectorCapabilitiesColumns[1], ConnectorCapabilitiesColumns[2], ConnectorCapabilitiesColumns[3]},
+			},
+		},
+	}
+	// EvidencesColumns holds the columns for the "evidences" table.
+	EvidencesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "evidence_key", Type: field.TypeString, Unique: true},
+		{Name: "run_key", Type: field.TypeString},
+		{Name: "source", Type: field.TypeString},
+		{Name: "source_instance", Type: field.TypeString},
+		{Name: "snapshot_key", Type: field.TypeString, Default: ""},
+		{Name: "source_url", Type: field.TypeString, Default: ""},
+		{Name: "text_hash", Type: field.TypeString},
+		{Name: "summary", Type: field.TypeString, Default: ""},
+		{Name: "quoted_text", Type: field.TypeString, Default: ""},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 0},
+		{Name: "observed_at", Type: field.TypeTime},
+	}
+	// EvidencesTable holds the schema information for the "evidences" table.
+	EvidencesTable = &schema.Table{
+		Name:       "evidences",
+		Columns:    EvidencesColumns,
+		PrimaryKey: []*schema.Column{EvidencesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "evidence_run_key",
+				Unique:  false,
+				Columns: []*schema.Column{EvidencesColumns[2]},
+			},
+			{
+				Name:    "evidence_snapshot_key",
+				Unique:  false,
+				Columns: []*schema.Column{EvidencesColumns[5]},
+			},
+			{
+				Name:    "evidence_source_source_instance",
+				Unique:  false,
+				Columns: []*schema.Column{EvidencesColumns[3], EvidencesColumns[4]},
+			},
+		},
+	}
 	// GraphEdgesColumns holds the columns for the "graph_edges" table.
 	GraphEdgesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -19,10 +82,16 @@ var (
 		{Name: "predicate", Type: field.TypeString},
 		{Name: "evidence_key", Type: field.TypeString},
 		{Name: "source", Type: field.TypeString, Default: ""},
+		{Name: "source_instance", Type: field.TypeString, Default: ""},
+		{Name: "source_url", Type: field.TypeString, Default: ""},
+		{Name: "snapshot_key", Type: field.TypeString, Default: ""},
+		{Name: "mapper_version", Type: field.TypeString, Default: ""},
 		{Name: "confidence", Type: field.TypeFloat64, Default: 0},
 		{Name: "visibility", Type: field.TypeString, Default: ""},
 		{Name: "freshness_state", Type: field.TypeString, Default: ""},
 		{Name: "observed_at", Type: field.TypeTime},
+		{Name: "source_updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "properties_json", Type: field.TypeString, Default: ""},
 	}
 	// GraphEdgesTable holds the schema information for the "graph_edges" table.
 	GraphEdgesTable = &schema.Table{
@@ -45,6 +114,43 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{GraphEdgesColumns[7]},
 			},
+			{
+				Name:    "graphedge_source_source_instance_snapshot_key",
+				Unique:  false,
+				Columns: []*schema.Column{GraphEdgesColumns[8], GraphEdgesColumns[9], GraphEdgesColumns[11]},
+			},
+		},
+	}
+	// IngestRunsColumns holds the columns for the "ingest_runs" table.
+	IngestRunsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "run_key", Type: field.TypeString, Unique: true},
+		{Name: "source", Type: field.TypeString},
+		{Name: "source_instance", Type: field.TypeString},
+		{Name: "slice", Type: field.TypeString, Default: ""},
+		{Name: "mapper_version", Type: field.TypeString, Default: ""},
+		{Name: "status", Type: field.TypeString},
+		{Name: "started_at", Type: field.TypeTime},
+		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "error_code", Type: field.TypeString, Default: ""},
+		{Name: "error_message", Type: field.TypeString, Default: ""},
+	}
+	// IngestRunsTable holds the schema information for the "ingest_runs" table.
+	IngestRunsTable = &schema.Table{
+		Name:       "ingest_runs",
+		Columns:    IngestRunsColumns,
+		PrimaryKey: []*schema.Column{IngestRunsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ingestrun_source_source_instance_slice_started_at",
+				Unique:  false,
+				Columns: []*schema.Column{IngestRunsColumns[2], IngestRunsColumns[3], IngestRunsColumns[4], IngestRunsColumns[7]},
+			},
+			{
+				Name:    "ingestrun_status",
+				Unique:  false,
+				Columns: []*schema.Column{IngestRunsColumns[6]},
+			},
 		},
 	}
 	// OntologyNodesColumns holds the columns for the "ontology_nodes" table.
@@ -54,10 +160,16 @@ var (
 		{Name: "kind", Type: field.TypeString},
 		{Name: "title", Type: field.TypeString, Default: ""},
 		{Name: "source", Type: field.TypeString, Default: ""},
+		{Name: "source_instance", Type: field.TypeString, Default: ""},
 		{Name: "external_id", Type: field.TypeString, Default: ""},
+		{Name: "source_url", Type: field.TypeString, Default: ""},
+		{Name: "snapshot_key", Type: field.TypeString, Default: ""},
+		{Name: "mapper_version", Type: field.TypeString, Default: ""},
 		{Name: "visibility", Type: field.TypeString, Default: ""},
 		{Name: "freshness_state", Type: field.TypeString, Default: ""},
 		{Name: "observed_at", Type: field.TypeTime},
+		{Name: "source_updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "properties_json", Type: field.TypeString, Default: ""},
 	}
 	// OntologyNodesTable holds the schema information for the "ontology_nodes" table.
 	OntologyNodesTable = &schema.Table{
@@ -73,14 +185,174 @@ var (
 			{
 				Name:    "ontologynode_source_external_id",
 				Unique:  false,
-				Columns: []*schema.Column{OntologyNodesColumns[4], OntologyNodesColumns[5]},
+				Columns: []*schema.Column{OntologyNodesColumns[4], OntologyNodesColumns[6]},
+			},
+			{
+				Name:    "ontologynode_source_source_instance_snapshot_key",
+				Unique:  false,
+				Columns: []*schema.Column{OntologyNodesColumns[4], OntologyNodesColumns[5], OntologyNodesColumns[8]},
+			},
+		},
+	}
+	// SourceCheckpointsColumns holds the columns for the "source_checkpoints" table.
+	SourceCheckpointsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "source", Type: field.TypeString},
+		{Name: "source_instance", Type: field.TypeString},
+		{Name: "slice", Type: field.TypeString, Default: ""},
+		{Name: "status", Type: field.TypeString, Default: "healthy"},
+		{Name: "checkpoint_key", Type: field.TypeString, Default: ""},
+		{Name: "checkpoint_value", Type: field.TypeString, Default: ""},
+		{Name: "last_successful_run_key", Type: field.TypeString, Default: ""},
+		{Name: "last_attempted_run_key", Type: field.TypeString, Default: ""},
+		{Name: "last_error_key", Type: field.TypeString, Default: ""},
+		{Name: "next_allowed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "object_counts_json", Type: field.TypeString, Default: "{}"},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// SourceCheckpointsTable holds the schema information for the "source_checkpoints" table.
+	SourceCheckpointsTable = &schema.Table{
+		Name:       "source_checkpoints",
+		Columns:    SourceCheckpointsColumns,
+		PrimaryKey: []*schema.Column{SourceCheckpointsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "sourcecheckpoint_source_source_instance_slice",
+				Unique:  true,
+				Columns: []*schema.Column{SourceCheckpointsColumns[1], SourceCheckpointsColumns[2], SourceCheckpointsColumns[3]},
+			},
+			{
+				Name:    "sourcecheckpoint_last_successful_run_key",
+				Unique:  false,
+				Columns: []*schema.Column{SourceCheckpointsColumns[7]},
+			},
+			{
+				Name:    "sourcecheckpoint_last_error_key",
+				Unique:  false,
+				Columns: []*schema.Column{SourceCheckpointsColumns[9]},
+			},
+		},
+	}
+	// SourceErrorsColumns holds the columns for the "source_errors" table.
+	SourceErrorsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "error_key", Type: field.TypeString, Unique: true},
+		{Name: "run_key", Type: field.TypeString, Default: ""},
+		{Name: "source", Type: field.TypeString},
+		{Name: "source_instance", Type: field.TypeString},
+		{Name: "slice", Type: field.TypeString, Default: ""},
+		{Name: "category", Type: field.TypeString},
+		{Name: "message", Type: field.TypeString, Default: ""},
+		{Name: "source_url", Type: field.TypeString, Default: ""},
+		{Name: "retriable", Type: field.TypeBool, Default: false},
+		{Name: "occurred_at", Type: field.TypeTime},
+		{Name: "payload_json", Type: field.TypeString, Default: ""},
+	}
+	// SourceErrorsTable holds the schema information for the "source_errors" table.
+	SourceErrorsTable = &schema.Table{
+		Name:       "source_errors",
+		Columns:    SourceErrorsColumns,
+		PrimaryKey: []*schema.Column{SourceErrorsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "sourceerror_source_source_instance_slice_occurred_at",
+				Unique:  false,
+				Columns: []*schema.Column{SourceErrorsColumns[3], SourceErrorsColumns[4], SourceErrorsColumns[5], SourceErrorsColumns[10]},
+			},
+			{
+				Name:    "sourceerror_run_key",
+				Unique:  false,
+				Columns: []*schema.Column{SourceErrorsColumns[2]},
+			},
+			{
+				Name:    "sourceerror_category",
+				Unique:  false,
+				Columns: []*schema.Column{SourceErrorsColumns[6]},
+			},
+		},
+	}
+	// SourceEventsColumns holds the columns for the "source_events" table.
+	SourceEventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "event_key", Type: field.TypeString, Unique: true},
+		{Name: "run_key", Type: field.TypeString},
+		{Name: "source", Type: field.TypeString},
+		{Name: "source_instance", Type: field.TypeString},
+		{Name: "snapshot_key", Type: field.TypeString, Default: ""},
+		{Name: "source_object_kind", Type: field.TypeString, Default: ""},
+		{Name: "source_object_id", Type: field.TypeString, Default: ""},
+		{Name: "event_type", Type: field.TypeString},
+		{Name: "observed_at", Type: field.TypeTime},
+		{Name: "payload_json", Type: field.TypeString, Default: ""},
+	}
+	// SourceEventsTable holds the schema information for the "source_events" table.
+	SourceEventsTable = &schema.Table{
+		Name:       "source_events",
+		Columns:    SourceEventsColumns,
+		PrimaryKey: []*schema.Column{SourceEventsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "sourceevent_run_key",
+				Unique:  false,
+				Columns: []*schema.Column{SourceEventsColumns[2]},
+			},
+			{
+				Name:    "sourceevent_snapshot_key",
+				Unique:  false,
+				Columns: []*schema.Column{SourceEventsColumns[5]},
+			},
+			{
+				Name:    "sourceevent_source_source_instance_source_object_kind_source_object_id",
+				Unique:  false,
+				Columns: []*schema.Column{SourceEventsColumns[3], SourceEventsColumns[4], SourceEventsColumns[6], SourceEventsColumns[7]},
+			},
+		},
+	}
+	// SourceSnapshotsColumns holds the columns for the "source_snapshots" table.
+	SourceSnapshotsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "snapshot_key", Type: field.TypeString, Unique: true},
+		{Name: "run_key", Type: field.TypeString},
+		{Name: "source", Type: field.TypeString},
+		{Name: "source_instance", Type: field.TypeString},
+		{Name: "source_object_kind", Type: field.TypeString, Default: ""},
+		{Name: "source_object_id", Type: field.TypeString, Default: ""},
+		{Name: "body_sha256", Type: field.TypeString},
+		{Name: "body_ref", Type: field.TypeString},
+		{Name: "source_url", Type: field.TypeString, Default: ""},
+		{Name: "fetched_at", Type: field.TypeTime},
+		{Name: "headers_json", Type: field.TypeString, Default: ""},
+		{Name: "created_at", Type: field.TypeTime},
+	}
+	// SourceSnapshotsTable holds the schema information for the "source_snapshots" table.
+	SourceSnapshotsTable = &schema.Table{
+		Name:       "source_snapshots",
+		Columns:    SourceSnapshotsColumns,
+		PrimaryKey: []*schema.Column{SourceSnapshotsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "sourcesnapshot_run_key",
+				Unique:  false,
+				Columns: []*schema.Column{SourceSnapshotsColumns[2]},
+			},
+			{
+				Name:    "sourcesnapshot_source_source_instance_source_object_kind_source_object_id",
+				Unique:  false,
+				Columns: []*schema.Column{SourceSnapshotsColumns[3], SourceSnapshotsColumns[4], SourceSnapshotsColumns[5], SourceSnapshotsColumns[6]},
 			},
 		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		ConnectorCapabilitiesTable,
+		EvidencesTable,
 		GraphEdgesTable,
+		IngestRunsTable,
 		OntologyNodesTable,
+		SourceCheckpointsTable,
+		SourceErrorsTable,
+		SourceEventsTable,
+		SourceSnapshotsTable,
 	}
 )
 

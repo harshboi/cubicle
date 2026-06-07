@@ -36,10 +36,16 @@ func (s *EntStore) UpsertNode(ctx context.Context, node domain.Node) error {
 			SetKind(string(node.Kind)).
 			SetTitle(node.Title).
 			SetSource(node.Source).
+			SetSourceInstance(node.SourceInstance).
 			SetExternalID(node.ExternalID).
+			SetSourceURL(node.SourceURL).
+			SetSnapshotKey(node.SnapshotKey).
+			SetMapperVersion(node.MapperVersion).
 			SetVisibility(node.Visibility).
 			SetFreshnessState(node.FreshnessState).
 			SetObservedAt(node.ObservedAt).
+			SetSourceUpdatedAt(node.SourceUpdatedAt).
+			SetPropertiesJSON(node.PropertiesJSON).
 			Exec(ctx)
 	}
 	if !ent.IsNotFound(err) {
@@ -50,10 +56,16 @@ func (s *EntStore) UpsertNode(ctx context.Context, node domain.Node) error {
 		SetKind(string(node.Kind)).
 		SetTitle(node.Title).
 		SetSource(node.Source).
+		SetSourceInstance(node.SourceInstance).
 		SetExternalID(node.ExternalID).
+		SetSourceURL(node.SourceURL).
+		SetSnapshotKey(node.SnapshotKey).
+		SetMapperVersion(node.MapperVersion).
 		SetVisibility(node.Visibility).
 		SetFreshnessState(node.FreshnessState).
 		SetObservedAt(node.ObservedAt).
+		SetSourceUpdatedAt(node.SourceUpdatedAt).
+		SetPropertiesJSON(node.PropertiesJSON).
 		Exec(ctx)
 }
 
@@ -82,10 +94,16 @@ func (s *EntStore) UpsertEdge(ctx context.Context, edge domain.Edge) error {
 			SetPredicate(string(edge.Metadata.Predicate)).
 			SetEvidenceKey(edge.Metadata.EvidenceKey).
 			SetSource(edge.Metadata.Source).
+			SetSourceInstance(edge.Metadata.SourceInstance).
+			SetSourceURL(edge.Metadata.SourceURL).
+			SetSnapshotKey(edge.Metadata.SnapshotKey).
+			SetMapperVersion(edge.Metadata.MapperVersion).
 			SetConfidence(edge.Metadata.Confidence).
 			SetVisibility(edge.Metadata.Visibility).
 			SetFreshnessState(edge.Metadata.FreshnessState).
 			SetObservedAt(edge.Metadata.ObservedAt).
+			SetSourceUpdatedAt(edge.Metadata.SourceUpdatedAt).
+			SetPropertiesJSON(edge.Metadata.PropertiesJSON).
 			Exec(ctx)
 	}
 	if !ent.IsNotFound(err) {
@@ -100,10 +118,16 @@ func (s *EntStore) UpsertEdge(ctx context.Context, edge domain.Edge) error {
 		SetPredicate(string(edge.Metadata.Predicate)).
 		SetEvidenceKey(edge.Metadata.EvidenceKey).
 		SetSource(edge.Metadata.Source).
+		SetSourceInstance(edge.Metadata.SourceInstance).
+		SetSourceURL(edge.Metadata.SourceURL).
+		SetSnapshotKey(edge.Metadata.SnapshotKey).
+		SetMapperVersion(edge.Metadata.MapperVersion).
 		SetConfidence(edge.Metadata.Confidence).
 		SetVisibility(edge.Metadata.Visibility).
 		SetFreshnessState(edge.Metadata.FreshnessState).
 		SetObservedAt(edge.Metadata.ObservedAt).
+		SetSourceUpdatedAt(edge.Metadata.SourceUpdatedAt).
+		SetPropertiesJSON(edge.Metadata.PropertiesJSON).
 		Exec(ctx)
 }
 
@@ -177,14 +201,20 @@ func (s *EntStore) nodeByKey(ctx context.Context, key string) (*ent.OntologyNode
 
 func nodeToDomain(node *ent.OntologyNode) domain.Node {
 	return domain.Node{
-		Kind:           domain.Kind(node.Kind),
-		Key:            node.Key,
-		Title:          node.Title,
-		Source:         node.Source,
-		ExternalID:     node.ExternalID,
-		Visibility:     node.Visibility,
-		FreshnessState: node.FreshnessState,
-		ObservedAt:     node.ObservedAt,
+		Kind:            domain.Kind(node.Kind),
+		Key:             node.Key,
+		Title:           node.Title,
+		Source:          node.Source,
+		SourceInstance:  node.SourceInstance,
+		ExternalID:      node.ExternalID,
+		SourceURL:       node.SourceURL,
+		SnapshotKey:     node.SnapshotKey,
+		MapperVersion:   node.MapperVersion,
+		Visibility:      node.Visibility,
+		FreshnessState:  node.FreshnessState,
+		ObservedAt:      node.ObservedAt,
+		SourceUpdatedAt: node.SourceUpdatedAt,
+		PropertiesJSON:  node.PropertiesJSON,
 	}
 }
 
@@ -194,13 +224,19 @@ func edgeToDomain(edge *ent.GraphEdge) domain.Edge {
 		From: domain.NodeRef{Kind: domain.Kind(edge.FromKind), Key: edge.FromKey},
 		To:   domain.NodeRef{Kind: domain.Kind(edge.ToKind), Key: edge.ToKey},
 		Metadata: domain.EdgeMetadata{
-			Predicate:      domain.Predicate(edge.Predicate),
-			EvidenceKey:    edge.EvidenceKey,
-			Source:         edge.Source,
-			Confidence:     edge.Confidence,
-			Visibility:     edge.Visibility,
-			FreshnessState: edge.FreshnessState,
-			ObservedAt:     edge.ObservedAt,
+			Predicate:       domain.Predicate(edge.Predicate),
+			EvidenceKey:     edge.EvidenceKey,
+			Source:          edge.Source,
+			SourceInstance:  edge.SourceInstance,
+			SourceURL:       edge.SourceURL,
+			SnapshotKey:     edge.SnapshotKey,
+			MapperVersion:   edge.MapperVersion,
+			Confidence:      edge.Confidence,
+			Visibility:      edge.Visibility,
+			FreshnessState:  edge.FreshnessState,
+			ObservedAt:      edge.ObservedAt,
+			SourceUpdatedAt: edge.SourceUpdatedAt,
+			PropertiesJSON:  edge.PropertiesJSON,
 		},
 	}
 }

@@ -2,6 +2,17 @@ package domain
 
 import "time"
 
+const (
+	// VisibilityPublic is the default for open-source POC data. Later private
+	// workplace connectors can use this same field without changing the API.
+	VisibilityPublic = "public"
+
+	// FreshnessFresh marks facts produced by the current crawler pass. Ingest
+	// runs can later mark untouched facts stale without deleting historical
+	// evidence.
+	FreshnessFresh = "fresh"
+)
+
 type Kind string
 
 const (
@@ -47,14 +58,20 @@ type NodeRef struct {
 // primary key. Keeping API keys domain-shaped prevents Swift from coupling to
 // Ent IDs or SQLite implementation details.
 type Node struct {
-	Kind           Kind      `json:"kind"`
-	Key            string    `json:"key"`
-	Title          string    `json:"title"`
-	Source         string    `json:"source,omitempty"`
-	ExternalID     string    `json:"external_id,omitempty"`
-	Visibility     string    `json:"visibility,omitempty"`
-	FreshnessState string    `json:"freshness_state,omitempty"`
-	ObservedAt     time.Time `json:"observed_at,omitempty"`
+	Kind            Kind      `json:"kind"`
+	Key             string    `json:"key"`
+	Title           string    `json:"title"`
+	Source          string    `json:"source,omitempty"`
+	SourceInstance  string    `json:"source_instance,omitempty"`
+	ExternalID      string    `json:"external_id,omitempty"`
+	SourceURL       string    `json:"source_url,omitempty"`
+	SnapshotKey     string    `json:"snapshot_key,omitempty"`
+	MapperVersion   string    `json:"mapper_version,omitempty"`
+	Visibility      string    `json:"visibility,omitempty"`
+	FreshnessState  string    `json:"freshness_state,omitempty"`
+	ObservedAt      time.Time `json:"observed_at,omitempty"`
+	SourceUpdatedAt time.Time `json:"source_updated_at,omitempty"`
+	PropertiesJSON  string    `json:"properties_json,omitempty"`
 }
 
 func (n Node) Ref() NodeRef {
@@ -67,13 +84,19 @@ func (n Node) Ref() NodeRef {
 // edge can explain where that fact came from. This is why metadata lives on the
 // edge itself instead of being an afterthought in a separate log.
 type EdgeMetadata struct {
-	Predicate      Predicate `json:"predicate"`
-	EvidenceKey    string    `json:"evidence_key"`
-	Source         string    `json:"source"`
-	Confidence     float64   `json:"confidence"`
-	Visibility     string    `json:"visibility"`
-	FreshnessState string    `json:"freshness_state"`
-	ObservedAt     time.Time `json:"observed_at"`
+	Predicate       Predicate `json:"predicate"`
+	EvidenceKey     string    `json:"evidence_key"`
+	Source          string    `json:"source"`
+	SourceInstance  string    `json:"source_instance,omitempty"`
+	SourceURL       string    `json:"source_url,omitempty"`
+	SnapshotKey     string    `json:"snapshot_key,omitempty"`
+	MapperVersion   string    `json:"mapper_version,omitempty"`
+	Confidence      float64   `json:"confidence"`
+	Visibility      string    `json:"visibility"`
+	FreshnessState  string    `json:"freshness_state"`
+	ObservedAt      time.Time `json:"observed_at"`
+	SourceUpdatedAt time.Time `json:"source_updated_at,omitempty"`
+	PropertiesJSON  string    `json:"properties_json,omitempty"`
 }
 
 type Edge struct {

@@ -140,6 +140,62 @@ func (_u *GraphEdgeUpdate) SetNillableSource(v *string) *GraphEdgeUpdate {
 	return _u
 }
 
+// SetSourceInstance sets the "source_instance" field.
+func (_u *GraphEdgeUpdate) SetSourceInstance(v string) *GraphEdgeUpdate {
+	_u.mutation.SetSourceInstance(v)
+	return _u
+}
+
+// SetNillableSourceInstance sets the "source_instance" field if the given value is not nil.
+func (_u *GraphEdgeUpdate) SetNillableSourceInstance(v *string) *GraphEdgeUpdate {
+	if v != nil {
+		_u.SetSourceInstance(*v)
+	}
+	return _u
+}
+
+// SetSourceURL sets the "source_url" field.
+func (_u *GraphEdgeUpdate) SetSourceURL(v string) *GraphEdgeUpdate {
+	_u.mutation.SetSourceURL(v)
+	return _u
+}
+
+// SetNillableSourceURL sets the "source_url" field if the given value is not nil.
+func (_u *GraphEdgeUpdate) SetNillableSourceURL(v *string) *GraphEdgeUpdate {
+	if v != nil {
+		_u.SetSourceURL(*v)
+	}
+	return _u
+}
+
+// SetSnapshotKey sets the "snapshot_key" field.
+func (_u *GraphEdgeUpdate) SetSnapshotKey(v string) *GraphEdgeUpdate {
+	_u.mutation.SetSnapshotKey(v)
+	return _u
+}
+
+// SetNillableSnapshotKey sets the "snapshot_key" field if the given value is not nil.
+func (_u *GraphEdgeUpdate) SetNillableSnapshotKey(v *string) *GraphEdgeUpdate {
+	if v != nil {
+		_u.SetSnapshotKey(*v)
+	}
+	return _u
+}
+
+// SetMapperVersion sets the "mapper_version" field.
+func (_u *GraphEdgeUpdate) SetMapperVersion(v string) *GraphEdgeUpdate {
+	_u.mutation.SetMapperVersion(v)
+	return _u
+}
+
+// SetNillableMapperVersion sets the "mapper_version" field if the given value is not nil.
+func (_u *GraphEdgeUpdate) SetNillableMapperVersion(v *string) *GraphEdgeUpdate {
+	if v != nil {
+		_u.SetMapperVersion(*v)
+	}
+	return _u
+}
+
 // SetConfidence sets the "confidence" field.
 func (_u *GraphEdgeUpdate) SetConfidence(v float64) *GraphEdgeUpdate {
 	_u.mutation.ResetConfidence()
@@ -199,6 +255,40 @@ func (_u *GraphEdgeUpdate) SetObservedAt(v time.Time) *GraphEdgeUpdate {
 func (_u *GraphEdgeUpdate) SetNillableObservedAt(v *time.Time) *GraphEdgeUpdate {
 	if v != nil {
 		_u.SetObservedAt(*v)
+	}
+	return _u
+}
+
+// SetSourceUpdatedAt sets the "source_updated_at" field.
+func (_u *GraphEdgeUpdate) SetSourceUpdatedAt(v time.Time) *GraphEdgeUpdate {
+	_u.mutation.SetSourceUpdatedAt(v)
+	return _u
+}
+
+// SetNillableSourceUpdatedAt sets the "source_updated_at" field if the given value is not nil.
+func (_u *GraphEdgeUpdate) SetNillableSourceUpdatedAt(v *time.Time) *GraphEdgeUpdate {
+	if v != nil {
+		_u.SetSourceUpdatedAt(*v)
+	}
+	return _u
+}
+
+// ClearSourceUpdatedAt clears the value of the "source_updated_at" field.
+func (_u *GraphEdgeUpdate) ClearSourceUpdatedAt() *GraphEdgeUpdate {
+	_u.mutation.ClearSourceUpdatedAt()
+	return _u
+}
+
+// SetPropertiesJSON sets the "properties_json" field.
+func (_u *GraphEdgeUpdate) SetPropertiesJSON(v string) *GraphEdgeUpdate {
+	_u.mutation.SetPropertiesJSON(v)
+	return _u
+}
+
+// SetNillablePropertiesJSON sets the "properties_json" field if the given value is not nil.
+func (_u *GraphEdgeUpdate) SetNillablePropertiesJSON(v *string) *GraphEdgeUpdate {
+	if v != nil {
+		_u.SetPropertiesJSON(*v)
 	}
 	return _u
 }
@@ -311,6 +401,18 @@ func (_u *GraphEdgeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Source(); ok {
 		_spec.SetField(graphedge.FieldSource, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.SourceInstance(); ok {
+		_spec.SetField(graphedge.FieldSourceInstance, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SourceURL(); ok {
+		_spec.SetField(graphedge.FieldSourceURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SnapshotKey(); ok {
+		_spec.SetField(graphedge.FieldSnapshotKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.MapperVersion(); ok {
+		_spec.SetField(graphedge.FieldMapperVersion, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.Confidence(); ok {
 		_spec.SetField(graphedge.FieldConfidence, field.TypeFloat64, value)
 	}
@@ -325,6 +427,15 @@ func (_u *GraphEdgeUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.ObservedAt(); ok {
 		_spec.SetField(graphedge.FieldObservedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.SourceUpdatedAt(); ok {
+		_spec.SetField(graphedge.FieldSourceUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SourceUpdatedAtCleared() {
+		_spec.ClearField(graphedge.FieldSourceUpdatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PropertiesJSON(); ok {
+		_spec.SetField(graphedge.FieldPropertiesJSON, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -458,6 +569,62 @@ func (_u *GraphEdgeUpdateOne) SetNillableSource(v *string) *GraphEdgeUpdateOne {
 	return _u
 }
 
+// SetSourceInstance sets the "source_instance" field.
+func (_u *GraphEdgeUpdateOne) SetSourceInstance(v string) *GraphEdgeUpdateOne {
+	_u.mutation.SetSourceInstance(v)
+	return _u
+}
+
+// SetNillableSourceInstance sets the "source_instance" field if the given value is not nil.
+func (_u *GraphEdgeUpdateOne) SetNillableSourceInstance(v *string) *GraphEdgeUpdateOne {
+	if v != nil {
+		_u.SetSourceInstance(*v)
+	}
+	return _u
+}
+
+// SetSourceURL sets the "source_url" field.
+func (_u *GraphEdgeUpdateOne) SetSourceURL(v string) *GraphEdgeUpdateOne {
+	_u.mutation.SetSourceURL(v)
+	return _u
+}
+
+// SetNillableSourceURL sets the "source_url" field if the given value is not nil.
+func (_u *GraphEdgeUpdateOne) SetNillableSourceURL(v *string) *GraphEdgeUpdateOne {
+	if v != nil {
+		_u.SetSourceURL(*v)
+	}
+	return _u
+}
+
+// SetSnapshotKey sets the "snapshot_key" field.
+func (_u *GraphEdgeUpdateOne) SetSnapshotKey(v string) *GraphEdgeUpdateOne {
+	_u.mutation.SetSnapshotKey(v)
+	return _u
+}
+
+// SetNillableSnapshotKey sets the "snapshot_key" field if the given value is not nil.
+func (_u *GraphEdgeUpdateOne) SetNillableSnapshotKey(v *string) *GraphEdgeUpdateOne {
+	if v != nil {
+		_u.SetSnapshotKey(*v)
+	}
+	return _u
+}
+
+// SetMapperVersion sets the "mapper_version" field.
+func (_u *GraphEdgeUpdateOne) SetMapperVersion(v string) *GraphEdgeUpdateOne {
+	_u.mutation.SetMapperVersion(v)
+	return _u
+}
+
+// SetNillableMapperVersion sets the "mapper_version" field if the given value is not nil.
+func (_u *GraphEdgeUpdateOne) SetNillableMapperVersion(v *string) *GraphEdgeUpdateOne {
+	if v != nil {
+		_u.SetMapperVersion(*v)
+	}
+	return _u
+}
+
 // SetConfidence sets the "confidence" field.
 func (_u *GraphEdgeUpdateOne) SetConfidence(v float64) *GraphEdgeUpdateOne {
 	_u.mutation.ResetConfidence()
@@ -517,6 +684,40 @@ func (_u *GraphEdgeUpdateOne) SetObservedAt(v time.Time) *GraphEdgeUpdateOne {
 func (_u *GraphEdgeUpdateOne) SetNillableObservedAt(v *time.Time) *GraphEdgeUpdateOne {
 	if v != nil {
 		_u.SetObservedAt(*v)
+	}
+	return _u
+}
+
+// SetSourceUpdatedAt sets the "source_updated_at" field.
+func (_u *GraphEdgeUpdateOne) SetSourceUpdatedAt(v time.Time) *GraphEdgeUpdateOne {
+	_u.mutation.SetSourceUpdatedAt(v)
+	return _u
+}
+
+// SetNillableSourceUpdatedAt sets the "source_updated_at" field if the given value is not nil.
+func (_u *GraphEdgeUpdateOne) SetNillableSourceUpdatedAt(v *time.Time) *GraphEdgeUpdateOne {
+	if v != nil {
+		_u.SetSourceUpdatedAt(*v)
+	}
+	return _u
+}
+
+// ClearSourceUpdatedAt clears the value of the "source_updated_at" field.
+func (_u *GraphEdgeUpdateOne) ClearSourceUpdatedAt() *GraphEdgeUpdateOne {
+	_u.mutation.ClearSourceUpdatedAt()
+	return _u
+}
+
+// SetPropertiesJSON sets the "properties_json" field.
+func (_u *GraphEdgeUpdateOne) SetPropertiesJSON(v string) *GraphEdgeUpdateOne {
+	_u.mutation.SetPropertiesJSON(v)
+	return _u
+}
+
+// SetNillablePropertiesJSON sets the "properties_json" field if the given value is not nil.
+func (_u *GraphEdgeUpdateOne) SetNillablePropertiesJSON(v *string) *GraphEdgeUpdateOne {
+	if v != nil {
+		_u.SetPropertiesJSON(*v)
 	}
 	return _u
 }
@@ -659,6 +860,18 @@ func (_u *GraphEdgeUpdateOne) sqlSave(ctx context.Context) (_node *GraphEdge, er
 	if value, ok := _u.mutation.Source(); ok {
 		_spec.SetField(graphedge.FieldSource, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.SourceInstance(); ok {
+		_spec.SetField(graphedge.FieldSourceInstance, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SourceURL(); ok {
+		_spec.SetField(graphedge.FieldSourceURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SnapshotKey(); ok {
+		_spec.SetField(graphedge.FieldSnapshotKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.MapperVersion(); ok {
+		_spec.SetField(graphedge.FieldMapperVersion, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.Confidence(); ok {
 		_spec.SetField(graphedge.FieldConfidence, field.TypeFloat64, value)
 	}
@@ -673,6 +886,15 @@ func (_u *GraphEdgeUpdateOne) sqlSave(ctx context.Context) (_node *GraphEdge, er
 	}
 	if value, ok := _u.mutation.ObservedAt(); ok {
 		_spec.SetField(graphedge.FieldObservedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.SourceUpdatedAt(); ok {
+		_spec.SetField(graphedge.FieldSourceUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SourceUpdatedAtCleared() {
+		_spec.ClearField(graphedge.FieldSourceUpdatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PropertiesJSON(); ok {
+		_spec.SetField(graphedge.FieldPropertiesJSON, field.TypeString, value)
 	}
 	_node = &GraphEdge{config: _u.config}
 	_spec.Assign = _node.assignValues

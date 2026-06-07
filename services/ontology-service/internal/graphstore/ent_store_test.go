@@ -59,6 +59,113 @@ func TestEntStoreExpandReturnsPersistedGraphWithEvidence(t *testing.T) {
 	assertEdge(t, graph, "pr:apache/flink-kubernetes-operator#1127", domain.PredicateChangesFile, "file:JobVertexScaler.java")
 }
 
+func TestEntStoreRoundTripsIngestFactMetadata(t *testing.T) {
+	ctx := context.Background()
+	client := openEntClient(t, ctx)
+	store := NewEntStore(client)
+	observedAt := time.Date(2026, 6, 7, 10, 0, 0, 0, time.UTC)
+	sourceUpdatedAt := time.Date(2026, 6, 6, 18, 30, 0, 0, time.UTC)
+
+	if err := store.UpsertNode(ctx, domain.Node{
+		Kind:           domain.KindWorkstream,
+		Key:            "workstream:flink-autoscaler",
+		Title:          "Flink Autoscaler",
+		Source:         "fixture",
+		Visibility:     domain.VisibilityPublic,
+		FreshnessState: domain.FreshnessFresh,
+		ObservedAt:     observedAt,
+	}); err != nil {
+		t.Fatalf("upsert workstream: %v", err)
+	}
+	if err := store.UpsertNode(ctx, domain.Node{
+		Kind:            domain.KindTicket,
+		Key:             "ticket:FLINK-39743",
+		Title:           "Autoscaler bug",
+		Source:          "jira",
+		SourceInstance:  "apache-jira",
+		ExternalID:      "FLINK-39743",
+		SourceURL:       "https://issues.apache.org/jira/browse/FLINK-39743",
+		SnapshotKey:     "snapshot:jira:FLINK-39743",
+		MapperVersion:   "flink-fixture/v1",
+		Visibility:      domain.VisibilityPublic,
+		FreshnessState:  domain.FreshnessFresh,
+		ObservedAt:      observedAt,
+		SourceUpdatedAt: sourceUpdatedAt,
+		PropertiesJSON:  `{"priority":"major"}`,
+	}); err != nil {
+		t.Fatalf("upsert ticket: %v", err)
+	}
+	if err := store.UpsertEdge(ctx, domain.Edge{
+		From: domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
+		To:   domain.NodeRef{Kind: domain.KindTicket, Key: "ticket:FLINK-39743"},
+		Metadata: domain.EdgeMetadata{
+			Predicate:       domain.PredicateContains,
+			EvidenceKey:     "evidence:jira:FLINK-39743",
+			Source:          "jira",
+			SourceInstance:  "apache-jira",
+			SourceURL:       "https://issues.apache.org/jira/browse/FLINK-39743",
+			SnapshotKey:     "snapshot:jira:FLINK-39743",
+			MapperVersion:   "flink-fixture/v1",
+			Confidence:      0.92,
+			Visibility:      domain.VisibilityPublic,
+			FreshnessState:  domain.FreshnessFresh,
+			ObservedAt:      observedAt,
+			SourceUpdatedAt: sourceUpdatedAt,
+			PropertiesJSON:  `{"relationship":"component"}`,
+		},
+	}); err != nil {
+		t.Fatalf("upsert edge: %v", err)
+	}
+
+	graph, err := store.Expand(ctx, domain.ExpandRequest{
+		Start:        domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:        1,
+		LimitPerNode: 10,
+	})
+	if err != nil {
+		t.Fatalf("expand persisted graph: %v", err)
+	}
+
+	node := nodeByKey(t, graph, "ticket:FLINK-39743")
+	if node.SourceInstance != "apache-jira" || node.SourceURL == "" || node.SnapshotKey == "" || node.MapperVersion == "" {
+		t.Fatalf("node ingest metadata was not preserved: %#v", node)
+	}
+	if !node.SourceUpdatedAt.Equal(sourceUpdatedAt) || node.PropertiesJSON != `{"priority":"major"}` {
+		t.Fatalf("node source details were not preserved: %#v", node)
+	}
+
+	graphEdge := edgeByPredicate(t, graph, domain.PredicateContains)
+	metadata := graphEdge.Metadata
+	if metadata.SourceInstance != "apache-jira" || metadata.SourceURL == "" || metadata.SnapshotKey == "" || metadata.MapperVersion == "" {
+		t.Fatalf("edge ingest metadata was not preserved: %#v", metadata)
+	}
+	if !metadata.SourceUpdatedAt.Equal(sourceUpdatedAt) || metadata.PropertiesJSON != `{"relationship":"component"}` {
+		t.Fatalf("edge source details were not preserved: %#v", metadata)
+	}
+}
+
+func nodeByKey(t *testing.T, graph domain.Neighborhood, key string) domain.Node {
+	t.Helper()
+	for _, node := range graph.Nodes {
+		if node.Key == key {
+			return node
+		}
+	}
+	t.Fatalf("expected node %q in graph; got %#v", key, graph.Nodes)
+	return domain.Node{}
+}
+
+func edgeByPredicate(t *testing.T, graph domain.Neighborhood, predicate domain.Predicate) domain.Edge {
+	t.Helper()
+	for _, edge := range graph.Edges {
+		if edge.Metadata.Predicate == predicate {
+			return edge
+		}
+	}
+	t.Fatalf("expected edge with predicate %q in graph; got %#v", predicate, graph.Edges)
+	return domain.Edge{}
+}
+
 func openEntClient(t *testing.T, ctx context.Context) *ent.Client {
 	t.Helper()
 	store, err := storage.Open(ctx, storage.Config{

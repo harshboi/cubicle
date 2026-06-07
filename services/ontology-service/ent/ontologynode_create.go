@@ -60,6 +60,20 @@ func (_c *OntologyNodeCreate) SetNillableSource(v *string) *OntologyNodeCreate {
 	return _c
 }
 
+// SetSourceInstance sets the "source_instance" field.
+func (_c *OntologyNodeCreate) SetSourceInstance(v string) *OntologyNodeCreate {
+	_c.mutation.SetSourceInstance(v)
+	return _c
+}
+
+// SetNillableSourceInstance sets the "source_instance" field if the given value is not nil.
+func (_c *OntologyNodeCreate) SetNillableSourceInstance(v *string) *OntologyNodeCreate {
+	if v != nil {
+		_c.SetSourceInstance(*v)
+	}
+	return _c
+}
+
 // SetExternalID sets the "external_id" field.
 func (_c *OntologyNodeCreate) SetExternalID(v string) *OntologyNodeCreate {
 	_c.mutation.SetExternalID(v)
@@ -70,6 +84,48 @@ func (_c *OntologyNodeCreate) SetExternalID(v string) *OntologyNodeCreate {
 func (_c *OntologyNodeCreate) SetNillableExternalID(v *string) *OntologyNodeCreate {
 	if v != nil {
 		_c.SetExternalID(*v)
+	}
+	return _c
+}
+
+// SetSourceURL sets the "source_url" field.
+func (_c *OntologyNodeCreate) SetSourceURL(v string) *OntologyNodeCreate {
+	_c.mutation.SetSourceURL(v)
+	return _c
+}
+
+// SetNillableSourceURL sets the "source_url" field if the given value is not nil.
+func (_c *OntologyNodeCreate) SetNillableSourceURL(v *string) *OntologyNodeCreate {
+	if v != nil {
+		_c.SetSourceURL(*v)
+	}
+	return _c
+}
+
+// SetSnapshotKey sets the "snapshot_key" field.
+func (_c *OntologyNodeCreate) SetSnapshotKey(v string) *OntologyNodeCreate {
+	_c.mutation.SetSnapshotKey(v)
+	return _c
+}
+
+// SetNillableSnapshotKey sets the "snapshot_key" field if the given value is not nil.
+func (_c *OntologyNodeCreate) SetNillableSnapshotKey(v *string) *OntologyNodeCreate {
+	if v != nil {
+		_c.SetSnapshotKey(*v)
+	}
+	return _c
+}
+
+// SetMapperVersion sets the "mapper_version" field.
+func (_c *OntologyNodeCreate) SetMapperVersion(v string) *OntologyNodeCreate {
+	_c.mutation.SetMapperVersion(v)
+	return _c
+}
+
+// SetNillableMapperVersion sets the "mapper_version" field if the given value is not nil.
+func (_c *OntologyNodeCreate) SetNillableMapperVersion(v *string) *OntologyNodeCreate {
+	if v != nil {
+		_c.SetMapperVersion(*v)
 	}
 	return _c
 }
@@ -105,6 +161,34 @@ func (_c *OntologyNodeCreate) SetNillableFreshnessState(v *string) *OntologyNode
 // SetObservedAt sets the "observed_at" field.
 func (_c *OntologyNodeCreate) SetObservedAt(v time.Time) *OntologyNodeCreate {
 	_c.mutation.SetObservedAt(v)
+	return _c
+}
+
+// SetSourceUpdatedAt sets the "source_updated_at" field.
+func (_c *OntologyNodeCreate) SetSourceUpdatedAt(v time.Time) *OntologyNodeCreate {
+	_c.mutation.SetSourceUpdatedAt(v)
+	return _c
+}
+
+// SetNillableSourceUpdatedAt sets the "source_updated_at" field if the given value is not nil.
+func (_c *OntologyNodeCreate) SetNillableSourceUpdatedAt(v *time.Time) *OntologyNodeCreate {
+	if v != nil {
+		_c.SetSourceUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetPropertiesJSON sets the "properties_json" field.
+func (_c *OntologyNodeCreate) SetPropertiesJSON(v string) *OntologyNodeCreate {
+	_c.mutation.SetPropertiesJSON(v)
+	return _c
+}
+
+// SetNillablePropertiesJSON sets the "properties_json" field if the given value is not nil.
+func (_c *OntologyNodeCreate) SetNillablePropertiesJSON(v *string) *OntologyNodeCreate {
+	if v != nil {
+		_c.SetPropertiesJSON(*v)
+	}
 	return _c
 }
 
@@ -151,9 +235,25 @@ func (_c *OntologyNodeCreate) defaults() {
 		v := ontologynode.DefaultSource
 		_c.mutation.SetSource(v)
 	}
+	if _, ok := _c.mutation.SourceInstance(); !ok {
+		v := ontologynode.DefaultSourceInstance
+		_c.mutation.SetSourceInstance(v)
+	}
 	if _, ok := _c.mutation.ExternalID(); !ok {
 		v := ontologynode.DefaultExternalID
 		_c.mutation.SetExternalID(v)
+	}
+	if _, ok := _c.mutation.SourceURL(); !ok {
+		v := ontologynode.DefaultSourceURL
+		_c.mutation.SetSourceURL(v)
+	}
+	if _, ok := _c.mutation.SnapshotKey(); !ok {
+		v := ontologynode.DefaultSnapshotKey
+		_c.mutation.SetSnapshotKey(v)
+	}
+	if _, ok := _c.mutation.MapperVersion(); !ok {
+		v := ontologynode.DefaultMapperVersion
+		_c.mutation.SetMapperVersion(v)
 	}
 	if _, ok := _c.mutation.Visibility(); !ok {
 		v := ontologynode.DefaultVisibility
@@ -162,6 +262,10 @@ func (_c *OntologyNodeCreate) defaults() {
 	if _, ok := _c.mutation.FreshnessState(); !ok {
 		v := ontologynode.DefaultFreshnessState
 		_c.mutation.SetFreshnessState(v)
+	}
+	if _, ok := _c.mutation.PropertiesJSON(); !ok {
+		v := ontologynode.DefaultPropertiesJSON
+		_c.mutation.SetPropertiesJSON(v)
 	}
 }
 
@@ -189,8 +293,20 @@ func (_c *OntologyNodeCreate) check() error {
 	if _, ok := _c.mutation.Source(); !ok {
 		return &ValidationError{Name: "source", err: errors.New(`ent: missing required field "OntologyNode.source"`)}
 	}
+	if _, ok := _c.mutation.SourceInstance(); !ok {
+		return &ValidationError{Name: "source_instance", err: errors.New(`ent: missing required field "OntologyNode.source_instance"`)}
+	}
 	if _, ok := _c.mutation.ExternalID(); !ok {
 		return &ValidationError{Name: "external_id", err: errors.New(`ent: missing required field "OntologyNode.external_id"`)}
+	}
+	if _, ok := _c.mutation.SourceURL(); !ok {
+		return &ValidationError{Name: "source_url", err: errors.New(`ent: missing required field "OntologyNode.source_url"`)}
+	}
+	if _, ok := _c.mutation.SnapshotKey(); !ok {
+		return &ValidationError{Name: "snapshot_key", err: errors.New(`ent: missing required field "OntologyNode.snapshot_key"`)}
+	}
+	if _, ok := _c.mutation.MapperVersion(); !ok {
+		return &ValidationError{Name: "mapper_version", err: errors.New(`ent: missing required field "OntologyNode.mapper_version"`)}
 	}
 	if _, ok := _c.mutation.Visibility(); !ok {
 		return &ValidationError{Name: "visibility", err: errors.New(`ent: missing required field "OntologyNode.visibility"`)}
@@ -200,6 +316,9 @@ func (_c *OntologyNodeCreate) check() error {
 	}
 	if _, ok := _c.mutation.ObservedAt(); !ok {
 		return &ValidationError{Name: "observed_at", err: errors.New(`ent: missing required field "OntologyNode.observed_at"`)}
+	}
+	if _, ok := _c.mutation.PropertiesJSON(); !ok {
+		return &ValidationError{Name: "properties_json", err: errors.New(`ent: missing required field "OntologyNode.properties_json"`)}
 	}
 	return nil
 }
@@ -243,9 +362,25 @@ func (_c *OntologyNodeCreate) createSpec() (*OntologyNode, *sqlgraph.CreateSpec)
 		_spec.SetField(ontologynode.FieldSource, field.TypeString, value)
 		_node.Source = value
 	}
+	if value, ok := _c.mutation.SourceInstance(); ok {
+		_spec.SetField(ontologynode.FieldSourceInstance, field.TypeString, value)
+		_node.SourceInstance = value
+	}
 	if value, ok := _c.mutation.ExternalID(); ok {
 		_spec.SetField(ontologynode.FieldExternalID, field.TypeString, value)
 		_node.ExternalID = value
+	}
+	if value, ok := _c.mutation.SourceURL(); ok {
+		_spec.SetField(ontologynode.FieldSourceURL, field.TypeString, value)
+		_node.SourceURL = value
+	}
+	if value, ok := _c.mutation.SnapshotKey(); ok {
+		_spec.SetField(ontologynode.FieldSnapshotKey, field.TypeString, value)
+		_node.SnapshotKey = value
+	}
+	if value, ok := _c.mutation.MapperVersion(); ok {
+		_spec.SetField(ontologynode.FieldMapperVersion, field.TypeString, value)
+		_node.MapperVersion = value
 	}
 	if value, ok := _c.mutation.Visibility(); ok {
 		_spec.SetField(ontologynode.FieldVisibility, field.TypeString, value)
@@ -258,6 +393,14 @@ func (_c *OntologyNodeCreate) createSpec() (*OntologyNode, *sqlgraph.CreateSpec)
 	if value, ok := _c.mutation.ObservedAt(); ok {
 		_spec.SetField(ontologynode.FieldObservedAt, field.TypeTime, value)
 		_node.ObservedAt = value
+	}
+	if value, ok := _c.mutation.SourceUpdatedAt(); ok {
+		_spec.SetField(ontologynode.FieldSourceUpdatedAt, field.TypeTime, value)
+		_node.SourceUpdatedAt = value
+	}
+	if value, ok := _c.mutation.PropertiesJSON(); ok {
+		_spec.SetField(ontologynode.FieldPropertiesJSON, field.TypeString, value)
+		_node.PropertiesJSON = value
 	}
 	return _node, _spec
 }

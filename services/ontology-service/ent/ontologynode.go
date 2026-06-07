@@ -25,15 +25,27 @@ type OntologyNode struct {
 	Title string `json:"title,omitempty"`
 	// Source holds the value of the "source" field.
 	Source string `json:"source,omitempty"`
+	// SourceInstance holds the value of the "source_instance" field.
+	SourceInstance string `json:"source_instance,omitempty"`
 	// ExternalID holds the value of the "external_id" field.
 	ExternalID string `json:"external_id,omitempty"`
+	// SourceURL holds the value of the "source_url" field.
+	SourceURL string `json:"source_url,omitempty"`
+	// SnapshotKey holds the value of the "snapshot_key" field.
+	SnapshotKey string `json:"snapshot_key,omitempty"`
+	// MapperVersion holds the value of the "mapper_version" field.
+	MapperVersion string `json:"mapper_version,omitempty"`
 	// Visibility holds the value of the "visibility" field.
 	Visibility string `json:"visibility,omitempty"`
 	// FreshnessState holds the value of the "freshness_state" field.
 	FreshnessState string `json:"freshness_state,omitempty"`
 	// ObservedAt holds the value of the "observed_at" field.
-	ObservedAt   time.Time `json:"observed_at,omitempty"`
-	selectValues sql.SelectValues
+	ObservedAt time.Time `json:"observed_at,omitempty"`
+	// SourceUpdatedAt holds the value of the "source_updated_at" field.
+	SourceUpdatedAt time.Time `json:"source_updated_at,omitempty"`
+	// PropertiesJSON holds the value of the "properties_json" field.
+	PropertiesJSON string `json:"properties_json,omitempty"`
+	selectValues   sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -43,9 +55,9 @@ func (*OntologyNode) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case ontologynode.FieldID:
 			values[i] = new(sql.NullInt64)
-		case ontologynode.FieldKey, ontologynode.FieldKind, ontologynode.FieldTitle, ontologynode.FieldSource, ontologynode.FieldExternalID, ontologynode.FieldVisibility, ontologynode.FieldFreshnessState:
+		case ontologynode.FieldKey, ontologynode.FieldKind, ontologynode.FieldTitle, ontologynode.FieldSource, ontologynode.FieldSourceInstance, ontologynode.FieldExternalID, ontologynode.FieldSourceURL, ontologynode.FieldSnapshotKey, ontologynode.FieldMapperVersion, ontologynode.FieldVisibility, ontologynode.FieldFreshnessState, ontologynode.FieldPropertiesJSON:
 			values[i] = new(sql.NullString)
-		case ontologynode.FieldObservedAt:
+		case ontologynode.FieldObservedAt, ontologynode.FieldSourceUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -92,11 +104,35 @@ func (_m *OntologyNode) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Source = value.String
 			}
+		case ontologynode.FieldSourceInstance:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field source_instance", values[i])
+			} else if value.Valid {
+				_m.SourceInstance = value.String
+			}
 		case ontologynode.FieldExternalID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field external_id", values[i])
 			} else if value.Valid {
 				_m.ExternalID = value.String
+			}
+		case ontologynode.FieldSourceURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field source_url", values[i])
+			} else if value.Valid {
+				_m.SourceURL = value.String
+			}
+		case ontologynode.FieldSnapshotKey:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field snapshot_key", values[i])
+			} else if value.Valid {
+				_m.SnapshotKey = value.String
+			}
+		case ontologynode.FieldMapperVersion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field mapper_version", values[i])
+			} else if value.Valid {
+				_m.MapperVersion = value.String
 			}
 		case ontologynode.FieldVisibility:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -115,6 +151,18 @@ func (_m *OntologyNode) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field observed_at", values[i])
 			} else if value.Valid {
 				_m.ObservedAt = value.Time
+			}
+		case ontologynode.FieldSourceUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field source_updated_at", values[i])
+			} else if value.Valid {
+				_m.SourceUpdatedAt = value.Time
+			}
+		case ontologynode.FieldPropertiesJSON:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field properties_json", values[i])
+			} else if value.Valid {
+				_m.PropertiesJSON = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -164,8 +212,20 @@ func (_m *OntologyNode) String() string {
 	builder.WriteString("source=")
 	builder.WriteString(_m.Source)
 	builder.WriteString(", ")
+	builder.WriteString("source_instance=")
+	builder.WriteString(_m.SourceInstance)
+	builder.WriteString(", ")
 	builder.WriteString("external_id=")
 	builder.WriteString(_m.ExternalID)
+	builder.WriteString(", ")
+	builder.WriteString("source_url=")
+	builder.WriteString(_m.SourceURL)
+	builder.WriteString(", ")
+	builder.WriteString("snapshot_key=")
+	builder.WriteString(_m.SnapshotKey)
+	builder.WriteString(", ")
+	builder.WriteString("mapper_version=")
+	builder.WriteString(_m.MapperVersion)
 	builder.WriteString(", ")
 	builder.WriteString("visibility=")
 	builder.WriteString(_m.Visibility)
@@ -175,6 +235,12 @@ func (_m *OntologyNode) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("observed_at=")
 	builder.WriteString(_m.ObservedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("source_updated_at=")
+	builder.WriteString(_m.SourceUpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("properties_json=")
+	builder.WriteString(_m.PropertiesJSON)
 	builder.WriteByte(')')
 	return builder.String()
 }

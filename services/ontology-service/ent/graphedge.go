@@ -33,6 +33,14 @@ type GraphEdge struct {
 	EvidenceKey string `json:"evidence_key,omitempty"`
 	// Source holds the value of the "source" field.
 	Source string `json:"source,omitempty"`
+	// SourceInstance holds the value of the "source_instance" field.
+	SourceInstance string `json:"source_instance,omitempty"`
+	// SourceURL holds the value of the "source_url" field.
+	SourceURL string `json:"source_url,omitempty"`
+	// SnapshotKey holds the value of the "snapshot_key" field.
+	SnapshotKey string `json:"snapshot_key,omitempty"`
+	// MapperVersion holds the value of the "mapper_version" field.
+	MapperVersion string `json:"mapper_version,omitempty"`
 	// Confidence holds the value of the "confidence" field.
 	Confidence float64 `json:"confidence,omitempty"`
 	// Visibility holds the value of the "visibility" field.
@@ -40,8 +48,12 @@ type GraphEdge struct {
 	// FreshnessState holds the value of the "freshness_state" field.
 	FreshnessState string `json:"freshness_state,omitempty"`
 	// ObservedAt holds the value of the "observed_at" field.
-	ObservedAt   time.Time `json:"observed_at,omitempty"`
-	selectValues sql.SelectValues
+	ObservedAt time.Time `json:"observed_at,omitempty"`
+	// SourceUpdatedAt holds the value of the "source_updated_at" field.
+	SourceUpdatedAt time.Time `json:"source_updated_at,omitempty"`
+	// PropertiesJSON holds the value of the "properties_json" field.
+	PropertiesJSON string `json:"properties_json,omitempty"`
+	selectValues   sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -53,9 +65,9 @@ func (*GraphEdge) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case graphedge.FieldID:
 			values[i] = new(sql.NullInt64)
-		case graphedge.FieldKey, graphedge.FieldFromKind, graphedge.FieldFromKey, graphedge.FieldToKind, graphedge.FieldToKey, graphedge.FieldPredicate, graphedge.FieldEvidenceKey, graphedge.FieldSource, graphedge.FieldVisibility, graphedge.FieldFreshnessState:
+		case graphedge.FieldKey, graphedge.FieldFromKind, graphedge.FieldFromKey, graphedge.FieldToKind, graphedge.FieldToKey, graphedge.FieldPredicate, graphedge.FieldEvidenceKey, graphedge.FieldSource, graphedge.FieldSourceInstance, graphedge.FieldSourceURL, graphedge.FieldSnapshotKey, graphedge.FieldMapperVersion, graphedge.FieldVisibility, graphedge.FieldFreshnessState, graphedge.FieldPropertiesJSON:
 			values[i] = new(sql.NullString)
-		case graphedge.FieldObservedAt:
+		case graphedge.FieldObservedAt, graphedge.FieldSourceUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -126,6 +138,30 @@ func (_m *GraphEdge) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Source = value.String
 			}
+		case graphedge.FieldSourceInstance:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field source_instance", values[i])
+			} else if value.Valid {
+				_m.SourceInstance = value.String
+			}
+		case graphedge.FieldSourceURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field source_url", values[i])
+			} else if value.Valid {
+				_m.SourceURL = value.String
+			}
+		case graphedge.FieldSnapshotKey:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field snapshot_key", values[i])
+			} else if value.Valid {
+				_m.SnapshotKey = value.String
+			}
+		case graphedge.FieldMapperVersion:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field mapper_version", values[i])
+			} else if value.Valid {
+				_m.MapperVersion = value.String
+			}
 		case graphedge.FieldConfidence:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field confidence", values[i])
@@ -149,6 +185,18 @@ func (_m *GraphEdge) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field observed_at", values[i])
 			} else if value.Valid {
 				_m.ObservedAt = value.Time
+			}
+		case graphedge.FieldSourceUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field source_updated_at", values[i])
+			} else if value.Valid {
+				_m.SourceUpdatedAt = value.Time
+			}
+		case graphedge.FieldPropertiesJSON:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field properties_json", values[i])
+			} else if value.Valid {
+				_m.PropertiesJSON = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -210,6 +258,18 @@ func (_m *GraphEdge) String() string {
 	builder.WriteString("source=")
 	builder.WriteString(_m.Source)
 	builder.WriteString(", ")
+	builder.WriteString("source_instance=")
+	builder.WriteString(_m.SourceInstance)
+	builder.WriteString(", ")
+	builder.WriteString("source_url=")
+	builder.WriteString(_m.SourceURL)
+	builder.WriteString(", ")
+	builder.WriteString("snapshot_key=")
+	builder.WriteString(_m.SnapshotKey)
+	builder.WriteString(", ")
+	builder.WriteString("mapper_version=")
+	builder.WriteString(_m.MapperVersion)
+	builder.WriteString(", ")
 	builder.WriteString("confidence=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Confidence))
 	builder.WriteString(", ")
@@ -221,6 +281,12 @@ func (_m *GraphEdge) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("observed_at=")
 	builder.WriteString(_m.ObservedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("source_updated_at=")
+	builder.WriteString(_m.SourceUpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("properties_json=")
+	builder.WriteString(_m.PropertiesJSON)
 	builder.WriteByte(')')
 	return builder.String()
 }

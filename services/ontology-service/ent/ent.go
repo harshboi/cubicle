@@ -4,8 +4,15 @@ package ent
 
 import (
 	"context"
+	"cubicle/services/ontology-service/ent/connectorcapability"
+	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/graphedge"
+	"cubicle/services/ontology-service/ent/ingestrun"
 	"cubicle/services/ontology-service/ent/ontologynode"
+	"cubicle/services/ontology-service/ent/sourcecheckpoint"
+	"cubicle/services/ontology-service/ent/sourceerror"
+	"cubicle/services/ontology-service/ent/sourceevent"
+	"cubicle/services/ontology-service/ent/sourcesnapshot"
 	"errors"
 	"fmt"
 	"reflect"
@@ -74,8 +81,15 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			graphedge.Table:    graphedge.ValidColumn,
-			ontologynode.Table: ontologynode.ValidColumn,
+			connectorcapability.Table: connectorcapability.ValidColumn,
+			evidence.Table:            evidence.ValidColumn,
+			graphedge.Table:           graphedge.ValidColumn,
+			ingestrun.Table:           ingestrun.ValidColumn,
+			ontologynode.Table:        ontologynode.ValidColumn,
+			sourcecheckpoint.Table:    sourcecheckpoint.ValidColumn,
+			sourceerror.Table:         sourceerror.ValidColumn,
+			sourceevent.Table:         sourceevent.ValidColumn,
+			sourcesnapshot.Table:      sourcesnapshot.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

@@ -84,6 +84,20 @@ func (_u *OntologyNodeUpdate) SetNillableSource(v *string) *OntologyNodeUpdate {
 	return _u
 }
 
+// SetSourceInstance sets the "source_instance" field.
+func (_u *OntologyNodeUpdate) SetSourceInstance(v string) *OntologyNodeUpdate {
+	_u.mutation.SetSourceInstance(v)
+	return _u
+}
+
+// SetNillableSourceInstance sets the "source_instance" field if the given value is not nil.
+func (_u *OntologyNodeUpdate) SetNillableSourceInstance(v *string) *OntologyNodeUpdate {
+	if v != nil {
+		_u.SetSourceInstance(*v)
+	}
+	return _u
+}
+
 // SetExternalID sets the "external_id" field.
 func (_u *OntologyNodeUpdate) SetExternalID(v string) *OntologyNodeUpdate {
 	_u.mutation.SetExternalID(v)
@@ -94,6 +108,48 @@ func (_u *OntologyNodeUpdate) SetExternalID(v string) *OntologyNodeUpdate {
 func (_u *OntologyNodeUpdate) SetNillableExternalID(v *string) *OntologyNodeUpdate {
 	if v != nil {
 		_u.SetExternalID(*v)
+	}
+	return _u
+}
+
+// SetSourceURL sets the "source_url" field.
+func (_u *OntologyNodeUpdate) SetSourceURL(v string) *OntologyNodeUpdate {
+	_u.mutation.SetSourceURL(v)
+	return _u
+}
+
+// SetNillableSourceURL sets the "source_url" field if the given value is not nil.
+func (_u *OntologyNodeUpdate) SetNillableSourceURL(v *string) *OntologyNodeUpdate {
+	if v != nil {
+		_u.SetSourceURL(*v)
+	}
+	return _u
+}
+
+// SetSnapshotKey sets the "snapshot_key" field.
+func (_u *OntologyNodeUpdate) SetSnapshotKey(v string) *OntologyNodeUpdate {
+	_u.mutation.SetSnapshotKey(v)
+	return _u
+}
+
+// SetNillableSnapshotKey sets the "snapshot_key" field if the given value is not nil.
+func (_u *OntologyNodeUpdate) SetNillableSnapshotKey(v *string) *OntologyNodeUpdate {
+	if v != nil {
+		_u.SetSnapshotKey(*v)
+	}
+	return _u
+}
+
+// SetMapperVersion sets the "mapper_version" field.
+func (_u *OntologyNodeUpdate) SetMapperVersion(v string) *OntologyNodeUpdate {
+	_u.mutation.SetMapperVersion(v)
+	return _u
+}
+
+// SetNillableMapperVersion sets the "mapper_version" field if the given value is not nil.
+func (_u *OntologyNodeUpdate) SetNillableMapperVersion(v *string) *OntologyNodeUpdate {
+	if v != nil {
+		_u.SetMapperVersion(*v)
 	}
 	return _u
 }
@@ -136,6 +192,40 @@ func (_u *OntologyNodeUpdate) SetObservedAt(v time.Time) *OntologyNodeUpdate {
 func (_u *OntologyNodeUpdate) SetNillableObservedAt(v *time.Time) *OntologyNodeUpdate {
 	if v != nil {
 		_u.SetObservedAt(*v)
+	}
+	return _u
+}
+
+// SetSourceUpdatedAt sets the "source_updated_at" field.
+func (_u *OntologyNodeUpdate) SetSourceUpdatedAt(v time.Time) *OntologyNodeUpdate {
+	_u.mutation.SetSourceUpdatedAt(v)
+	return _u
+}
+
+// SetNillableSourceUpdatedAt sets the "source_updated_at" field if the given value is not nil.
+func (_u *OntologyNodeUpdate) SetNillableSourceUpdatedAt(v *time.Time) *OntologyNodeUpdate {
+	if v != nil {
+		_u.SetSourceUpdatedAt(*v)
+	}
+	return _u
+}
+
+// ClearSourceUpdatedAt clears the value of the "source_updated_at" field.
+func (_u *OntologyNodeUpdate) ClearSourceUpdatedAt() *OntologyNodeUpdate {
+	_u.mutation.ClearSourceUpdatedAt()
+	return _u
+}
+
+// SetPropertiesJSON sets the "properties_json" field.
+func (_u *OntologyNodeUpdate) SetPropertiesJSON(v string) *OntologyNodeUpdate {
+	_u.mutation.SetPropertiesJSON(v)
+	return _u
+}
+
+// SetNillablePropertiesJSON sets the "properties_json" field if the given value is not nil.
+func (_u *OntologyNodeUpdate) SetNillablePropertiesJSON(v *string) *OntologyNodeUpdate {
+	if v != nil {
+		_u.SetPropertiesJSON(*v)
 	}
 	return _u
 }
@@ -211,8 +301,20 @@ func (_u *OntologyNodeUpdate) sqlSave(ctx context.Context) (_node int, err error
 	if value, ok := _u.mutation.Source(); ok {
 		_spec.SetField(ontologynode.FieldSource, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.SourceInstance(); ok {
+		_spec.SetField(ontologynode.FieldSourceInstance, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.ExternalID(); ok {
 		_spec.SetField(ontologynode.FieldExternalID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SourceURL(); ok {
+		_spec.SetField(ontologynode.FieldSourceURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SnapshotKey(); ok {
+		_spec.SetField(ontologynode.FieldSnapshotKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.MapperVersion(); ok {
+		_spec.SetField(ontologynode.FieldMapperVersion, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Visibility(); ok {
 		_spec.SetField(ontologynode.FieldVisibility, field.TypeString, value)
@@ -222,6 +324,15 @@ func (_u *OntologyNodeUpdate) sqlSave(ctx context.Context) (_node int, err error
 	}
 	if value, ok := _u.mutation.ObservedAt(); ok {
 		_spec.SetField(ontologynode.FieldObservedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.SourceUpdatedAt(); ok {
+		_spec.SetField(ontologynode.FieldSourceUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SourceUpdatedAtCleared() {
+		_spec.ClearField(ontologynode.FieldSourceUpdatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PropertiesJSON(); ok {
+		_spec.SetField(ontologynode.FieldPropertiesJSON, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -299,6 +410,20 @@ func (_u *OntologyNodeUpdateOne) SetNillableSource(v *string) *OntologyNodeUpdat
 	return _u
 }
 
+// SetSourceInstance sets the "source_instance" field.
+func (_u *OntologyNodeUpdateOne) SetSourceInstance(v string) *OntologyNodeUpdateOne {
+	_u.mutation.SetSourceInstance(v)
+	return _u
+}
+
+// SetNillableSourceInstance sets the "source_instance" field if the given value is not nil.
+func (_u *OntologyNodeUpdateOne) SetNillableSourceInstance(v *string) *OntologyNodeUpdateOne {
+	if v != nil {
+		_u.SetSourceInstance(*v)
+	}
+	return _u
+}
+
 // SetExternalID sets the "external_id" field.
 func (_u *OntologyNodeUpdateOne) SetExternalID(v string) *OntologyNodeUpdateOne {
 	_u.mutation.SetExternalID(v)
@@ -309,6 +434,48 @@ func (_u *OntologyNodeUpdateOne) SetExternalID(v string) *OntologyNodeUpdateOne 
 func (_u *OntologyNodeUpdateOne) SetNillableExternalID(v *string) *OntologyNodeUpdateOne {
 	if v != nil {
 		_u.SetExternalID(*v)
+	}
+	return _u
+}
+
+// SetSourceURL sets the "source_url" field.
+func (_u *OntologyNodeUpdateOne) SetSourceURL(v string) *OntologyNodeUpdateOne {
+	_u.mutation.SetSourceURL(v)
+	return _u
+}
+
+// SetNillableSourceURL sets the "source_url" field if the given value is not nil.
+func (_u *OntologyNodeUpdateOne) SetNillableSourceURL(v *string) *OntologyNodeUpdateOne {
+	if v != nil {
+		_u.SetSourceURL(*v)
+	}
+	return _u
+}
+
+// SetSnapshotKey sets the "snapshot_key" field.
+func (_u *OntologyNodeUpdateOne) SetSnapshotKey(v string) *OntologyNodeUpdateOne {
+	_u.mutation.SetSnapshotKey(v)
+	return _u
+}
+
+// SetNillableSnapshotKey sets the "snapshot_key" field if the given value is not nil.
+func (_u *OntologyNodeUpdateOne) SetNillableSnapshotKey(v *string) *OntologyNodeUpdateOne {
+	if v != nil {
+		_u.SetSnapshotKey(*v)
+	}
+	return _u
+}
+
+// SetMapperVersion sets the "mapper_version" field.
+func (_u *OntologyNodeUpdateOne) SetMapperVersion(v string) *OntologyNodeUpdateOne {
+	_u.mutation.SetMapperVersion(v)
+	return _u
+}
+
+// SetNillableMapperVersion sets the "mapper_version" field if the given value is not nil.
+func (_u *OntologyNodeUpdateOne) SetNillableMapperVersion(v *string) *OntologyNodeUpdateOne {
+	if v != nil {
+		_u.SetMapperVersion(*v)
 	}
 	return _u
 }
@@ -351,6 +518,40 @@ func (_u *OntologyNodeUpdateOne) SetObservedAt(v time.Time) *OntologyNodeUpdateO
 func (_u *OntologyNodeUpdateOne) SetNillableObservedAt(v *time.Time) *OntologyNodeUpdateOne {
 	if v != nil {
 		_u.SetObservedAt(*v)
+	}
+	return _u
+}
+
+// SetSourceUpdatedAt sets the "source_updated_at" field.
+func (_u *OntologyNodeUpdateOne) SetSourceUpdatedAt(v time.Time) *OntologyNodeUpdateOne {
+	_u.mutation.SetSourceUpdatedAt(v)
+	return _u
+}
+
+// SetNillableSourceUpdatedAt sets the "source_updated_at" field if the given value is not nil.
+func (_u *OntologyNodeUpdateOne) SetNillableSourceUpdatedAt(v *time.Time) *OntologyNodeUpdateOne {
+	if v != nil {
+		_u.SetSourceUpdatedAt(*v)
+	}
+	return _u
+}
+
+// ClearSourceUpdatedAt clears the value of the "source_updated_at" field.
+func (_u *OntologyNodeUpdateOne) ClearSourceUpdatedAt() *OntologyNodeUpdateOne {
+	_u.mutation.ClearSourceUpdatedAt()
+	return _u
+}
+
+// SetPropertiesJSON sets the "properties_json" field.
+func (_u *OntologyNodeUpdateOne) SetPropertiesJSON(v string) *OntologyNodeUpdateOne {
+	_u.mutation.SetPropertiesJSON(v)
+	return _u
+}
+
+// SetNillablePropertiesJSON sets the "properties_json" field if the given value is not nil.
+func (_u *OntologyNodeUpdateOne) SetNillablePropertiesJSON(v *string) *OntologyNodeUpdateOne {
+	if v != nil {
+		_u.SetPropertiesJSON(*v)
 	}
 	return _u
 }
@@ -456,8 +657,20 @@ func (_u *OntologyNodeUpdateOne) sqlSave(ctx context.Context) (_node *OntologyNo
 	if value, ok := _u.mutation.Source(); ok {
 		_spec.SetField(ontologynode.FieldSource, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.SourceInstance(); ok {
+		_spec.SetField(ontologynode.FieldSourceInstance, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.ExternalID(); ok {
 		_spec.SetField(ontologynode.FieldExternalID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SourceURL(); ok {
+		_spec.SetField(ontologynode.FieldSourceURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SnapshotKey(); ok {
+		_spec.SetField(ontologynode.FieldSnapshotKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.MapperVersion(); ok {
+		_spec.SetField(ontologynode.FieldMapperVersion, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Visibility(); ok {
 		_spec.SetField(ontologynode.FieldVisibility, field.TypeString, value)
@@ -467,6 +680,15 @@ func (_u *OntologyNodeUpdateOne) sqlSave(ctx context.Context) (_node *OntologyNo
 	}
 	if value, ok := _u.mutation.ObservedAt(); ok {
 		_spec.SetField(ontologynode.FieldObservedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.SourceUpdatedAt(); ok {
+		_spec.SetField(ontologynode.FieldSourceUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SourceUpdatedAtCleared() {
+		_spec.ClearField(ontologynode.FieldSourceUpdatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PropertiesJSON(); ok {
+		_spec.SetField(ontologynode.FieldPropertiesJSON, field.TypeString, value)
 	}
 	_node = &OntologyNode{config: _u.config}
 	_spec.Assign = _node.assignValues

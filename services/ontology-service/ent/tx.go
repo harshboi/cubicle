@@ -12,10 +12,24 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// ConnectorCapability is the client for interacting with the ConnectorCapability builders.
+	ConnectorCapability *ConnectorCapabilityClient
+	// Evidence is the client for interacting with the Evidence builders.
+	Evidence *EvidenceClient
 	// GraphEdge is the client for interacting with the GraphEdge builders.
 	GraphEdge *GraphEdgeClient
+	// IngestRun is the client for interacting with the IngestRun builders.
+	IngestRun *IngestRunClient
 	// OntologyNode is the client for interacting with the OntologyNode builders.
 	OntologyNode *OntologyNodeClient
+	// SourceCheckpoint is the client for interacting with the SourceCheckpoint builders.
+	SourceCheckpoint *SourceCheckpointClient
+	// SourceError is the client for interacting with the SourceError builders.
+	SourceError *SourceErrorClient
+	// SourceEvent is the client for interacting with the SourceEvent builders.
+	SourceEvent *SourceEventClient
+	// SourceSnapshot is the client for interacting with the SourceSnapshot builders.
+	SourceSnapshot *SourceSnapshotClient
 
 	// lazily loaded.
 	client     *Client
@@ -147,8 +161,15 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.ConnectorCapability = NewConnectorCapabilityClient(tx.config)
+	tx.Evidence = NewEvidenceClient(tx.config)
 	tx.GraphEdge = NewGraphEdgeClient(tx.config)
+	tx.IngestRun = NewIngestRunClient(tx.config)
 	tx.OntologyNode = NewOntologyNodeClient(tx.config)
+	tx.SourceCheckpoint = NewSourceCheckpointClient(tx.config)
+	tx.SourceError = NewSourceErrorClient(tx.config)
+	tx.SourceEvent = NewSourceEventClient(tx.config)
+	tx.SourceSnapshot = NewSourceSnapshotClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.
@@ -158,7 +179,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: GraphEdge.QueryXXX(), the query will be executed
+// applies a query, for example: ConnectorCapability.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

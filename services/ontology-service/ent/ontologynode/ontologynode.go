@@ -19,14 +19,26 @@ const (
 	FieldTitle = "title"
 	// FieldSource holds the string denoting the source field in the database.
 	FieldSource = "source"
+	// FieldSourceInstance holds the string denoting the source_instance field in the database.
+	FieldSourceInstance = "source_instance"
 	// FieldExternalID holds the string denoting the external_id field in the database.
 	FieldExternalID = "external_id"
+	// FieldSourceURL holds the string denoting the source_url field in the database.
+	FieldSourceURL = "source_url"
+	// FieldSnapshotKey holds the string denoting the snapshot_key field in the database.
+	FieldSnapshotKey = "snapshot_key"
+	// FieldMapperVersion holds the string denoting the mapper_version field in the database.
+	FieldMapperVersion = "mapper_version"
 	// FieldVisibility holds the string denoting the visibility field in the database.
 	FieldVisibility = "visibility"
 	// FieldFreshnessState holds the string denoting the freshness_state field in the database.
 	FieldFreshnessState = "freshness_state"
 	// FieldObservedAt holds the string denoting the observed_at field in the database.
 	FieldObservedAt = "observed_at"
+	// FieldSourceUpdatedAt holds the string denoting the source_updated_at field in the database.
+	FieldSourceUpdatedAt = "source_updated_at"
+	// FieldPropertiesJSON holds the string denoting the properties_json field in the database.
+	FieldPropertiesJSON = "properties_json"
 	// Table holds the table name of the ontologynode in the database.
 	Table = "ontology_nodes"
 )
@@ -38,10 +50,16 @@ var Columns = []string{
 	FieldKind,
 	FieldTitle,
 	FieldSource,
+	FieldSourceInstance,
 	FieldExternalID,
+	FieldSourceURL,
+	FieldSnapshotKey,
+	FieldMapperVersion,
 	FieldVisibility,
 	FieldFreshnessState,
 	FieldObservedAt,
+	FieldSourceUpdatedAt,
+	FieldPropertiesJSON,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -63,12 +81,22 @@ var (
 	DefaultTitle string
 	// DefaultSource holds the default value on creation for the "source" field.
 	DefaultSource string
+	// DefaultSourceInstance holds the default value on creation for the "source_instance" field.
+	DefaultSourceInstance string
 	// DefaultExternalID holds the default value on creation for the "external_id" field.
 	DefaultExternalID string
+	// DefaultSourceURL holds the default value on creation for the "source_url" field.
+	DefaultSourceURL string
+	// DefaultSnapshotKey holds the default value on creation for the "snapshot_key" field.
+	DefaultSnapshotKey string
+	// DefaultMapperVersion holds the default value on creation for the "mapper_version" field.
+	DefaultMapperVersion string
 	// DefaultVisibility holds the default value on creation for the "visibility" field.
 	DefaultVisibility string
 	// DefaultFreshnessState holds the default value on creation for the "freshness_state" field.
 	DefaultFreshnessState string
+	// DefaultPropertiesJSON holds the default value on creation for the "properties_json" field.
+	DefaultPropertiesJSON string
 )
 
 // OrderOption defines the ordering options for the OntologyNode queries.
@@ -99,9 +127,29 @@ func BySource(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSource, opts...).ToFunc()
 }
 
+// BySourceInstance orders the results by the source_instance field.
+func BySourceInstance(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSourceInstance, opts...).ToFunc()
+}
+
 // ByExternalID orders the results by the external_id field.
 func ByExternalID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldExternalID, opts...).ToFunc()
+}
+
+// BySourceURL orders the results by the source_url field.
+func BySourceURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSourceURL, opts...).ToFunc()
+}
+
+// BySnapshotKey orders the results by the snapshot_key field.
+func BySnapshotKey(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSnapshotKey, opts...).ToFunc()
+}
+
+// ByMapperVersion orders the results by the mapper_version field.
+func ByMapperVersion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMapperVersion, opts...).ToFunc()
 }
 
 // ByVisibility orders the results by the visibility field.
@@ -117,4 +165,14 @@ func ByFreshnessState(opts ...sql.OrderTermOption) OrderOption {
 // ByObservedAt orders the results by the observed_at field.
 func ByObservedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldObservedAt, opts...).ToFunc()
+}
+
+// BySourceUpdatedAt orders the results by the source_updated_at field.
+func BySourceUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSourceUpdatedAt, opts...).ToFunc()
+}
+
+// ByPropertiesJSON orders the results by the properties_json field.
+func ByPropertiesJSON(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPropertiesJSON, opts...).ToFunc()
 }
