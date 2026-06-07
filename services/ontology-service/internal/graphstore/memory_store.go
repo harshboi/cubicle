@@ -51,8 +51,8 @@ type MemoryStore struct {
 	out map[string][]string
 }
 
-// NewMemoryStore creates an empty graphstore for tests, fixtures, and the first
-// localhost server slice.
+// NewMemoryStore creates an empty graphstore for tests and the first localhost
+// server slice.
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
 		objects:      make(map[string]domain.Object),
