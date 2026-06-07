@@ -22,8 +22,21 @@ import (
 // That shape keeps framework code thin and prevents product/query logic from
 // being embedded inside Gin handlers.
 func NewRouter(store graphstore.Store, logger *slog.Logger) http.Handler {
+	return NewRouterWithOptions(store, logger, RouterOptions{
+		OpenAPIServerURL: "http://127.0.0.1:48080",
+	})
+}
+
+type RouterOptions struct {
+	OpenAPIServerURL string
+}
+
+func NewRouterWithOptions(store graphstore.Store, logger *slog.Logger, opts RouterOptions) http.Handler {
 	if logger == nil {
 		logger = slog.Default()
+	}
+	if opts.OpenAPIServerURL == "" {
+		opts.OpenAPIServerURL = "http://127.0.0.1:48080"
 	}
 
 	gin.SetMode(gin.ReleaseMode)
@@ -34,7 +47,7 @@ func NewRouter(store graphstore.Store, logger *slog.Logger) http.Handler {
 	config := huma.DefaultConfig("Cubicle Ontology Service", "0.1.0")
 	config.OpenAPIPath = "/openapi"
 	config.DocsPath = "/docs"
-	config.Servers = []*huma.Server{{URL: "http://127.0.0.1:48080"}}
+	config.Servers = []*huma.Server{{URL: opts.OpenAPIServerURL}}
 	// Huma's default create hook adds schema links into response bodies. That is
 	// useful for browsable APIs, but Cubicle's Swift contract should stay as
 	// plain DTO JSON: no transport metadata mixed into product responses.

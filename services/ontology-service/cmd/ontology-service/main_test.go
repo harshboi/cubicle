@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"cubicle/services/ontology-service/internal/domain"
 )
@@ -67,6 +68,34 @@ fixtures.seed = false
 	}
 }
 
+func TestParseServeConfigLoadsRuntimeTuningFromHOCONFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "ontology-service.conf")
+	if err := os.WriteFile(path, []byte(`
+server {
+  listen_addr = "127.0.0.1:49300"
+  openapi_server_url = "http://ontology.local:49300"
+}
+storage {
+  database_path = "/tmp/cubicle-runtime-command.db"
+  sqlite_busy_timeout = 900ms
+}
+`), 0o644); err != nil {
+		t.Fatalf("write config file: %v", err)
+	}
+
+	cfg, err := parseServeConfigWithEnv([]string{"serve", "--config", path}, func(string) string { return "" })
+	if err != nil {
+		t.Fatalf("parse config file: %v", err)
+	}
+
+	if cfg.OpenAPIServerURL != "http://ontology.local:49300" {
+		t.Fatalf("OpenAPIServerURL = %q", cfg.OpenAPIServerURL)
+	}
+	if cfg.SQLiteBusyTimeout != 900*time.Millisecond {
+		t.Fatalf("SQLiteBusyTimeout = %s", cfg.SQLiteBusyTimeout)
+	}
+}
+
 func TestParseServeConfigLoadsHOCONPathFromEnv(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "ontology-service.conf")
 	if err := os.WriteFile(path, []byte(`
@@ -110,6 +139,8 @@ fixtures.seed = false
 		"--config", path,
 		"--listen", "127.0.0.1:49400",
 		"--database", "/tmp/from-flag.db",
+		"--openapi-server-url", "http://flag.local:49400",
+		"--sqlite-busy-timeout", "1500ms",
 		"--seed-fixtures=true",
 	}, func(string) string { return "" })
 	if err != nil {
@@ -124,6 +155,12 @@ fixtures.seed = false
 	}
 	if !cfg.SeedFixtures {
 		t.Fatal("SeedFixtures = false, want true")
+	}
+	if cfg.OpenAPIServerURL != "http://flag.local:49400" {
+		t.Fatalf("OpenAPIServerURL = %q", cfg.OpenAPIServerURL)
+	}
+	if cfg.SQLiteBusyTimeout != 1500*time.Millisecond {
+		t.Fatalf("SQLiteBusyTimeout = %s", cfg.SQLiteBusyTimeout)
 	}
 }
 
@@ -141,6 +178,19 @@ func TestParseServeConfigAllowsPublicBindWithFlag(t *testing.T) {
 	}
 	if cfg.Listen != "0.0.0.0:48080" {
 		t.Fatalf("unexpected listen address: %s", cfg.Listen)
+	}
+}
+
+func TestParseServeConfigDerivesOpenAPIURLFromListenFlag(t *testing.T) {
+	cfg, err := parseServeConfigWithEnv([]string{
+		"serve",
+		"--listen", "127.0.0.1:49500",
+	}, func(string) string { return "" })
+	if err != nil {
+		t.Fatalf("parse listen flag: %v", err)
+	}
+	if cfg.OpenAPIServerURL != "http://127.0.0.1:49500" {
+		t.Fatalf("OpenAPIServerURL = %q", cfg.OpenAPIServerURL)
 	}
 }
 

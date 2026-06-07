@@ -146,8 +146,10 @@ Default local paths come from `internal/config`:
 ```text
 CUBICLE_ONTOLOGY_CONFIG_PATH   optional HOCON config file path
 CUBICLE_ONTOLOGY_LISTEN_ADDR   default: 127.0.0.1:48080
+CUBICLE_ONTOLOGY_OPENAPI_SERVER_URL default: http://127.0.0.1:48080
 CUBICLE_ONTOLOGY_DATA_ROOT     default: .data
 CUBICLE_ONTOLOGY_DATABASE_PATH default: .data/graph.db
+CUBICLE_ONTOLOGY_SQLITE_BUSY_TIMEOUT default: 5s
 CUBICLE_ONTOLOGY_SEED_FIXTURES default: true
 ```
 
@@ -162,11 +164,13 @@ Example config:
 ```hocon
 server {
   listen_addr = "127.0.0.1:48080"
+  openapi_server_url = "http://127.0.0.1:48080"
 }
 
 storage {
   data_root = ".data"
   database_path = ".data/graph.db"
+  sqlite_busy_timeout = 5s
 }
 
 fixtures {
@@ -175,6 +179,12 @@ fixtures {
 ```
 
 The same example lives at `config/ontology-service.conf.example`.
+
+Startup logs include the effective config fields that matter for local runs:
+
+```text
+ontology_service_config config_path=... listen_addr=... openapi_server_url=... database_path=... sqlite_busy_timeout_ms=... seed_fixtures=...
+```
 
 SQLite settings enforced by tests:
 

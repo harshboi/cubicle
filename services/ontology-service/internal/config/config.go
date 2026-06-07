@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	hocon "github.com/o3co/go.hocon"
 )
@@ -14,6 +15,8 @@ const (
 	envDatabasePath = "CUBICLE_ONTOLOGY_DATABASE_PATH"
 	envConfigPath   = "CUBICLE_ONTOLOGY_CONFIG_PATH"
 	envSeedFixtures = "CUBICLE_ONTOLOGY_SEED_FIXTURES"
+	envOpenAPIURL   = "CUBICLE_ONTOLOGY_OPENAPI_SERVER_URL"
+	envBusyTimeout  = "CUBICLE_ONTOLOGY_SQLITE_BUSY_TIMEOUT"
 )
 
 // Config is process-level service configuration.
@@ -22,11 +25,14 @@ const (
 // when configuration is loaded once near process startup and passed down as
 // values, rather than read ad hoc from environment variables across packages.
 type Config struct {
-	ConfigPath   string
-	ListenAddr   string
-	DataRoot     string
-	DatabasePath string
-	SeedFixtures bool
+	ConfigPath               string
+	ListenAddr               string
+	OpenAPIServerURL         string
+	OpenAPIServerURLExplicit bool
+	DataRoot                 string
+	DatabasePath             string
+	SeedFixtures             bool
+	SQLiteBusyTimeout        time.Duration
 }
 
 type LoadOptions struct {
@@ -60,11 +66,13 @@ func LoadWithOptions(opts LoadOptions) (Config, error) {
 	}
 
 	cfg := Config{
-		ListenAddr:   "127.0.0.1:48080",
-		DataRoot:     ".data",
-		SeedFixtures: true,
+		ListenAddr:        "127.0.0.1:48080",
+		DataRoot:          ".data",
+		SeedFixtures:      true,
+		SQLiteBusyTimeout: 5 * time.Second,
 	}
 	cfg.DatabasePath = filepath.Join(cfg.DataRoot, "graph.db")
+	cfg.OpenAPIServerURL = openAPIURLFromListen(cfg.ListenAddr)
 
 	configPath := opts.ConfigPath
 	if configPath == "" {
@@ -90,6 +98,13 @@ func applyHOCONFile(cfg *Config, path string) error {
 
 	if value, ok := file.GetStringOption("server.listen_addr").Get(); ok {
 		cfg.ListenAddr = value
+		if !cfg.OpenAPIServerURLExplicit {
+			cfg.OpenAPIServerURL = openAPIURLFromListen(value)
+		}
+	}
+	if value, ok := file.GetStringOption("server.openapi_server_url").Get(); ok {
+		cfg.OpenAPIServerURL = value
+		cfg.OpenAPIServerURLExplicit = true
 	}
 	if value, ok := file.GetStringOption("storage.data_root").Get(); ok {
 		cfg.DataRoot = value
@@ -101,12 +116,22 @@ func applyHOCONFile(cfg *Config, path string) error {
 	if value, ok := file.GetBoolOption("fixtures.seed").Get(); ok {
 		cfg.SeedFixtures = value
 	}
+	if value, ok := file.GetDurationOption("storage.sqlite_busy_timeout").Get(); ok {
+		cfg.SQLiteBusyTimeout = value
+	}
 	return nil
 }
 
 func applyEnv(cfg *Config, getenv func(string) string) error {
 	if v := getenv(envListenAddr); v != "" {
 		cfg.ListenAddr = v
+		if !cfg.OpenAPIServerURLExplicit {
+			cfg.OpenAPIServerURL = openAPIURLFromListen(v)
+		}
+	}
+	if v := getenv(envOpenAPIURL); v != "" {
+		cfg.OpenAPIServerURL = v
+		cfg.OpenAPIServerURLExplicit = true
 	}
 	if v := getenv(envDataRoot); v != "" {
 		cfg.DataRoot = v
@@ -122,5 +147,16 @@ func applyEnv(cfg *Config, getenv func(string) string) error {
 		}
 		cfg.SeedFixtures = value
 	}
+	if v := getenv(envBusyTimeout); v != "" {
+		value, err := time.ParseDuration(v)
+		if err != nil {
+			return fmt.Errorf("parse %s: %w", envBusyTimeout, err)
+		}
+		cfg.SQLiteBusyTimeout = value
+	}
 	return nil
+}
+
+func openAPIURLFromListen(listen string) string {
+	return "http://" + listen
 }
