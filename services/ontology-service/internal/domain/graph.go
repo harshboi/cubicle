@@ -86,21 +86,21 @@ func (n Node) Ref() NodeRef {
 type EdgeMetadata struct {
 	Predicate       Predicate `json:"predicate"`
 	EvidenceKey     string    `json:"evidence_key"`
-	Source          string    `json:"source"`
+	Source          string    `json:"source,omitempty"`
 	SourceInstance  string    `json:"source_instance,omitempty"`
 	SourceURL       string    `json:"source_url,omitempty"`
 	SnapshotKey     string    `json:"snapshot_key,omitempty"`
 	MapperVersion   string    `json:"mapper_version,omitempty"`
-	Confidence      float64   `json:"confidence"`
-	Visibility      string    `json:"visibility"`
-	FreshnessState  string    `json:"freshness_state"`
-	ObservedAt      time.Time `json:"observed_at"`
+	Confidence      float64   `json:"confidence,omitempty"`
+	Visibility      string    `json:"visibility,omitempty"`
+	FreshnessState  string    `json:"freshness_state,omitempty"`
+	ObservedAt      time.Time `json:"observed_at,omitempty"`
 	SourceUpdatedAt time.Time `json:"source_updated_at,omitempty"`
 	PropertiesJSON  string    `json:"properties_json,omitempty"`
 }
 
 type Edge struct {
-	Key      string       `json:"key"`
+	Key      string       `json:"key,omitempty"`
 	From     NodeRef      `json:"from"`
 	To       NodeRef      `json:"to"`
 	Metadata EdgeMetadata `json:"metadata"`

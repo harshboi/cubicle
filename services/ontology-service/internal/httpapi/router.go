@@ -59,6 +59,10 @@ func NewRouterWithOptions(store graphstore.Store, logger *slog.Logger, opts Rout
 	registerGraph(api, store)
 	registerGraphUpsert(api, store)
 	registerWorkstreams(api, store)
+	if ingestStore, ok := store.(graphstore.IngestWriter); ok {
+		registerIngest(api, ingestStore)
+		registerSources(api, ingestStore)
+	}
 
 	return router
 }
