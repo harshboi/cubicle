@@ -21,7 +21,7 @@ func TestWorkstreamNeighborhoodReturnsConnectedGraphWithEvidence(t *testing.T) {
 	// observedAt is fixed so association metadata is deterministic in tests.
 	observedAt := time.Date(2026, 6, 7, 10, 0, 0, 0, time.UTC)
 
-	// objects is the minimal Flink workstream fixture. It models a connected
+	// objects is the minimal fake Flink workstream sample. It models a connected
 	// slice from workstream to ticket, PR, changed file, blocker, and action.
 	objects := []domain.Object{
 		{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler", Title: "Flink Autoscaler"},
@@ -32,7 +32,7 @@ func TestWorkstreamNeighborhoodReturnsConnectedGraphWithEvidence(t *testing.T) {
 		{ObjectType: ontology.ObjectActionCandidate, Key: "action:request-review", Title: "Request review"},
 	}
 
-	// object is each fixture entity being inserted before associations. The
+	// object is each fake sample entity being inserted before associations. The
 	// store requires endpoints to exist before relationships are written.
 	for _, object := range objects {
 		if err := store.UpsertObject(ctx, object); err != nil {
@@ -40,7 +40,7 @@ func TestWorkstreamNeighborhoodReturnsConnectedGraphWithEvidence(t *testing.T) {
 		}
 	}
 
-	// associations is the evidence-backed relationship fixture that makes the
+	// associations is the evidence-backed fake sample relationship set that makes the
 	// workstream traversable.
 	associations := []domain.Association{
 		association("workstream:flink-autoscaler", ontology.ObjectWorkstream, ontology.AssocContains, "ticket:FLINK-39743", ontology.ObjectTicket, "evidence:jira-component", observedAt),
@@ -170,7 +170,7 @@ func TestMemoryStoreUsesOpenAssociationVocabulary(t *testing.T) {
 	}
 }
 
-// association builds a fixture relationship with evidence metadata.
+// association builds a fake sample relationship with evidence metadata.
 //
 // fromKey/fromObjectType describe the directed source object, associationType
 // names the relationship, toKey/toObjectType describe the directed target
@@ -182,7 +182,7 @@ func association(fromKey string, fromObjectType domain.ObjectType, associationTy
 		AssociationType: associationType,
 		Metadata: domain.AssociationMetadata{
 			EvidenceKey:    evidenceKey,
-			Source:         "fixture",
+			Source:         "fake_sampledata",
 			Confidence:     1,
 			Visibility:     "public",
 			FreshnessState: "fresh",
