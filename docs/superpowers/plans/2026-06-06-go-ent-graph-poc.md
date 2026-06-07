@@ -6,7 +6,7 @@
 
 **Architecture:** Create a standalone Go module under `services/cubicle-graph/`. The service owns `graph.db`, Ent schemas, raw snapshots, ingestion, graph traversal, deterministic read-only action candidates, and localhost HTTP/CLI queries. The durable graph is a Meta/TAO-inspired object-association store over Ent and SQLite. The graph follows a Glean-style context contract for source, freshness, visibility, and provenance, while using a Palantir-style operational ontology for typed execution objects, typed links, and read-only actions.
 
-**Tech Stack:** Go 1.25.1 local toolchain, Ent, SQLite, standard `net/http` `ServeMux`, `log/slog`, `go test`, synthetic JSON fixtures, optional Apache Flink public-data import.
+**Tech Stack:** Go 1.25.1 local toolchain, Ent, SQLite, Gin `v1.12.0`, Huma `v2.38.0`, Huma Gin adapter `humagin`, `log/slog`, `go test`, synthetic JSON fixtures, optional Apache Flink public-data import.
 
 ---
 
@@ -118,9 +118,10 @@ Use these choices unless the codebase gives a stronger reason during implementat
 ```text
 HTTP
  |
- +-- use net/http ServeMux for V0 routes
- +-- use small local middleware for request ID, logging, timeout, and JSON errors
- +-- do not add chi until routing/middleware complexity proves it is needed
+ +-- use Gin as the HTTP server framework for V0 routes, route groups, recovery, and middleware
+ +-- use Huma on top of Gin for typed request/response DTOs, validation, OpenAPI 3.1, generated docs, and Swift client generation
+ +-- keep Gin handlers thin; product behavior lives in internal/query and graphstore
+ +-- do not expose raw Gin contexts, Ent structs, SQLite paths, FTS tables, or snapshot paths across the API boundary
 
 SQLite / Ent
  |
@@ -175,7 +176,7 @@ Each implementation slice must include a fixture or test for the invariant it in
 | Reverse edges stay consistent | forward edge insert creates derived reverse edge in same transaction |
 | High-degree graph expansion is bounded | synthetic high-degree project returns limited page with cursor |
 | SQLite settings are applied | storage test reads PRAGMA foreign_keys, journal_mode, busy_timeout |
-| Swift contract is backend-private | HTTP tests assert DTO shape and no Ent/SQLite fields leak |
+| Swift contract is backend-private | Huma/OpenAPI tests assert DTO shape and no Ent/SQLite fields leak |
 
 ## Product Hardening Addendum
 
@@ -1757,7 +1758,7 @@ GET /v1/graph/neighborhood?node=ticket:ATLAS-42&depth=1
 GET /v1/sources
 ```
 
-Build routes with standard `net/http` `ServeMux`. Add small local helpers for JSON responses, request timeout, request ID, and `slog` fields. Do not expose Ent structs directly; every handler returns versioned DTOs from `internal/domain` or `internal/query`.
+Build routes with Gin and register typed operations through Huma's Gin adapter. Gin owns route grouping, recovery, middleware, request logging, and localhost binding. Huma owns request/response DTOs, validation, OpenAPI 3.1 generation, generated docs, and the contract consumed by Swift OpenAPI Generator. Do not expose Ent structs directly; every handler returns versioned DTOs from `internal/domain`, `internal/query`, or `internal/httpapi`.
 
 - [ ] **Step 2: Add HTTP tests**
 
@@ -1774,6 +1775,7 @@ Use `httptest` to assert:
 responses include source status summary when a query depends on a partial source
 responses do not include Ent IDs, SQLite paths, FTS table names, or raw snapshot file paths
 unknown ticket returns 404
+OpenAPI document includes health, graph neighborhood, source health, readiness, trace, search, and action candidate operations
 ```
 
 - [ ] **Step 3: Add serve command**

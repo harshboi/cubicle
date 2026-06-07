@@ -474,7 +474,7 @@ Implementation refinement ledger:
 | 96 | What if GitHub Search caps or incomplete results hide matches? | Search is not completeness proof. | Partition by known keys/date windows and prefer Jira remote links; store search result counts as diagnostics only. |
 | 97 | What if a PR force-push removes commits or files that were once evidence? | PR state is mutable. | Store commit/file snapshots by crawl run and mark previous commit/file evidence stale when current PR state no longer contains it. |
 | 98 | What if GitHub review-thread resolution needs GraphQL, not REST? | Some review metadata is easier through GraphQL. | Keep a future `github_graphql` source client seam, but V0 uses REST comments/reviews and records unresolved resolution state as unknown. |
-| 99 | Should the Go HTTP service use `chi` or standard `net/http`? | Go's standard router is enough for V0. | Use `net/http` `ServeMux` and small local middleware; add `chi` only when routing needs exceed stdlib. |
+| 99 | Should the Go HTTP service use a bare `net/http` router, `chi`, Gin, or Huma? | Bare `net/http` keeps dependencies low but gives weak API-contract ergonomics for Swift. Gin is a popular Go web framework; Huma adds typed REST/OpenAPI on top of routers. | Use Gin as the V0 server framework and Huma's Gin adapter for typed DTOs, validation, OpenAPI 3.1 generation, generated docs, and Swift client generation. |
 | 100 | What if SQLite connection pooling causes write-lock churn? | SQLite concurrency depends on connection and transaction behavior. | Use a single writer path, explicit transaction helper, busy timeout, WAL mode, and bounded read-only queries. |
 | 101 | What if a request is cancelled during an Ent transaction? | Context cancellation must roll back cleanly. | All transaction helpers accept context, map Ent rows to DTOs before returning, and never leak open transactional entities. |
 | 102 | What if Ent auto migration succeeds locally but production migration needs review? | Auto migration is convenient but weak as a long-lived DB contract. | Use auto migration only in early POC; add Atlas versioned migrations before any user-shared persistent DB. |
@@ -499,13 +499,13 @@ Implementation refinement ledger:
 
 Implementation details validated from this pass:
 
-- Standard library HTTP is enough for V0. Use `net/http` `ServeMux`, explicit JSON helpers, context timeouts, and `slog`.
+- Use Gin plus Huma for V0 HTTP. Gin provides the familiar server framework shape: route groups, middleware, recovery, and localhost binding. Huma provides the typed API contract: request/response DTOs, validation, OpenAPI 3.1 generation, generated docs, and a path to Swift OpenAPI Generator.
 - Source ingestion must be idempotent. The minimum durable keys are provider event ID where available, source external ID, source version/revision, raw snapshot hash, and mapper version.
 - Snapshot replay must be separable from live crawling. Live fetch writes snapshots first; mappers read snapshots and can be rerun.
 - Search must revalidate every hit against owner freshness and visibility. The FTS table is an acceleration structure, not authority.
 - Graph edges must be valid-time aware. Use both source event time and observed crawl time to answer "what changed" and "what do we know now?"
 - SQLite must be configured deliberately: local path, WAL, busy timeout, bounded transactions, single writer queue/path, and a backup/checkpoint strategy.
-- The Swift contract must be versioned HTTP DTOs. The database and Ent schema are implementation details until the graph stabilizes.
+- The Swift contract must be versioned HTTP DTOs generated from the Huma OpenAPI document. The database and Ent schema are implementation details until the graph stabilizes.
 
 Second implementation refinement ledger:
 
@@ -1654,7 +1654,7 @@ internal/ontology          object/link/action type registry
 internal/query             product query layer
 internal/search            SQLite FTS/object/evidence search
 internal/actions           deterministic read-only action candidate rules
-internal/httpapi           localhost JSON routes
+internal/httpapi           Gin + Huma localhost JSON routes and OpenAPI contract
 internal/eval              graph correctness metrics
 ```
 
@@ -1674,6 +1674,27 @@ GET /v1/graph/neighborhood?node=<kind:key>&depth=<n>
 ```
 
 The service owns the graph database. Swift should not write this DB directly. Swift integration later uses localhost HTTP JSON.
+
+The HTTP server uses Gin as the framework and Huma as the typed API layer:
+
+```text
+Swift app
+ |
+ v
+Swift OpenAPI Generator client
+ |
+ v
+Huma OpenAPI operations
+ |
+ v
+Gin router / middleware / recovery
+ |
+ v
+internal/query
+ |
+ v
+AssociationStore / Ent / SQLite
+```
 
 ## Database Choice
 
@@ -1769,7 +1790,10 @@ The localhost POC does not need auth, but the graph schema should not make permi
 - Ent transactions: https://entgo.io/docs/transactions/
 - Ent migrations: https://entgo.io/docs/migrate/
 - Ent supported dialects: https://entgo.io/docs/dialects/
-- Go net/http ServeMux docs: https://pkg.go.dev/net/http#ServeMux
+- Gin package docs: https://pkg.go.dev/github.com/gin-gonic/gin
+- Huma package docs: https://pkg.go.dev/github.com/danielgtaylor/huma/v2
+- Huma Gin adapter package docs: https://pkg.go.dev/github.com/danielgtaylor/huma/v2/adapters/humagin
+- Swift OpenAPI Generator: https://github.com/apple/swift-openapi-generator
 - Go database/sql connection pool docs: https://pkg.go.dev/database/sql#DB.SetMaxOpenConns
 - Go slog docs: https://pkg.go.dev/log/slog
 - Meta TAO engineering article: https://engineering.fb.com/2013/06/25/core-infra/tao-the-power-of-the-graph/
