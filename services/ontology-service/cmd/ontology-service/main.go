@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 
 	"cubicle/services/ontology-service/ent"
 	"cubicle/services/ontology-service/internal/config"
@@ -21,6 +22,7 @@ import (
 )
 
 type serveConfig struct {
+	ConfigPath      string
 	Listen          string
 	DatabasePath    string
 	SeedFixtures    bool
@@ -57,15 +59,28 @@ func parseServeConfig(args []string) (serveConfig, error) {
 }
 
 func parseServeConfigWithEnv(args []string, getenv func(string) string) (serveConfig, error) {
+	configPath, err := configPathFromArgs(args)
+	if err != nil {
+		return serveConfig{}, err
+	}
+	appCfg, err := config.LoadWithOptions(config.LoadOptions{
+		ConfigPath: configPath,
+		Getenv:     getenv,
+	})
+	if err != nil {
+		return serveConfig{}, err
+	}
+
 	flags := flag.NewFlagSet("serve", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 
-	appCfg := config.Load(getenv)
 	cfg := serveConfig{
+		ConfigPath:   appCfg.ConfigPath,
 		Listen:       appCfg.ListenAddr,
 		DatabasePath: appCfg.DatabasePath,
-		SeedFixtures: true,
+		SeedFixtures: appCfg.SeedFixtures,
 	}
+	flags.StringVar(&cfg.ConfigPath, "config", cfg.ConfigPath, "HOCON config file path")
 	flags.StringVar(&cfg.Listen, "listen", cfg.Listen, "host:port for the local HTTP server")
 	flags.StringVar(&cfg.DatabasePath, "database", cfg.DatabasePath, "SQLite database path for the ontology graph")
 	flags.BoolVar(&cfg.SeedFixtures, "seed-fixtures", cfg.SeedFixtures, "seed the local Flink demo graph before serving")
@@ -77,6 +92,25 @@ func parseServeConfigWithEnv(args []string, getenv func(string) string) (serveCo
 		return serveConfig{}, err
 	}
 	return cfg, nil
+}
+
+func configPathFromArgs(args []string) (string, error) {
+	for i := 1; i < len(args); i++ {
+		arg := args[i]
+		if arg == "--config" || arg == "-config" {
+			if i+1 >= len(args) {
+				return "", errors.New("missing value for --config")
+			}
+			return args[i+1], nil
+		}
+		if strings.HasPrefix(arg, "--config=") {
+			return strings.TrimPrefix(arg, "--config="), nil
+		}
+		if strings.HasPrefix(arg, "-config=") {
+			return strings.TrimPrefix(arg, "-config="), nil
+		}
+	}
+	return "", nil
 }
 
 func validateListenAddress(listen string, allowPublicBind bool) error {
