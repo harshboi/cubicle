@@ -114,7 +114,7 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 	return server.ListenAndServe()
 }
 
-func openGraphStore(ctx context.Context, cfg serveConfig) (graphstore.Expander, func(), error) {
+func openGraphStore(ctx context.Context, cfg serveConfig) (graphstore.Store, func(), error) {
 	store, err := storage.Open(ctx, storage.Config{DatabasePath: cfg.DatabasePath})
 	if err != nil {
 		return nil, nil, err

@@ -25,3 +25,13 @@ type Writer interface {
 	UpsertNode(context.Context, domain.Node) error
 	UpsertEdge(context.Context, domain.Edge) error
 }
+
+// Store is the full local graph boundary used by HTTP composition.
+//
+// Query-only code should still prefer Expander, and ingestion-only code should
+// prefer Writer. The server needs both so crawlers can insert graph facts and
+// clients can query them through the same process.
+type Store interface {
+	Expander
+	Writer
+}
