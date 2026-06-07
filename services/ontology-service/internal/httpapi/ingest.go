@@ -1,0 +1,290 @@
+package httpapi
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"time"
+
+	"github.com/danielgtaylor/huma/v2"
+
+	"cubicle/services/ontology-service/internal/domain"
+	"cubicle/services/ontology-service/internal/graphstore"
+)
+
+type BeginIngestRunInput struct {
+	Body domain.IngestRunStart
+}
+
+type IngestRunOutput struct {
+	Body domain.IngestRun
+}
+
+type IngestRunPathInput struct {
+	RunID string `path:"run_id"`
+}
+
+type WriteSnapshotInput struct {
+	RunID string `path:"run_id"`
+	Body  SourceSnapshotWriteBody
+}
+
+type SourceSnapshotOutput struct {
+	Body domain.SourceSnapshot
+}
+
+type SourceSnapshotWriteBody struct {
+	SnapshotKey      string    `json:"snapshot_key"`
+	SourceObjectType string    `json:"source_object_type,omitempty"`
+	SourceObjectID   string    `json:"source_object_id,omitempty"`
+	BodySHA256       string    `json:"body_sha256"`
+	BodyRef          string    `json:"body_ref"`
+	SourceURL        string    `json:"source_url,omitempty"`
+	FetchedAt        time.Time `json:"fetched_at,omitempty"`
+	HeadersJSON      string    `json:"headers_json,omitempty"`
+}
+
+type WriteIngestBatchInput struct {
+	RunID string `path:"run_id"`
+	Body  IngestBatchBody
+}
+
+type IngestBatchResultOutput struct {
+	Body domain.IngestBatchResult
+}
+
+type IngestBatchBody struct {
+	Slice         string                        `json:"slice,omitempty"`
+	MapperVersion string                        `json:"mapper_version,omitempty"`
+	SnapshotKeys  []string                      `json:"snapshot_keys,omitempty"`
+	ObservedAt    time.Time                     `json:"observed_at,omitempty"`
+	Objects       []domain.Object               `json:"objects,omitempty"`
+	Associations  []domain.Association          `json:"associations,omitempty"`
+	Evidence      []domain.Evidence             `json:"evidence,omitempty"`
+	Events        []domain.SourceEvent          `json:"events,omitempty"`
+	Checkpoint    *domain.SourceCheckpointWrite `json:"checkpoint,omitempty"`
+}
+
+type CompleteIngestRunInput struct {
+	RunID string `path:"run_id"`
+	Body  CompleteIngestRunBody
+}
+
+type CompleteIngestRunBody struct {
+	Status       domain.IngestRunStatus `json:"status"`
+	CompletedAt  time.Time              `json:"completed_at,omitempty"`
+	ErrorCode    domain.IngestErrorCode `json:"error_code,omitempty"`
+	ErrorMessage string                 `json:"error_message,omitempty"`
+}
+
+func registerIngest(api huma.API, store graphstore.IngestWriter) {
+	huma.Register(api, huma.Operation{
+		OperationID: "begin-ingest-run",
+		Method:      http.MethodPost,
+		Path:        "/v1/ingest/runs",
+		Summary:     "Start a source ingestion run",
+		Tags:        []string{"ingest"},
+		Errors:      []int{http.StatusBadRequest, http.StatusConflict},
+		RequestBody: jsonRequestExample("flink fixture run", map[string]any{
+			"run_key":         "run-flink-fixture-1",
+			"source":          "jira",
+			"source_instance": "apache-jira",
+			"slice":           "flink-autoscaler",
+			"mapper_version":  "flink-fixture/v1",
+		}),
+	}, func(ctx context.Context, input *BeginIngestRunInput) (*IngestRunOutput, error) {
+		run, err := store.BeginIngestRun(ctx, input.Body)
+		if err != nil {
+			return nil, ingestHTTPError(err)
+		}
+		return &IngestRunOutput{Body: run}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "write-ingest-snapshot",
+		Method:      http.MethodPost,
+		Path:        "/v1/ingest/runs/{run_id}/snapshots",
+		Summary:     "Record a raw source snapshot reference",
+		Tags:        []string{"ingest"},
+		Errors:      []int{http.StatusBadRequest, http.StatusConflict},
+		RequestBody: jsonRequestExample("jira issue snapshot", map[string]any{
+			"snapshot_key":       "snapshot:jira:FLINK-39743",
+			"source_object_type": "jira_issue",
+			"source_object_id":   "FLINK-39743",
+			"body_sha256":        "sha256:issue-body",
+			"body_ref":           "snapshots/sha256/issue-body.json",
+			"source_url":         "https://issues.apache.org/jira/browse/FLINK-39743",
+		}),
+	}, func(ctx context.Context, input *WriteSnapshotInput) (*SourceSnapshotOutput, error) {
+		run, err := store.GetIngestRun(ctx, input.RunID)
+		if err != nil {
+			return nil, ingestHTTPError(err)
+		}
+		write := input.Body.toDomain(input.RunID, run)
+		snapshot, err := store.WriteSnapshot(ctx, write)
+		if err != nil {
+			return nil, ingestHTTPError(err)
+		}
+		return &SourceSnapshotOutput{Body: snapshot}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "write-ingest-batch",
+		Method:      http.MethodPost,
+		Path:        "/v1/ingest/runs/{run_id}/batches",
+		Summary:     "Persist mapped ontology facts for an ingestion run",
+		Tags:        []string{"ingest"},
+		Errors:      []int{http.StatusBadRequest, http.StatusConflict},
+		RequestBody: jsonRequestExample("mapped Jira issue batch", map[string]any{
+			"snapshot_keys": []string{"snapshot:jira:FLINK-39743"},
+			"objects": []map[string]any{
+				{"object_type": "workstream", "key": "workstream:flink-autoscaler", "title": "Flink Autoscaler"},
+				{"object_type": "ticket", "key": "ticket:FLINK-39743", "title": "Autoscaler bug", "snapshot_key": "snapshot:jira:FLINK-39743"},
+			},
+			"evidence": []map[string]any{
+				{"evidence_key": "evidence:jira:FLINK-39743", "snapshot_key": "snapshot:jira:FLINK-39743", "text_hash": "sha256:evidence-text"},
+			},
+			"associations": []map[string]any{{
+				"from":             map[string]any{"object_type": "workstream", "key": "workstream:flink-autoscaler"},
+				"to":               map[string]any{"object_type": "ticket", "key": "ticket:FLINK-39743"},
+				"association_type": "contains",
+				"metadata":         map[string]any{"evidence_key": "evidence:jira:FLINK-39743", "snapshot_key": "snapshot:jira:FLINK-39743"},
+			}},
+			"checkpoint": map[string]any{"checkpoint_key": "jira-start-at", "checkpoint_value": "50"},
+		}),
+	}, func(ctx context.Context, input *WriteIngestBatchInput) (*IngestBatchResultOutput, error) {
+		run, err := store.GetIngestRun(ctx, input.RunID)
+		if err != nil {
+			return nil, ingestHTTPError(err)
+		}
+		batch := input.Body.toDomain(input.RunID)
+		defaultBatchIdentity(&batch, run)
+		result, err := store.WriteMappedBatch(ctx, batch)
+		if err != nil {
+			return nil, ingestHTTPError(err)
+		}
+		return &IngestBatchResultOutput{Body: result}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "complete-ingest-run",
+		Method:      http.MethodPost,
+		Path:        "/v1/ingest/runs/{run_id}/complete",
+		Summary:     "Complete an ingestion run",
+		Tags:        []string{"ingest"},
+		Errors:      []int{http.StatusBadRequest, http.StatusConflict},
+		RequestBody: jsonRequestExample("complete run", map[string]any{
+			"status": "completed",
+		}),
+	}, func(ctx context.Context, input *CompleteIngestRunInput) (*IngestRunOutput, error) {
+		complete := input.Body.toDomain(input.RunID)
+		run, err := store.CompleteIngestRun(ctx, complete)
+		if err != nil {
+			return nil, ingestHTTPError(err)
+		}
+		return &IngestRunOutput{Body: run}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "get-ingest-run",
+		Method:      http.MethodGet,
+		Path:        "/v1/ingest/runs/{run_id}",
+		Summary:     "Get an ingestion run",
+		Tags:        []string{"ingest"},
+		Errors:      []int{http.StatusBadRequest},
+	}, func(ctx context.Context, input *IngestRunPathInput) (*IngestRunOutput, error) {
+		run, err := store.GetIngestRun(ctx, input.RunID)
+		if err != nil {
+			return nil, ingestHTTPError(err)
+		}
+		return &IngestRunOutput{Body: run}, nil
+	})
+}
+
+func (b SourceSnapshotWriteBody) toDomain(runID string, run domain.IngestRun) domain.SourceSnapshotWrite {
+	return domain.SourceSnapshotWrite{
+		RunKey:           runID,
+		Source:           run.Source,
+		SourceInstance:   run.SourceInstance,
+		SnapshotKey:      b.SnapshotKey,
+		SourceObjectType: b.SourceObjectType,
+		SourceObjectID:   b.SourceObjectID,
+		BodySHA256:       b.BodySHA256,
+		BodyRef:          b.BodyRef,
+		SourceURL:        b.SourceURL,
+		FetchedAt:        b.FetchedAt,
+		HeadersJSON:      b.HeadersJSON,
+	}
+}
+
+func (b IngestBatchBody) toDomain(runID string) domain.IngestBatch {
+	return domain.IngestBatch{
+		RunKey:        runID,
+		Slice:         b.Slice,
+		MapperVersion: b.MapperVersion,
+		SnapshotKeys:  b.SnapshotKeys,
+		ObservedAt:    b.ObservedAt,
+		Objects:       b.Objects,
+		Associations:  b.Associations,
+		Evidence:      b.Evidence,
+		Events:        b.Events,
+		Checkpoint:    b.Checkpoint,
+	}
+}
+
+func (b CompleteIngestRunBody) toDomain(runID string) domain.IngestRunComplete {
+	return domain.IngestRunComplete{
+		RunKey:       runID,
+		Status:       b.Status,
+		CompletedAt:  b.CompletedAt,
+		ErrorCode:    b.ErrorCode,
+		ErrorMessage: b.ErrorMessage,
+	}
+}
+
+func defaultBatchIdentity(batch *domain.IngestBatch, run domain.IngestRun) {
+	if batch.Source == "" {
+		batch.Source = run.Source
+	}
+	if batch.SourceInstance == "" {
+		batch.SourceInstance = run.SourceInstance
+	}
+	if batch.Slice == "" {
+		batch.Slice = run.Slice
+	}
+	if batch.MapperVersion == "" {
+		batch.MapperVersion = run.MapperVersion
+	}
+}
+
+func ingestHTTPError(err error) error {
+	switch {
+	case errors.Is(err, graphstore.ErrIngestConflict):
+		return huma.Error409Conflict(string(domain.IngestErrorConflict)+": "+err.Error(), err)
+	case errors.Is(err, graphstore.ErrRunNotOpen):
+		return huma.Error409Conflict(string(domain.IngestErrorRunNotOpen)+": "+err.Error(), err)
+	case errors.Is(err, graphstore.ErrSnapshotNotFound):
+		return huma.Error400BadRequest(string(domain.IngestErrorSnapshotNotFound)+": "+err.Error(), err)
+	case errors.Is(err, graphstore.ErrInvalidIngest),
+		errors.Is(err, graphstore.ErrInvalidExpansion),
+		errors.Is(err, graphstore.ErrMissingObject):
+		return huma.Error400BadRequest(string(domain.IngestErrorValidationFailed)+": "+err.Error(), err)
+	default:
+		return huma.Error500InternalServerError("ingest request failed")
+	}
+}
+
+func jsonRequestExample(summary string, value any) *huma.RequestBody {
+	return &huma.RequestBody{
+		Content: map[string]*huma.MediaType{
+			"application/json": {
+				Examples: map[string]*huma.Example{
+					"default": {
+						Summary: summary,
+						Value:   value,
+					},
+				},
+			},
+		},
+	}
+}
