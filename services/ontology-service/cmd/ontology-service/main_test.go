@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"cubicle/services/ontology-service/internal/domain"
 	"cubicle/services/ontology-service/internal/graphstore"
@@ -20,6 +21,9 @@ func TestParseServeConfigDefaultsToLocalhost(t *testing.T) {
 	}
 	if cfg.Listen != "127.0.0.1:48080" {
 		t.Fatalf("unexpected listen address: %s", cfg.Listen)
+	}
+	if cfg.SeedFakeFlinkWorkstream {
+		t.Fatal("SeedFakeFlinkWorkstream = true, want false")
 	}
 }
 
@@ -67,6 +71,38 @@ storage.database_path = "/tmp/cubicle-config-file.db"
 	}
 }
 
+func TestParseServeConfigLoadsRuntimeTuningFromHOCONFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "ontology-service.conf")
+	if err := os.WriteFile(path, []byte(`
+server {
+  listen_addr = "127.0.0.1:49300"
+  openapi_server_url = "http://ontology.local:49300"
+}
+storage {
+  database_path = "/tmp/cubicle-runtime-command.db"
+  sqlite_busy_timeout = 900ms
+}
+dev_seed.fake_flink_workstream = true
+`), 0o644); err != nil {
+		t.Fatalf("write config file: %v", err)
+	}
+
+	cfg, err := parseServeConfigWithEnv([]string{"serve", "--config", path}, func(string) string { return "" })
+	if err != nil {
+		t.Fatalf("parse config file: %v", err)
+	}
+
+	if cfg.OpenAPIServerURL != "http://ontology.local:49300" {
+		t.Fatalf("OpenAPIServerURL = %q", cfg.OpenAPIServerURL)
+	}
+	if cfg.SQLiteBusyTimeout != 900*time.Millisecond {
+		t.Fatalf("SQLiteBusyTimeout = %s", cfg.SQLiteBusyTimeout)
+	}
+	if !cfg.SeedFakeFlinkWorkstream {
+		t.Fatal("SeedFakeFlinkWorkstream = false, want true")
+	}
+}
+
 func TestParseServeConfigLoadsHOCONPathFromEnv(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "ontology-service.conf")
 	if err := os.WriteFile(path, []byte(`
@@ -109,6 +145,9 @@ storage.database_path = "/tmp/from-file.db"
 		"--config", path,
 		"--listen", "127.0.0.1:49400",
 		"--database", "/tmp/from-flag.db",
+		"--openapi-server-url", "http://flag.local:49400",
+		"--sqlite-busy-timeout", "1500ms",
+		"--dev-seed-fake-flink-workstream",
 	}, func(string) string { return "" })
 	if err != nil {
 		t.Fatalf("parse config file: %v", err)
@@ -119,6 +158,15 @@ storage.database_path = "/tmp/from-file.db"
 	}
 	if cfg.DatabasePath != "/tmp/from-flag.db" {
 		t.Fatalf("DatabasePath = %q", cfg.DatabasePath)
+	}
+	if cfg.OpenAPIServerURL != "http://flag.local:49400" {
+		t.Fatalf("OpenAPIServerURL = %q", cfg.OpenAPIServerURL)
+	}
+	if cfg.SQLiteBusyTimeout != 1500*time.Millisecond {
+		t.Fatalf("SQLiteBusyTimeout = %s", cfg.SQLiteBusyTimeout)
+	}
+	if !cfg.SeedFakeFlinkWorkstream {
+		t.Fatal("SeedFakeFlinkWorkstream = false, want true")
 	}
 }
 
@@ -157,6 +205,19 @@ func TestHTTPServerUsesTimeouts(t *testing.T) {
 	}
 }
 
+func TestParseServeConfigDerivesOpenAPIURLFromListenFlag(t *testing.T) {
+	cfg, err := parseServeConfigWithEnv([]string{
+		"serve",
+		"--listen", "127.0.0.1:49500",
+	}, func(string) string { return "" })
+	if err != nil {
+		t.Fatalf("parse listen flag: %v", err)
+	}
+	if cfg.OpenAPIServerURL != "http://127.0.0.1:49500" {
+		t.Fatalf("OpenAPIServerURL = %q", cfg.OpenAPIServerURL)
+	}
+}
+
 func TestParseServeConfigAcceptsDatabasePath(t *testing.T) {
 	cfg, err := parseServeConfig([]string{"serve", "--database", "/tmp/cubicle-ontology/graph.db"})
 	if err != nil {
@@ -184,5 +245,29 @@ func TestOpenGraphStoreStartsEmpty(t *testing.T) {
 	})
 	if !errors.Is(err, graphstore.ErrMissingObject) {
 		t.Fatalf("expected missing object from empty graph, got graph=%#v err=%v", graph, err)
+	}
+}
+
+func TestOpenGraphStoreSeedsFakeWorkstreamOnlyWhenEnabled(t *testing.T) {
+	ctx := context.Background()
+	expander, cleanup, err := openGraphStore(ctx, serveConfig{
+		DatabasePath:            filepath.Join(t.TempDir(), "graph.db"),
+		SeedFakeFlinkWorkstream: true,
+	})
+	if err != nil {
+		t.Fatalf("open graph store: %v", err)
+	}
+	t.Cleanup(cleanup)
+
+	graph, err := expander.Expand(ctx, domain.ExpandRequest{
+		Start:          domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:          2,
+		LimitPerObject: 10,
+	})
+	if err != nil {
+		t.Fatalf("expand fake seeded graph: %v", err)
+	}
+	if len(graph.Objects) == 0 || len(graph.Associations) == 0 {
+		t.Fatalf("expected fake seeded graph, got %d objects and %d associations", len(graph.Objects), len(graph.Associations))
 	}
 }

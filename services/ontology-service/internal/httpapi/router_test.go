@@ -59,3 +59,33 @@ func TestOpenAPIDocumentIncludesHealthAndGraph(t *testing.T) {
 		}
 	}
 }
+
+func TestOpenAPIDocumentUsesConfiguredServerURL(t *testing.T) {
+	router := NewRouterWithOptions(sampledata.NewFakeFlinkAutoscalerMemoryStore(), slog.Default(), RouterOptions{
+		OpenAPIServerURL: "http://ontology.local:49100",
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/openapi.json", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var doc map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &doc); err != nil {
+		t.Fatalf("openapi response is not JSON: %v", err)
+	}
+	servers, ok := doc["servers"].([]any)
+	if !ok || len(servers) == 0 {
+		t.Fatalf("openapi document has no servers: %#v", doc)
+	}
+	server, ok := servers[0].(map[string]any)
+	if !ok {
+		t.Fatalf("openapi server entry is not an object: %#v", servers[0])
+	}
+	if server["url"] != "http://ontology.local:49100" {
+		t.Fatalf("server url = %#v", server["url"])
+	}
+}

@@ -16,16 +16,21 @@ import (
 	"cubicle/services/ontology-service/internal/config"
 	"cubicle/services/ontology-service/internal/graphstore"
 	"cubicle/services/ontology-service/internal/httpapi"
+	"cubicle/services/ontology-service/internal/sampledata"
 	"cubicle/services/ontology-service/internal/storage"
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
 )
 
 type serveConfig struct {
-	ConfigPath      string // ConfigPath is the optional HOCON file path used to load runtime defaults.
-	Listen          string // Listen is the host:port address the local HTTP server binds to.
-	DatabasePath    string // DatabasePath is the SQLite file path used by the Ent-backed ontology store.
-	AllowPublicBind bool   // AllowPublicBind permits non-localhost binds for explicit development use.
+	ConfigPath               string        // ConfigPath is the optional HOCON file path used to load runtime defaults.
+	Listen                   string        // Listen is the host:port address the local HTTP server binds to.
+	OpenAPIServerURL         string        // OpenAPIServerURL is the base URL advertised in generated OpenAPI metadata.
+	OpenAPIServerURLExplicit bool          // OpenAPIServerURLExplicit tracks whether config or flags set the OpenAPI URL directly.
+	DatabasePath             string        // DatabasePath is the SQLite file path used by the Ent-backed ontology store.
+	SQLiteBusyTimeout        time.Duration // SQLiteBusyTimeout is the SQLite lock wait timeout configured for local persistence.
+	SeedFakeFlinkWorkstream  bool          // SeedFakeFlinkWorkstream controls explicit dev-only fake workstream seeding.
+	AllowPublicBind          bool          // AllowPublicBind permits non-localhost binds for explicit development use.
 }
 
 const (
@@ -88,21 +93,44 @@ func parseServeConfigWithEnv(args []string, getenv func(string) string) (serveCo
 	flags.SetOutput(os.Stderr)
 
 	cfg := serveConfig{
-		ConfigPath:   appCfg.ConfigPath,
-		Listen:       appCfg.ListenAddr,
-		DatabasePath: appCfg.DatabasePath,
+		ConfigPath:               appCfg.ConfigPath,
+		Listen:                   appCfg.ListenAddr,
+		OpenAPIServerURL:         appCfg.OpenAPIServerURL,
+		OpenAPIServerURLExplicit: appCfg.OpenAPIServerURLExplicit,
+		DatabasePath:             appCfg.DatabasePath,
+		SQLiteBusyTimeout:        appCfg.SQLiteBusyTimeout,
+		SeedFakeFlinkWorkstream:  appCfg.SeedFakeFlinkWorkstream,
 	}
 	flags.StringVar(&cfg.ConfigPath, "config", cfg.ConfigPath, "HOCON config file path")
 	flags.StringVar(&cfg.Listen, "listen", cfg.Listen, "host:port for the local HTTP server")
+	flags.StringVar(&cfg.OpenAPIServerURL, "openapi-server-url", cfg.OpenAPIServerURL, "server URL advertised in OpenAPI")
 	flags.StringVar(&cfg.DatabasePath, "database", cfg.DatabasePath, "SQLite database path for the ontology graph")
+	flags.DurationVar(&cfg.SQLiteBusyTimeout, "sqlite-busy-timeout", cfg.SQLiteBusyTimeout, "SQLite busy timeout")
+	flags.BoolVar(&cfg.SeedFakeFlinkWorkstream, "dev-seed-fake-flink-workstream", cfg.SeedFakeFlinkWorkstream, "seed the dev-only fake Flink workstream sample")
 	flags.BoolVar(&cfg.AllowPublicBind, "allow-public-bind", false, "allow binding outside localhost for development")
 	if err := flags.Parse(args[1:]); err != nil {
 		return serveConfig{}, err
+	}
+	if flagWasSet(flags, "openapi-server-url") {
+		cfg.OpenAPIServerURLExplicit = true
+	}
+	if flagWasSet(flags, "listen") && !cfg.OpenAPIServerURLExplicit {
+		cfg.OpenAPIServerURL = "http://" + cfg.Listen
 	}
 	if err := validateListenAddress(cfg.Listen, cfg.AllowPublicBind); err != nil {
 		return serveConfig{}, err
 	}
 	return cfg, nil
+}
+
+func flagWasSet(flags *flag.FlagSet, name string) bool {
+	found := false
+	flags.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			found = true
+		}
+	})
+	return found
 }
 
 func configPathFromArgs(args []string) (string, error) {
@@ -142,6 +170,15 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 	if logger == nil {
 		logger = slog.Default()
 	}
+	logger.Info(
+		"ontology_service_config",
+		"config_path", cfg.ConfigPath,
+		"listen_addr", cfg.Listen,
+		"openapi_server_url", cfg.OpenAPIServerURL,
+		"database_path", cfg.DatabasePath,
+		"sqlite_busy_timeout_ms", cfg.SQLiteBusyTimeout.Milliseconds(),
+		"seed_fake_flink_workstream", cfg.SeedFakeFlinkWorkstream,
+	)
 
 	graph, cleanup, err := openGraphStore(context.Background(), cfg)
 	if err != nil {
@@ -149,7 +186,9 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 	}
 	defer cleanup()
 
-	router := httpapi.NewRouter(graph, logger)
+	router := httpapi.NewRouterWithOptions(graph, logger, httpapi.RouterOptions{
+		OpenAPIServerURL: cfg.OpenAPIServerURL,
+	})
 	server := newHTTPServer(cfg, router)
 
 	logger.Info("ontology_service_listening", "url", "http://"+cfg.Listen)
@@ -168,7 +207,10 @@ func newHTTPServer(cfg serveConfig, router http.Handler) *http.Server {
 }
 
 func openGraphStore(ctx context.Context, cfg serveConfig) (graphstore.Store, func(), error) {
-	store, err := storage.Open(ctx, storage.Config{DatabasePath: cfg.DatabasePath})
+	store, err := storage.Open(ctx, storage.Config{
+		DatabasePath: cfg.DatabasePath,
+		BusyTimeout:  cfg.SQLiteBusyTimeout,
+	})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -185,5 +227,11 @@ func openGraphStore(ctx context.Context, cfg serveConfig) (graphstore.Store, fun
 	}
 
 	graph := graphstore.NewEntStore(client)
+	if cfg.SeedFakeFlinkWorkstream {
+		if err := sampledata.SeedFakeFlinkAutoscalerWorkstream(ctx, graph); err != nil {
+			cleanup()
+			return nil, nil, fmt.Errorf("seed fake Flink workstream: %w", err)
+		}
+	}
 	return graph, cleanup, nil
 }

@@ -5,9 +5,15 @@
 
 server {
   listen_addr = "127.0.0.1:48080"
+  openapi_server_url = "http://127.0.0.1:48080"
 }
 
 storage {
   data_root = ".data"
   database_path = ".data/graph.db"
+  sqlite_busy_timeout = 5s
+}
+
+dev_seed {
+  fake_flink_workstream = false
 }
