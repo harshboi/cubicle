@@ -177,6 +177,62 @@ Each implementation slice must include a fixture or test for the invariant it in
 | SQLite settings are applied | storage test reads PRAGMA foreign_keys, journal_mode, busy_timeout |
 | Swift contract is backend-private | HTTP tests assert DTO shape and no Ent/SQLite fields leak |
 
+## Product Hardening Addendum
+
+The next research pass lives in [2026-06-07-graph-product-hardening-research.md](../specs/2026-06-07-graph-product-hardening-research.md). Its implementation impact is:
+
+```text
+source health
+ |
+ +-- add ConnectorCapability manifest per source
+ +-- /v1/sources exposes capability, freshness, counts, partial state, stale count, hidden count, and last error
+ +-- source gaps are answer states, not internal logs
+
+permissions
+ |
+ +-- represent access facts as principal -> relation -> object tuples
+ +-- keep ACL fields exact-match, never FTS-tokenized
+ +-- permission results include acl_snapshot_key and observed_at
+ +-- hidden_by_policy beats source ACL
+
+product answers
+ |
+ +-- every answer returns answer_run_id, source_status_summary, freshness_summary, evidence refs, confidence, no_answer_reason, and action candidates
+ +-- generated prose remains out of scope until per-claim citation and retrieval evals exist
+
+graph model
+ |
+ +-- add Conflict as a future object for contradictory source facts
+ +-- add manual_assertion edges for user-corrected facts without overwriting source evidence
+ +-- edge types require a named product query and lifecycle owner
+
+search/eval
+ |
+ +-- track exact hit rate, MRR, nDCG, context precision, context recall, citation coverage, no-answer correctness, and permission-safe recall
+ +-- exact keys/paths/PR refs use exact lanes; FTS and future vector lanes explain match reason separately
+
+scale/ops
+ |
+ +-- add synthetic scale fixture: high-degree project, 10k fragments, 100k edges
+ +-- define promotion trigger for Postgres/search service before SQLite becomes a hidden bottleneck
+ +-- snapshots are source of truth; normalized DB can be rebuilt from snapshots plus mapper version
+```
+
+Additional hardening tests:
+
+| Invariant | Required Validation |
+|---|---|
+| Connector capability is visible | `/v1/sources` returns permission model, cursor type, delete support, freshness SLA |
+| Source gap changes answer state | query with missing Slack/docs source returns evidence gap, not confident answer |
+| Permission tuples filter search | tuple fixture allows one principal and denies another |
+| Policy-hidden object is stronger than ACL | `hidden_by_policy` fixture is never returned |
+| Search ranking is measurable | golden queries produce exact hit rate, MRR, nDCG, and source diversity metrics |
+| Contradictory facts are not flattened | conflicting owner/status fixture creates `Conflict` or unresolved state |
+| User correction preserves provenance | manual assertion adds evidence path and does not overwrite source edge |
+| High-degree graph stays bounded | 100k-edge fixture respects depth, edge budget, cursor, and latency target |
+| DB rebuild works | delete normalized DB, replay snapshots, and compare eval output |
+| Product DTO is stable | HTTP golden responses include answer_run_id and no backend internals |
+
 ## Target Shape
 
 ```text
@@ -256,7 +312,9 @@ Decision
 Risk
 Blocker
 ActionCandidate
+Conflict
 ConnectorState
+ConnectorCapability
 SourceSnapshot
 SourceEvent
 ProviderEvent
@@ -597,7 +655,9 @@ ok  	cubicle/services/cubicle-graph/internal/config
 - Create: `services/cubicle-graph/ent/schema/risk.go`
 - Create: `services/cubicle-graph/ent/schema/blocker.go`
 - Create: `services/cubicle-graph/ent/schema/actioncandidate.go`
+- Create: `services/cubicle-graph/ent/schema/conflict.go`
 - Create: `services/cubicle-graph/ent/schema/connectorstate.go`
+- Create: `services/cubicle-graph/ent/schema/connectorcapability.go`
 - Create: `services/cubicle-graph/ent/schema/sourcesnapshot.go`
 - Create: `services/cubicle-graph/ent/schema/sourceevent.go`
 - Create: `services/cubicle-graph/ent/schema/providerevent.go`
@@ -831,9 +891,10 @@ func (ActionCandidate) Indexes() []ent.Index {
 }
 ```
 
-Create `SourceSnapshot`, `SourceEvent`, `ProviderEvent`, `SourceError`, `ConnectorState`, `SourcePermission`, `IssueEvent`, `Attachment`, `SearchIndexState`, and `EmbeddingArtifact` with these fields:
+Create `ConnectorCapability`, `SourceSnapshot`, `SourceEvent`, `ProviderEvent`, `SourceError`, `ConnectorState`, `SourcePermission`, `IssueEvent`, `Attachment`, `Conflict`, `SearchIndexState`, and `EmbeddingArtifact` with these fields:
 
 ```text
+ConnectorCapability: source, source_instance, permission_model, cursor_type, supports_incremental, supports_deletes, supports_permission_changes, supports_threads, supports_comments, supports_attachments, freshness_sla_seconds, rate_limit_policy, private_data_policy
 SourceSnapshot: key, source, run_id, kind, external_id, source_url, request_url, request_params_json, field_mask, response_headers_json, path, content_hash, fetched_at, source_updated_at, http_status, visibility
 SourceEvent: key, source, external_id, provider_event_key, event_type, event_time, observed_at, actor_key, source_snapshot_key, payload_hash, visibility
 ProviderEvent: key, source, provider_event_key, event_type, event_time, observed_at, payload_hash, source_snapshot_key, status
@@ -842,6 +903,7 @@ ConnectorState: source, slice, status, last_success_at, last_attempt_at, last_er
 SourcePermission: source, source_object_kind, source_object_key, principal_kind, principal_key, role, visibility, observed_at, source_updated_at, snapshot_key
 IssueEvent: source, issue_key, event_type, actor_key, from_value, to_value, source_event_key, event_time, observed_at
 Attachment: key, source, external_id, owner_kind, owner_key, filename, mime_type, byte_size, content_hash, source_url, extraction_state, visibility
+Conflict: key, object_kind, object_key, conflict_type, left_evidence_key, right_evidence_key, status, detected_at, resolved_at
 SearchIndexState: owner_kind, owner_key, index_name, indexed_hash, mapper_version, indexed_at, status, needs_reindex, error
 EmbeddingArtifact: key, owner_kind, owner_key, content_hash, model, dimensions, embedding_ref, generated_at, status
 ```
@@ -1992,10 +2054,16 @@ type EvaluationReport struct {
 	DocumentFragmentTraceCoverage   float64 `json:"document_fragment_trace_coverage"`
 	ExactObjectSearchRecall         float64 `json:"exact_object_search_recall"`
 	LexicalEvidenceSearchRecall     float64 `json:"lexical_evidence_search_recall"`
+	MeanReciprocalRank              float64 `json:"mean_reciprocal_rank"`
+	NDCG                            float64 `json:"ndcg"`
+	CitationCoverage                float64 `json:"citation_coverage"`
+	PermissionSafeRecall            float64 `json:"permission_safe_recall"`
+	SourceHealthCoverage            float64 `json:"source_health_coverage"`
 	ProductGatePassCount            int     `json:"product_gate_pass_count"`
 	NoAnswerBehaviorPass            bool    `json:"no_answer_behavior_pass"`
 	ActionCandidateEvidenceCoverage float64 `json:"action_candidate_evidence_coverage"`
 	SnapshotReplayConsistent        bool    `json:"snapshot_replay_consistent"`
+	RebuildFromSnapshotsConsistent  bool    `json:"rebuild_from_snapshots_consistent"`
 }
 ```
 
@@ -2029,6 +2097,10 @@ permission filters prevent hidden objects from appearing in search results
 tombstone or stale events remove or mark invalid query-facing edges
 SearchIndexState catches and repairs stale FTS rows
 graph expansion is bounded and uses read-only transactions in query tests
+ranking eval reports exact hit rate, MRR, nDCG, citation coverage, and permission-safe recall
+source health eval confirms partial/missing sources appear in answer DTOs
+rebuild eval deletes normalized rows, replays snapshots, and compares report output
+conflicting source facts create unresolved conflict state instead of overwriting each other
 ```
 
 - [ ] **Step 3: Add CLI**
@@ -2040,7 +2112,7 @@ go run ./cmd/cubicle-graph eval --db 'file:graph.db?_fk=1'
 Expected for synthetic ingest:
 
 ```json
-{"expected_edges":95,"found_edges":95,"missing_edges":0,"precision":1,"recall":1,"edge_metadata_completeness":1,"association_metadata_completeness":1,"document_fragment_trace_coverage":1,"exact_object_search_recall":1,"lexical_evidence_search_recall":1,"product_gate_pass_count":3,"no_answer_behavior_pass":true,"action_candidate_evidence_coverage":1,"snapshot_replay_consistent":true}
+{"expected_edges":95,"found_edges":95,"missing_edges":0,"precision":1,"recall":1,"edge_metadata_completeness":1,"association_metadata_completeness":1,"document_fragment_trace_coverage":1,"exact_object_search_recall":1,"lexical_evidence_search_recall":1,"mean_reciprocal_rank":1,"ndcg":1,"citation_coverage":1,"permission_safe_recall":1,"source_health_coverage":1,"product_gate_pass_count":3,"no_answer_behavior_pass":true,"action_candidate_evidence_coverage":1,"snapshot_replay_consistent":true,"rebuild_from_snapshots_consistent":true}
 ```
 
 ## Task 9: Documentation And Handoff
@@ -2107,15 +2179,20 @@ Ent schemas represent typed execution graph concepts
 AssociationStore exposes object and association primitives over Ent
 source snapshots, source events, connector state, evidence, and edge metadata are stored
 connector cursor, partial, tombstone, and stale states are represented
+connector capabilities and source health are visible through /v1/sources
 query-facing objects carry visibility/source-permission metadata
+permission tuple filtering is covered by tests
 document revisions, tabs, fragments, permissions, summaries, search state, and embedding metadata are stored
 readiness query answers "can project Atlas launch?"
 ticket trace query links ticket -> PRs -> docs -> decisions -> messages -> blockers
 search query returns exact object hits and lexical evidence hits
 search excludes hidden or stale evidence and detects stale FTS rows through SearchIndexState
+search evaluation tracks exact hit rate, MRR, nDCG, citation coverage, and no-answer correctness
 document trace query links a doc to fragments, tickets, decisions, and evidence
 action candidate query returns evidence-backed read-only next actions
+conflicting source facts create unresolved conflict state instead of being flattened
 SQLite runs as a local WAL-backed store with bounded reads and a single writer ingestion path
+normalized DB can be rebuilt from source snapshots and mapper versions
 HTTP service exposes the same query layer
 evaluation compares graph edges to ground truth and verifies metadata, search, fragment, and snapshot completeness
 Flink Autoscaler snapshot importer exists and is offline-testable
@@ -2133,9 +2210,10 @@ Swift app remains untouched
 6. Ingest service
 7. Query layer and action candidate rules
 8. HTTP service
-9. Flink Autoscaler snapshot importer
-10. Evaluation
-11. Docs
+9. Source health and hardening fixtures
+10. Flink Autoscaler snapshot importer
+11. Evaluation
+12. Docs
 ```
 
 Do not start with Flink live crawling. Start with synthetic data because it gives a known answer key. Add Flink after the query layer works.
