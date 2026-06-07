@@ -824,7 +824,7 @@ Slack API constraints:
 Use two storage layers:
 
 ```text
-services/cubicle-graph/.data/
+services/ontology-service/.data/
   graph.db
   snapshots/
     crawl-budget.json
@@ -1386,7 +1386,7 @@ The graph controls trust, scope, freshness, and permissions. Embeddings help fin
 Command:
 
 ```bash
-go run ./cmd/cubicle-graph crawl-flink --slice autoscaler --since 2025-06-01
+go run ./cmd/ontology-service crawl-flink --slice autoscaler --since 2025-06-01
 ```
 
 Flow:
@@ -1633,13 +1633,13 @@ Minimum acceptance for the Flink import:
 Module:
 
 ```text
-services/cubicle-graph/
+services/ontology-service/
 ```
 
 Packages:
 
 ```text
-cmd/cubicle-graph          CLI: serve, crawl-flink, replay, query
+cmd/ontology-service          CLI: serve, crawl-flink, replay, query
 internal/config            env and defaults
 internal/store             Ent client, migrations, transaction helper
 internal/sources/jira      Jira fetcher and snapshot writer
@@ -1747,7 +1747,7 @@ The localhost POC does not need auth, but the graph schema should not make permi
 
 ## Open Decisions Resolved For POC
 
-- Data root defaults to `services/cubicle-graph/.data`; `CUBICLE_GRAPH_DATA_ROOT` overrides it.
+- Data root defaults to `services/ontology-service/.data`; `CUBICLE_GRAPH_DATA_ROOT` overrides it.
 - Swift does not access `graph.db` directly.
 - Flink import starts with Autoscaler, not all Kubernetes Operator.
 - Pony Mail is optional and never blocks Jira/GitHub/docs import.

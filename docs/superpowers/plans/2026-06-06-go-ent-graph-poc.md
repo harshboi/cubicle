@@ -4,7 +4,7 @@
 
 **Goal:** Build a barebones Go service and query layer that ingests a realistic engineering-work dataset into an Ent-backed SQLite graph and answers product-shaped execution questions.
 
-**Architecture:** Create a standalone Go module under `services/cubicle-graph/`. The service owns `graph.db`, Ent schemas, raw snapshots, ingestion, graph traversal, deterministic read-only action candidates, and localhost HTTP/CLI queries. The durable graph is a Meta/TAO-inspired object-association store over Ent and SQLite. The graph follows a Glean-style context contract for source, freshness, visibility, and provenance, while using a Palantir-style operational ontology for typed execution objects, typed links, and read-only actions.
+**Architecture:** Create a standalone Go module under `services/ontology-service/`. The service owns `graph.db`, Ent schemas, raw snapshots, ingestion, graph traversal, deterministic read-only action candidates, and localhost HTTP/CLI queries. The durable graph is a Meta/TAO-inspired object-association store over Ent and SQLite. The graph follows a Glean-style context contract for source, freshness, visibility, and provenance, while using a Palantir-style operational ontology for typed execution objects, typed links, and read-only actions.
 
 **Tech Stack:** Go 1.25.1 local toolchain, Ent, SQLite, Gin `v1.12.0`, Huma `v2.38.0`, Huma Gin adapter `humagin`, `log/slog`, `go test`, synthetic JSON fixtures, optional Apache Flink public-data import.
 
@@ -50,7 +50,7 @@ For POC order:
 
 In scope:
 
-- A new Go module: `services/cubicle-graph/`.
+- A new Go module: `services/ontology-service/`.
 - Ent schemas for project execution graph objects, document fragments, source permissions, source snapshots, connector state, evidence, metadata-rich associations, search index state, embedding artifacts, and read-only action candidates.
 - A synthetic workplace dataset generator.
 - A raw snapshot and replay model for source-backed imports.
@@ -237,9 +237,9 @@ Additional hardening tests:
 ## Target Shape
 
 ```text
-services/cubicle-graph/
+services/ontology-service/
  |
- +-- cmd/cubicle-graph/
+ +-- cmd/ontology-service/
  |     -> CLI entry point: serve, ingest-synthetic, query
  |
  +-- ent/schema/
@@ -433,14 +433,14 @@ A whole-document vector is not enough. V0 stores searchable fragments and option
 The POC succeeds if these commands return evidence-backed answers:
 
 ```bash
-go run ./cmd/cubicle-graph query readiness --project atlas
-go run ./cmd/cubicle-graph query ticket-trace --ticket ATLAS-42
-go run ./cmd/cubicle-graph query blockers --project atlas
-go run ./cmd/cubicle-graph query decision-gaps --project atlas
-go run ./cmd/cubicle-graph query action-candidates --project atlas
-go run ./cmd/cubicle-graph query neighborhood --node ticket:ATLAS-42
-go run ./cmd/cubicle-graph search --q "ATLAS-42 rollout decision" --project atlas
-go run ./cmd/cubicle-graph query document-trace --document RFC-7
+go run ./cmd/ontology-service query readiness --project atlas
+go run ./cmd/ontology-service query ticket-trace --ticket ATLAS-42
+go run ./cmd/ontology-service query blockers --project atlas
+go run ./cmd/ontology-service query decision-gaps --project atlas
+go run ./cmd/ontology-service query action-candidates --project atlas
+go run ./cmd/ontology-service query neighborhood --node ticket:ATLAS-42
+go run ./cmd/ontology-service search --q "ATLAS-42 rollout decision" --project atlas
+go run ./cmd/ontology-service query document-trace --document RFC-7
 ```
 
 The HTTP layer should expose the same concepts:
@@ -481,11 +481,11 @@ explicit no-answer when evidence is missing
 
 **Files:**
 
-- Create: `services/cubicle-graph/go.mod`
-- Create: `services/cubicle-graph/cmd/cubicle-graph/main.go`
-- Create: `services/cubicle-graph/internal/config/config.go`
-- Create: `services/cubicle-graph/internal/config/config_test.go`
-- Create: `services/cubicle-graph/internal/observability/logging.go`
+- Create: `services/ontology-service/go.mod`
+- Create: `services/ontology-service/cmd/ontology-service/main.go`
+- Create: `services/ontology-service/internal/config/config.go`
+- Create: `services/ontology-service/internal/config/config_test.go`
+- Create: `services/ontology-service/internal/observability/logging.go`
 
 - [ ] **Step 1: Initialize module**
 
@@ -493,9 +493,9 @@ Run:
 
 ```bash
 cd /Users/prabhat/workspace/cubicle
-mkdir -p services/cubicle-graph
-cd services/cubicle-graph
-go mod init cubicle/services/cubicle-graph
+mkdir -p services/ontology-service
+cd services/ontology-service
+go mod init cubicle/services/ontology-service
 go test ./...
 ```
 
@@ -508,7 +508,7 @@ go: warning: "./..." matched no packages
 
 - [ ] **Step 2: Add config test**
 
-Create `services/cubicle-graph/internal/config/config_test.go`:
+Create `services/ontology-service/internal/config/config_test.go`:
 
 ```go
 package config
@@ -528,12 +528,12 @@ func TestLoadDefaults(t *testing.T) {
 func TestLoadEnvOverrides(t *testing.T) {
 	cfg := Load(map[string]string{
 		"CUBICLE_GRAPH_LISTEN_ADDR": "127.0.0.1:48080",
-		"CUBICLE_GRAPH_DATABASE_URL": "file:/tmp/cubicle-graph.db?_fk=1",
+		"CUBICLE_GRAPH_DATABASE_URL": "file:/tmp/ontology-service.db?_fk=1",
 	})
 	if cfg.ListenAddr != "127.0.0.1:48080" {
 		t.Fatalf("ListenAddr = %q", cfg.ListenAddr)
 	}
-	if cfg.DatabaseURL != "file:/tmp/cubicle-graph.db?_fk=1" {
+	if cfg.DatabaseURL != "file:/tmp/ontology-service.db?_fk=1" {
 		t.Fatalf("DatabaseURL = %q", cfg.DatabaseURL)
 	}
 }
@@ -541,7 +541,7 @@ func TestLoadEnvOverrides(t *testing.T) {
 
 - [ ] **Step 3: Add config implementation**
 
-Create `services/cubicle-graph/internal/config/config.go`:
+Create `services/ontology-service/internal/config/config.go`:
 
 ```go
 package config
@@ -568,7 +568,7 @@ func Load(env map[string]string) Config {
 
 - [ ] **Step 4: Add logger helper**
 
-Create `services/cubicle-graph/internal/observability/logging.go`:
+Create `services/ontology-service/internal/observability/logging.go`:
 
 ```go
 package observability
@@ -585,7 +585,7 @@ func NewLogger() *slog.Logger {
 
 - [ ] **Step 5: Add CLI version command with real JSON output**
 
-Create `services/cubicle-graph/cmd/cubicle-graph/main.go`:
+Create `services/ontology-service/cmd/ontology-service/main.go`:
 
 ```go
 package main
@@ -605,11 +605,11 @@ func main() {
 	switch cmd {
 	case "version":
 		_ = json.NewEncoder(os.Stdout).Encode(map[string]string{
-			"service": "cubicle-graph",
+			"service": "ontology-service",
 			"version": "poc",
 		})
 	default:
-		fmt.Fprintln(os.Stderr, "usage: cubicle-graph [version|serve|ingest-synthetic|query]")
+		fmt.Fprintln(os.Stderr, "usage: ontology-service [version|serve|ingest-synthetic|query]")
 		os.Exit(2)
 	}
 }
@@ -620,70 +620,70 @@ func main() {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./...
-go run ./cmd/cubicle-graph version
+go run ./cmd/ontology-service version
 ```
 
 Expected:
 
 ```text
-ok  	cubicle/services/cubicle-graph/internal/config
-{"service":"cubicle-graph","version":"poc"}
+ok  	cubicle/services/ontology-service/internal/config
+{"service":"ontology-service","version":"poc"}
 ```
 
 ## Task 2: Add Ent And SQLite Store
 
 **Files:**
 
-- Create: `services/cubicle-graph/ent/generate.go`
-- Create: `services/cubicle-graph/ent/schema/person.go`
-- Create: `services/cubicle-graph/ent/schema/personalias.go`
-- Create: `services/cubicle-graph/ent/schema/actoralias.go`
-- Create: `services/cubicle-graph/ent/schema/team.go`
-- Create: `services/cubicle-graph/ent/schema/project.go`
-- Create: `services/cubicle-graph/ent/schema/component.go`
-- Create: `services/cubicle-graph/ent/schema/ticket.go`
-- Create: `services/cubicle-graph/ent/schema/pullrequest.go`
-- Create: `services/cubicle-graph/ent/schema/codefile.go`
-- Create: `services/cubicle-graph/ent/schema/document.go`
-- Create: `services/cubicle-graph/ent/schema/documentrevision.go`
-- Create: `services/cubicle-graph/ent/schema/documenttab.go`
-- Create: `services/cubicle-graph/ent/schema/documentfragment.go`
-- Create: `services/cubicle-graph/ent/schema/documentsummary.go`
-- Create: `services/cubicle-graph/ent/schema/message.go`
-- Create: `services/cubicle-graph/ent/schema/decision.go`
-- Create: `services/cubicle-graph/ent/schema/risk.go`
-- Create: `services/cubicle-graph/ent/schema/blocker.go`
-- Create: `services/cubicle-graph/ent/schema/actioncandidate.go`
-- Create: `services/cubicle-graph/ent/schema/conflict.go`
-- Create: `services/cubicle-graph/ent/schema/connectorstate.go`
-- Create: `services/cubicle-graph/ent/schema/connectorcapability.go`
-- Create: `services/cubicle-graph/ent/schema/sourcesnapshot.go`
-- Create: `services/cubicle-graph/ent/schema/sourceevent.go`
-- Create: `services/cubicle-graph/ent/schema/providerevent.go`
-- Create: `services/cubicle-graph/ent/schema/sourceerror.go`
-- Create: `services/cubicle-graph/ent/schema/sourcepermission.go`
-- Create: `services/cubicle-graph/ent/schema/evidence.go`
-- Create: `services/cubicle-graph/ent/schema/issueevent.go`
-- Create: `services/cubicle-graph/ent/schema/attachment.go`
-- Create: `services/cubicle-graph/ent/schema/embeddingartifact.go`
-- Create: `services/cubicle-graph/ent/schema/searchindexstate.go`
-- Create: `services/cubicle-graph/ent/schema/ontologyobjecttype.go`
-- Create: `services/cubicle-graph/ent/schema/ontologylinktype.go`
-- Create: `services/cubicle-graph/ent/schema/ontologyactiontype.go`
-- Create: `services/cubicle-graph/ent/schema/graphedge.go`
-- Create: `services/cubicle-graph/internal/store/store.go`
-- Create: `services/cubicle-graph/internal/store/store_test.go`
-- Create: `services/cubicle-graph/internal/store/tx.go`
-- Create: `services/cubicle-graph/internal/store/tx_test.go`
+- Create: `services/ontology-service/ent/generate.go`
+- Create: `services/ontology-service/ent/schema/person.go`
+- Create: `services/ontology-service/ent/schema/personalias.go`
+- Create: `services/ontology-service/ent/schema/actoralias.go`
+- Create: `services/ontology-service/ent/schema/team.go`
+- Create: `services/ontology-service/ent/schema/project.go`
+- Create: `services/ontology-service/ent/schema/component.go`
+- Create: `services/ontology-service/ent/schema/ticket.go`
+- Create: `services/ontology-service/ent/schema/pullrequest.go`
+- Create: `services/ontology-service/ent/schema/codefile.go`
+- Create: `services/ontology-service/ent/schema/document.go`
+- Create: `services/ontology-service/ent/schema/documentrevision.go`
+- Create: `services/ontology-service/ent/schema/documenttab.go`
+- Create: `services/ontology-service/ent/schema/documentfragment.go`
+- Create: `services/ontology-service/ent/schema/documentsummary.go`
+- Create: `services/ontology-service/ent/schema/message.go`
+- Create: `services/ontology-service/ent/schema/decision.go`
+- Create: `services/ontology-service/ent/schema/risk.go`
+- Create: `services/ontology-service/ent/schema/blocker.go`
+- Create: `services/ontology-service/ent/schema/actioncandidate.go`
+- Create: `services/ontology-service/ent/schema/conflict.go`
+- Create: `services/ontology-service/ent/schema/connectorstate.go`
+- Create: `services/ontology-service/ent/schema/connectorcapability.go`
+- Create: `services/ontology-service/ent/schema/sourcesnapshot.go`
+- Create: `services/ontology-service/ent/schema/sourceevent.go`
+- Create: `services/ontology-service/ent/schema/providerevent.go`
+- Create: `services/ontology-service/ent/schema/sourceerror.go`
+- Create: `services/ontology-service/ent/schema/sourcepermission.go`
+- Create: `services/ontology-service/ent/schema/evidence.go`
+- Create: `services/ontology-service/ent/schema/issueevent.go`
+- Create: `services/ontology-service/ent/schema/attachment.go`
+- Create: `services/ontology-service/ent/schema/embeddingartifact.go`
+- Create: `services/ontology-service/ent/schema/searchindexstate.go`
+- Create: `services/ontology-service/ent/schema/ontologyobjecttype.go`
+- Create: `services/ontology-service/ent/schema/ontologylinktype.go`
+- Create: `services/ontology-service/ent/schema/ontologyactiontype.go`
+- Create: `services/ontology-service/ent/schema/graphedge.go`
+- Create: `services/ontology-service/internal/store/store.go`
+- Create: `services/ontology-service/internal/store/store_test.go`
+- Create: `services/ontology-service/internal/store/tx.go`
+- Create: `services/ontology-service/internal/store/tx_test.go`
 
 - [ ] **Step 1: Install Ent dependencies**
 
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go get entgo.io/ent
 go get github.com/mattn/go-sqlite3
 go get entgo.io/ent/cmd/ent
@@ -697,7 +697,7 @@ go: added entgo.io/ent
 
 - [ ] **Step 2: Add Ent generator marker**
 
-Create `services/cubicle-graph/ent/generate.go`:
+Create `services/ontology-service/ent/generate.go`:
 
 ```go
 package ent
@@ -709,7 +709,7 @@ package ent
 
 Each schema must include stable natural keys and enough metadata for Glean-style freshness/provenance and Palantir-style operational links. The first implementation can use explicit foreign-key fields plus `GraphEdge` rather than complex typed Ent edges, but the edge itself must not be thin.
 
-Example `services/cubicle-graph/ent/schema/ticket.go`:
+Example `services/ontology-service/ent/schema/ticket.go`:
 
 ```go
 package schema
@@ -754,7 +754,7 @@ func (Ticket) Indexes() []ent.Index {
 }
 ```
 
-Example `services/cubicle-graph/ent/schema/evidence.go`:
+Example `services/ontology-service/ent/schema/evidence.go`:
 
 ```go
 package schema
@@ -794,7 +794,7 @@ func (Evidence) Indexes() []ent.Index {
 }
 ```
 
-Example `services/cubicle-graph/ent/schema/graphedge.go`:
+Example `services/ontology-service/ent/schema/graphedge.go`:
 
 ```go
 package schema
@@ -851,7 +851,7 @@ func (GraphEdge) Indexes() []ent.Index {
 }
 ```
 
-Example `services/cubicle-graph/ent/schema/actioncandidate.go`:
+Example `services/ontology-service/ent/schema/actioncandidate.go`:
 
 ```go
 package schema
@@ -916,7 +916,7 @@ These schemas are part of the graph contract, not importer bookkeeping. Query re
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go generate ./ent
 go test ./...
 ```
@@ -924,12 +924,12 @@ go test ./...
 Expected:
 
 ```text
-ok  	cubicle/services/cubicle-graph/internal/config
+ok  	cubicle/services/ontology-service/internal/config
 ```
 
 - [ ] **Step 5: Add store opener**
 
-Create `services/cubicle-graph/internal/store/store.go`:
+Create `services/ontology-service/internal/store/store.go`:
 
 ```go
 package store
@@ -938,7 +938,7 @@ import (
 	"context"
 	stdsql "database/sql"
 
-	"cubicle/services/cubicle-graph/ent"
+	"cubicle/services/ontology-service/ent"
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
 	_ "github.com/mattn/go-sqlite3"
@@ -990,7 +990,7 @@ func (s *Store) Close() error {
 
 `MaxOpenConns(1)` is acceptable for the local POC because ingestion is single-writer and the HTTP API is localhost. Before multi-user serving, split reader/writer handles or move to Postgres.
 
-Create `services/cubicle-graph/internal/store/tx.go`:
+Create `services/ontology-service/internal/store/tx.go`:
 
 ```go
 package store
@@ -998,7 +998,7 @@ package store
 import (
 	"context"
 
-	"cubicle/services/cubicle-graph/ent"
+	"cubicle/services/ontology-service/ent"
 )
 
 func (s *Store) WithTx(ctx context.Context, fn func(*ent.Tx) error) error {
@@ -1018,7 +1018,7 @@ Do not return Ent entities loaded inside `WithTx` unless they are mapped to doma
 
 - [ ] **Step 6: Add store integration test**
 
-Create `services/cubicle-graph/internal/store/store_test.go`:
+Create `services/ontology-service/internal/store/store_test.go`:
 
 ```go
 package store
@@ -1061,7 +1061,7 @@ WithTx rolls back on mapper error
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 CGO_ENABLED=1 go test ./...
 ```
 
@@ -1071,14 +1071,14 @@ Expected: all tests pass.
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/graphstore/association_store.go`
-- Create: `services/cubicle-graph/internal/graphstore/association_store_test.go`
-- Create: `services/cubicle-graph/internal/ontology/registry.go`
-- Create: `services/cubicle-graph/internal/ontology/registry_test.go`
+- Create: `services/ontology-service/internal/graphstore/association_store.go`
+- Create: `services/ontology-service/internal/graphstore/association_store_test.go`
+- Create: `services/ontology-service/internal/ontology/registry.go`
+- Create: `services/ontology-service/internal/ontology/registry_test.go`
 
 - [ ] **Step 1: Define graph primitives**
 
-Create `services/cubicle-graph/internal/graphstore/association_store.go`:
+Create `services/ontology-service/internal/graphstore/association_store.go`:
 
 ```go
 package graphstore
@@ -1087,7 +1087,7 @@ import (
 	"context"
 	"time"
 
-	"cubicle/services/cubicle-graph/ent"
+	"cubicle/services/ontology-service/ent"
 )
 
 type NodeRef struct {
@@ -1183,7 +1183,7 @@ assert association metadata survives the round trip
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/graphstore ./internal/ontology -v
 ```
 
@@ -1193,10 +1193,10 @@ Expected: AssociationStore and ontology tests pass.
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/search/search.go`
-- Create: `services/cubicle-graph/internal/search/search_test.go`
-- Create: `services/cubicle-graph/internal/docmodel/docmodel.go`
-- Create: `services/cubicle-graph/internal/docmodel/docmodel_test.go`
+- Create: `services/ontology-service/internal/search/search.go`
+- Create: `services/ontology-service/internal/search/search_test.go`
+- Create: `services/ontology-service/internal/docmodel/docmodel.go`
+- Create: `services/ontology-service/internal/docmodel/docmodel_test.go`
 
 - [ ] **Step 1: Define document normalization rules**
 
@@ -1315,7 +1315,7 @@ assert the result reports no evidence instead of fabricating an answer
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/docmodel ./internal/search -v
 ```
 
@@ -1325,10 +1325,10 @@ Expected: document model and search tests pass.
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/domain/models.go`
-- Create: `services/cubicle-graph/internal/synthetic/generator.go`
-- Create: `services/cubicle-graph/internal/synthetic/generator_test.go`
-- Create: `services/cubicle-graph/testdata/synthetic/README.md`
+- Create: `services/ontology-service/internal/domain/models.go`
+- Create: `services/ontology-service/internal/synthetic/generator.go`
+- Create: `services/ontology-service/internal/synthetic/generator_test.go`
+- Create: `services/ontology-service/testdata/synthetic/README.md`
 
 - [ ] **Step 1: Define source DTOs**
 
@@ -1437,7 +1437,7 @@ at least one connector state is stale or partial
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/synthetic -v
 ```
 
@@ -1447,9 +1447,9 @@ Expected: generator tests pass.
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/ingest/ingest.go`
-- Create: `services/cubicle-graph/internal/ingest/ingest_test.go`
-- Modify: `services/cubicle-graph/cmd/cubicle-graph/main.go`
+- Create: `services/ontology-service/internal/ingest/ingest.go`
+- Create: `services/ontology-service/internal/ingest/ingest_test.go`
+- Modify: `services/ontology-service/cmd/ontology-service/main.go`
 
 - [ ] **Step 1: Add ingest API**
 
@@ -1496,7 +1496,7 @@ assert at least one action candidate exists for project:atlas
 Add:
 
 ```bash
-go run ./cmd/cubicle-graph ingest-synthetic --db file:graph.db?_fk=1
+go run ./cmd/ontology-service ingest-synthetic --db file:graph.db?_fk=1
 ```
 
 Expected output:
@@ -1510,9 +1510,9 @@ Expected output:
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 rm -f graph.db
-go run ./cmd/cubicle-graph ingest-synthetic --db 'file:graph.db?_fk=1'
+go run ./cmd/ontology-service ingest-synthetic --db 'file:graph.db?_fk=1'
 go test ./...
 ```
 
@@ -1522,17 +1522,17 @@ Expected: command prints JSON counts and tests pass.
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/query/models.go`
-- Create: `services/cubicle-graph/internal/query/readiness.go`
-- Create: `services/cubicle-graph/internal/query/ticket_trace.go`
-- Create: `services/cubicle-graph/internal/query/neighborhood.go`
-- Create: `services/cubicle-graph/internal/query/decision_gaps.go`
-- Create: `services/cubicle-graph/internal/query/document_trace.go`
-- Create: `services/cubicle-graph/internal/query/search.go`
-- Create: `services/cubicle-graph/internal/actions/actions.go`
-- Create: `services/cubicle-graph/internal/actions/actions_test.go`
-- Create: `services/cubicle-graph/internal/query/query_test.go`
-- Modify: `services/cubicle-graph/cmd/cubicle-graph/main.go`
+- Create: `services/ontology-service/internal/query/models.go`
+- Create: `services/ontology-service/internal/query/readiness.go`
+- Create: `services/ontology-service/internal/query/ticket_trace.go`
+- Create: `services/ontology-service/internal/query/neighborhood.go`
+- Create: `services/ontology-service/internal/query/decision_gaps.go`
+- Create: `services/ontology-service/internal/query/document_trace.go`
+- Create: `services/ontology-service/internal/query/search.go`
+- Create: `services/ontology-service/internal/actions/actions.go`
+- Create: `services/ontology-service/internal/actions/actions_test.go`
+- Create: `services/ontology-service/internal/query/query_test.go`
+- Modify: `services/ontology-service/cmd/ontology-service/main.go`
 
 - [ ] **Step 1: Define query outputs**
 
@@ -1701,13 +1701,13 @@ Search and document trace are evidence retrieval commands. They do not generate 
 Commands:
 
 ```bash
-go run ./cmd/cubicle-graph query readiness --project atlas --db 'file:graph.db?_fk=1'
-go run ./cmd/cubicle-graph query ticket-trace --ticket ATLAS-42 --db 'file:graph.db?_fk=1'
-go run ./cmd/cubicle-graph query neighborhood --node ticket:ATLAS-42 --db 'file:graph.db?_fk=1'
-go run ./cmd/cubicle-graph query decision-gaps --project atlas --db 'file:graph.db?_fk=1'
-go run ./cmd/cubicle-graph query action-candidates --project atlas --db 'file:graph.db?_fk=1'
-go run ./cmd/cubicle-graph search --q 'rollout gate ATLAS-42' --project atlas --db 'file:graph.db?_fk=1'
-go run ./cmd/cubicle-graph query document-trace --document RFC-7 --db 'file:graph.db?_fk=1'
+go run ./cmd/ontology-service query readiness --project atlas --db 'file:graph.db?_fk=1'
+go run ./cmd/ontology-service query ticket-trace --ticket ATLAS-42 --db 'file:graph.db?_fk=1'
+go run ./cmd/ontology-service query neighborhood --node ticket:ATLAS-42 --db 'file:graph.db?_fk=1'
+go run ./cmd/ontology-service query decision-gaps --project atlas --db 'file:graph.db?_fk=1'
+go run ./cmd/ontology-service query action-candidates --project atlas --db 'file:graph.db?_fk=1'
+go run ./cmd/ontology-service search --q 'rollout gate ATLAS-42' --project atlas --db 'file:graph.db?_fk=1'
+go run ./cmd/ontology-service query document-trace --document RFC-7 --db 'file:graph.db?_fk=1'
 ```
 
 - [ ] **Step 7: Verify**
@@ -1715,10 +1715,10 @@ go run ./cmd/cubicle-graph query document-trace --document RFC-7 --db 'file:grap
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 rm -f graph.db
-go run ./cmd/cubicle-graph ingest-synthetic --db 'file:graph.db?_fk=1'
-go run ./cmd/cubicle-graph query readiness --project atlas --db 'file:graph.db?_fk=1'
+go run ./cmd/ontology-service ingest-synthetic --db 'file:graph.db?_fk=1'
+go run ./cmd/ontology-service query readiness --project atlas --db 'file:graph.db?_fk=1'
 go test ./internal/query ./internal/actions -v
 ```
 
@@ -1737,9 +1737,9 @@ query tests pass
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/httpapi/router.go`
-- Create: `services/cubicle-graph/internal/httpapi/router_test.go`
-- Modify: `services/cubicle-graph/cmd/cubicle-graph/main.go`
+- Create: `services/ontology-service/internal/httpapi/router.go`
+- Create: `services/ontology-service/internal/httpapi/router_test.go`
+- Modify: `services/ontology-service/cmd/ontology-service/main.go`
 
 - [ ] **Step 1: Add router**
 
@@ -1783,13 +1783,13 @@ OpenAPI document includes health, graph neighborhood, source health, readiness, 
 Command:
 
 ```bash
-go run ./cmd/cubicle-graph serve --db 'file:graph.db?_fk=1' --listen 127.0.0.1:48080
+go run ./cmd/ontology-service serve --db 'file:graph.db?_fk=1' --listen 127.0.0.1:48080
 ```
 
 Startup output:
 
 ```json
-{"service":"cubicle-graph","url":"http://127.0.0.1:48080","db":"file:graph.db?_fk=1"}
+{"service":"ontology-service","url":"http://127.0.0.1:48080","db":"file:graph.db?_fk=1"}
 ```
 
 - [ ] **Step 4: Verify**
@@ -1797,8 +1797,8 @@ Startup output:
 Run in one terminal:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
-go run ./cmd/cubicle-graph serve --db 'file:graph.db?_fk=1' --listen 127.0.0.1:48080
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
+go run ./cmd/ontology-service serve --db 'file:graph.db?_fk=1' --listen 127.0.0.1:48080
 ```
 
 Run in another:
@@ -1820,22 +1820,22 @@ Expected:
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/snapshot/writer.go`
-- Create: `services/cubicle-graph/internal/snapshot/writer_test.go`
-- Create: `services/cubicle-graph/internal/snapshot/replay.go`
-- Create: `services/cubicle-graph/internal/snapshot/replay_test.go`
-- Create: `services/cubicle-graph/internal/flink/crawl_budget.go`
-- Create: `services/cubicle-graph/internal/flink/crawl_budget_test.go`
-- Create: `services/cubicle-graph/internal/sources/testserver/server.go`
-- Create: `services/cubicle-graph/internal/sources/jira/client.go`
-- Create: `services/cubicle-graph/internal/sources/jira/remotelinks.go`
-- Create: `services/cubicle-graph/internal/sources/github/client.go`
-- Create: `services/cubicle-graph/internal/sources/docs/client.go`
-- Create: `services/cubicle-graph/internal/sources/docs/fragmenter.go`
-- Create: `services/cubicle-graph/internal/sources/ponymail/client.go`
-- Create: `services/cubicle-graph/internal/flink/importer.go`
-- Create: `services/cubicle-graph/internal/flink/importer_test.go`
-- Modify: `services/cubicle-graph/cmd/cubicle-graph/main.go`
+- Create: `services/ontology-service/internal/snapshot/writer.go`
+- Create: `services/ontology-service/internal/snapshot/writer_test.go`
+- Create: `services/ontology-service/internal/snapshot/replay.go`
+- Create: `services/ontology-service/internal/snapshot/replay_test.go`
+- Create: `services/ontology-service/internal/flink/crawl_budget.go`
+- Create: `services/ontology-service/internal/flink/crawl_budget_test.go`
+- Create: `services/ontology-service/internal/sources/testserver/server.go`
+- Create: `services/ontology-service/internal/sources/jira/client.go`
+- Create: `services/ontology-service/internal/sources/jira/remotelinks.go`
+- Create: `services/ontology-service/internal/sources/github/client.go`
+- Create: `services/ontology-service/internal/sources/docs/client.go`
+- Create: `services/ontology-service/internal/sources/docs/fragmenter.go`
+- Create: `services/ontology-service/internal/sources/ponymail/client.go`
+- Create: `services/ontology-service/internal/flink/importer.go`
+- Create: `services/ontology-service/internal/flink/importer_test.go`
+- Modify: `services/ontology-service/cmd/ontology-service/main.go`
 
 - [ ] **Step 1: Define bounded import request**
 
@@ -1948,7 +1948,7 @@ mapper upserts by source external ID, version/revision, snapshot hash, and mappe
 Command:
 
 ```bash
-go run ./cmd/cubicle-graph ingest-flink \
+go run ./cmd/ontology-service ingest-flink \
   --db 'file:graph.db?_fk=1' \
   --component 'Autoscaler' \
   --jira-since '2023-01-01T00:00:00Z' \
@@ -2028,7 +2028,7 @@ If these fail, do not keep widening blindly. First inspect missing links and rem
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/flink ./internal/snapshot ./internal/sources/... -v
 ```
 
@@ -2038,9 +2038,9 @@ Expected: importer replays fixture snapshots into source objects, graph edges, e
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/eval/eval.go`
-- Create: `services/cubicle-graph/internal/eval/eval_test.go`
-- Modify: `services/cubicle-graph/cmd/cubicle-graph/main.go`
+- Create: `services/ontology-service/internal/eval/eval.go`
+- Create: `services/ontology-service/internal/eval/eval_test.go`
+- Modify: `services/ontology-service/cmd/ontology-service/main.go`
 
 - [ ] **Step 1: Define evaluation output**
 
@@ -2108,7 +2108,7 @@ conflicting source facts create unresolved conflict state instead of overwriting
 - [ ] **Step 3: Add CLI**
 
 ```bash
-go run ./cmd/cubicle-graph eval --db 'file:graph.db?_fk=1'
+go run ./cmd/ontology-service eval --db 'file:graph.db?_fk=1'
 ```
 
 Expected for synthetic ingest:
@@ -2121,7 +2121,7 @@ Expected for synthetic ingest:
 
 **Files:**
 
-- Create: `services/cubicle-graph/README.md`
+- Create: `services/ontology-service/README.md`
 - Create: `docs/go-ent-graph-poc.md`
 
 - [ ] **Step 1: Add service README**
@@ -2164,7 +2164,7 @@ future Swift integration path
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./...
 ```
 
@@ -2175,7 +2175,7 @@ Expected: all tests pass.
 The POC is complete when:
 
 ```text
-services/cubicle-graph exists as a working Go module
+services/ontology-service exists as a working Go module
 synthetic dataset can be ingested into graph.db
 Ent schemas represent typed execution graph concepts
 AssociationStore exposes object and association primitives over Ent

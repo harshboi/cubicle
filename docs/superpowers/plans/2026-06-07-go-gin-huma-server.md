@@ -13,12 +13,12 @@
 ## File Structure
 
 ```text
-services/cubicle-graph/
+services/ontology-service/
  |
  +-- go.mod
  |     -> pin Gin and Huma versions
  |
- +-- cmd/cubicle-graph/main.go
+ +-- cmd/ontology-service/main.go
  |     -> parse `serve` command flags, seed fixture graph, start localhost server
  |
  +-- internal/domain/graph.go
@@ -67,14 +67,14 @@ The first server slice intentionally exposes one generic graph operation plus he
 
 **Files:**
 
-- Modify: `services/cubicle-graph/go.mod`
+- Modify: `services/ontology-service/go.mod`
 
 - [ ] **Step 1: Add framework dependencies**
 
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go get github.com/gin-gonic/gin@v1.12.0
 go get github.com/danielgtaylor/huma/v2@v2.38.0
 go mod tidy
@@ -83,7 +83,7 @@ go mod tidy
 Expected `go.mod` contains:
 
 ```go
-module cubicle/services/cubicle-graph
+module cubicle/services/ontology-service
 
 go 1.25.1
 
@@ -98,7 +98,7 @@ require (
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go list -m github.com/gin-gonic/gin github.com/danielgtaylor/huma/v2
 ```
 
@@ -115,7 +115,7 @@ Run:
 
 ```bash
 cd /Users/prabhat/workspace/cubicle
-git add services/cubicle-graph/go.mod services/cubicle-graph/go.sum
+git add services/ontology-service/go.mod services/ontology-service/go.sum
 git commit -m "chore: add graph server dependencies"
 ```
 
@@ -123,13 +123,13 @@ git commit -m "chore: add graph server dependencies"
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/graphstore/store.go`
-- Create: `services/cubicle-graph/internal/fixtures/workstream.go`
-- Create: `services/cubicle-graph/internal/fixtures/workstream_test.go`
+- Create: `services/ontology-service/internal/graphstore/store.go`
+- Create: `services/ontology-service/internal/fixtures/workstream.go`
+- Create: `services/ontology-service/internal/fixtures/workstream_test.go`
 
 - [ ] **Step 1: Write fixture test**
 
-Create `services/cubicle-graph/internal/fixtures/workstream_test.go`:
+Create `services/ontology-service/internal/fixtures/workstream_test.go`:
 
 ```go
 package fixtures
@@ -138,7 +138,7 @@ import (
 	"context"
 	"testing"
 
-	"cubicle/services/cubicle-graph/internal/domain"
+	"cubicle/services/ontology-service/internal/domain"
 )
 
 func TestFlinkAutoscalerStoreExpandsKnownWorkstream(t *testing.T) {
@@ -173,7 +173,7 @@ func TestFlinkAutoscalerStoreExpandsKnownWorkstream(t *testing.T) {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/fixtures -run TestFlinkAutoscalerStoreExpandsKnownWorkstream -v
 ```
 
@@ -181,7 +181,7 @@ Expected: FAIL because `NewFlinkAutoscalerStore` does not exist.
 
 - [ ] **Step 3: Add graphstore interface**
 
-Create `services/cubicle-graph/internal/graphstore/store.go`:
+Create `services/ontology-service/internal/graphstore/store.go`:
 
 ```go
 package graphstore
@@ -189,7 +189,7 @@ package graphstore
 import (
 	"context"
 
-	"cubicle/services/cubicle-graph/internal/domain"
+	"cubicle/services/ontology-service/internal/domain"
 )
 
 type Expander interface {
@@ -199,7 +199,7 @@ type Expander interface {
 
 - [ ] **Step 4: Add deterministic fixture store**
 
-Create `services/cubicle-graph/internal/fixtures/workstream.go`:
+Create `services/ontology-service/internal/fixtures/workstream.go`:
 
 ```go
 package fixtures
@@ -208,8 +208,8 @@ import (
 	"context"
 	"time"
 
-	"cubicle/services/cubicle-graph/internal/domain"
-	"cubicle/services/cubicle-graph/internal/graphstore"
+	"cubicle/services/ontology-service/internal/domain"
+	"cubicle/services/ontology-service/internal/graphstore"
 )
 
 func NewFlinkAutoscalerStore() *graphstore.MemoryStore {
@@ -269,7 +269,7 @@ func fixtureEdge(fromKey string, fromKind domain.Kind, predicate domain.Predicat
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/fixtures -run TestFlinkAutoscalerStoreExpandsKnownWorkstream -v
 ```
 
@@ -281,7 +281,7 @@ Run:
 
 ```bash
 cd /Users/prabhat/workspace/cubicle
-git add services/cubicle-graph/internal/graphstore/store.go services/cubicle-graph/internal/fixtures
+git add services/ontology-service/internal/graphstore/store.go services/ontology-service/internal/fixtures
 git commit -m "feat: add graph server fixture store"
 ```
 
@@ -289,12 +289,12 @@ git commit -m "feat: add graph server fixture store"
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/httpapi/contracts.go`
-- Create: `services/cubicle-graph/internal/httpapi/contracts_test.go`
+- Create: `services/ontology-service/internal/httpapi/contracts.go`
+- Create: `services/ontology-service/internal/httpapi/contracts_test.go`
 
 - [ ] **Step 1: Write contract-shape tests**
 
-Create `services/cubicle-graph/internal/httpapi/contracts_test.go`:
+Create `services/ontology-service/internal/httpapi/contracts_test.go`:
 
 ```go
 package httpapi
@@ -330,7 +330,7 @@ func TestErrorResponseJSONShape(t *testing.T) {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/httpapi -run 'Test.*JSONShape' -v
 ```
 
@@ -338,12 +338,12 @@ Expected: FAIL because `internal/httpapi` and DTO types do not exist.
 
 - [ ] **Step 3: Add contracts**
 
-Create `services/cubicle-graph/internal/httpapi/contracts.go`:
+Create `services/ontology-service/internal/httpapi/contracts.go`:
 
 ```go
 package httpapi
 
-import "cubicle/services/cubicle-graph/internal/domain"
+import "cubicle/services/ontology-service/internal/domain"
 
 type HealthOutput struct {
 	Body HealthResponse
@@ -372,7 +372,7 @@ type ErrorResponse struct {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/httpapi -run 'Test.*JSONShape' -v
 ```
 
@@ -384,7 +384,7 @@ Run:
 
 ```bash
 cd /Users/prabhat/workspace/cubicle
-git add services/cubicle-graph/internal/httpapi/contracts.go services/cubicle-graph/internal/httpapi/contracts_test.go
+git add services/ontology-service/internal/httpapi/contracts.go services/ontology-service/internal/httpapi/contracts_test.go
 git commit -m "feat: add graph API contracts"
 ```
 
@@ -392,13 +392,13 @@ git commit -m "feat: add graph API contracts"
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/httpapi/router.go`
-- Create: `services/cubicle-graph/internal/httpapi/health.go`
-- Create: `services/cubicle-graph/internal/httpapi/router_test.go`
+- Create: `services/ontology-service/internal/httpapi/router.go`
+- Create: `services/ontology-service/internal/httpapi/health.go`
+- Create: `services/ontology-service/internal/httpapi/router_test.go`
 
 - [ ] **Step 1: Write router tests**
 
-Create `services/cubicle-graph/internal/httpapi/router_test.go`:
+Create `services/ontology-service/internal/httpapi/router_test.go`:
 
 ```go
 package httpapi
@@ -411,7 +411,7 @@ import (
 	"strings"
 	"testing"
 
-	"cubicle/services/cubicle-graph/internal/fixtures"
+	"cubicle/services/ontology-service/internal/fixtures"
 )
 
 func TestHealthzReturnsOK(t *testing.T) {
@@ -459,7 +459,7 @@ func TestOpenAPIDocumentIncludesHealth(t *testing.T) {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/httpapi -run 'TestHealthzReturnsOK|TestOpenAPIDocumentIncludesHealth' -v
 ```
 
@@ -467,7 +467,7 @@ Expected: FAIL because `NewRouter` does not exist.
 
 - [ ] **Step 3: Add router**
 
-Create `services/cubicle-graph/internal/httpapi/router.go`:
+Create `services/ontology-service/internal/httpapi/router.go`:
 
 ```go
 package httpapi
@@ -481,7 +481,7 @@ import (
 	"github.com/danielgtaylor/huma/v2/adapters/humagin"
 	"github.com/gin-gonic/gin"
 
-	"cubicle/services/cubicle-graph/internal/graphstore"
+	"cubicle/services/ontology-service/internal/graphstore"
 )
 
 func NewRouter(store graphstore.Expander, logger *slog.Logger) http.Handler {
@@ -524,7 +524,7 @@ func requestLogger(logger *slog.Logger) gin.HandlerFunc {
 
 - [ ] **Step 4: Add health operation**
 
-Create `services/cubicle-graph/internal/httpapi/health.go`:
+Create `services/ontology-service/internal/httpapi/health.go`:
 
 ```go
 package httpapi
@@ -551,7 +551,7 @@ func registerHealth(api huma.API) {
 
 - [ ] **Step 5: Add temporary graph registration stub**
 
-Create `services/cubicle-graph/internal/httpapi/graph.go`:
+Create `services/ontology-service/internal/httpapi/graph.go`:
 
 ```go
 package httpapi
@@ -559,7 +559,7 @@ package httpapi
 import (
 	"github.com/danielgtaylor/huma/v2"
 
-	"cubicle/services/cubicle-graph/internal/graphstore"
+	"cubicle/services/ontology-service/internal/graphstore"
 )
 
 func registerGraph(api huma.API, store graphstore.Expander) {
@@ -573,7 +573,7 @@ func registerGraph(api huma.API, store graphstore.Expander) {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/httpapi -run 'TestHealthzReturnsOK|TestOpenAPIDocumentIncludesHealth' -v
 ```
 
@@ -585,7 +585,7 @@ Run:
 
 ```bash
 cd /Users/prabhat/workspace/cubicle
-git add services/cubicle-graph/internal/httpapi
+git add services/ontology-service/internal/httpapi
 git commit -m "feat: add gin huma graph router"
 ```
 
@@ -593,12 +593,12 @@ git commit -m "feat: add gin huma graph router"
 
 **Files:**
 
-- Modify: `services/cubicle-graph/internal/httpapi/graph.go`
-- Create: `services/cubicle-graph/internal/httpapi/graph_test.go`
+- Modify: `services/ontology-service/internal/httpapi/graph.go`
+- Create: `services/ontology-service/internal/httpapi/graph_test.go`
 
 - [ ] **Step 1: Write graph endpoint tests**
 
-Create `services/cubicle-graph/internal/httpapi/graph_test.go`:
+Create `services/ontology-service/internal/httpapi/graph_test.go`:
 
 ```go
 package httpapi
@@ -611,8 +611,8 @@ import (
 	"strings"
 	"testing"
 
-	"cubicle/services/cubicle-graph/internal/domain"
-	"cubicle/services/cubicle-graph/internal/fixtures"
+	"cubicle/services/ontology-service/internal/domain"
+	"cubicle/services/ontology-service/internal/fixtures"
 )
 
 func TestGraphExpandReturnsNeighborhood(t *testing.T) {
@@ -660,7 +660,7 @@ func TestGraphExpandRejectsInvalidBounds(t *testing.T) {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/httpapi -run 'TestGraphExpand' -v
 ```
 
@@ -668,7 +668,7 @@ Expected: FAIL because `/v1/graph/expand` is not registered.
 
 - [ ] **Step 3: Implement graph endpoint**
 
-Replace `services/cubicle-graph/internal/httpapi/graph.go` with:
+Replace `services/ontology-service/internal/httpapi/graph.go` with:
 
 ```go
 package httpapi
@@ -680,7 +680,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 
-	"cubicle/services/cubicle-graph/internal/graphstore"
+	"cubicle/services/ontology-service/internal/graphstore"
 )
 
 func registerGraph(api huma.API, store graphstore.Expander) {
@@ -708,7 +708,7 @@ func registerGraph(api huma.API, store graphstore.Expander) {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/httpapi -run 'TestGraphExpand' -v
 ```
 
@@ -716,7 +716,7 @@ Expected: PASS.
 
 - [ ] **Step 5: Add exact OpenAPI path assertion for graph endpoint**
 
-Replace `TestOpenAPIDocumentIncludesHealth` in `services/cubicle-graph/internal/httpapi/router_test.go` with:
+Replace `TestOpenAPIDocumentIncludesHealth` in `services/ontology-service/internal/httpapi/router_test.go` with:
 
 ```go
 func TestOpenAPIDocumentIncludesHealthAndGraph(t *testing.T) {
@@ -749,7 +749,7 @@ func TestOpenAPIDocumentIncludesHealthAndGraph(t *testing.T) {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/httpapi -run TestOpenAPIDocumentIncludesHealthAndGraph -v
 ```
 
@@ -761,7 +761,7 @@ Run:
 
 ```bash
 cd /Users/prabhat/workspace/cubicle
-git add services/cubicle-graph/internal/httpapi/graph.go services/cubicle-graph/internal/httpapi/graph_test.go services/cubicle-graph/internal/httpapi/router_test.go
+git add services/ontology-service/internal/httpapi/graph.go services/ontology-service/internal/httpapi/graph_test.go services/ontology-service/internal/httpapi/router_test.go
 git commit -m "feat: add graph expansion API"
 ```
 
@@ -769,12 +769,12 @@ git commit -m "feat: add graph expansion API"
 
 **Files:**
 
-- Create: `services/cubicle-graph/cmd/cubicle-graph/main.go`
-- Create: `services/cubicle-graph/cmd/cubicle-graph/main_test.go`
+- Create: `services/ontology-service/cmd/ontology-service/main.go`
+- Create: `services/ontology-service/cmd/ontology-service/main_test.go`
 
 - [ ] **Step 1: Write command parsing test**
 
-Create `services/cubicle-graph/cmd/cubicle-graph/main_test.go`:
+Create `services/ontology-service/cmd/ontology-service/main_test.go`:
 
 ```go
 package main
@@ -804,15 +804,15 @@ func TestParseServeConfigRejectsPublicBindWithoutFlag(t *testing.T) {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
-go test ./cmd/cubicle-graph -run TestParseServeConfig -v
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
+go test ./cmd/ontology-service -run TestParseServeConfig -v
 ```
 
 Expected: FAIL because `parseServeConfig` does not exist.
 
 - [ ] **Step 3: Add serve command**
 
-Create `services/cubicle-graph/cmd/cubicle-graph/main.go`:
+Create `services/ontology-service/cmd/ontology-service/main.go`:
 
 ```go
 package main
@@ -826,8 +826,8 @@ import (
 	"net/http"
 	"os"
 
-	"cubicle/services/cubicle-graph/internal/fixtures"
-	"cubicle/services/cubicle-graph/internal/httpapi"
+	"cubicle/services/ontology-service/internal/fixtures"
+	"cubicle/services/ontology-service/internal/httpapi"
 )
 
 type serveConfig struct {
@@ -905,8 +905,8 @@ func serve(cfg serveConfig) error {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
-go test ./cmd/cubicle-graph -run TestParseServeConfig -v
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
+go test ./cmd/ontology-service -run TestParseServeConfig -v
 ```
 
 Expected: PASS.
@@ -916,8 +916,8 @@ Expected: PASS.
 Run in terminal 1:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
-go run ./cmd/cubicle-graph serve --listen 127.0.0.1:48080
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
+go run ./cmd/ontology-service serve --listen 127.0.0.1:48080
 ```
 
 Run in terminal 2:
@@ -946,7 +946,7 @@ Run:
 
 ```bash
 cd /Users/prabhat/workspace/cubicle
-git add services/cubicle-graph/cmd/cubicle-graph
+git add services/ontology-service/cmd/ontology-service
 git commit -m "feat: add graph serve command"
 ```
 
@@ -954,11 +954,11 @@ git commit -m "feat: add graph serve command"
 
 **Files:**
 
-- Create: `services/cubicle-graph/internal/httpapi/openapi_test.go`
+- Create: `services/ontology-service/internal/httpapi/openapi_test.go`
 
 - [ ] **Step 1: Write OpenAPI contract test**
 
-Create `services/cubicle-graph/internal/httpapi/openapi_test.go`:
+Create `services/ontology-service/internal/httpapi/openapi_test.go`:
 
 ```go
 package httpapi
@@ -970,7 +970,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"cubicle/services/cubicle-graph/internal/fixtures"
+	"cubicle/services/ontology-service/internal/fixtures"
 )
 
 func TestOpenAPIDocumentIsSwiftClientReady(t *testing.T) {
@@ -1005,7 +1005,7 @@ func TestOpenAPIDocumentIsSwiftClientReady(t *testing.T) {
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./internal/httpapi -run TestOpenAPIDocumentIsSwiftClientReady -v
 ```
 
@@ -1017,7 +1017,7 @@ Run:
 
 ```bash
 cd /Users/prabhat/workspace/cubicle
-git add services/cubicle-graph/internal/httpapi/openapi_test.go
+git add services/ontology-service/internal/httpapi/openapi_test.go
 git commit -m "test: lock graph API openapi contract"
 ```
 
@@ -1032,7 +1032,7 @@ git commit -m "test: lock graph API openapi contract"
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 gofmt -w cmd internal
 ```
 
@@ -1043,7 +1043,7 @@ Expected: no output.
 Run:
 
 ```bash
-cd /Users/prabhat/workspace/cubicle/services/cubicle-graph
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
 go test ./...
 ```
 
@@ -1067,7 +1067,7 @@ Run:
 
 ```bash
 cd /Users/prabhat/workspace/cubicle
-git add services/cubicle-graph
+git add services/ontology-service
 git commit -m "chore: verify graph server scaffold"
 ```
 
@@ -1086,7 +1086,7 @@ public bind is rejected unless --allow-public-bind is passed
 handlers return DTOs from internal/domain or internal/httpapi
 handlers do not expose Ent structs, SQLite paths, FTS tables, or snapshot paths
 graph expansion returns evidence-backed nodes and edges from the fixture graph
-go test ./... passes under services/cubicle-graph
+go test ./... passes under services/ontology-service
 ```
 
 ## Sources
