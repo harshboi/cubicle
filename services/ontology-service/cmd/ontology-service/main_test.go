@@ -3,14 +3,19 @@ package main
 import (
 	"context"
 	"errors"
+	"io"
+	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"cubicle/services/ontology-service/internal/domain"
+	"cubicle/services/ontology-service/internal/flink"
 	"cubicle/services/ontology-service/internal/graphstore"
+	"cubicle/services/ontology-service/internal/httpapi"
 	"cubicle/services/ontology-service/internal/ontology"
 )
 
@@ -269,5 +274,87 @@ func TestOpenGraphStoreSeedsFakeWorkstreamOnlyWhenEnabled(t *testing.T) {
 	}
 	if len(graph.Objects) == 0 || len(graph.Associations) == 0 {
 		t.Fatalf("expected fake seeded graph, got %d objects and %d associations", len(graph.Objects), len(graph.Associations))
+	}
+}
+
+func TestRunIngestFlinkFixtureImportsFixtureIntoSQLite(t *testing.T) {
+	ctx := context.Background()
+	dbPath := filepath.Join(t.TempDir(), "graph.db")
+	fixtureDir := filepath.Join("..", "..", "internal", "flink", "testdata", "flink-fixture")
+	snapshotRoot := filepath.Join(t.TempDir(), "snapshots")
+
+	if err := run([]string{
+		"ingest-flink-fixture",
+		"--database", dbPath,
+		"--fixture-dir", fixtureDir,
+		"--snapshot-root", snapshotRoot,
+	}, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
+		t.Fatalf("run ingest-flink-fixture: %v", err)
+	}
+
+	expander, cleanup, err := openGraphStore(ctx, serveConfig{DatabasePath: dbPath})
+	if err != nil {
+		t.Fatalf("open imported graph: %v", err)
+	}
+	t.Cleanup(cleanup)
+	graph, err := expander.Expand(ctx, domain.ExpandRequest{
+		Start:          domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:          3,
+		LimitPerObject: 20,
+	})
+	if err != nil {
+		t.Fatalf("expand imported graph: %v", err)
+	}
+	if len(graph.Objects) < 5 || len(graph.Associations) < 5 {
+		t.Fatalf("expected Flink fixture graph, got %d objects and %d associations", len(graph.Objects), len(graph.Associations))
+	}
+}
+
+func TestRunIngestFlinkFixtureCanWriteThroughHTTPIngestURL(t *testing.T) {
+	ctx := context.Background()
+	store, cleanup, err := openGraphStore(ctx, serveConfig{DatabasePath: filepath.Join(t.TempDir(), "graph.db")})
+	if err != nil {
+		t.Fatalf("open graph store: %v", err)
+	}
+	t.Cleanup(cleanup)
+	server := httptest.NewServer(httpapi.NewRouter(store, slog.New(slog.NewTextHandler(io.Discard, nil))))
+	t.Cleanup(server.Close)
+
+	if err := run([]string{
+		"ingest-flink-fixture",
+		"--ingest-url", server.URL,
+		"--fixture-dir", filepath.Join("..", "..", "internal", "flink", "testdata", "flink-fixture"),
+		"--snapshot-root", filepath.Join(t.TempDir(), "snapshots"),
+	}, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
+		t.Fatalf("run ingest-flink-fixture over HTTP: %v", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL+"/v1/sources", nil)
+	if err != nil {
+		t.Fatalf("new sources request: %v", err)
+	}
+	resp, err := server.Client().Do(req)
+	if err != nil {
+		t.Fatalf("get sources: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("sources status = %d", resp.StatusCode)
+	}
+
+	graph, err := store.Expand(ctx, domain.ExpandRequest{
+		Start:            domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:            3,
+		LimitPerObject:   20,
+		AssociationTypes: []domain.AssociationType{ontology.AssocImplementedBy, ontology.AssocChangesFile, ontology.AssocDiscussedIn, ontology.AssocContains},
+	})
+	if err != nil {
+		t.Fatalf("expand imported graph: %v", err)
+	}
+	if len(graph.Objects) < 4 {
+		t.Fatalf("expected HTTP-imported Flink fixture graph, got %#v", graph)
+	}
+	if flink.FlinkFixtureMapperVersion == "" {
+		t.Fatal("fixture mapper version is empty")
 	}
 }

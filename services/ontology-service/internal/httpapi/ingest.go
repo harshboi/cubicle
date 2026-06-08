@@ -12,71 +12,83 @@ import (
 	"cubicle/services/ontology-service/internal/graphstore"
 )
 
+// BeginIngestRunInput is the Huma request envelope for starting an ingestion run.
 type BeginIngestRunInput struct {
-	Body domain.IngestRunStart
+	Body domain.IngestRunStart // Body carries the run identity and source metadata.
 }
 
+// IngestRunOutput is the Huma response envelope for ingestion run state.
 type IngestRunOutput struct {
-	Body domain.IngestRun
+	Body domain.IngestRun // Body is the persisted ingestion run.
 }
 
+// IngestRunPathInput is the Huma path envelope for endpoints scoped to one run.
 type IngestRunPathInput struct {
-	RunID string `path:"run_id"`
+	RunID string `path:"run_id"` // RunID is the path-escaped ingest run key.
 }
 
+// WriteSnapshotInput is the Huma request envelope for recording a source snapshot.
 type WriteSnapshotInput struct {
-	RunID string `path:"run_id"`
-	Body  SourceSnapshotWriteBody
+	RunID string                  `path:"run_id"` // RunID is the ingest run key that owns the snapshot.
+	Body  SourceSnapshotWriteBody // Body carries snapshot metadata and body references.
 }
 
+// SourceSnapshotOutput is the Huma response envelope for recorded source snapshots.
 type SourceSnapshotOutput struct {
-	Body domain.SourceSnapshot
+	Body domain.SourceSnapshot // Body is the persisted source snapshot metadata.
 }
 
+// SourceSnapshotWriteBody is the JSON request shape for recording source snapshot metadata.
 type SourceSnapshotWriteBody struct {
-	SnapshotKey      string    `json:"snapshot_key"`
-	SourceObjectType string    `json:"source_object_type,omitempty"`
-	SourceObjectID   string    `json:"source_object_id,omitempty"`
-	BodySHA256       string    `json:"body_sha256"`
-	BodyRef          string    `json:"body_ref"`
-	SourceURL        string    `json:"source_url,omitempty"`
-	FetchedAt        time.Time `json:"fetched_at,omitempty"`
-	HeadersJSON      string    `json:"headers_json,omitempty"`
+	SnapshotKey      string    `json:"snapshot_key"`                 // SnapshotKey is the stable source snapshot identity.
+	SourceObjectType string    `json:"source_object_type,omitempty"` // SourceObjectType is the source-native payload type.
+	SourceObjectID   string    `json:"source_object_id,omitempty"`   // SourceObjectID is the source-native object identifier.
+	BodySHA256       string    `json:"body_sha256"`                  // BodySHA256 is the content hash for the raw snapshot body.
+	BodyRef          string    `json:"body_ref"`                     // BodyRef is the content-addressed body location.
+	SourceURL        string    `json:"source_url,omitempty"`         // SourceURL is the human source URL used as evidence provenance.
+	FetchedAt        time.Time `json:"fetched_at,omitempty"`         // FetchedAt records when the source payload was observed.
+	HeadersJSON      string    `json:"headers_json,omitempty"`       // HeadersJSON stores selected response headers when useful for replay.
 }
 
+// WriteIngestBatchInput is the Huma request envelope for mapped ontology facts.
 type WriteIngestBatchInput struct {
-	RunID string `path:"run_id"`
-	Body  IngestBatchBody
+	RunID string          `path:"run_id"` // RunID is the ingest run key that owns the mapped batch.
+	Body  IngestBatchBody // Body carries mapped ontology objects, associations, evidence, and events.
 }
 
+// IngestBatchResultOutput is the Huma response envelope for mapped-batch write counts.
 type IngestBatchResultOutput struct {
-	Body domain.IngestBatchResult
+	Body domain.IngestBatchResult // Body summarizes how many mapped facts were upserted.
 }
 
+// IngestBatchBody is the JSON request shape for mapped ontology facts.
 type IngestBatchBody struct {
-	Slice         string                        `json:"slice,omitempty"`
-	MapperVersion string                        `json:"mapper_version,omitempty"`
-	SnapshotKeys  []string                      `json:"snapshot_keys,omitempty"`
-	ObservedAt    time.Time                     `json:"observed_at,omitempty"`
-	Objects       []domain.Object               `json:"objects,omitempty"`
-	Associations  []domain.Association          `json:"associations,omitempty"`
-	Evidence      []domain.Evidence             `json:"evidence,omitempty"`
-	Events        []domain.SourceEvent          `json:"events,omitempty"`
-	Checkpoint    *domain.SourceCheckpointWrite `json:"checkpoint,omitempty"`
+	Slice         string                        `json:"slice,omitempty"`          // Slice is the product/workstream partition for the mapped facts.
+	MapperVersion string                        `json:"mapper_version,omitempty"` // MapperVersion records the mapper code version that produced the facts.
+	SnapshotKeys  []string                      `json:"snapshot_keys,omitempty"`  // SnapshotKeys are the raw snapshots that support this batch.
+	ObservedAt    time.Time                     `json:"observed_at,omitempty"`    // ObservedAt is the logical observation timestamp for mapped facts.
+	Objects       []domain.Object               `json:"objects,omitempty"`        // Objects are ontology objects to upsert.
+	Associations  []domain.Association          `json:"associations,omitempty"`   // Associations are ontology edges to upsert.
+	Evidence      []domain.Evidence             `json:"evidence,omitempty"`       // Evidence records explain why facts were emitted.
+	Events        []domain.SourceEvent          `json:"events,omitempty"`         // Events record source-level observation history.
+	Checkpoint    *domain.SourceCheckpointWrite `json:"checkpoint,omitempty"`     // Checkpoint records source progress for resumable imports.
 }
 
+// CompleteIngestRunInput is the Huma request envelope for completing an ingestion run.
 type CompleteIngestRunInput struct {
-	RunID string `path:"run_id"`
-	Body  CompleteIngestRunBody
+	RunID string                `path:"run_id"` // RunID is the ingest run key to complete.
+	Body  CompleteIngestRunBody // Body carries the terminal status and optional error metadata.
 }
 
+// CompleteIngestRunBody is the JSON request shape for terminal run status.
 type CompleteIngestRunBody struct {
-	Status       domain.IngestRunStatus `json:"status"`
-	CompletedAt  time.Time              `json:"completed_at,omitempty"`
-	ErrorCode    domain.IngestErrorCode `json:"error_code,omitempty"`
-	ErrorMessage string                 `json:"error_message,omitempty"`
+	Status       domain.IngestRunStatus `json:"status"`                  // Status is the terminal ingest run state.
+	CompletedAt  time.Time              `json:"completed_at,omitempty"`  // CompletedAt records when the run reached its terminal state.
+	ErrorCode    domain.IngestErrorCode `json:"error_code,omitempty"`    // ErrorCode classifies failed imports.
+	ErrorMessage string                 `json:"error_message,omitempty"` // ErrorMessage gives a human-readable failure description.
 }
 
+// registerIngest registers the ingestion write API on the Huma router.
 func registerIngest(api huma.API, store graphstore.IngestWriter) {
 	huma.Register(api, huma.Operation{
 		OperationID: "begin-ingest-run",
@@ -85,12 +97,12 @@ func registerIngest(api huma.API, store graphstore.IngestWriter) {
 		Summary:     "Start a source ingestion run",
 		Tags:        []string{"ingest"},
 		Errors:      []int{http.StatusBadRequest, http.StatusConflict},
-		RequestBody: jsonRequestExample("flink fixture run", map[string]any{
-			"run_key":         "run-flink-fixture-1",
-			"source":          "jira",
-			"source_instance": "apache-jira",
-			"slice":           "flink-autoscaler",
-			"mapper_version":  "flink-fixture/v1",
+		RequestBody: jsonRequestExample("custom project fixture run", map[string]any{
+			"run_key":         "run-custom-fixture-1",
+			"source":          "custom",
+			"source_instance": "example/project",
+			"slice":           "custom-workstream",
+			"mapper_version":  "custom-fixture/v1",
 		}),
 	}, func(ctx context.Context, input *BeginIngestRunInput) (*IngestRunOutput, error) {
 		run, err := store.BeginIngestRun(ctx, input.Body)
@@ -107,13 +119,13 @@ func registerIngest(api huma.API, store graphstore.IngestWriter) {
 		Summary:     "Record a raw source snapshot reference",
 		Tags:        []string{"ingest"},
 		Errors:      []int{http.StatusBadRequest, http.StatusConflict},
-		RequestBody: jsonRequestExample("jira issue snapshot", map[string]any{
-			"snapshot_key":       "snapshot:jira:FLINK-39743",
-			"source_object_type": "jira_issue",
-			"source_object_id":   "FLINK-39743",
-			"body_sha256":        "sha256:issue-body",
-			"body_ref":           "snapshots/sha256/issue-body.json",
-			"source_url":         "https://issues.apache.org/jira/browse/FLINK-39743",
+		RequestBody: jsonRequestExample("custom ticket snapshot", map[string]any{
+			"snapshot_key":       "snapshot:custom:ticket:1",
+			"source_object_type": "custom_ticket",
+			"source_object_id":   "TICKET-1",
+			"body_sha256":        "sha256:ticket-body",
+			"body_ref":           "sha256/ticket-body.json",
+			"source_url":         "https://example.test/tickets/1",
 		}),
 	}, func(ctx context.Context, input *WriteSnapshotInput) (*SourceSnapshotOutput, error) {
 		run, err := store.GetIngestRun(ctx, input.RunID)
@@ -135,22 +147,22 @@ func registerIngest(api huma.API, store graphstore.IngestWriter) {
 		Summary:     "Persist mapped ontology facts for an ingestion run",
 		Tags:        []string{"ingest"},
 		Errors:      []int{http.StatusBadRequest, http.StatusConflict},
-		RequestBody: jsonRequestExample("mapped Jira issue batch", map[string]any{
-			"snapshot_keys": []string{"snapshot:jira:FLINK-39743"},
+		RequestBody: jsonRequestExample("mapped custom ticket batch", map[string]any{
+			"snapshot_keys": []string{"snapshot:custom:ticket:1"},
 			"objects": []map[string]any{
-				{"object_type": "workstream", "key": "workstream:flink-autoscaler", "title": "Flink Autoscaler"},
-				{"object_type": "ticket", "key": "ticket:FLINK-39743", "title": "Autoscaler bug", "snapshot_key": "snapshot:jira:FLINK-39743"},
+				{"object_type": "workstream", "key": "workstream:custom-project", "title": "Custom Project"},
+				{"object_type": "ticket", "key": "ticket:TICKET-1", "title": "Example ticket", "snapshot_key": "snapshot:custom:ticket:1"},
 			},
 			"evidence": []map[string]any{
-				{"evidence_key": "evidence:jira:FLINK-39743", "snapshot_key": "snapshot:jira:FLINK-39743", "text_hash": "sha256:evidence-text"},
+				{"evidence_key": "evidence:custom:TICKET-1", "snapshot_key": "snapshot:custom:ticket:1", "text_hash": "sha256:evidence-text"},
 			},
 			"associations": []map[string]any{{
-				"from":             map[string]any{"object_type": "workstream", "key": "workstream:flink-autoscaler"},
-				"to":               map[string]any{"object_type": "ticket", "key": "ticket:FLINK-39743"},
+				"from":             map[string]any{"object_type": "workstream", "key": "workstream:custom-project"},
+				"to":               map[string]any{"object_type": "ticket", "key": "ticket:TICKET-1"},
 				"association_type": "contains",
-				"metadata":         map[string]any{"evidence_key": "evidence:jira:FLINK-39743", "snapshot_key": "snapshot:jira:FLINK-39743"},
+				"metadata":         map[string]any{"evidence_key": "evidence:custom:TICKET-1", "snapshot_key": "snapshot:custom:ticket:1"},
 			}},
-			"checkpoint": map[string]any{"checkpoint_key": "jira-start-at", "checkpoint_value": "50"},
+			"checkpoint": map[string]any{"checkpoint_key": "fixture-manifest", "checkpoint_value": "snapshot:custom:ticket:1"},
 		}),
 	}, func(ctx context.Context, input *WriteIngestBatchInput) (*IngestBatchResultOutput, error) {
 		run, err := store.GetIngestRun(ctx, input.RunID)
@@ -201,6 +213,7 @@ func registerIngest(api huma.API, store graphstore.IngestWriter) {
 	})
 }
 
+// toDomain converts snapshot request JSON into the graphstore write contract.
 func (b SourceSnapshotWriteBody) toDomain(runID string, run domain.IngestRun) domain.SourceSnapshotWrite {
 	return domain.SourceSnapshotWrite{
 		RunKey:           runID,
@@ -217,6 +230,7 @@ func (b SourceSnapshotWriteBody) toDomain(runID string, run domain.IngestRun) do
 	}
 }
 
+// toDomain converts mapped-batch request JSON into the graphstore write contract.
 func (b IngestBatchBody) toDomain(runID string) domain.IngestBatch {
 	return domain.IngestBatch{
 		RunKey:        runID,
@@ -232,6 +246,7 @@ func (b IngestBatchBody) toDomain(runID string) domain.IngestBatch {
 	}
 }
 
+// toDomain converts run-completion request JSON into the graphstore write contract.
 func (b CompleteIngestRunBody) toDomain(runID string) domain.IngestRunComplete {
 	return domain.IngestRunComplete{
 		RunKey:       runID,
@@ -242,6 +257,7 @@ func (b CompleteIngestRunBody) toDomain(runID string) domain.IngestRunComplete {
 	}
 }
 
+// defaultBatchIdentity inherits source identity from the run when a client omits repeated batch fields.
 func defaultBatchIdentity(batch *domain.IngestBatch, run domain.IngestRun) {
 	if batch.Source == "" {
 		batch.Source = run.Source
@@ -257,6 +273,7 @@ func defaultBatchIdentity(batch *domain.IngestBatch, run domain.IngestRun) {
 	}
 }
 
+// ingestHTTPError maps graphstore ingestion errors onto stable HTTP status codes.
 func ingestHTTPError(err error) error {
 	switch {
 	case errors.Is(err, graphstore.ErrIngestConflict):
@@ -274,6 +291,7 @@ func ingestHTTPError(err error) error {
 	}
 }
 
+// jsonRequestExample builds compact OpenAPI examples for Huma operations.
 func jsonRequestExample(summary string, value any) *huma.RequestBody {
 	return &huma.RequestBody{
 		Content: map[string]*huma.MediaType{

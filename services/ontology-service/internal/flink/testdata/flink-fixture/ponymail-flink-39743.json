@@ -1,0 +1,9 @@
+{
+  "messages": [
+    {
+      "id": "dev:20260607:flink-39743",
+      "subject": "Re: FLINK-39743 autoscaler stabilization",
+      "body": "The dev list discussion agrees that FLINK-39743 should keep autoscaler recommendations stable before release."
+    }
+  ]
+}

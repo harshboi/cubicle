@@ -1,0 +1,26 @@
+{
+  "number": 1234,
+  "html_url": "https://github.com/apache/flink-kubernetes-operator/pull/1234",
+  "title": "[FLINK-39743] Stabilize autoscaler recommendations",
+  "body": "Implements the autoscaler fix tracked by FLINK-39743.",
+  "state": "open",
+  "files": [
+    {
+      "filename": "src/main/java/org/apache/flink/kubernetes/operator/autoscaler/Autoscaler.java",
+      "status": "modified"
+    }
+  ],
+  "comments": [
+    {
+      "id": 9001,
+      "body": "This keeps target utilization recommendations stable for FLINK-39743."
+    }
+  ],
+  "reviews": [
+    {
+      "id": 7001,
+      "state": "COMMENTED",
+      "body": "Please add coverage for the stabilization path."
+    }
+  ]
+}

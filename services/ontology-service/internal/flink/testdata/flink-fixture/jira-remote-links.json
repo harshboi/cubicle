@@ -1,0 +1,9 @@
+{
+  "issueKey": "FLINK-39743",
+  "links": [
+    {
+      "title": "[FLINK-39743] Stabilize autoscaler recommendations",
+      "url": "https://github.com/apache/flink-kubernetes-operator/pull/1234"
+    }
+  ]
+}

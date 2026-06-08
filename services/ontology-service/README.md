@@ -94,6 +94,41 @@ go test ./...
 
 The current tests validate bounded graph expansion for both memory and Ent stores, SQLite setup, HTTP/OpenAPI behavior, and command startup composition.
 
+## Import The Flink Fixture
+
+The offline Flink fixture importer is for product validation with deterministic
+sample source snapshots. It does not fetch live Apache services and it is not
+enabled by `serve` startup.
+
+Write the fixture directly into SQLite:
+
+```bash
+cd /Users/prabhat/workspace/cubicle/services/ontology-service
+go run ./cmd/ontology-service ingest-flink-fixture \
+  --database .data/graph.db \
+  --fixture-dir internal/flink/testdata/flink-fixture \
+  --snapshot-root .data/snapshots
+```
+
+Or run the server and import through the ingestion HTTP API:
+
+```bash
+go run ./cmd/ontology-service serve --database .data/graph.db
+
+go run ./cmd/ontology-service ingest-flink-fixture \
+  --ingest-url http://127.0.0.1:48080 \
+  --fixture-dir internal/flink/testdata/flink-fixture \
+  --snapshot-root .data/snapshots
+```
+
+Then query the imported workstream:
+
+```bash
+curl -s -X POST http://127.0.0.1:48080/v1/graph/expand \
+  -H 'Content-Type: application/json' \
+  -d '{"start":{"object_type":"workstream","key":"workstream:flink-autoscaler"},"depth":3,"limit_per_object":20}'
+```
+
 ## Storage
 
 The service now has a SQLite storage foundation under `internal/storage`.
@@ -279,13 +314,45 @@ internal/httpapi
  +-- graph_upsert.go
  |     -> POST /v1/graph/upsert for simple crawler/import batches
  |
+ +-- ingest.go
+ |     -> source ingestion write API for crawler/import batches
+ |
  +-- workstream.go
        -> GET /v1/workstreams/{slug}/overview
+
+internal/ingestpipeline
+ |
+ +-- fixtures.go
+ |     -> source-neutral offline fixture snapshot loader
+ |
+ +-- importer.go
+ |     -> source-neutral mapper/importer orchestration
+ |
+ +-- materialize.go
+       -> content-addressed snapshot body materialization
+
+internal/flink
+ |
+ +-- mapper.go
+ |     -> offline Apache Flink fixture mapper into ontology ingest batches
+ |
+ +-- types.go
+       -> Flink fixture importer wrapper around the generic ingest pipeline
+
+internal/ingestclient
+ |
+ +-- client.go
+       -> HTTP client that implements the ingestion writer contract
+
+internal/snapshot
+ |
+ +-- store.go
+       -> local content-addressed snapshot body store
 
 cmd/ontology-service
  |
  +-- main.go
-       -> serve command, localhost bind guard, and Ent-backed startup wiring
+       -> serve and ingest-flink-fixture commands, localhost bind guard, and Ent-backed wiring
 ```
 
 ## Go Design Rules Used Here
