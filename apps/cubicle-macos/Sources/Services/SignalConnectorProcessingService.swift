@@ -59,7 +59,15 @@ final class SignalConnectorProcessingService: SignalConnectorProcessing {
         return SignalConnectorProcessingResult(
             targetCount: targets.count,
             pipelineResult: result,
-            summary: "Signal sync: targets=\(targets.count), batches=\(result.batches.count), failures=\(result.failures.count)."
+            summary: summary(targetCount: targets.count, result: result)
         )
+    }
+
+    private func summary(targetCount: Int, result: SignalSyncPipelineResult) -> String {
+        let warningCount = result.batches.reduce(0) { count, batch in
+            count + batch.warnings.count
+        }
+        let warningFragment = warningCount > 0 ? ", warnings=\(warningCount)" : ""
+        return "Signal sync: targets=\(targetCount), batches=\(result.batches.count), failures=\(result.failures.count)\(warningFragment)."
     }
 }

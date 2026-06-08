@@ -407,6 +407,54 @@ final class SignalConnectorTests: XCTestCase {
         XCTAssertEqual(result.summary, "Signal sync: targets=2, batches=2, failures=0.")
     }
 
+    func testSignalConnectorProcessingServiceSummaryIncludesConnectorWarnings() async throws {
+        let registry = try SignalConnectorRegistry(
+            providers: [
+                MinimalSignalConnectorProvider(
+                    connectorID: .iMessage,
+                    connector: StubSignalConnector(
+                        connectorID: .iMessage,
+                        batch: SignalSyncBatch.empty(
+                            connectorID: .iMessage,
+                            accountID: "local",
+                            availability: .unavailable,
+                            warnings: [
+                                ConnectorWarning(
+                                    connectorID: .iMessage,
+                                    targetID: "person:alex",
+                                    message: "authorization denied"
+                                )
+                            ]
+                        )
+                    )
+                )
+            ]
+        )
+        let service = SignalConnectorProcessingService(
+            factory: SignalConnectorFactory(registry: registry),
+            writer: RecordingSignalKnowledgeWriter(),
+            connectorIDs: [.iMessage],
+            now: { Date(timeIntervalSince1970: 1_715_000_000) }
+        )
+        let target = ConfigTarget(
+            kind: .person,
+            label: "Alex Chen",
+            roomID: "",
+            roomType: "direct",
+            email: "alex@example.com",
+            iMessageHandles: ["(408) 555-0100"]
+        )
+
+        let result = try await service.sync(
+            configTargets: [target],
+            mode: .incremental,
+            limit: 10,
+            since: nil
+        )
+
+        XCTAssertEqual(result.summary, "Signal sync: targets=1, batches=1, failures=0, warnings=1.")
+    }
+
     func testRefreshSourceRegistryRunsRegisteredSourcesInOrder() async throws {
         let registry = RefreshSourceRegistry()
         let first = RecordingRefreshSource(id: "webex", summary: "webex done")
