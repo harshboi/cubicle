@@ -85,12 +85,12 @@ func registerIngest(api huma.API, store graphstore.IngestWriter) {
 		Summary:     "Start a source ingestion run",
 		Tags:        []string{"ingest"},
 		Errors:      []int{http.StatusBadRequest, http.StatusConflict},
-		RequestBody: jsonRequestExample("flink fixture run", map[string]any{
-			"run_key":         "run-flink-fixture-1",
-			"source":          "jira",
-			"source_instance": "apache-jira",
-			"slice":           "flink-autoscaler",
-			"mapper_version":  "flink-fixture/v1",
+		RequestBody: jsonRequestExample("custom project fixture run", map[string]any{
+			"run_key":         "run-custom-fixture-1",
+			"source":          "custom",
+			"source_instance": "example/project",
+			"slice":           "custom-workstream",
+			"mapper_version":  "custom-fixture/v1",
 		}),
 	}, func(ctx context.Context, input *BeginIngestRunInput) (*IngestRunOutput, error) {
 		run, err := store.BeginIngestRun(ctx, input.Body)
@@ -107,13 +107,13 @@ func registerIngest(api huma.API, store graphstore.IngestWriter) {
 		Summary:     "Record a raw source snapshot reference",
 		Tags:        []string{"ingest"},
 		Errors:      []int{http.StatusBadRequest, http.StatusConflict},
-		RequestBody: jsonRequestExample("jira issue snapshot", map[string]any{
-			"snapshot_key":       "snapshot:jira:FLINK-39743",
-			"source_object_kind": "jira_issue",
-			"source_object_id":   "FLINK-39743",
-			"body_sha256":        "sha256:issue-body",
-			"body_ref":           "snapshots/sha256/issue-body.json",
-			"source_url":         "https://issues.apache.org/jira/browse/FLINK-39743",
+		RequestBody: jsonRequestExample("custom ticket snapshot", map[string]any{
+			"snapshot_key":       "snapshot:custom:ticket:1",
+			"source_object_kind": "custom_ticket",
+			"source_object_id":   "TICKET-1",
+			"body_sha256":        "sha256:ticket-body",
+			"body_ref":           "sha256/ticket-body.json",
+			"source_url":         "https://example.test/tickets/1",
 		}),
 	}, func(ctx context.Context, input *WriteSnapshotInput) (*SourceSnapshotOutput, error) {
 		run, err := store.GetIngestRun(ctx, input.RunID)
@@ -135,21 +135,21 @@ func registerIngest(api huma.API, store graphstore.IngestWriter) {
 		Summary:     "Persist mapped ontology facts for an ingestion run",
 		Tags:        []string{"ingest"},
 		Errors:      []int{http.StatusBadRequest, http.StatusConflict},
-		RequestBody: jsonRequestExample("mapped Jira issue batch", map[string]any{
-			"snapshot_keys": []string{"snapshot:jira:FLINK-39743"},
+		RequestBody: jsonRequestExample("mapped custom ticket batch", map[string]any{
+			"snapshot_keys": []string{"snapshot:custom:ticket:1"},
 			"nodes": []map[string]any{
-				{"kind": "workstream", "key": "workstream:flink-autoscaler", "title": "Flink Autoscaler"},
-				{"kind": "ticket", "key": "ticket:FLINK-39743", "title": "Autoscaler bug", "snapshot_key": "snapshot:jira:FLINK-39743"},
+				{"kind": "workstream", "key": "workstream:custom-project", "title": "Custom Project"},
+				{"kind": "ticket", "key": "ticket:TICKET-1", "title": "Example ticket", "snapshot_key": "snapshot:custom:ticket:1"},
 			},
 			"evidence": []map[string]any{
-				{"evidence_key": "evidence:jira:FLINK-39743", "snapshot_key": "snapshot:jira:FLINK-39743", "text_hash": "sha256:evidence-text"},
+				{"evidence_key": "evidence:custom:TICKET-1", "snapshot_key": "snapshot:custom:ticket:1", "text_hash": "sha256:evidence-text"},
 			},
 			"edges": []map[string]any{{
-				"from":     map[string]any{"kind": "workstream", "key": "workstream:flink-autoscaler"},
-				"to":       map[string]any{"kind": "ticket", "key": "ticket:FLINK-39743"},
-				"metadata": map[string]any{"predicate": "contains", "evidence_key": "evidence:jira:FLINK-39743", "snapshot_key": "snapshot:jira:FLINK-39743"},
+				"from":     map[string]any{"kind": "workstream", "key": "workstream:custom-project"},
+				"to":       map[string]any{"kind": "ticket", "key": "ticket:TICKET-1"},
+				"metadata": map[string]any{"predicate": "contains", "evidence_key": "evidence:custom:TICKET-1", "snapshot_key": "snapshot:custom:ticket:1"},
 			}},
-			"checkpoint": map[string]any{"checkpoint_key": "jira-start-at", "checkpoint_value": "50"},
+			"checkpoint": map[string]any{"checkpoint_key": "fixture-manifest", "checkpoint_value": "snapshot:custom:ticket:1"},
 		}),
 	}, func(ctx context.Context, input *WriteIngestBatchInput) (*IngestBatchResultOutput, error) {
 		run, err := store.GetIngestRun(ctx, input.RunID)

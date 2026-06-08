@@ -1,0 +1,49 @@
+{
+  "snapshots": [
+    {
+      "snapshot_key": "snapshot:jira:search:autoscaler:2026-06-07",
+      "source": "jira",
+      "source_instance": "apache-jira",
+      "source_object_kind": "jira_search_page",
+      "source_object_id": "autoscaler-page-1",
+      "source_url": "https://issues.apache.org/jira/issues/?jql=project%20%3D%20FLINK%20AND%20component%20%3D%20Autoscaler",
+      "path": "jira-search.json"
+    },
+    {
+      "snapshot_key": "snapshot:jira:remote-links:FLINK-39743",
+      "source": "jira",
+      "source_instance": "apache-jira",
+      "source_object_kind": "jira_remote_links",
+      "source_object_id": "FLINK-39743",
+      "source_url": "https://issues.apache.org/jira/browse/FLINK-39743",
+      "path": "jira-remote-links.json"
+    },
+    {
+      "snapshot_key": "snapshot:github:pr:apache-flink-kubernetes-operator:1234",
+      "source": "github",
+      "source_instance": "github.com/apache/flink-kubernetes-operator",
+      "source_object_kind": "github_pr",
+      "source_object_id": "apache/flink-kubernetes-operator#1234",
+      "source_url": "https://github.com/apache/flink-kubernetes-operator/pull/1234",
+      "path": "github-pr-1234.json"
+    },
+    {
+      "snapshot_key": "snapshot:docs:autoscaler-md",
+      "source": "docs",
+      "source_instance": "github.com/apache/flink-kubernetes-operator/docs",
+      "source_object_kind": "markdown_doc",
+      "source_object_id": "docs/content/docs/custom-resource/autoscaler.md",
+      "source_url": "https://github.com/apache/flink-kubernetes-operator/blob/main/docs/content/docs/custom-resource/autoscaler.md",
+      "path": "autoscaler.md"
+    },
+    {
+      "snapshot_key": "snapshot:ponymail:FLINK-39743",
+      "source": "ponymail",
+      "source_instance": "lists.apache.org",
+      "source_object_kind": "ponymail_search",
+      "source_object_id": "FLINK-39743",
+      "source_url": "https://lists.apache.org/list.html?dev@flink.apache.org:lte=1M:FLINK-39743",
+      "path": "ponymail-flink-39743.json"
+    }
+  ]
+}

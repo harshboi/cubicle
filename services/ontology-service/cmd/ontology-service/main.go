@@ -15,8 +15,10 @@ import (
 	"cubicle/services/ontology-service/ent"
 	"cubicle/services/ontology-service/internal/config"
 	"cubicle/services/ontology-service/internal/fixtures"
+	"cubicle/services/ontology-service/internal/flink"
 	"cubicle/services/ontology-service/internal/graphstore"
 	"cubicle/services/ontology-service/internal/httpapi"
+	"cubicle/services/ontology-service/internal/ingestclient"
 	"cubicle/services/ontology-service/internal/storage"
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
@@ -31,6 +33,16 @@ type serveConfig struct {
 	SQLiteBusyTimeout        time.Duration
 	SeedFixtures             bool
 	AllowPublicBind          bool
+}
+
+type ingestFlinkConfig struct {
+	ConfigPath        string
+	DatabasePath      string
+	SQLiteBusyTimeout time.Duration
+	IngestURL         string
+	FixtureDir        string
+	SnapshotRoot      string
+	Live              bool
 }
 
 func main() {
@@ -53,6 +65,12 @@ func run(args []string, logger *slog.Logger) error {
 			return err
 		}
 		return serve(cfg, logger)
+	case "ingest-flink":
+		cfg, err := parseIngestFlinkConfig(args)
+		if err != nil {
+			return err
+		}
+		return ingestFlink(context.Background(), cfg, logger)
 	default:
 		return fmt.Errorf("unknown command: %s", args[0])
 	}
@@ -105,6 +123,45 @@ func parseServeConfigWithEnv(args []string, getenv func(string) string) (serveCo
 	}
 	if err := validateListenAddress(cfg.Listen, cfg.AllowPublicBind); err != nil {
 		return serveConfig{}, err
+	}
+	return cfg, nil
+}
+
+func parseIngestFlinkConfig(args []string) (ingestFlinkConfig, error) {
+	return parseIngestFlinkConfigWithEnv(args, os.Getenv)
+}
+
+func parseIngestFlinkConfigWithEnv(args []string, getenv func(string) string) (ingestFlinkConfig, error) {
+	configPath, err := configPathFromArgs(args)
+	if err != nil {
+		return ingestFlinkConfig{}, err
+	}
+	appCfg, err := config.LoadWithOptions(config.LoadOptions{
+		ConfigPath: configPath,
+		Getenv:     getenv,
+	})
+	if err != nil {
+		return ingestFlinkConfig{}, err
+	}
+
+	flags := flag.NewFlagSet("ingest-flink", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	cfg := ingestFlinkConfig{
+		ConfigPath:        appCfg.ConfigPath,
+		DatabasePath:      appCfg.DatabasePath,
+		SQLiteBusyTimeout: appCfg.SQLiteBusyTimeout,
+		FixtureDir:        "internal/flink/testdata/flink-fixture",
+		SnapshotRoot:      ".data/snapshots",
+	}
+	flags.StringVar(&cfg.ConfigPath, "config", cfg.ConfigPath, "HOCON config file path")
+	flags.StringVar(&cfg.DatabasePath, "database", cfg.DatabasePath, "SQLite database path for the ontology graph")
+	flags.DurationVar(&cfg.SQLiteBusyTimeout, "sqlite-busy-timeout", cfg.SQLiteBusyTimeout, "SQLite busy timeout")
+	flags.StringVar(&cfg.IngestURL, "ingest-url", "", "ontology service base URL for HTTP ingestion")
+	flags.StringVar(&cfg.FixtureDir, "fixture-dir", cfg.FixtureDir, "offline Flink fixture snapshot directory")
+	flags.StringVar(&cfg.SnapshotRoot, "snapshot-root", cfg.SnapshotRoot, "content-addressed snapshot body root")
+	flags.BoolVar(&cfg.Live, "live", false, "allow live Flink source network access")
+	if err := flags.Parse(args[1:]); err != nil {
+		return ingestFlinkConfig{}, err
 	}
 	return cfg, nil
 }
@@ -182,6 +239,51 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 
 	logger.Info("ontology_service_listening", "url", "http://"+cfg.Listen)
 	return server.ListenAndServe()
+}
+
+func ingestFlink(ctx context.Context, cfg ingestFlinkConfig, logger *slog.Logger) error {
+	if cfg.Live {
+		return errors.New("live Flink ingestion is not implemented yet; omit --live to run fixture import")
+	}
+	if logger == nil {
+		logger = slog.Default()
+	}
+	if cfg.IngestURL != "" {
+		return ingestFlinkWithWriter(ctx, cfg, ingestclient.New(cfg.IngestURL, http.DefaultClient), logger)
+	}
+	graph, cleanup, err := openGraphStore(ctx, serveConfig{
+		DatabasePath:      cfg.DatabasePath,
+		SQLiteBusyTimeout: cfg.SQLiteBusyTimeout,
+	})
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+	writer, ok := graph.(graphstore.IngestWriter)
+	if !ok {
+		return errors.New("graph store does not implement ingest writer")
+	}
+	return ingestFlinkWithWriter(ctx, cfg, writer, logger)
+}
+
+func ingestFlinkWithWriter(ctx context.Context, cfg ingestFlinkConfig, writer graphstore.IngestWriter, logger *slog.Logger) error {
+	result, err := flink.NewFixtureImporter(writer).Import(ctx, flink.FixtureImportConfig{
+		FixtureDir:   cfg.FixtureDir,
+		SnapshotRoot: cfg.SnapshotRoot,
+	})
+	if err != nil {
+		return err
+	}
+	logger.Info(
+		"flink_fixture_ingested",
+		"runs_completed", result.RunsCompleted,
+		"snapshots_written", result.SnapshotsWritten,
+		"nodes_upserted", result.NodesUpserted,
+		"edges_upserted", result.EdgesUpserted,
+		"evidence_upserted", result.EvidenceUpserted,
+		"events_upserted", result.EventsUpserted,
+	)
+	return nil
 }
 
 func openGraphStore(ctx context.Context, cfg serveConfig) (graphstore.Store, func(), error) {

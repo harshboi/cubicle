@@ -1,0 +1,16 @@
+{
+  "issues": [
+    {
+      "key": "FLINK-39743",
+      "self": "https://issues.apache.org/jira/rest/api/2/issue/FLINK-39743",
+      "fields": {
+        "summary": "Autoscaler should stabilize target utilization recommendations",
+        "updated": "2026-06-01T10:00:00.000+0000",
+        "status": {"name": "In Progress"},
+        "components": [{"name": "Autoscaler"}],
+        "labels": ["autoscaler", "kubernetes-operator"],
+        "assignee": {"displayName": "Flink Maintainer"}
+      }
+    }
+  ]
+}
