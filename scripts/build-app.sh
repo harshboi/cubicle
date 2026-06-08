@@ -64,6 +64,10 @@ cat > "$APP_DIR/Contents/Info.plist" <<'PLIST'
   <true/>
   <key>NSMicrophoneUsageDescription</key>
   <string>Cubicle uses microphone audio only when you start a live transcription session.</string>
+  <key>NSDesktopFolderUsageDescription</key>
+  <string>Cubicle reads and writes its local runtime data in getwebexspace-data when that folder is on your Desktop.</string>
+  <key>NSDocumentsFolderUsageDescription</key>
+  <string>Cubicle can read and write a user-selected runtime data folder if you keep it in Documents.</string>
 </dict>
 </plist>
 PLIST

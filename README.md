@@ -23,58 +23,43 @@ cubicle/
   tests/                        future cross-system integration tests
 ```
 
-## Code Structure DAG
+## Architecture DAG
 
 ```text
-                         +-----------------------------+
-                         |        Cubicle repo         |
-                         +--------------+--------------+
-                                        |
-       +--------------------------------+--------------------------------+
-       |                                |                                |
-+------+-------+                +-------+--------+               +-------+------+
-| apps/        |                | packages/      |               | services/    |
-+------+-------+                +-------+--------+               +-------+------+
-       |                                |                                |
-       |                                |                                |
-+------v---------------+        +-------v----------------+       +-------v----------------+
-| cubicle-macos        |------->| webex-question-core    |       | transcription          |
-| SwiftUI desktop app  |        | import, analyze, rank  |       | audio -> transcript    |
-+------+---------------+        +------------------------+       +-------+----------------+
-       |                                                                 |
-       | runtime WebSocket/API                                           |
-       +---------------------------------------------------------------->|
-       |
-       | local runtime state
-       v
-+------+----------------+
-| knowledge/runtime    |
-| outside git checkout |
-+----------------------+
+External sources
+  -> apps/cubicle-macos/Sources/Connectors/
+    -> SignalSyncPipeline
+      -> SignalKnowledgeWriter
+        -> apps/cubicle-macos/Sources/Data/DAO/KnowledgeStore.swift
+          -> SQLite knowledge tables
+            -> AppModel / NativeRefreshCoordinator
+              -> SwiftUI views
+              -> CodexPromptOrchestration -> CodexRunner
 
-+----------------------+       +-----------------------+
-| voicenotes-web       |------>| services/transcription|
-| browser review app   |       | shared transcript API |
-+----------------------+       +-----------------------+
+apps/cubicle-macos
+  -> packages/webex-question-core
+    -> question/topic/sentiment/network analysis
 
-+----------------------+       +-----------------------+
-| infra/aws            |------>| deployable services   |
-| Terraform + scripts  |       | ECS/Lambda/runtime    |
-+----------------------+       +-----------------------+
+apps/cubicle-macos
+  -> services/transcription
+    -> live transcript events
+
+apps/voicenotes-web
+  -> services/transcription
 ```
 
-## macOS App Internal DAG
+## Runtime Call Flow DAG
 
 ```text
-SwiftUI Views
-  -> AppModel / FocusModels / KnowledgeModels
-    -> Services
-      -> WebexSyncEngine -> WebexAPIClient -> Webex API
-      -> NativeIMessageIngestionService -> local iMessage source
-      -> KnowledgeStore / NativeRuntimeStore -> runtime knowledge files
-      -> QuestionEngine -> WebexQuestionGeneratorCore
-      -> TranscriptionRuntime -> TranscriptionWebSocketClient -> transcription service
-      -> CodexPromptOrchestration -> CodexRunner -> local Codex CLI
+Config targets
+  -> SignalTarget selectors
+    -> TargetRouter
+      -> WebexSignalConnector / IMessageSignalConnector
+        -> SignalSyncBatch
+          -> SignalKnowledgeWriter.mapRecords
+            -> KnowledgeStore.writeConnectorMessageBatch
+              -> rooms / people / messages / belief_evidence
+                -> focus, question, belief, and Ask Codex views
 ```
 
 ## AppModel Summary DAG
@@ -181,15 +166,22 @@ apps/cubicle-macos/Sources/Services
 * = important for understanding the product core
 ```
 
-## Knowledge Flow DAG
+## Filename Call Flow DAG
 
 ```text
-Webex + iMessage + transcripts
-  -> ingestion/sync services
-  -> normalized messages and threads
-  -> feature extraction + topic/sentiment/network analysis
-  -> generated questions + ranked focus targets
-  -> SwiftUI dashboards, beliefs, jobs, and ask-Codex prompts
+ConfigStore.swift
+  -> SignalModels.swift
+    -> SignalConnector.swift
+      -> SignalSyncPipeline.swift
+        -> Webex/WebexSignalConnector.swift
+        -> IMessage/IMessageSignalConnector.swift
+          -> SignalKnowledgeWriter.swift
+            -> Data/DAO/KnowledgeStore.swift
+              -> Models/AppModel.swift
+              -> Services/NativeRefreshCoordinator.swift
+                -> Views/DashboardView.swift
+                -> Views/QuestionsView.swift
+                -> Views/AskCodexView.swift
 ```
 
 ## Swift macOS App

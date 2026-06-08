@@ -28,10 +28,16 @@ struct RuntimeConfiguration: Equatable {
 
     static func resolved(
         environment: [String: String],
-        fileManager: FileManager = .default
+        fileManager: FileManager = .default,
+        fileExists: ((String) -> Bool)? = nil
     ) -> RuntimeConfiguration {
+        let fileExists = fileExists ?? fileManager.fileExists(atPath:)
         let environmentRootPath = trimToNil(environment["GETWEBEXSPACE_RUNTIME_ROOT"])
-        let bootstrapRootPath = environmentRootPath ?? "/Volumes/Webex/getwebexspace-data"
+        let bootstrapRootPath = resolvedRuntimeRoot(
+            explicitRoot: environmentRootPath,
+            environment: environment,
+            fileExists: fileExists
+        )
         let bootstrapRootURL = rootURL(from: bootstrapRootPath)
         let jsonLoader = MacAppJSONConfigurationLoader(
             runtimeRoot: bootstrapRootURL,
@@ -236,6 +242,29 @@ struct RuntimeConfiguration: Equatable {
             adaptiveBackgroundIntervalSeconds: overlay?.adaptiveBackgroundIntervalSeconds ?? base?.adaptiveBackgroundIntervalSeconds,
             adaptiveJitterPercent: overlay?.adaptiveJitterPercent ?? base?.adaptiveJitterPercent
         )
+    }
+
+    private static func resolvedRuntimeRoot(
+        explicitRoot: String?,
+        environment: [String: String],
+        fileExists: (String) -> Bool
+    ) -> String {
+        if let explicitRoot, !explicitRoot.isEmpty {
+            return explicitRoot
+        }
+
+        let home = trimToNil(environment["HOME"]) ?? NSHomeDirectory()
+        let desktopRuntimeRoot = "\(home)/Desktop/getwebexspace-data"
+        if fileExists(desktopRuntimeRoot) {
+            return desktopRuntimeRoot
+        }
+
+        let volumeRuntimeRoot = "/Volumes/Webex/getwebexspace-data"
+        if fileExists(volumeRuntimeRoot) {
+            return volumeRuntimeRoot
+        }
+
+        return "\(home)/Library/Application Support/Cubicle"
     }
 
     private static func parseInt(
