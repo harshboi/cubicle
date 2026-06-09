@@ -7,12 +7,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"cubicle/services/ontology-service/internal/sampledata"
 )
 
 func TestHealthzReturnsOK(t *testing.T) {
-	router := NewRouter(sampledata.NewFakeFlinkAutoscalerMemoryStore(), slog.Default())
+	router := NewRouter(slog.Default())
 
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	rec := httptest.NewRecorder()
@@ -29,15 +27,17 @@ func TestHealthzReturnsOK(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
 		t.Fatalf("health response is not JSON: %v", err)
 	}
-	if !response.OK {
+	if !response.OK || response.Service != "ontology-service" {
 		t.Fatalf("expected ok health response, got %#v", response)
 	}
 }
 
-func TestOpenAPIDocumentIncludesHealthAndGraph(t *testing.T) {
-	router := NewRouter(sampledata.NewFakeFlinkAutoscalerMemoryStore(), slog.Default())
+func TestGraphQLHealthQuery(t *testing.T) {
+	router := NewRouter(slog.Default())
 
-	req := httptest.NewRequest(http.MethodGet, "/openapi.json", nil)
+	body := `{"query":"query { health { ok service } }"}`
+	req := httptest.NewRequest(http.MethodPost, "/graphql", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 
@@ -45,17 +45,34 @@ func TestOpenAPIDocumentIncludesHealthAndGraph(t *testing.T) {
 		t.Fatalf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
 	}
 
-	var doc map[string]any
-	if err := json.Unmarshal(rec.Body.Bytes(), &doc); err != nil {
-		t.Fatalf("openapi response is not JSON: %v", err)
+	var response struct {
+		Data struct {
+			Health HealthResponse `json:"health"`
+		} `json:"data"`
+		Errors []any `json:"errors,omitempty"`
 	}
-	paths, ok := doc["paths"].(map[string]any)
-	if !ok {
-		t.Fatalf("openapi document has no paths: %#v", doc)
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Fatalf("graphql response is not JSON: %v", err)
 	}
-	for _, path := range []string{"/healthz", "/v1/graph/expand"} {
-		if _, ok := paths[path]; !ok {
-			t.Fatalf("openapi document missing %s: %#v", path, paths)
-		}
+	if len(response.Errors) > 0 {
+		t.Fatalf("graphql response had errors: %#v", response.Errors)
+	}
+	if !response.Data.Health.OK || response.Data.Health.Service != "ontology-service" {
+		t.Fatalf("unexpected graphql health response: %#v", response)
+	}
+}
+
+func TestGraphQLPlaygroundIsMounted(t *testing.T) {
+	router := NewRouter(slog.Default())
+
+	req := httptest.NewRequest(http.MethodGet, "/playground", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "Cubicle Ontology GraphQL") {
+		t.Fatalf("playground response did not contain title: %s", rec.Body.String())
 	}
 }

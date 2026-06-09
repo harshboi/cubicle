@@ -97,9 +97,9 @@ func (s *MemoryStore) UpsertAssociation(_ context.Context, association domain.As
 
 // Expand performs deterministic breadth-first traversal from a start object.
 //
-// Deterministic ordering is important for tests, OpenAPI examples, and Swift UI
-// snapshots. The implementation sorts association keys at each hop so the same graph
-// always yields the same response order.
+// Deterministic ordering is important for tests, generated examples, and UI
+// snapshots. The implementation sorts association keys at each hop so the same
+// graph always yields the same response order.
 func (s *MemoryStore) Expand(_ context.Context, req domain.ExpandRequest) (domain.Neighborhood, error) {
 	if req.Start.ObjectType == "" || req.Start.Key == "" || req.Depth < 0 || req.LimitPerObject <= 0 {
 		return domain.Neighborhood{}, fmt.Errorf("%w: start, non-negative depth, and positive limit are required", ErrInvalidExpansion)

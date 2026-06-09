@@ -101,7 +101,7 @@ const (
 )
 
 // ObjectTypeDef describes one built-in object type for docs, validation, and
-// future OpenAPI/introspection endpoints.
+// future GraphQL introspection endpoints.
 type ObjectTypeDef struct {
 	// Type is the stable machine-readable object type used in graph DTOs.
 	Type domain.ObjectType `json:"type"`

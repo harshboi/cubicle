@@ -10,7 +10,6 @@ import (
 	"os"
 	"time"
 
-	"cubicle/services/ontology-service/internal/graphstore"
 	"cubicle/services/ontology-service/internal/httpapi"
 )
 
@@ -93,7 +92,7 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 		logger = slog.Default()
 	}
 
-	router := httpapi.NewRouter(graphstore.NewMemoryStore(), logger)
+	router := httpapi.NewRouter(logger)
 	server := newHTTPServer(cfg, router)
 
 	logger.Info("ontology_service_listening", "url", "http://"+cfg.Listen)

@@ -1,20 +1,13 @@
 package httpapi
 
-import (
-	"context"
-	"net/http"
+import "github.com/gin-gonic/gin"
 
-	"github.com/danielgtaylor/huma/v2"
-)
-
-func registerHealth(api huma.API) {
-	huma.Register(api, huma.Operation{
-		OperationID: "get-health",
-		Method:      http.MethodGet,
-		Path:        "/healthz",
-		Summary:     "Check ontology service health",
-		Tags:        []string{"system"},
-	}, func(context.Context, *struct{}) (*HealthOutput, error) {
-		return &HealthOutput{Body: HealthResponse{OK: true}}, nil
+// registerHealth mounts the process health endpoint outside GraphQL.
+func registerHealth(router gin.IRouter) {
+	router.GET("/healthz", func(c *gin.Context) {
+		c.JSON(200, HealthResponse{
+			OK:      true,
+			Service: "ontology-service",
+		})
 	})
 }
