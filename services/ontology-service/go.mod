@@ -5,6 +5,7 @@ go 1.25.1
 require (
 	github.com/danielgtaylor/huma/v2 v2.38.0
 	github.com/gin-gonic/gin v1.12.0
+	github.com/mattn/go-sqlite3 v1.14.45
 )
 
 require (
