@@ -1,0 +1,19 @@
+# Cubicle ontology-service local config.
+#
+# Precedence:
+#   defaults < this file < environment variables < command-line flags
+
+server {
+  listen_addr = "127.0.0.1:48080"
+  allow_public_bind = false
+}
+
+storage {
+  data_root = ".data"
+  database_path = ".data/graph.db"
+  sqlite_busy_timeout = 5s
+}
+
+graphql {
+  playground_enabled = true
+}

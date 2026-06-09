@@ -31,6 +31,7 @@ included now
  +-- gqlgen schema/codegen wiring
  +-- minimal health query
  +-- SQLite storage foundation from the previous PR
+ +-- HOCON/env/flag runtime configuration
 
 deferred
  |
@@ -80,13 +81,62 @@ Framework dependencies in this slice:
 Gin     -> server shell: routing, recovery, request logging
 gqlgen  -> GraphQL schema, generated execution code, typed resolvers
 SQLite  -> local persistence foundation for later ontology storage
+HOCON   -> local runtime configuration files
+```
+
+## Configure
+
+The service loads configuration in this order:
+
+```text
+defaults < HOCON config file < environment variables < command-line flags
+```
+
+Example config:
+
+```bash
+mkdir -p .data
+cp config/ontology-service.conf.example .data/ontology-service.conf
+```
+
+Important keys:
+
+```hocon
+server {
+  listen_addr = "127.0.0.1:48080"
+  allow_public_bind = false
+}
+
+storage {
+  data_root = ".data"
+  database_path = ".data/graph.db"
+  sqlite_busy_timeout = 5s
+}
+
+graphql {
+  playground_enabled = true
+}
+```
+
+Equivalent environment variables:
+
+```text
+CUBICLE_ONTOLOGY_CONFIG_PATH
+CUBICLE_ONTOLOGY_LISTEN_ADDR
+CUBICLE_ONTOLOGY_ALLOW_PUBLIC_BIND
+CUBICLE_ONTOLOGY_DATA_ROOT
+CUBICLE_ONTOLOGY_DATABASE_PATH
+CUBICLE_ONTOLOGY_SQLITE_BUSY_TIMEOUT
+CUBICLE_ONTOLOGY_GRAPHQL_PLAYGROUND_ENABLED
 ```
 
 ## Run Server
 
 ```bash
 cd services/ontology-service
-go run ./cmd/ontology-service serve --listen 127.0.0.1:48080
+go run ./cmd/ontology-service serve \
+  --config .data/ontology-service.conf \
+  --listen 127.0.0.1:48080
 ```
 
 In another terminal:
@@ -114,6 +164,9 @@ The local playground is available at:
 ```text
 http://127.0.0.1:48080/playground
 ```
+
+Set `graphql.playground_enabled = false` or pass
+`--graphql-playground=false` when you want only `/healthz` and `/graphql`.
 
 ## Current Packages
 
@@ -143,7 +196,7 @@ internal/graphql
 internal/httpapi
  |
  +-- router.go
- |     -> Gin router, middleware, endpoint registration
+ |     -> Gin router, middleware, endpoint registration, runtime options
  |
  +-- health.go
  |     -> GET /healthz
@@ -156,10 +209,15 @@ internal/storage
  +-- storage.go
        -> SQLite open, PRAGMAs, transaction helper
 
+internal/config
+ |
+ +-- config.go
+       -> defaults, HOCON file loading, environment overrides
+
 cmd/ontology-service
  |
  +-- main.go
-       -> serve command and localhost bind guard
+       -> serve command, config parsing, SQLite startup, localhost bind guard
 ```
 
 ## Design Rules
