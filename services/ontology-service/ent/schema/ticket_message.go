@@ -23,8 +23,10 @@ func (TicketMessage) Fields() []ent.Field {
 	return appendFields(
 		[]ent.Field{
 			field.Int("ticket_id").
+				Immutable().
 				Comment("Source Ticket endpoint for this association."),
 			field.Int("message_id").
+				Immutable().
 				Comment("Target Message endpoint for this association."),
 		},
 		linkFields([]string{relationDiscussedIn}),
@@ -37,11 +39,13 @@ func (TicketMessage) Edges() []ent.Edge {
 		edge.To("ticket", Ticket.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("ticket_id").
 			Comment("Ticket endpoint for this association."),
 		edge.To("message", Message.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("message_id").
 			Comment("Message endpoint for this association."),
 		edge.To("latest_evidence", Evidence.Type).

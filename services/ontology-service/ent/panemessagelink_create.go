@@ -579,42 +579,6 @@ type (
 	}
 )
 
-// SetPaneID sets the "pane_id" field.
-func (u *PaneMessageLinkUpsert) SetPaneID(v int) *PaneMessageLinkUpsert {
-	u.Set(panemessagelink.FieldPaneID, v)
-	return u
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PaneMessageLinkUpsert) UpdatePaneID() *PaneMessageLinkUpsert {
-	u.SetExcluded(panemessagelink.FieldPaneID)
-	return u
-}
-
-// SetMessageID sets the "message_id" field.
-func (u *PaneMessageLinkUpsert) SetMessageID(v int) *PaneMessageLinkUpsert {
-	u.Set(panemessagelink.FieldMessageID, v)
-	return u
-}
-
-// UpdateMessageID sets the "message_id" field to the value that was provided on create.
-func (u *PaneMessageLinkUpsert) UpdateMessageID() *PaneMessageLinkUpsert {
-	u.SetExcluded(panemessagelink.FieldMessageID)
-	return u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PaneMessageLinkUpsert) SetRelationKind(v panemessagelink.RelationKind) *PaneMessageLinkUpsert {
-	u.Set(panemessagelink.FieldRelationKind, v)
-	return u
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PaneMessageLinkUpsert) UpdateRelationKind() *PaneMessageLinkUpsert {
-	u.SetExcluded(panemessagelink.FieldRelationKind)
-	return u
-}
-
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
 func (u *PaneMessageLinkUpsert) SetLatestEvidenceID(v int) *PaneMessageLinkUpsert {
 	u.Set(panemessagelink.FieldLatestEvidenceID, v)
@@ -860,6 +824,15 @@ func (u *PaneMessageLinkUpsert) UpdateUpdatedAt() *PaneMessageLinkUpsert {
 func (u *PaneMessageLinkUpsertOne) UpdateNewValues() *PaneMessageLinkUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.PaneID(); exists {
+			s.SetIgnore(panemessagelink.FieldPaneID)
+		}
+		if _, exists := u.create.mutation.MessageID(); exists {
+			s.SetIgnore(panemessagelink.FieldMessageID)
+		}
+		if _, exists := u.create.mutation.RelationKind(); exists {
+			s.SetIgnore(panemessagelink.FieldRelationKind)
+		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(panemessagelink.FieldCreatedAt)
 		}
@@ -892,48 +865,6 @@ func (u *PaneMessageLinkUpsertOne) Update(set func(*PaneMessageLinkUpsert)) *Pan
 		set(&PaneMessageLinkUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (u *PaneMessageLinkUpsertOne) SetPaneID(v int) *PaneMessageLinkUpsertOne {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.SetPaneID(v)
-	})
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PaneMessageLinkUpsertOne) UpdatePaneID() *PaneMessageLinkUpsertOne {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.UpdatePaneID()
-	})
-}
-
-// SetMessageID sets the "message_id" field.
-func (u *PaneMessageLinkUpsertOne) SetMessageID(v int) *PaneMessageLinkUpsertOne {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.SetMessageID(v)
-	})
-}
-
-// UpdateMessageID sets the "message_id" field to the value that was provided on create.
-func (u *PaneMessageLinkUpsertOne) UpdateMessageID() *PaneMessageLinkUpsertOne {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.UpdateMessageID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PaneMessageLinkUpsertOne) SetRelationKind(v panemessagelink.RelationKind) *PaneMessageLinkUpsertOne {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PaneMessageLinkUpsertOne) UpdateRelationKind() *PaneMessageLinkUpsertOne {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -1362,6 +1293,15 @@ func (u *PaneMessageLinkUpsertBulk) UpdateNewValues() *PaneMessageLinkUpsertBulk
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
+			if _, exists := b.mutation.PaneID(); exists {
+				s.SetIgnore(panemessagelink.FieldPaneID)
+			}
+			if _, exists := b.mutation.MessageID(); exists {
+				s.SetIgnore(panemessagelink.FieldMessageID)
+			}
+			if _, exists := b.mutation.RelationKind(); exists {
+				s.SetIgnore(panemessagelink.FieldRelationKind)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(panemessagelink.FieldCreatedAt)
 			}
@@ -1395,48 +1335,6 @@ func (u *PaneMessageLinkUpsertBulk) Update(set func(*PaneMessageLinkUpsert)) *Pa
 		set(&PaneMessageLinkUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (u *PaneMessageLinkUpsertBulk) SetPaneID(v int) *PaneMessageLinkUpsertBulk {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.SetPaneID(v)
-	})
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PaneMessageLinkUpsertBulk) UpdatePaneID() *PaneMessageLinkUpsertBulk {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.UpdatePaneID()
-	})
-}
-
-// SetMessageID sets the "message_id" field.
-func (u *PaneMessageLinkUpsertBulk) SetMessageID(v int) *PaneMessageLinkUpsertBulk {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.SetMessageID(v)
-	})
-}
-
-// UpdateMessageID sets the "message_id" field to the value that was provided on create.
-func (u *PaneMessageLinkUpsertBulk) UpdateMessageID() *PaneMessageLinkUpsertBulk {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.UpdateMessageID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PaneMessageLinkUpsertBulk) SetRelationKind(v panemessagelink.RelationKind) *PaneMessageLinkUpsertBulk {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PaneMessageLinkUpsertBulk) UpdateRelationKind() *PaneMessageLinkUpsertBulk {
-	return u.Update(func(s *PaneMessageLinkUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.

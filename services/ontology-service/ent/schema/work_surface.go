@@ -27,9 +27,11 @@ func (WorkSurface) Fields() []ent.Field {
 		stableKeyFields(),
 		[]ent.Field{
 			field.Int("person_id").
+				Immutable().
 				Comment("Person row that owns this work surface."),
 			field.Enum("surface_kind").
 				Values(surfaceKindValues()...).
+				Immutable().
 				Comment("Major work domain represented by this surface."),
 			field.String("display_name").
 				NotEmpty().
@@ -57,6 +59,7 @@ func (WorkSurface) Edges() []ent.Edge {
 			Ref("work_surfaces").
 			Unique().
 			Required().
+			Immutable().
 			Field("person_id").
 			Comment("Person who owns this bounded work surface."),
 		edge.To("panes", WorkPane.Type).

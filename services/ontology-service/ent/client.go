@@ -2668,7 +2668,8 @@ func (c *WorkPaneClient) QueryMessageLinks(_m *WorkPane) *PaneMessageLinkQuery {
 
 // Hooks returns the client hooks.
 func (c *WorkPaneClient) Hooks() []Hook {
-	return c.hooks.WorkPane
+	hooks := c.hooks.WorkPane
+	return append(hooks[:len(hooks):len(hooks)], workpane.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.

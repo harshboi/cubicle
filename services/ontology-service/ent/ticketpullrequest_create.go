@@ -579,42 +579,6 @@ type (
 	}
 )
 
-// SetTicketID sets the "ticket_id" field.
-func (u *TicketPullRequestUpsert) SetTicketID(v int) *TicketPullRequestUpsert {
-	u.Set(ticketpullrequest.FieldTicketID, v)
-	return u
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *TicketPullRequestUpsert) UpdateTicketID() *TicketPullRequestUpsert {
-	u.SetExcluded(ticketpullrequest.FieldTicketID)
-	return u
-}
-
-// SetPullRequestID sets the "pull_request_id" field.
-func (u *TicketPullRequestUpsert) SetPullRequestID(v int) *TicketPullRequestUpsert {
-	u.Set(ticketpullrequest.FieldPullRequestID, v)
-	return u
-}
-
-// UpdatePullRequestID sets the "pull_request_id" field to the value that was provided on create.
-func (u *TicketPullRequestUpsert) UpdatePullRequestID() *TicketPullRequestUpsert {
-	u.SetExcluded(ticketpullrequest.FieldPullRequestID)
-	return u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *TicketPullRequestUpsert) SetRelationKind(v ticketpullrequest.RelationKind) *TicketPullRequestUpsert {
-	u.Set(ticketpullrequest.FieldRelationKind, v)
-	return u
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *TicketPullRequestUpsert) UpdateRelationKind() *TicketPullRequestUpsert {
-	u.SetExcluded(ticketpullrequest.FieldRelationKind)
-	return u
-}
-
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
 func (u *TicketPullRequestUpsert) SetLatestEvidenceID(v int) *TicketPullRequestUpsert {
 	u.Set(ticketpullrequest.FieldLatestEvidenceID, v)
@@ -860,6 +824,15 @@ func (u *TicketPullRequestUpsert) UpdateUpdatedAt() *TicketPullRequestUpsert {
 func (u *TicketPullRequestUpsertOne) UpdateNewValues() *TicketPullRequestUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.TicketID(); exists {
+			s.SetIgnore(ticketpullrequest.FieldTicketID)
+		}
+		if _, exists := u.create.mutation.PullRequestID(); exists {
+			s.SetIgnore(ticketpullrequest.FieldPullRequestID)
+		}
+		if _, exists := u.create.mutation.RelationKind(); exists {
+			s.SetIgnore(ticketpullrequest.FieldRelationKind)
+		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(ticketpullrequest.FieldCreatedAt)
 		}
@@ -892,48 +865,6 @@ func (u *TicketPullRequestUpsertOne) Update(set func(*TicketPullRequestUpsert)) 
 		set(&TicketPullRequestUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *TicketPullRequestUpsertOne) SetTicketID(v int) *TicketPullRequestUpsertOne {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.SetTicketID(v)
-	})
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *TicketPullRequestUpsertOne) UpdateTicketID() *TicketPullRequestUpsertOne {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.UpdateTicketID()
-	})
-}
-
-// SetPullRequestID sets the "pull_request_id" field.
-func (u *TicketPullRequestUpsertOne) SetPullRequestID(v int) *TicketPullRequestUpsertOne {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.SetPullRequestID(v)
-	})
-}
-
-// UpdatePullRequestID sets the "pull_request_id" field to the value that was provided on create.
-func (u *TicketPullRequestUpsertOne) UpdatePullRequestID() *TicketPullRequestUpsertOne {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.UpdatePullRequestID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *TicketPullRequestUpsertOne) SetRelationKind(v ticketpullrequest.RelationKind) *TicketPullRequestUpsertOne {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *TicketPullRequestUpsertOne) UpdateRelationKind() *TicketPullRequestUpsertOne {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -1362,6 +1293,15 @@ func (u *TicketPullRequestUpsertBulk) UpdateNewValues() *TicketPullRequestUpsert
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
+			if _, exists := b.mutation.TicketID(); exists {
+				s.SetIgnore(ticketpullrequest.FieldTicketID)
+			}
+			if _, exists := b.mutation.PullRequestID(); exists {
+				s.SetIgnore(ticketpullrequest.FieldPullRequestID)
+			}
+			if _, exists := b.mutation.RelationKind(); exists {
+				s.SetIgnore(ticketpullrequest.FieldRelationKind)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(ticketpullrequest.FieldCreatedAt)
 			}
@@ -1395,48 +1335,6 @@ func (u *TicketPullRequestUpsertBulk) Update(set func(*TicketPullRequestUpsert))
 		set(&TicketPullRequestUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *TicketPullRequestUpsertBulk) SetTicketID(v int) *TicketPullRequestUpsertBulk {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.SetTicketID(v)
-	})
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *TicketPullRequestUpsertBulk) UpdateTicketID() *TicketPullRequestUpsertBulk {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.UpdateTicketID()
-	})
-}
-
-// SetPullRequestID sets the "pull_request_id" field.
-func (u *TicketPullRequestUpsertBulk) SetPullRequestID(v int) *TicketPullRequestUpsertBulk {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.SetPullRequestID(v)
-	})
-}
-
-// UpdatePullRequestID sets the "pull_request_id" field to the value that was provided on create.
-func (u *TicketPullRequestUpsertBulk) UpdatePullRequestID() *TicketPullRequestUpsertBulk {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.UpdatePullRequestID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *TicketPullRequestUpsertBulk) SetRelationKind(v ticketpullrequest.RelationKind) *TicketPullRequestUpsertBulk {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *TicketPullRequestUpsertBulk) UpdateRelationKind() *TicketPullRequestUpsertBulk {
-	return u.Update(func(s *TicketPullRequestUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.

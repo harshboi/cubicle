@@ -579,42 +579,6 @@ type (
 	}
 )
 
-// SetPaneID sets the "pane_id" field.
-func (u *PanePullRequestLinkUpsert) SetPaneID(v int) *PanePullRequestLinkUpsert {
-	u.Set(panepullrequestlink.FieldPaneID, v)
-	return u
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PanePullRequestLinkUpsert) UpdatePaneID() *PanePullRequestLinkUpsert {
-	u.SetExcluded(panepullrequestlink.FieldPaneID)
-	return u
-}
-
-// SetPullRequestID sets the "pull_request_id" field.
-func (u *PanePullRequestLinkUpsert) SetPullRequestID(v int) *PanePullRequestLinkUpsert {
-	u.Set(panepullrequestlink.FieldPullRequestID, v)
-	return u
-}
-
-// UpdatePullRequestID sets the "pull_request_id" field to the value that was provided on create.
-func (u *PanePullRequestLinkUpsert) UpdatePullRequestID() *PanePullRequestLinkUpsert {
-	u.SetExcluded(panepullrequestlink.FieldPullRequestID)
-	return u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PanePullRequestLinkUpsert) SetRelationKind(v panepullrequestlink.RelationKind) *PanePullRequestLinkUpsert {
-	u.Set(panepullrequestlink.FieldRelationKind, v)
-	return u
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PanePullRequestLinkUpsert) UpdateRelationKind() *PanePullRequestLinkUpsert {
-	u.SetExcluded(panepullrequestlink.FieldRelationKind)
-	return u
-}
-
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
 func (u *PanePullRequestLinkUpsert) SetLatestEvidenceID(v int) *PanePullRequestLinkUpsert {
 	u.Set(panepullrequestlink.FieldLatestEvidenceID, v)
@@ -860,6 +824,15 @@ func (u *PanePullRequestLinkUpsert) UpdateUpdatedAt() *PanePullRequestLinkUpsert
 func (u *PanePullRequestLinkUpsertOne) UpdateNewValues() *PanePullRequestLinkUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.PaneID(); exists {
+			s.SetIgnore(panepullrequestlink.FieldPaneID)
+		}
+		if _, exists := u.create.mutation.PullRequestID(); exists {
+			s.SetIgnore(panepullrequestlink.FieldPullRequestID)
+		}
+		if _, exists := u.create.mutation.RelationKind(); exists {
+			s.SetIgnore(panepullrequestlink.FieldRelationKind)
+		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(panepullrequestlink.FieldCreatedAt)
 		}
@@ -892,48 +865,6 @@ func (u *PanePullRequestLinkUpsertOne) Update(set func(*PanePullRequestLinkUpser
 		set(&PanePullRequestLinkUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (u *PanePullRequestLinkUpsertOne) SetPaneID(v int) *PanePullRequestLinkUpsertOne {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.SetPaneID(v)
-	})
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PanePullRequestLinkUpsertOne) UpdatePaneID() *PanePullRequestLinkUpsertOne {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.UpdatePaneID()
-	})
-}
-
-// SetPullRequestID sets the "pull_request_id" field.
-func (u *PanePullRequestLinkUpsertOne) SetPullRequestID(v int) *PanePullRequestLinkUpsertOne {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.SetPullRequestID(v)
-	})
-}
-
-// UpdatePullRequestID sets the "pull_request_id" field to the value that was provided on create.
-func (u *PanePullRequestLinkUpsertOne) UpdatePullRequestID() *PanePullRequestLinkUpsertOne {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.UpdatePullRequestID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PanePullRequestLinkUpsertOne) SetRelationKind(v panepullrequestlink.RelationKind) *PanePullRequestLinkUpsertOne {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PanePullRequestLinkUpsertOne) UpdateRelationKind() *PanePullRequestLinkUpsertOne {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -1362,6 +1293,15 @@ func (u *PanePullRequestLinkUpsertBulk) UpdateNewValues() *PanePullRequestLinkUp
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
+			if _, exists := b.mutation.PaneID(); exists {
+				s.SetIgnore(panepullrequestlink.FieldPaneID)
+			}
+			if _, exists := b.mutation.PullRequestID(); exists {
+				s.SetIgnore(panepullrequestlink.FieldPullRequestID)
+			}
+			if _, exists := b.mutation.RelationKind(); exists {
+				s.SetIgnore(panepullrequestlink.FieldRelationKind)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(panepullrequestlink.FieldCreatedAt)
 			}
@@ -1395,48 +1335,6 @@ func (u *PanePullRequestLinkUpsertBulk) Update(set func(*PanePullRequestLinkUpse
 		set(&PanePullRequestLinkUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (u *PanePullRequestLinkUpsertBulk) SetPaneID(v int) *PanePullRequestLinkUpsertBulk {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.SetPaneID(v)
-	})
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PanePullRequestLinkUpsertBulk) UpdatePaneID() *PanePullRequestLinkUpsertBulk {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.UpdatePaneID()
-	})
-}
-
-// SetPullRequestID sets the "pull_request_id" field.
-func (u *PanePullRequestLinkUpsertBulk) SetPullRequestID(v int) *PanePullRequestLinkUpsertBulk {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.SetPullRequestID(v)
-	})
-}
-
-// UpdatePullRequestID sets the "pull_request_id" field to the value that was provided on create.
-func (u *PanePullRequestLinkUpsertBulk) UpdatePullRequestID() *PanePullRequestLinkUpsertBulk {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.UpdatePullRequestID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PanePullRequestLinkUpsertBulk) SetRelationKind(v panepullrequestlink.RelationKind) *PanePullRequestLinkUpsertBulk {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PanePullRequestLinkUpsertBulk) UpdateRelationKind() *PanePullRequestLinkUpsertBulk {
-	return u.Update(func(s *PanePullRequestLinkUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.

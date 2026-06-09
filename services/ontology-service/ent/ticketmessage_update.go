@@ -5,9 +5,7 @@ package ent
 import (
 	"context"
 	"cubicle/services/ontology-service/ent/evidence"
-	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/predicate"
-	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"errors"
 	"fmt"
@@ -28,48 +26,6 @@ type TicketMessageUpdate struct {
 // Where appends a list predicates to the TicketMessageUpdate builder.
 func (_u *TicketMessageUpdate) Where(ps ...predicate.TicketMessage) *TicketMessageUpdate {
 	_u.mutation.Where(ps...)
-	return _u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (_u *TicketMessageUpdate) SetTicketID(v int) *TicketMessageUpdate {
-	_u.mutation.SetTicketID(v)
-	return _u
-}
-
-// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (_u *TicketMessageUpdate) SetNillableTicketID(v *int) *TicketMessageUpdate {
-	if v != nil {
-		_u.SetTicketID(*v)
-	}
-	return _u
-}
-
-// SetMessageID sets the "message_id" field.
-func (_u *TicketMessageUpdate) SetMessageID(v int) *TicketMessageUpdate {
-	_u.mutation.SetMessageID(v)
-	return _u
-}
-
-// SetNillableMessageID sets the "message_id" field if the given value is not nil.
-func (_u *TicketMessageUpdate) SetNillableMessageID(v *int) *TicketMessageUpdate {
-	if v != nil {
-		_u.SetMessageID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *TicketMessageUpdate) SetRelationKind(v ticketmessage.RelationKind) *TicketMessageUpdate {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *TicketMessageUpdate) SetNillableRelationKind(v *ticketmessage.RelationKind) *TicketMessageUpdate {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
 	return _u
 }
 
@@ -331,16 +287,6 @@ func (_u *TicketMessageUpdate) SetUpdatedAt(v time.Time) *TicketMessageUpdate {
 	return _u
 }
 
-// SetTicket sets the "ticket" edge to the Ticket entity.
-func (_u *TicketMessageUpdate) SetTicket(v *Ticket) *TicketMessageUpdate {
-	return _u.SetTicketID(v.ID)
-}
-
-// SetMessage sets the "message" edge to the Message entity.
-func (_u *TicketMessageUpdate) SetMessage(v *Message) *TicketMessageUpdate {
-	return _u.SetMessageID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *TicketMessageUpdate) SetLatestEvidence(v *Evidence) *TicketMessageUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -349,18 +295,6 @@ func (_u *TicketMessageUpdate) SetLatestEvidence(v *Evidence) *TicketMessageUpda
 // Mutation returns the TicketMessageMutation object of the builder.
 func (_u *TicketMessageUpdate) Mutation() *TicketMessageMutation {
 	return _u.mutation
-}
-
-// ClearTicket clears the "ticket" edge to the Ticket entity.
-func (_u *TicketMessageUpdate) ClearTicket() *TicketMessageUpdate {
-	_u.mutation.ClearTicket()
-	return _u
-}
-
-// ClearMessage clears the "message" edge to the Message entity.
-func (_u *TicketMessageUpdate) ClearMessage() *TicketMessageUpdate {
-	_u.mutation.ClearMessage()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -407,11 +341,6 @@ func (_u *TicketMessageUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *TicketMessageUpdate) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := ticketmessage.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "TicketMessage.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := ticketmessage.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "TicketMessage.freshness_state": %w`, err)}
@@ -442,9 +371,6 @@ func (_u *TicketMessageUpdate) sqlSave(ctx context.Context) (_node int, err erro
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(ticketmessage.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(ticketmessage.FieldEvidenceCount, field.TypeInt, value)
@@ -515,64 +441,6 @@ func (_u *TicketMessageUpdate) sqlSave(ctx context.Context) (_node int, err erro
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ticketmessage.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.TicketCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketmessage.TicketTable,
-			Columns: []string{ticketmessage.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketmessage.TicketTable,
-			Columns: []string{ticketmessage.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.MessageCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketmessage.MessageTable,
-			Columns: []string{ticketmessage.MessageColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.MessageIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketmessage.MessageTable,
-			Columns: []string{ticketmessage.MessageColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -620,48 +488,6 @@ type TicketMessageUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TicketMessageMutation
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (_u *TicketMessageUpdateOne) SetTicketID(v int) *TicketMessageUpdateOne {
-	_u.mutation.SetTicketID(v)
-	return _u
-}
-
-// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (_u *TicketMessageUpdateOne) SetNillableTicketID(v *int) *TicketMessageUpdateOne {
-	if v != nil {
-		_u.SetTicketID(*v)
-	}
-	return _u
-}
-
-// SetMessageID sets the "message_id" field.
-func (_u *TicketMessageUpdateOne) SetMessageID(v int) *TicketMessageUpdateOne {
-	_u.mutation.SetMessageID(v)
-	return _u
-}
-
-// SetNillableMessageID sets the "message_id" field if the given value is not nil.
-func (_u *TicketMessageUpdateOne) SetNillableMessageID(v *int) *TicketMessageUpdateOne {
-	if v != nil {
-		_u.SetMessageID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *TicketMessageUpdateOne) SetRelationKind(v ticketmessage.RelationKind) *TicketMessageUpdateOne {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *TicketMessageUpdateOne) SetNillableRelationKind(v *ticketmessage.RelationKind) *TicketMessageUpdateOne {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
-	return _u
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -922,16 +748,6 @@ func (_u *TicketMessageUpdateOne) SetUpdatedAt(v time.Time) *TicketMessageUpdate
 	return _u
 }
 
-// SetTicket sets the "ticket" edge to the Ticket entity.
-func (_u *TicketMessageUpdateOne) SetTicket(v *Ticket) *TicketMessageUpdateOne {
-	return _u.SetTicketID(v.ID)
-}
-
-// SetMessage sets the "message" edge to the Message entity.
-func (_u *TicketMessageUpdateOne) SetMessage(v *Message) *TicketMessageUpdateOne {
-	return _u.SetMessageID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *TicketMessageUpdateOne) SetLatestEvidence(v *Evidence) *TicketMessageUpdateOne {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -940,18 +756,6 @@ func (_u *TicketMessageUpdateOne) SetLatestEvidence(v *Evidence) *TicketMessageU
 // Mutation returns the TicketMessageMutation object of the builder.
 func (_u *TicketMessageUpdateOne) Mutation() *TicketMessageMutation {
 	return _u.mutation
-}
-
-// ClearTicket clears the "ticket" edge to the Ticket entity.
-func (_u *TicketMessageUpdateOne) ClearTicket() *TicketMessageUpdateOne {
-	_u.mutation.ClearTicket()
-	return _u
-}
-
-// ClearMessage clears the "message" edge to the Message entity.
-func (_u *TicketMessageUpdateOne) ClearMessage() *TicketMessageUpdateOne {
-	_u.mutation.ClearMessage()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -1011,11 +815,6 @@ func (_u *TicketMessageUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *TicketMessageUpdateOne) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := ticketmessage.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "TicketMessage.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := ticketmessage.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "TicketMessage.freshness_state": %w`, err)}
@@ -1065,9 +864,6 @@ func (_u *TicketMessageUpdateOne) sqlSave(ctx context.Context) (_node *TicketMes
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(ticketmessage.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(ticketmessage.FieldEvidenceCount, field.TypeInt, value)
@@ -1137,64 +933,6 @@ func (_u *TicketMessageUpdateOne) sqlSave(ctx context.Context) (_node *TicketMes
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ticketmessage.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.TicketCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketmessage.TicketTable,
-			Columns: []string{ticketmessage.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketmessage.TicketTable,
-			Columns: []string{ticketmessage.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.MessageCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketmessage.MessageTable,
-			Columns: []string{ticketmessage.MessageColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.MessageIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketmessage.MessageTable,
-			Columns: []string{ticketmessage.MessageColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{

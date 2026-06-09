@@ -24,6 +24,7 @@ func (DocumentFragment) Fields() []ent.Field {
 		stableKeyFields(),
 		[]ent.Field{
 			field.Int("document_id").
+				Immutable().
 				Comment("Parent Document row that owns this fragment."),
 			field.String("heading").
 				Optional().
@@ -55,6 +56,7 @@ func (DocumentFragment) Edges() []ent.Edge {
 			Ref("fragments").
 			Unique().
 			Required().
+			Immutable().
 			Field("document_id").
 			Comment("Parent document for this fragment."),
 		edge.From("tickets", Ticket.Type).

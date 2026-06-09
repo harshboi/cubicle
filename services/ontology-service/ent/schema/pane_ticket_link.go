@@ -23,8 +23,10 @@ func (PaneTicketLink) Fields() []ent.Field {
 	return appendFields(
 		[]ent.Field{
 			field.Int("pane_id").
+				Immutable().
 				Comment("Source WorkPane endpoint for this association."),
 			field.Int("ticket_id").
+				Immutable().
 				Comment("Target Ticket endpoint for this association."),
 		},
 		linkFields(ticketRelationValues()),
@@ -37,11 +39,13 @@ func (PaneTicketLink) Edges() []ent.Edge {
 		edge.To("pane", WorkPane.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("pane_id").
 			Comment("Work pane that owns this ticket association."),
 		edge.To("ticket", Ticket.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("ticket_id").
 			Comment("Ticket target for this association."),
 		edge.To("latest_evidence", Evidence.Type).

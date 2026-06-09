@@ -1,5 +1,7 @@
 package schema
 
+import "cubicle/services/ontology-service/internal/ontology"
+
 const (
 	freshnessFresh   = "fresh"   // freshnessFresh means Cubicle believes the fact is current for its source.
 	freshnessPartial = "partial" // freshnessPartial means at least one source gap or incomplete crawl affects the fact.
@@ -16,48 +18,48 @@ const (
 )
 
 const (
-	surfaceDocuments      = "documents"      // surfaceDocuments groups a person's document-related work panes.
-	surfaceCode           = "code"           // surfaceCode groups a person's pull-request and code-review panes.
-	surfaceTickets        = "tickets"        // surfaceTickets groups a person's ticket and issue-tracker panes.
-	surfaceCommunications = "communications" // surfaceCommunications groups a person's message and thread panes.
+	surfaceDocuments      = string(ontology.SurfaceDocuments)      // surfaceDocuments groups a person's document-related work panes.
+	surfaceCode           = string(ontology.SurfaceCode)           // surfaceCode groups a person's pull-request and code-review panes.
+	surfaceTickets        = string(ontology.SurfaceTickets)        // surfaceTickets groups a person's ticket and issue-tracker panes.
+	surfaceCommunications = string(ontology.SurfaceCommunications) // surfaceCommunications groups a person's message and thread panes.
 )
 
 const (
-	targetDocument    = "document"     // targetDocument means a pane link points to Document rows.
-	targetPullRequest = "pull_request" // targetPullRequest means a pane link points to PullRequest rows.
-	targetTicket      = "ticket"       // targetTicket means a pane link points to Ticket rows.
-	targetMessage     = "message"      // targetMessage means a pane link points to Message rows.
+	targetDocument    = string(ontology.TargetDocument)    // targetDocument means a pane link points to Document rows.
+	targetPullRequest = string(ontology.TargetPullRequest) // targetPullRequest means a pane link points to PullRequest rows.
+	targetTicket      = string(ontology.TargetTicket)      // targetTicket means a pane link points to Ticket rows.
+	targetMessage     = string(ontology.TargetMessage)     // targetMessage means a pane link points to Message rows.
 )
 
 const (
-	paneDocumentsCreated       = "documents_created"          // paneDocumentsCreated contains documents created by the person.
-	paneDocumentsEdited        = "documents_edited"           // paneDocumentsEdited contains documents edited by the person.
-	paneDocumentsCommentedOn   = "documents_commented_on"     // paneDocumentsCommentedOn contains documents the person commented on.
-	panePullRequestsAuthored   = "pull_requests_authored"     // panePullRequestsAuthored contains pull requests authored by the person.
-	panePullRequestsReviewed   = "pull_requests_reviewed"     // panePullRequestsReviewed contains pull requests reviewed by the person.
-	panePullRequestsCommented  = "pull_requests_commented_on" // panePullRequestsCommented contains pull requests the person commented on.
-	paneTicketsOwned           = "tickets_owned"              // paneTicketsOwned contains tickets owned or assigned to the person.
-	paneTicketsReviewed        = "tickets_reviewed"           // paneTicketsReviewed contains tickets reviewed or triaged by the person.
-	paneTicketsMentionedIn     = "tickets_mentioned_in"       // paneTicketsMentionedIn contains tickets where the person was mentioned.
-	paneMessagesAuthored       = "messages_authored"          // paneMessagesAuthored contains messages authored by the person.
-	paneMessagesMentioningUser = "messages_mentioning_person" // paneMessagesMentioningUser contains messages that mention the person.
-	paneMessagesRepliedTo      = "messages_replied_to"        // paneMessagesRepliedTo contains message threads the person replied to.
+	paneDocumentsCreated       = string(ontology.PaneDocumentsCreated)       // paneDocumentsCreated contains documents created by the person.
+	paneDocumentsEdited        = string(ontology.PaneDocumentsEdited)        // paneDocumentsEdited contains documents edited by the person.
+	paneDocumentsCommentedOn   = string(ontology.PaneDocumentsCommentedOn)   // paneDocumentsCommentedOn contains documents the person commented on.
+	panePullRequestsAuthored   = string(ontology.PanePullRequestsAuthored)   // panePullRequestsAuthored contains pull requests authored by the person.
+	panePullRequestsReviewed   = string(ontology.PanePullRequestsReviewed)   // panePullRequestsReviewed contains pull requests reviewed by the person.
+	panePullRequestsCommented  = string(ontology.PanePullRequestsCommented)  // panePullRequestsCommented contains pull requests the person commented on.
+	paneTicketsOwned           = string(ontology.PaneTicketsOwned)           // paneTicketsOwned contains tickets owned or assigned to the person.
+	paneTicketsReviewed        = string(ontology.PaneTicketsReviewed)        // paneTicketsReviewed contains tickets reviewed or triaged by the person.
+	paneTicketsMentionedIn     = string(ontology.PaneTicketsMentionedIn)     // paneTicketsMentionedIn contains tickets where the person was mentioned.
+	paneMessagesAuthored       = string(ontology.PaneMessagesAuthored)       // paneMessagesAuthored contains messages authored by the person.
+	paneMessagesMentioningUser = string(ontology.PaneMessagesMentioningUser) // paneMessagesMentioningUser contains messages that mention the person.
+	paneMessagesRepliedTo      = string(ontology.PaneMessagesRepliedTo)      // paneMessagesRepliedTo contains message threads the person replied to.
 )
 
 const (
-	relationCreated        = "created"         // relationCreated means the source actor created the target object.
-	relationEdited         = "edited"          // relationEdited means the source actor edited the target object.
-	relationCommentedOn    = "commented_on"    // relationCommentedOn means the source actor commented on the target object.
-	relationAuthored       = "authored"        // relationAuthored means the source actor authored the target object.
-	relationReviewed       = "reviewed"        // relationReviewed means the source actor reviewed the target object.
-	relationOwned          = "owned"           // relationOwned means the source actor owns or is assigned to the target object.
-	relationMentionedIn    = "mentioned_in"    // relationMentionedIn means the source actor is mentioned in the target context.
-	relationMentionsPerson = "mentions_person" // relationMentionsPerson means the target message mentions the source person.
-	relationRepliedTo      = "replied_to"      // relationRepliedTo means the source actor replied to the target message thread.
-	relationContains       = "contains"        // relationContains means a parent work object contains a child work object.
-	relationImplementedBy  = "implemented_by"  // relationImplementedBy means a pull request implements a ticket.
-	relationDocumentedBy   = "documented_by"   // relationDocumentedBy means a document fragment explains or supports a ticket.
-	relationDiscussedIn    = "discussed_in"    // relationDiscussedIn means a message discusses a ticket.
+	relationCreated        = string(ontology.RelationCreated)        // relationCreated means the source actor created the target object.
+	relationEdited         = string(ontology.RelationEdited)         // relationEdited means the source actor edited the target object.
+	relationCommentedOn    = string(ontology.RelationCommentedOn)    // relationCommentedOn means the source actor commented on the target object.
+	relationAuthored       = string(ontology.RelationAuthored)       // relationAuthored means the source actor authored the target object.
+	relationReviewed       = string(ontology.RelationReviewed)       // relationReviewed means the source actor reviewed the target object.
+	relationOwned          = string(ontology.RelationOwned)          // relationOwned means the source actor owns or is assigned to the target object.
+	relationMentionedIn    = string(ontology.RelationMentionedIn)    // relationMentionedIn means the source actor is mentioned in the target context.
+	relationMentionsPerson = string(ontology.RelationMentionsPerson) // relationMentionsPerson means the target message mentions the source person.
+	relationRepliedTo      = string(ontology.RelationRepliedTo)      // relationRepliedTo means the source actor replied to the target message thread.
+	relationContains       = "contains"                              // relationContains means a parent work object contains a child work object.
+	relationImplementedBy  = "implemented_by"                        // relationImplementedBy means a pull request implements a ticket.
+	relationDocumentedBy   = "documented_by"                         // relationDocumentedBy means a document fragment explains or supports a ticket.
+	relationDiscussedIn    = "discussed_in"                          // relationDiscussedIn means a message discusses a ticket.
 )
 
 const (
@@ -96,42 +98,29 @@ func visibilityValues() []string {
 }
 
 func surfaceKindValues() []string {
-	return []string{surfaceDocuments, surfaceCode, surfaceTickets, surfaceCommunications}
+	return ontology.SurfaceKindStrings()
 }
 
 func targetKindValues() []string {
-	return []string{targetDocument, targetPullRequest, targetTicket, targetMessage}
+	return ontology.TargetKindStrings()
 }
 
 func paneKindValues() []string {
-	return []string{
-		paneDocumentsCreated,
-		paneDocumentsEdited,
-		paneDocumentsCommentedOn,
-		panePullRequestsAuthored,
-		panePullRequestsReviewed,
-		panePullRequestsCommented,
-		paneTicketsOwned,
-		paneTicketsReviewed,
-		paneTicketsMentionedIn,
-		paneMessagesAuthored,
-		paneMessagesMentioningUser,
-		paneMessagesRepliedTo,
-	}
+	return ontology.PaneKindStrings()
 }
 
 func documentRelationValues() []string {
-	return []string{relationCreated, relationEdited, relationCommentedOn}
+	return ontology.RelationKindStringsForTarget(ontology.TargetDocument)
 }
 
 func pullRequestRelationValues() []string {
-	return []string{relationAuthored, relationReviewed, relationCommentedOn}
+	return ontology.RelationKindStringsForTarget(ontology.TargetPullRequest)
 }
 
 func ticketRelationValues() []string {
-	return []string{relationOwned, relationReviewed, relationMentionedIn}
+	return ontology.RelationKindStringsForTarget(ontology.TargetTicket)
 }
 
 func messageRelationValues() []string {
-	return []string{relationAuthored, relationMentionsPerson, relationRepliedTo}
+	return ontology.RelationKindStringsForTarget(ontology.TargetMessage)
 }

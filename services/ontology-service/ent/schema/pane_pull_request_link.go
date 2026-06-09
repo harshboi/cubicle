@@ -23,8 +23,10 @@ func (PanePullRequestLink) Fields() []ent.Field {
 	return appendFields(
 		[]ent.Field{
 			field.Int("pane_id").
+				Immutable().
 				Comment("Source WorkPane endpoint for this association."),
 			field.Int("pull_request_id").
+				Immutable().
 				Comment("Target PullRequest endpoint for this association."),
 		},
 		linkFields(pullRequestRelationValues()),
@@ -37,11 +39,13 @@ func (PanePullRequestLink) Edges() []ent.Edge {
 		edge.To("pane", WorkPane.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("pane_id").
 			Comment("Work pane that owns this pull-request association."),
 		edge.To("pull_request", PullRequest.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("pull_request_id").
 			Comment("Pull request target for this association."),
 		edge.To("latest_evidence", Evidence.Type).

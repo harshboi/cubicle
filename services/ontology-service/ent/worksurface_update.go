@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/workpane"
 	"cubicle/services/ontology-service/ent/worksurface"
@@ -40,34 +39,6 @@ func (_u *WorkSurfaceUpdate) SetKey(v string) *WorkSurfaceUpdate {
 func (_u *WorkSurfaceUpdate) SetNillableKey(v *string) *WorkSurfaceUpdate {
 	if v != nil {
 		_u.SetKey(*v)
-	}
-	return _u
-}
-
-// SetPersonID sets the "person_id" field.
-func (_u *WorkSurfaceUpdate) SetPersonID(v int) *WorkSurfaceUpdate {
-	_u.mutation.SetPersonID(v)
-	return _u
-}
-
-// SetNillablePersonID sets the "person_id" field if the given value is not nil.
-func (_u *WorkSurfaceUpdate) SetNillablePersonID(v *int) *WorkSurfaceUpdate {
-	if v != nil {
-		_u.SetPersonID(*v)
-	}
-	return _u
-}
-
-// SetSurfaceKind sets the "surface_kind" field.
-func (_u *WorkSurfaceUpdate) SetSurfaceKind(v worksurface.SurfaceKind) *WorkSurfaceUpdate {
-	_u.mutation.SetSurfaceKind(v)
-	return _u
-}
-
-// SetNillableSurfaceKind sets the "surface_kind" field if the given value is not nil.
-func (_u *WorkSurfaceUpdate) SetNillableSurfaceKind(v *worksurface.SurfaceKind) *WorkSurfaceUpdate {
-	if v != nil {
-		_u.SetSurfaceKind(*v)
 	}
 	return _u
 }
@@ -285,11 +256,6 @@ func (_u *WorkSurfaceUpdate) SetUpdatedAt(v time.Time) *WorkSurfaceUpdate {
 	return _u
 }
 
-// SetPerson sets the "person" edge to the Person entity.
-func (_u *WorkSurfaceUpdate) SetPerson(v *Person) *WorkSurfaceUpdate {
-	return _u.SetPersonID(v.ID)
-}
-
 // AddPaneIDs adds the "panes" edge to the WorkPane entity by IDs.
 func (_u *WorkSurfaceUpdate) AddPaneIDs(ids ...int) *WorkSurfaceUpdate {
 	_u.mutation.AddPaneIDs(ids...)
@@ -308,12 +274,6 @@ func (_u *WorkSurfaceUpdate) AddPanes(v ...*WorkPane) *WorkSurfaceUpdate {
 // Mutation returns the WorkSurfaceMutation object of the builder.
 func (_u *WorkSurfaceUpdate) Mutation() *WorkSurfaceMutation {
 	return _u.mutation
-}
-
-// ClearPerson clears the "person" edge to the Person entity.
-func (_u *WorkSurfaceUpdate) ClearPerson() *WorkSurfaceUpdate {
-	_u.mutation.ClearPerson()
-	return _u
 }
 
 // ClearPanes clears all "panes" edges to the WorkPane entity.
@@ -380,11 +340,6 @@ func (_u *WorkSurfaceUpdate) check() error {
 			return &ValidationError{Name: "key", err: fmt.Errorf(`ent: validator failed for field "WorkSurface.key": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.SurfaceKind(); ok {
-		if err := worksurface.SurfaceKindValidator(v); err != nil {
-			return &ValidationError{Name: "surface_kind", err: fmt.Errorf(`ent: validator failed for field "WorkSurface.surface_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.DisplayName(); ok {
 		if err := worksurface.DisplayNameValidator(v); err != nil {
 			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "WorkSurface.display_name": %w`, err)}
@@ -420,9 +375,6 @@ func (_u *WorkSurfaceUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.Key(); ok {
 		_spec.SetField(worksurface.FieldKey, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.SurfaceKind(); ok {
-		_spec.SetField(worksurface.FieldSurfaceKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.DisplayName(); ok {
 		_spec.SetField(worksurface.FieldDisplayName, field.TypeString, value)
@@ -483,35 +435,6 @@ func (_u *WorkSurfaceUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(worksurface.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.PersonCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   worksurface.PersonTable,
-			Columns: []string{worksurface.PersonColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PersonIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   worksurface.PersonTable,
-			Columns: []string{worksurface.PersonColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.PanesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -588,34 +511,6 @@ func (_u *WorkSurfaceUpdateOne) SetKey(v string) *WorkSurfaceUpdateOne {
 func (_u *WorkSurfaceUpdateOne) SetNillableKey(v *string) *WorkSurfaceUpdateOne {
 	if v != nil {
 		_u.SetKey(*v)
-	}
-	return _u
-}
-
-// SetPersonID sets the "person_id" field.
-func (_u *WorkSurfaceUpdateOne) SetPersonID(v int) *WorkSurfaceUpdateOne {
-	_u.mutation.SetPersonID(v)
-	return _u
-}
-
-// SetNillablePersonID sets the "person_id" field if the given value is not nil.
-func (_u *WorkSurfaceUpdateOne) SetNillablePersonID(v *int) *WorkSurfaceUpdateOne {
-	if v != nil {
-		_u.SetPersonID(*v)
-	}
-	return _u
-}
-
-// SetSurfaceKind sets the "surface_kind" field.
-func (_u *WorkSurfaceUpdateOne) SetSurfaceKind(v worksurface.SurfaceKind) *WorkSurfaceUpdateOne {
-	_u.mutation.SetSurfaceKind(v)
-	return _u
-}
-
-// SetNillableSurfaceKind sets the "surface_kind" field if the given value is not nil.
-func (_u *WorkSurfaceUpdateOne) SetNillableSurfaceKind(v *worksurface.SurfaceKind) *WorkSurfaceUpdateOne {
-	if v != nil {
-		_u.SetSurfaceKind(*v)
 	}
 	return _u
 }
@@ -833,11 +728,6 @@ func (_u *WorkSurfaceUpdateOne) SetUpdatedAt(v time.Time) *WorkSurfaceUpdateOne 
 	return _u
 }
 
-// SetPerson sets the "person" edge to the Person entity.
-func (_u *WorkSurfaceUpdateOne) SetPerson(v *Person) *WorkSurfaceUpdateOne {
-	return _u.SetPersonID(v.ID)
-}
-
 // AddPaneIDs adds the "panes" edge to the WorkPane entity by IDs.
 func (_u *WorkSurfaceUpdateOne) AddPaneIDs(ids ...int) *WorkSurfaceUpdateOne {
 	_u.mutation.AddPaneIDs(ids...)
@@ -856,12 +746,6 @@ func (_u *WorkSurfaceUpdateOne) AddPanes(v ...*WorkPane) *WorkSurfaceUpdateOne {
 // Mutation returns the WorkSurfaceMutation object of the builder.
 func (_u *WorkSurfaceUpdateOne) Mutation() *WorkSurfaceMutation {
 	return _u.mutation
-}
-
-// ClearPerson clears the "person" edge to the Person entity.
-func (_u *WorkSurfaceUpdateOne) ClearPerson() *WorkSurfaceUpdateOne {
-	_u.mutation.ClearPerson()
-	return _u
 }
 
 // ClearPanes clears all "panes" edges to the WorkPane entity.
@@ -941,11 +825,6 @@ func (_u *WorkSurfaceUpdateOne) check() error {
 			return &ValidationError{Name: "key", err: fmt.Errorf(`ent: validator failed for field "WorkSurface.key": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.SurfaceKind(); ok {
-		if err := worksurface.SurfaceKindValidator(v); err != nil {
-			return &ValidationError{Name: "surface_kind", err: fmt.Errorf(`ent: validator failed for field "WorkSurface.surface_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.DisplayName(); ok {
 		if err := worksurface.DisplayNameValidator(v); err != nil {
 			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "WorkSurface.display_name": %w`, err)}
@@ -998,9 +877,6 @@ func (_u *WorkSurfaceUpdateOne) sqlSave(ctx context.Context) (_node *WorkSurface
 	}
 	if value, ok := _u.mutation.Key(); ok {
 		_spec.SetField(worksurface.FieldKey, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.SurfaceKind(); ok {
-		_spec.SetField(worksurface.FieldSurfaceKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.DisplayName(); ok {
 		_spec.SetField(worksurface.FieldDisplayName, field.TypeString, value)
@@ -1061,35 +937,6 @@ func (_u *WorkSurfaceUpdateOne) sqlSave(ctx context.Context) (_node *WorkSurface
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(worksurface.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.PersonCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   worksurface.PersonTable,
-			Columns: []string{worksurface.PersonColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PersonIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   worksurface.PersonTable,
-			Columns: []string{worksurface.PersonColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.PanesCleared() {
 		edge := &sqlgraph.EdgeSpec{

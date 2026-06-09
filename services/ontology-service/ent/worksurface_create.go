@@ -562,30 +562,6 @@ func (u *WorkSurfaceUpsert) UpdateKey() *WorkSurfaceUpsert {
 	return u
 }
 
-// SetPersonID sets the "person_id" field.
-func (u *WorkSurfaceUpsert) SetPersonID(v int) *WorkSurfaceUpsert {
-	u.Set(worksurface.FieldPersonID, v)
-	return u
-}
-
-// UpdatePersonID sets the "person_id" field to the value that was provided on create.
-func (u *WorkSurfaceUpsert) UpdatePersonID() *WorkSurfaceUpsert {
-	u.SetExcluded(worksurface.FieldPersonID)
-	return u
-}
-
-// SetSurfaceKind sets the "surface_kind" field.
-func (u *WorkSurfaceUpsert) SetSurfaceKind(v worksurface.SurfaceKind) *WorkSurfaceUpsert {
-	u.Set(worksurface.FieldSurfaceKind, v)
-	return u
-}
-
-// UpdateSurfaceKind sets the "surface_kind" field to the value that was provided on create.
-func (u *WorkSurfaceUpsert) UpdateSurfaceKind() *WorkSurfaceUpsert {
-	u.SetExcluded(worksurface.FieldSurfaceKind)
-	return u
-}
-
 // SetDisplayName sets the "display_name" field.
 func (u *WorkSurfaceUpsert) SetDisplayName(v string) *WorkSurfaceUpsert {
 	u.Set(worksurface.FieldDisplayName, v)
@@ -789,6 +765,12 @@ func (u *WorkSurfaceUpsert) UpdateUpdatedAt() *WorkSurfaceUpsert {
 func (u *WorkSurfaceUpsertOne) UpdateNewValues() *WorkSurfaceUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.PersonID(); exists {
+			s.SetIgnore(worksurface.FieldPersonID)
+		}
+		if _, exists := u.create.mutation.SurfaceKind(); exists {
+			s.SetIgnore(worksurface.FieldSurfaceKind)
+		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(worksurface.FieldCreatedAt)
 		}
@@ -834,34 +816,6 @@ func (u *WorkSurfaceUpsertOne) SetKey(v string) *WorkSurfaceUpsertOne {
 func (u *WorkSurfaceUpsertOne) UpdateKey() *WorkSurfaceUpsertOne {
 	return u.Update(func(s *WorkSurfaceUpsert) {
 		s.UpdateKey()
-	})
-}
-
-// SetPersonID sets the "person_id" field.
-func (u *WorkSurfaceUpsertOne) SetPersonID(v int) *WorkSurfaceUpsertOne {
-	return u.Update(func(s *WorkSurfaceUpsert) {
-		s.SetPersonID(v)
-	})
-}
-
-// UpdatePersonID sets the "person_id" field to the value that was provided on create.
-func (u *WorkSurfaceUpsertOne) UpdatePersonID() *WorkSurfaceUpsertOne {
-	return u.Update(func(s *WorkSurfaceUpsert) {
-		s.UpdatePersonID()
-	})
-}
-
-// SetSurfaceKind sets the "surface_kind" field.
-func (u *WorkSurfaceUpsertOne) SetSurfaceKind(v worksurface.SurfaceKind) *WorkSurfaceUpsertOne {
-	return u.Update(func(s *WorkSurfaceUpsert) {
-		s.SetSurfaceKind(v)
-	})
-}
-
-// UpdateSurfaceKind sets the "surface_kind" field to the value that was provided on create.
-func (u *WorkSurfaceUpsertOne) UpdateSurfaceKind() *WorkSurfaceUpsertOne {
-	return u.Update(func(s *WorkSurfaceUpsert) {
-		s.UpdateSurfaceKind()
 	})
 }
 
@@ -1265,6 +1219,12 @@ func (u *WorkSurfaceUpsertBulk) UpdateNewValues() *WorkSurfaceUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
+			if _, exists := b.mutation.PersonID(); exists {
+				s.SetIgnore(worksurface.FieldPersonID)
+			}
+			if _, exists := b.mutation.SurfaceKind(); exists {
+				s.SetIgnore(worksurface.FieldSurfaceKind)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(worksurface.FieldCreatedAt)
 			}
@@ -1311,34 +1271,6 @@ func (u *WorkSurfaceUpsertBulk) SetKey(v string) *WorkSurfaceUpsertBulk {
 func (u *WorkSurfaceUpsertBulk) UpdateKey() *WorkSurfaceUpsertBulk {
 	return u.Update(func(s *WorkSurfaceUpsert) {
 		s.UpdateKey()
-	})
-}
-
-// SetPersonID sets the "person_id" field.
-func (u *WorkSurfaceUpsertBulk) SetPersonID(v int) *WorkSurfaceUpsertBulk {
-	return u.Update(func(s *WorkSurfaceUpsert) {
-		s.SetPersonID(v)
-	})
-}
-
-// UpdatePersonID sets the "person_id" field to the value that was provided on create.
-func (u *WorkSurfaceUpsertBulk) UpdatePersonID() *WorkSurfaceUpsertBulk {
-	return u.Update(func(s *WorkSurfaceUpsert) {
-		s.UpdatePersonID()
-	})
-}
-
-// SetSurfaceKind sets the "surface_kind" field.
-func (u *WorkSurfaceUpsertBulk) SetSurfaceKind(v worksurface.SurfaceKind) *WorkSurfaceUpsertBulk {
-	return u.Update(func(s *WorkSurfaceUpsert) {
-		s.SetSurfaceKind(v)
-	})
-}
-
-// UpdateSurfaceKind sets the "surface_kind" field to the value that was provided on create.
-func (u *WorkSurfaceUpsertBulk) UpdateSurfaceKind() *WorkSurfaceUpsertBulk {
-	return u.Update(func(s *WorkSurfaceUpsert) {
-		s.UpdateSurfaceKind()
 	})
 }
 

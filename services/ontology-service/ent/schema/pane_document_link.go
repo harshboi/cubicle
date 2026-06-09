@@ -23,8 +23,10 @@ func (PaneDocumentLink) Fields() []ent.Field {
 	return appendFields(
 		[]ent.Field{
 			field.Int("pane_id").
+				Immutable().
 				Comment("Source WorkPane endpoint for this association."),
 			field.Int("document_id").
+				Immutable().
 				Comment("Target Document endpoint for this association."),
 		},
 		linkFields(documentRelationValues()),
@@ -37,11 +39,13 @@ func (PaneDocumentLink) Edges() []ent.Edge {
 		edge.To("pane", WorkPane.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("pane_id").
 			Comment("Work pane that owns this document association."),
 		edge.To("document", Document.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("document_id").
 			Comment("Document target for this association."),
 		edge.To("latest_evidence", Evidence.Type).

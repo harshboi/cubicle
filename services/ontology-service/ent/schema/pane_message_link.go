@@ -23,8 +23,10 @@ func (PaneMessageLink) Fields() []ent.Field {
 	return appendFields(
 		[]ent.Field{
 			field.Int("pane_id").
+				Immutable().
 				Comment("Source WorkPane endpoint for this association."),
 			field.Int("message_id").
+				Immutable().
 				Comment("Target Message endpoint for this association."),
 		},
 		linkFields(messageRelationValues()),
@@ -37,11 +39,13 @@ func (PaneMessageLink) Edges() []ent.Edge {
 		edge.To("pane", WorkPane.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("pane_id").
 			Comment("Work pane that owns this message association."),
 		edge.To("message", Message.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("message_id").
 			Comment("Message target for this association."),
 		edge.To("latest_evidence", Evidence.Type).

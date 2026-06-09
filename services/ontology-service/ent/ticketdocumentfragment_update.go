@@ -4,10 +4,8 @@ package ent
 
 import (
 	"context"
-	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/predicate"
-	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"errors"
 	"fmt"
@@ -28,48 +26,6 @@ type TicketDocumentFragmentUpdate struct {
 // Where appends a list predicates to the TicketDocumentFragmentUpdate builder.
 func (_u *TicketDocumentFragmentUpdate) Where(ps ...predicate.TicketDocumentFragment) *TicketDocumentFragmentUpdate {
 	_u.mutation.Where(ps...)
-	return _u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (_u *TicketDocumentFragmentUpdate) SetTicketID(v int) *TicketDocumentFragmentUpdate {
-	_u.mutation.SetTicketID(v)
-	return _u
-}
-
-// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (_u *TicketDocumentFragmentUpdate) SetNillableTicketID(v *int) *TicketDocumentFragmentUpdate {
-	if v != nil {
-		_u.SetTicketID(*v)
-	}
-	return _u
-}
-
-// SetDocumentFragmentID sets the "document_fragment_id" field.
-func (_u *TicketDocumentFragmentUpdate) SetDocumentFragmentID(v int) *TicketDocumentFragmentUpdate {
-	_u.mutation.SetDocumentFragmentID(v)
-	return _u
-}
-
-// SetNillableDocumentFragmentID sets the "document_fragment_id" field if the given value is not nil.
-func (_u *TicketDocumentFragmentUpdate) SetNillableDocumentFragmentID(v *int) *TicketDocumentFragmentUpdate {
-	if v != nil {
-		_u.SetDocumentFragmentID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *TicketDocumentFragmentUpdate) SetRelationKind(v ticketdocumentfragment.RelationKind) *TicketDocumentFragmentUpdate {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *TicketDocumentFragmentUpdate) SetNillableRelationKind(v *ticketdocumentfragment.RelationKind) *TicketDocumentFragmentUpdate {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
 	return _u
 }
 
@@ -331,16 +287,6 @@ func (_u *TicketDocumentFragmentUpdate) SetUpdatedAt(v time.Time) *TicketDocumen
 	return _u
 }
 
-// SetTicket sets the "ticket" edge to the Ticket entity.
-func (_u *TicketDocumentFragmentUpdate) SetTicket(v *Ticket) *TicketDocumentFragmentUpdate {
-	return _u.SetTicketID(v.ID)
-}
-
-// SetDocumentFragment sets the "document_fragment" edge to the DocumentFragment entity.
-func (_u *TicketDocumentFragmentUpdate) SetDocumentFragment(v *DocumentFragment) *TicketDocumentFragmentUpdate {
-	return _u.SetDocumentFragmentID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *TicketDocumentFragmentUpdate) SetLatestEvidence(v *Evidence) *TicketDocumentFragmentUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -349,18 +295,6 @@ func (_u *TicketDocumentFragmentUpdate) SetLatestEvidence(v *Evidence) *TicketDo
 // Mutation returns the TicketDocumentFragmentMutation object of the builder.
 func (_u *TicketDocumentFragmentUpdate) Mutation() *TicketDocumentFragmentMutation {
 	return _u.mutation
-}
-
-// ClearTicket clears the "ticket" edge to the Ticket entity.
-func (_u *TicketDocumentFragmentUpdate) ClearTicket() *TicketDocumentFragmentUpdate {
-	_u.mutation.ClearTicket()
-	return _u
-}
-
-// ClearDocumentFragment clears the "document_fragment" edge to the DocumentFragment entity.
-func (_u *TicketDocumentFragmentUpdate) ClearDocumentFragment() *TicketDocumentFragmentUpdate {
-	_u.mutation.ClearDocumentFragment()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -407,11 +341,6 @@ func (_u *TicketDocumentFragmentUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *TicketDocumentFragmentUpdate) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := ticketdocumentfragment.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "TicketDocumentFragment.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := ticketdocumentfragment.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "TicketDocumentFragment.freshness_state": %w`, err)}
@@ -442,9 +371,6 @@ func (_u *TicketDocumentFragmentUpdate) sqlSave(ctx context.Context) (_node int,
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(ticketdocumentfragment.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(ticketdocumentfragment.FieldEvidenceCount, field.TypeInt, value)
@@ -515,64 +441,6 @@ func (_u *TicketDocumentFragmentUpdate) sqlSave(ctx context.Context) (_node int,
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ticketdocumentfragment.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.TicketCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketdocumentfragment.TicketTable,
-			Columns: []string{ticketdocumentfragment.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketdocumentfragment.TicketTable,
-			Columns: []string{ticketdocumentfragment.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.DocumentFragmentCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketdocumentfragment.DocumentFragmentTable,
-			Columns: []string{ticketdocumentfragment.DocumentFragmentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.DocumentFragmentIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketdocumentfragment.DocumentFragmentTable,
-			Columns: []string{ticketdocumentfragment.DocumentFragmentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -620,48 +488,6 @@ type TicketDocumentFragmentUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TicketDocumentFragmentMutation
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (_u *TicketDocumentFragmentUpdateOne) SetTicketID(v int) *TicketDocumentFragmentUpdateOne {
-	_u.mutation.SetTicketID(v)
-	return _u
-}
-
-// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (_u *TicketDocumentFragmentUpdateOne) SetNillableTicketID(v *int) *TicketDocumentFragmentUpdateOne {
-	if v != nil {
-		_u.SetTicketID(*v)
-	}
-	return _u
-}
-
-// SetDocumentFragmentID sets the "document_fragment_id" field.
-func (_u *TicketDocumentFragmentUpdateOne) SetDocumentFragmentID(v int) *TicketDocumentFragmentUpdateOne {
-	_u.mutation.SetDocumentFragmentID(v)
-	return _u
-}
-
-// SetNillableDocumentFragmentID sets the "document_fragment_id" field if the given value is not nil.
-func (_u *TicketDocumentFragmentUpdateOne) SetNillableDocumentFragmentID(v *int) *TicketDocumentFragmentUpdateOne {
-	if v != nil {
-		_u.SetDocumentFragmentID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *TicketDocumentFragmentUpdateOne) SetRelationKind(v ticketdocumentfragment.RelationKind) *TicketDocumentFragmentUpdateOne {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *TicketDocumentFragmentUpdateOne) SetNillableRelationKind(v *ticketdocumentfragment.RelationKind) *TicketDocumentFragmentUpdateOne {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
-	return _u
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -922,16 +748,6 @@ func (_u *TicketDocumentFragmentUpdateOne) SetUpdatedAt(v time.Time) *TicketDocu
 	return _u
 }
 
-// SetTicket sets the "ticket" edge to the Ticket entity.
-func (_u *TicketDocumentFragmentUpdateOne) SetTicket(v *Ticket) *TicketDocumentFragmentUpdateOne {
-	return _u.SetTicketID(v.ID)
-}
-
-// SetDocumentFragment sets the "document_fragment" edge to the DocumentFragment entity.
-func (_u *TicketDocumentFragmentUpdateOne) SetDocumentFragment(v *DocumentFragment) *TicketDocumentFragmentUpdateOne {
-	return _u.SetDocumentFragmentID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *TicketDocumentFragmentUpdateOne) SetLatestEvidence(v *Evidence) *TicketDocumentFragmentUpdateOne {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -940,18 +756,6 @@ func (_u *TicketDocumentFragmentUpdateOne) SetLatestEvidence(v *Evidence) *Ticke
 // Mutation returns the TicketDocumentFragmentMutation object of the builder.
 func (_u *TicketDocumentFragmentUpdateOne) Mutation() *TicketDocumentFragmentMutation {
 	return _u.mutation
-}
-
-// ClearTicket clears the "ticket" edge to the Ticket entity.
-func (_u *TicketDocumentFragmentUpdateOne) ClearTicket() *TicketDocumentFragmentUpdateOne {
-	_u.mutation.ClearTicket()
-	return _u
-}
-
-// ClearDocumentFragment clears the "document_fragment" edge to the DocumentFragment entity.
-func (_u *TicketDocumentFragmentUpdateOne) ClearDocumentFragment() *TicketDocumentFragmentUpdateOne {
-	_u.mutation.ClearDocumentFragment()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -1011,11 +815,6 @@ func (_u *TicketDocumentFragmentUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *TicketDocumentFragmentUpdateOne) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := ticketdocumentfragment.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "TicketDocumentFragment.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := ticketdocumentfragment.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "TicketDocumentFragment.freshness_state": %w`, err)}
@@ -1065,9 +864,6 @@ func (_u *TicketDocumentFragmentUpdateOne) sqlSave(ctx context.Context) (_node *
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(ticketdocumentfragment.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(ticketdocumentfragment.FieldEvidenceCount, field.TypeInt, value)
@@ -1137,64 +933,6 @@ func (_u *TicketDocumentFragmentUpdateOne) sqlSave(ctx context.Context) (_node *
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ticketdocumentfragment.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.TicketCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketdocumentfragment.TicketTable,
-			Columns: []string{ticketdocumentfragment.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketdocumentfragment.TicketTable,
-			Columns: []string{ticketdocumentfragment.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.DocumentFragmentCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketdocumentfragment.DocumentFragmentTable,
-			Columns: []string{ticketdocumentfragment.DocumentFragmentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.DocumentFragmentIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketdocumentfragment.DocumentFragmentTable,
-			Columns: []string{ticketdocumentfragment.DocumentFragmentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{

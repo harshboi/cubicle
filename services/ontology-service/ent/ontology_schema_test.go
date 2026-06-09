@@ -1,10 +1,14 @@
 package ent_test
 
 import (
+	"context"
 	"testing"
 
+	"cubicle/services/ontology-service/ent"
 	"cubicle/services/ontology-service/ent/enttest"
 	"cubicle/services/ontology-service/ent/migrate"
+	"cubicle/services/ontology-service/ent/workpane"
+	"cubicle/services/ontology-service/ent/worksurface"
 
 	entsqlschema "entgo.io/ent/dialect/sql/schema"
 	_ "github.com/mattn/go-sqlite3"
@@ -70,6 +74,49 @@ func TestWorkPaneDeclaresConcreteTargetEdges(t *testing.T) {
 	assertColumn(t, table, "target_kind")
 	assertColumn(t, table, "target_count")
 	assertColumn(t, table, "last_indexed_at")
+}
+
+// TestWorkPaneRejectsMismatchedTargetKind proves pane_kind remains the source
+// of semantic truth instead of letting writes create contradictory pane rows.
+func TestWorkPaneRejectsMismatchedTargetKind(t *testing.T) {
+	ctx := context.Background()
+	client := enttest.Open(t, "sqlite3", "file:ontology-pane-validation?mode=memory&cache=shared&_fk=1")
+	defer client.Close()
+
+	surface := createTestSurface(t, ctx, client)
+	if _, err := client.WorkPane.Create().
+		SetKey("pane:person:docs:bad-target").
+		SetWorkSurfaceID(surface.ID).
+		SetPaneKind(workpane.PaneKindDocumentsCommentedOn).
+		SetTargetKind(workpane.TargetKindTicket).
+		SetDisplayName("Bad target").
+		Save(ctx); err == nil {
+		t.Fatal("expected mismatched pane target kind to fail")
+	}
+
+	if _, err := client.WorkPane.Create().
+		SetKey("pane:person:docs:commented-on").
+		SetWorkSurfaceID(surface.ID).
+		SetPaneKind(workpane.PaneKindDocumentsCommentedOn).
+		SetTargetKind(workpane.TargetKindDocument).
+		SetDisplayName("Documents Commented On").
+		Save(ctx); err != nil {
+		t.Fatalf("expected valid pane target kind to save: %v", err)
+	}
+}
+
+func createTestSurface(t *testing.T, ctx context.Context, client *ent.Client) *ent.WorkSurface {
+	t.Helper()
+	person := client.Person.Create().
+		SetKey("person:test").
+		SetDisplayName("Test Person").
+		SaveX(ctx)
+	return client.WorkSurface.Create().
+		SetKey("surface:person:test:documents").
+		SetPersonID(person.ID).
+		SetSurfaceKind(worksurface.SurfaceKindDocuments).
+		SetDisplayName("Documents").
+		SaveX(ctx)
 }
 
 func findTable(t *testing.T, name string) *entsqlschema.Table {

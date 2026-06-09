@@ -577,18 +577,6 @@ func (u *DocumentFragmentUpsert) UpdateKey() *DocumentFragmentUpsert {
 	return u
 }
 
-// SetDocumentID sets the "document_id" field.
-func (u *DocumentFragmentUpsert) SetDocumentID(v int) *DocumentFragmentUpsert {
-	u.Set(documentfragment.FieldDocumentID, v)
-	return u
-}
-
-// UpdateDocumentID sets the "document_id" field to the value that was provided on create.
-func (u *DocumentFragmentUpsert) UpdateDocumentID() *DocumentFragmentUpsert {
-	u.SetExcluded(documentfragment.FieldDocumentID)
-	return u
-}
-
 // SetHeading sets the "heading" field.
 func (u *DocumentFragmentUpsert) SetHeading(v string) *DocumentFragmentUpsert {
 	u.Set(documentfragment.FieldHeading, v)
@@ -852,6 +840,9 @@ func (u *DocumentFragmentUpsert) UpdateUpdatedAt() *DocumentFragmentUpsert {
 func (u *DocumentFragmentUpsertOne) UpdateNewValues() *DocumentFragmentUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.DocumentID(); exists {
+			s.SetIgnore(documentfragment.FieldDocumentID)
+		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(documentfragment.FieldCreatedAt)
 		}
@@ -897,20 +888,6 @@ func (u *DocumentFragmentUpsertOne) SetKey(v string) *DocumentFragmentUpsertOne 
 func (u *DocumentFragmentUpsertOne) UpdateKey() *DocumentFragmentUpsertOne {
 	return u.Update(func(s *DocumentFragmentUpsert) {
 		s.UpdateKey()
-	})
-}
-
-// SetDocumentID sets the "document_id" field.
-func (u *DocumentFragmentUpsertOne) SetDocumentID(v int) *DocumentFragmentUpsertOne {
-	return u.Update(func(s *DocumentFragmentUpsert) {
-		s.SetDocumentID(v)
-	})
-}
-
-// UpdateDocumentID sets the "document_id" field to the value that was provided on create.
-func (u *DocumentFragmentUpsertOne) UpdateDocumentID() *DocumentFragmentUpsertOne {
-	return u.Update(func(s *DocumentFragmentUpsert) {
-		s.UpdateDocumentID()
 	})
 }
 
@@ -1384,6 +1361,9 @@ func (u *DocumentFragmentUpsertBulk) UpdateNewValues() *DocumentFragmentUpsertBu
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
+			if _, exists := b.mutation.DocumentID(); exists {
+				s.SetIgnore(documentfragment.FieldDocumentID)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(documentfragment.FieldCreatedAt)
 			}
@@ -1430,20 +1410,6 @@ func (u *DocumentFragmentUpsertBulk) SetKey(v string) *DocumentFragmentUpsertBul
 func (u *DocumentFragmentUpsertBulk) UpdateKey() *DocumentFragmentUpsertBulk {
 	return u.Update(func(s *DocumentFragmentUpsert) {
 		s.UpdateKey()
-	})
-}
-
-// SetDocumentID sets the "document_id" field.
-func (u *DocumentFragmentUpsertBulk) SetDocumentID(v int) *DocumentFragmentUpsertBulk {
-	return u.Update(func(s *DocumentFragmentUpsert) {
-		s.SetDocumentID(v)
-	})
-}
-
-// UpdateDocumentID sets the "document_id" field to the value that was provided on create.
-func (u *DocumentFragmentUpsertBulk) UpdateDocumentID() *DocumentFragmentUpsertBulk {
-	return u.Update(func(s *DocumentFragmentUpsert) {
-		s.UpdateDocumentID()
 	})
 }
 

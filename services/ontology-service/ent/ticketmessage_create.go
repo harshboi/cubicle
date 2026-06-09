@@ -579,42 +579,6 @@ type (
 	}
 )
 
-// SetTicketID sets the "ticket_id" field.
-func (u *TicketMessageUpsert) SetTicketID(v int) *TicketMessageUpsert {
-	u.Set(ticketmessage.FieldTicketID, v)
-	return u
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *TicketMessageUpsert) UpdateTicketID() *TicketMessageUpsert {
-	u.SetExcluded(ticketmessage.FieldTicketID)
-	return u
-}
-
-// SetMessageID sets the "message_id" field.
-func (u *TicketMessageUpsert) SetMessageID(v int) *TicketMessageUpsert {
-	u.Set(ticketmessage.FieldMessageID, v)
-	return u
-}
-
-// UpdateMessageID sets the "message_id" field to the value that was provided on create.
-func (u *TicketMessageUpsert) UpdateMessageID() *TicketMessageUpsert {
-	u.SetExcluded(ticketmessage.FieldMessageID)
-	return u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *TicketMessageUpsert) SetRelationKind(v ticketmessage.RelationKind) *TicketMessageUpsert {
-	u.Set(ticketmessage.FieldRelationKind, v)
-	return u
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *TicketMessageUpsert) UpdateRelationKind() *TicketMessageUpsert {
-	u.SetExcluded(ticketmessage.FieldRelationKind)
-	return u
-}
-
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
 func (u *TicketMessageUpsert) SetLatestEvidenceID(v int) *TicketMessageUpsert {
 	u.Set(ticketmessage.FieldLatestEvidenceID, v)
@@ -860,6 +824,15 @@ func (u *TicketMessageUpsert) UpdateUpdatedAt() *TicketMessageUpsert {
 func (u *TicketMessageUpsertOne) UpdateNewValues() *TicketMessageUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.TicketID(); exists {
+			s.SetIgnore(ticketmessage.FieldTicketID)
+		}
+		if _, exists := u.create.mutation.MessageID(); exists {
+			s.SetIgnore(ticketmessage.FieldMessageID)
+		}
+		if _, exists := u.create.mutation.RelationKind(); exists {
+			s.SetIgnore(ticketmessage.FieldRelationKind)
+		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(ticketmessage.FieldCreatedAt)
 		}
@@ -892,48 +865,6 @@ func (u *TicketMessageUpsertOne) Update(set func(*TicketMessageUpsert)) *TicketM
 		set(&TicketMessageUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *TicketMessageUpsertOne) SetTicketID(v int) *TicketMessageUpsertOne {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.SetTicketID(v)
-	})
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *TicketMessageUpsertOne) UpdateTicketID() *TicketMessageUpsertOne {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.UpdateTicketID()
-	})
-}
-
-// SetMessageID sets the "message_id" field.
-func (u *TicketMessageUpsertOne) SetMessageID(v int) *TicketMessageUpsertOne {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.SetMessageID(v)
-	})
-}
-
-// UpdateMessageID sets the "message_id" field to the value that was provided on create.
-func (u *TicketMessageUpsertOne) UpdateMessageID() *TicketMessageUpsertOne {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.UpdateMessageID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *TicketMessageUpsertOne) SetRelationKind(v ticketmessage.RelationKind) *TicketMessageUpsertOne {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *TicketMessageUpsertOne) UpdateRelationKind() *TicketMessageUpsertOne {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -1362,6 +1293,15 @@ func (u *TicketMessageUpsertBulk) UpdateNewValues() *TicketMessageUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
+			if _, exists := b.mutation.TicketID(); exists {
+				s.SetIgnore(ticketmessage.FieldTicketID)
+			}
+			if _, exists := b.mutation.MessageID(); exists {
+				s.SetIgnore(ticketmessage.FieldMessageID)
+			}
+			if _, exists := b.mutation.RelationKind(); exists {
+				s.SetIgnore(ticketmessage.FieldRelationKind)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(ticketmessage.FieldCreatedAt)
 			}
@@ -1395,48 +1335,6 @@ func (u *TicketMessageUpsertBulk) Update(set func(*TicketMessageUpsert)) *Ticket
 		set(&TicketMessageUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *TicketMessageUpsertBulk) SetTicketID(v int) *TicketMessageUpsertBulk {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.SetTicketID(v)
-	})
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *TicketMessageUpsertBulk) UpdateTicketID() *TicketMessageUpsertBulk {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.UpdateTicketID()
-	})
-}
-
-// SetMessageID sets the "message_id" field.
-func (u *TicketMessageUpsertBulk) SetMessageID(v int) *TicketMessageUpsertBulk {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.SetMessageID(v)
-	})
-}
-
-// UpdateMessageID sets the "message_id" field to the value that was provided on create.
-func (u *TicketMessageUpsertBulk) UpdateMessageID() *TicketMessageUpsertBulk {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.UpdateMessageID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *TicketMessageUpsertBulk) SetRelationKind(v ticketmessage.RelationKind) *TicketMessageUpsertBulk {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *TicketMessageUpsertBulk) UpdateRelationKind() *TicketMessageUpsertBulk {
-	return u.Update(func(s *TicketMessageUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.

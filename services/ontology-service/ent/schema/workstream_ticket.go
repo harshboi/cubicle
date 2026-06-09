@@ -23,8 +23,10 @@ func (WorkstreamTicket) Fields() []ent.Field {
 	return appendFields(
 		[]ent.Field{
 			field.Int("workstream_id").
+				Immutable().
 				Comment("Source Workstream endpoint for this association."),
 			field.Int("ticket_id").
+				Immutable().
 				Comment("Target Ticket endpoint for this association."),
 		},
 		linkFields([]string{relationContains}),
@@ -37,11 +39,13 @@ func (WorkstreamTicket) Edges() []ent.Edge {
 		edge.To("workstream", Workstream.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("workstream_id").
 			Comment("Workstream endpoint for this association."),
 		edge.To("ticket", Ticket.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("ticket_id").
 			Comment("Ticket endpoint for this association."),
 		edge.To("latest_evidence", Evidence.Type).

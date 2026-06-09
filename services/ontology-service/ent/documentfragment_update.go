@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/ticket"
@@ -40,20 +39,6 @@ func (_u *DocumentFragmentUpdate) SetKey(v string) *DocumentFragmentUpdate {
 func (_u *DocumentFragmentUpdate) SetNillableKey(v *string) *DocumentFragmentUpdate {
 	if v != nil {
 		_u.SetKey(*v)
-	}
-	return _u
-}
-
-// SetDocumentID sets the "document_id" field.
-func (_u *DocumentFragmentUpdate) SetDocumentID(v int) *DocumentFragmentUpdate {
-	_u.mutation.SetDocumentID(v)
-	return _u
-}
-
-// SetNillableDocumentID sets the "document_id" field if the given value is not nil.
-func (_u *DocumentFragmentUpdate) SetNillableDocumentID(v *int) *DocumentFragmentUpdate {
-	if v != nil {
-		_u.SetDocumentID(*v)
 	}
 	return _u
 }
@@ -334,11 +319,6 @@ func (_u *DocumentFragmentUpdate) SetUpdatedAt(v time.Time) *DocumentFragmentUpd
 	return _u
 }
 
-// SetDocument sets the "document" edge to the Document entity.
-func (_u *DocumentFragmentUpdate) SetDocument(v *Document) *DocumentFragmentUpdate {
-	return _u.SetDocumentID(v.ID)
-}
-
 // AddTicketIDs adds the "tickets" edge to the Ticket entity by IDs.
 func (_u *DocumentFragmentUpdate) AddTicketIDs(ids ...int) *DocumentFragmentUpdate {
 	_u.mutation.AddTicketIDs(ids...)
@@ -357,12 +337,6 @@ func (_u *DocumentFragmentUpdate) AddTickets(v ...*Ticket) *DocumentFragmentUpda
 // Mutation returns the DocumentFragmentMutation object of the builder.
 func (_u *DocumentFragmentUpdate) Mutation() *DocumentFragmentMutation {
 	return _u.mutation
-}
-
-// ClearDocument clears the "document" edge to the Document entity.
-func (_u *DocumentFragmentUpdate) ClearDocument() *DocumentFragmentUpdate {
-	_u.mutation.ClearDocument()
-	return _u
 }
 
 // ClearTickets clears all "tickets" edges to the Ticket entity.
@@ -541,35 +515,6 @@ func (_u *DocumentFragmentUpdate) sqlSave(ctx context.Context) (_node int, err e
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(documentfragment.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.DocumentCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   documentfragment.DocumentTable,
-			Columns: []string{documentfragment.DocumentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.DocumentIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   documentfragment.DocumentTable,
-			Columns: []string{documentfragment.DocumentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _u.mutation.TicketsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -645,20 +590,6 @@ func (_u *DocumentFragmentUpdateOne) SetKey(v string) *DocumentFragmentUpdateOne
 func (_u *DocumentFragmentUpdateOne) SetNillableKey(v *string) *DocumentFragmentUpdateOne {
 	if v != nil {
 		_u.SetKey(*v)
-	}
-	return _u
-}
-
-// SetDocumentID sets the "document_id" field.
-func (_u *DocumentFragmentUpdateOne) SetDocumentID(v int) *DocumentFragmentUpdateOne {
-	_u.mutation.SetDocumentID(v)
-	return _u
-}
-
-// SetNillableDocumentID sets the "document_id" field if the given value is not nil.
-func (_u *DocumentFragmentUpdateOne) SetNillableDocumentID(v *int) *DocumentFragmentUpdateOne {
-	if v != nil {
-		_u.SetDocumentID(*v)
 	}
 	return _u
 }
@@ -939,11 +870,6 @@ func (_u *DocumentFragmentUpdateOne) SetUpdatedAt(v time.Time) *DocumentFragment
 	return _u
 }
 
-// SetDocument sets the "document" edge to the Document entity.
-func (_u *DocumentFragmentUpdateOne) SetDocument(v *Document) *DocumentFragmentUpdateOne {
-	return _u.SetDocumentID(v.ID)
-}
-
 // AddTicketIDs adds the "tickets" edge to the Ticket entity by IDs.
 func (_u *DocumentFragmentUpdateOne) AddTicketIDs(ids ...int) *DocumentFragmentUpdateOne {
 	_u.mutation.AddTicketIDs(ids...)
@@ -962,12 +888,6 @@ func (_u *DocumentFragmentUpdateOne) AddTickets(v ...*Ticket) *DocumentFragmentU
 // Mutation returns the DocumentFragmentMutation object of the builder.
 func (_u *DocumentFragmentUpdateOne) Mutation() *DocumentFragmentMutation {
 	return _u.mutation
-}
-
-// ClearDocument clears the "document" edge to the Document entity.
-func (_u *DocumentFragmentUpdateOne) ClearDocument() *DocumentFragmentUpdateOne {
-	_u.mutation.ClearDocument()
-	return _u
 }
 
 // ClearTickets clears all "tickets" edges to the Ticket entity.
@@ -1175,35 +1095,6 @@ func (_u *DocumentFragmentUpdateOne) sqlSave(ctx context.Context) (_node *Docume
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(documentfragment.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.DocumentCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   documentfragment.DocumentTable,
-			Columns: []string{documentfragment.DocumentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.DocumentIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   documentfragment.DocumentTable,
-			Columns: []string{documentfragment.DocumentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.TicketsCleared() {
 		edge := &sqlgraph.EdgeSpec{

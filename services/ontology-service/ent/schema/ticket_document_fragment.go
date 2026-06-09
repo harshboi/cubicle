@@ -23,8 +23,10 @@ func (TicketDocumentFragment) Fields() []ent.Field {
 	return appendFields(
 		[]ent.Field{
 			field.Int("ticket_id").
+				Immutable().
 				Comment("Source Ticket endpoint for this association."),
 			field.Int("document_fragment_id").
+				Immutable().
 				Comment("Target DocumentFragment endpoint for this association."),
 		},
 		linkFields([]string{relationDocumentedBy}),
@@ -37,11 +39,13 @@ func (TicketDocumentFragment) Edges() []ent.Edge {
 		edge.To("ticket", Ticket.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("ticket_id").
 			Comment("Ticket endpoint for this association."),
 		edge.To("document_fragment", DocumentFragment.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("document_fragment_id").
 			Comment("Document fragment endpoint for this association."),
 		edge.To("latest_evidence", Evidence.Type).

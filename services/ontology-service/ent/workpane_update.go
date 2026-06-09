@@ -10,7 +10,6 @@ import (
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workpane"
-	"cubicle/services/ontology-service/ent/worksurface"
 	"errors"
 	"fmt"
 	"time"
@@ -43,48 +42,6 @@ func (_u *WorkPaneUpdate) SetKey(v string) *WorkPaneUpdate {
 func (_u *WorkPaneUpdate) SetNillableKey(v *string) *WorkPaneUpdate {
 	if v != nil {
 		_u.SetKey(*v)
-	}
-	return _u
-}
-
-// SetWorkSurfaceID sets the "work_surface_id" field.
-func (_u *WorkPaneUpdate) SetWorkSurfaceID(v int) *WorkPaneUpdate {
-	_u.mutation.SetWorkSurfaceID(v)
-	return _u
-}
-
-// SetNillableWorkSurfaceID sets the "work_surface_id" field if the given value is not nil.
-func (_u *WorkPaneUpdate) SetNillableWorkSurfaceID(v *int) *WorkPaneUpdate {
-	if v != nil {
-		_u.SetWorkSurfaceID(*v)
-	}
-	return _u
-}
-
-// SetPaneKind sets the "pane_kind" field.
-func (_u *WorkPaneUpdate) SetPaneKind(v workpane.PaneKind) *WorkPaneUpdate {
-	_u.mutation.SetPaneKind(v)
-	return _u
-}
-
-// SetNillablePaneKind sets the "pane_kind" field if the given value is not nil.
-func (_u *WorkPaneUpdate) SetNillablePaneKind(v *workpane.PaneKind) *WorkPaneUpdate {
-	if v != nil {
-		_u.SetPaneKind(*v)
-	}
-	return _u
-}
-
-// SetTargetKind sets the "target_kind" field.
-func (_u *WorkPaneUpdate) SetTargetKind(v workpane.TargetKind) *WorkPaneUpdate {
-	_u.mutation.SetTargetKind(v)
-	return _u
-}
-
-// SetNillableTargetKind sets the "target_kind" field if the given value is not nil.
-func (_u *WorkPaneUpdate) SetNillableTargetKind(v *workpane.TargetKind) *WorkPaneUpdate {
-	if v != nil {
-		_u.SetTargetKind(*v)
 	}
 	return _u
 }
@@ -336,17 +293,6 @@ func (_u *WorkPaneUpdate) SetUpdatedAt(v time.Time) *WorkPaneUpdate {
 	return _u
 }
 
-// SetSurfaceID sets the "surface" edge to the WorkSurface entity by ID.
-func (_u *WorkPaneUpdate) SetSurfaceID(id int) *WorkPaneUpdate {
-	_u.mutation.SetSurfaceID(id)
-	return _u
-}
-
-// SetSurface sets the "surface" edge to the WorkSurface entity.
-func (_u *WorkPaneUpdate) SetSurface(v *WorkSurface) *WorkPaneUpdate {
-	return _u.SetSurfaceID(v.ID)
-}
-
 // AddDocumentIDs adds the "documents" edge to the Document entity by IDs.
 func (_u *WorkPaneUpdate) AddDocumentIDs(ids ...int) *WorkPaneUpdate {
 	_u.mutation.AddDocumentIDs(ids...)
@@ -410,12 +356,6 @@ func (_u *WorkPaneUpdate) AddMessages(v ...*Message) *WorkPaneUpdate {
 // Mutation returns the WorkPaneMutation object of the builder.
 func (_u *WorkPaneUpdate) Mutation() *WorkPaneMutation {
 	return _u.mutation
-}
-
-// ClearSurface clears the "surface" edge to the WorkSurface entity.
-func (_u *WorkPaneUpdate) ClearSurface() *WorkPaneUpdate {
-	_u.mutation.ClearSurface()
-	return _u
 }
 
 // ClearDocuments clears all "documents" edges to the Document entity.
@@ -504,7 +444,9 @@ func (_u *WorkPaneUpdate) RemoveMessages(v ...*Message) *WorkPaneUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *WorkPaneUpdate) Save(ctx context.Context) (int, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -531,11 +473,15 @@ func (_u *WorkPaneUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *WorkPaneUpdate) defaults() {
+func (_u *WorkPaneUpdate) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if workpane.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized workpane.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := workpane.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -543,16 +489,6 @@ func (_u *WorkPaneUpdate) check() error {
 	if v, ok := _u.mutation.Key(); ok {
 		if err := workpane.KeyValidator(v); err != nil {
 			return &ValidationError{Name: "key", err: fmt.Errorf(`ent: validator failed for field "WorkPane.key": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.PaneKind(); ok {
-		if err := workpane.PaneKindValidator(v); err != nil {
-			return &ValidationError{Name: "pane_kind", err: fmt.Errorf(`ent: validator failed for field "WorkPane.pane_kind": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.TargetKind(); ok {
-		if err := workpane.TargetKindValidator(v); err != nil {
-			return &ValidationError{Name: "target_kind", err: fmt.Errorf(`ent: validator failed for field "WorkPane.target_kind": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.DisplayName(); ok {
@@ -590,12 +526,6 @@ func (_u *WorkPaneUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Key(); ok {
 		_spec.SetField(workpane.FieldKey, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.PaneKind(); ok {
-		_spec.SetField(workpane.FieldPaneKind, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.TargetKind(); ok {
-		_spec.SetField(workpane.FieldTargetKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.DisplayName(); ok {
 		_spec.SetField(workpane.FieldDisplayName, field.TypeString, value)
@@ -665,35 +595,6 @@ func (_u *WorkPaneUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workpane.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.SurfaceCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   workpane.SurfaceTable,
-			Columns: []string{workpane.SurfaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(worksurface.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.SurfaceIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   workpane.SurfaceTable,
-			Columns: []string{workpane.SurfaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(worksurface.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.DocumentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -957,48 +858,6 @@ func (_u *WorkPaneUpdateOne) SetNillableKey(v *string) *WorkPaneUpdateOne {
 	return _u
 }
 
-// SetWorkSurfaceID sets the "work_surface_id" field.
-func (_u *WorkPaneUpdateOne) SetWorkSurfaceID(v int) *WorkPaneUpdateOne {
-	_u.mutation.SetWorkSurfaceID(v)
-	return _u
-}
-
-// SetNillableWorkSurfaceID sets the "work_surface_id" field if the given value is not nil.
-func (_u *WorkPaneUpdateOne) SetNillableWorkSurfaceID(v *int) *WorkPaneUpdateOne {
-	if v != nil {
-		_u.SetWorkSurfaceID(*v)
-	}
-	return _u
-}
-
-// SetPaneKind sets the "pane_kind" field.
-func (_u *WorkPaneUpdateOne) SetPaneKind(v workpane.PaneKind) *WorkPaneUpdateOne {
-	_u.mutation.SetPaneKind(v)
-	return _u
-}
-
-// SetNillablePaneKind sets the "pane_kind" field if the given value is not nil.
-func (_u *WorkPaneUpdateOne) SetNillablePaneKind(v *workpane.PaneKind) *WorkPaneUpdateOne {
-	if v != nil {
-		_u.SetPaneKind(*v)
-	}
-	return _u
-}
-
-// SetTargetKind sets the "target_kind" field.
-func (_u *WorkPaneUpdateOne) SetTargetKind(v workpane.TargetKind) *WorkPaneUpdateOne {
-	_u.mutation.SetTargetKind(v)
-	return _u
-}
-
-// SetNillableTargetKind sets the "target_kind" field if the given value is not nil.
-func (_u *WorkPaneUpdateOne) SetNillableTargetKind(v *workpane.TargetKind) *WorkPaneUpdateOne {
-	if v != nil {
-		_u.SetTargetKind(*v)
-	}
-	return _u
-}
-
 // SetDisplayName sets the "display_name" field.
 func (_u *WorkPaneUpdateOne) SetDisplayName(v string) *WorkPaneUpdateOne {
 	_u.mutation.SetDisplayName(v)
@@ -1246,17 +1105,6 @@ func (_u *WorkPaneUpdateOne) SetUpdatedAt(v time.Time) *WorkPaneUpdateOne {
 	return _u
 }
 
-// SetSurfaceID sets the "surface" edge to the WorkSurface entity by ID.
-func (_u *WorkPaneUpdateOne) SetSurfaceID(id int) *WorkPaneUpdateOne {
-	_u.mutation.SetSurfaceID(id)
-	return _u
-}
-
-// SetSurface sets the "surface" edge to the WorkSurface entity.
-func (_u *WorkPaneUpdateOne) SetSurface(v *WorkSurface) *WorkPaneUpdateOne {
-	return _u.SetSurfaceID(v.ID)
-}
-
 // AddDocumentIDs adds the "documents" edge to the Document entity by IDs.
 func (_u *WorkPaneUpdateOne) AddDocumentIDs(ids ...int) *WorkPaneUpdateOne {
 	_u.mutation.AddDocumentIDs(ids...)
@@ -1320,12 +1168,6 @@ func (_u *WorkPaneUpdateOne) AddMessages(v ...*Message) *WorkPaneUpdateOne {
 // Mutation returns the WorkPaneMutation object of the builder.
 func (_u *WorkPaneUpdateOne) Mutation() *WorkPaneMutation {
 	return _u.mutation
-}
-
-// ClearSurface clears the "surface" edge to the WorkSurface entity.
-func (_u *WorkPaneUpdateOne) ClearSurface() *WorkPaneUpdateOne {
-	_u.mutation.ClearSurface()
-	return _u
 }
 
 // ClearDocuments clears all "documents" edges to the Document entity.
@@ -1427,7 +1269,9 @@ func (_u *WorkPaneUpdateOne) Select(field string, fields ...string) *WorkPaneUpd
 
 // Save executes the query and returns the updated WorkPane entity.
 func (_u *WorkPaneUpdateOne) Save(ctx context.Context) (*WorkPane, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -1454,11 +1298,15 @@ func (_u *WorkPaneUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *WorkPaneUpdateOne) defaults() {
+func (_u *WorkPaneUpdateOne) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if workpane.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized workpane.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := workpane.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -1466,16 +1314,6 @@ func (_u *WorkPaneUpdateOne) check() error {
 	if v, ok := _u.mutation.Key(); ok {
 		if err := workpane.KeyValidator(v); err != nil {
 			return &ValidationError{Name: "key", err: fmt.Errorf(`ent: validator failed for field "WorkPane.key": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.PaneKind(); ok {
-		if err := workpane.PaneKindValidator(v); err != nil {
-			return &ValidationError{Name: "pane_kind", err: fmt.Errorf(`ent: validator failed for field "WorkPane.pane_kind": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.TargetKind(); ok {
-		if err := workpane.TargetKindValidator(v); err != nil {
-			return &ValidationError{Name: "target_kind", err: fmt.Errorf(`ent: validator failed for field "WorkPane.target_kind": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.DisplayName(); ok {
@@ -1530,12 +1368,6 @@ func (_u *WorkPaneUpdateOne) sqlSave(ctx context.Context) (_node *WorkPane, err 
 	}
 	if value, ok := _u.mutation.Key(); ok {
 		_spec.SetField(workpane.FieldKey, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.PaneKind(); ok {
-		_spec.SetField(workpane.FieldPaneKind, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.TargetKind(); ok {
-		_spec.SetField(workpane.FieldTargetKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.DisplayName(); ok {
 		_spec.SetField(workpane.FieldDisplayName, field.TypeString, value)
@@ -1605,35 +1437,6 @@ func (_u *WorkPaneUpdateOne) sqlSave(ctx context.Context) (_node *WorkPane, err 
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workpane.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.SurfaceCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   workpane.SurfaceTable,
-			Columns: []string{workpane.SurfaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(worksurface.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.SurfaceIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   workpane.SurfaceTable,
-			Columns: []string{workpane.SurfaceColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(worksurface.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.DocumentsCleared() {
 		edge := &sqlgraph.EdgeSpec{

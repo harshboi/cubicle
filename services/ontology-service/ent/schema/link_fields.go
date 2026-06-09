@@ -12,6 +12,7 @@ func linkFields(relationValues []string) []ent.Field {
 		[]ent.Field{
 			field.Enum("relation_kind").
 				Values(relationValues...).
+				Immutable().
 				Comment("Semantic relationship represented by this link row."),
 			evidenceRefField(),
 			field.Int("evidence_count").

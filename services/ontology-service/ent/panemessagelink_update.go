@@ -5,10 +5,8 @@ package ent
 import (
 	"context"
 	"cubicle/services/ontology-service/ent/evidence"
-	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/panemessagelink"
 	"cubicle/services/ontology-service/ent/predicate"
-	"cubicle/services/ontology-service/ent/workpane"
 	"errors"
 	"fmt"
 	"time"
@@ -28,48 +26,6 @@ type PaneMessageLinkUpdate struct {
 // Where appends a list predicates to the PaneMessageLinkUpdate builder.
 func (_u *PaneMessageLinkUpdate) Where(ps ...predicate.PaneMessageLink) *PaneMessageLinkUpdate {
 	_u.mutation.Where(ps...)
-	return _u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (_u *PaneMessageLinkUpdate) SetPaneID(v int) *PaneMessageLinkUpdate {
-	_u.mutation.SetPaneID(v)
-	return _u
-}
-
-// SetNillablePaneID sets the "pane_id" field if the given value is not nil.
-func (_u *PaneMessageLinkUpdate) SetNillablePaneID(v *int) *PaneMessageLinkUpdate {
-	if v != nil {
-		_u.SetPaneID(*v)
-	}
-	return _u
-}
-
-// SetMessageID sets the "message_id" field.
-func (_u *PaneMessageLinkUpdate) SetMessageID(v int) *PaneMessageLinkUpdate {
-	_u.mutation.SetMessageID(v)
-	return _u
-}
-
-// SetNillableMessageID sets the "message_id" field if the given value is not nil.
-func (_u *PaneMessageLinkUpdate) SetNillableMessageID(v *int) *PaneMessageLinkUpdate {
-	if v != nil {
-		_u.SetMessageID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *PaneMessageLinkUpdate) SetRelationKind(v panemessagelink.RelationKind) *PaneMessageLinkUpdate {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *PaneMessageLinkUpdate) SetNillableRelationKind(v *panemessagelink.RelationKind) *PaneMessageLinkUpdate {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
 	return _u
 }
 
@@ -331,16 +287,6 @@ func (_u *PaneMessageLinkUpdate) SetUpdatedAt(v time.Time) *PaneMessageLinkUpdat
 	return _u
 }
 
-// SetPane sets the "pane" edge to the WorkPane entity.
-func (_u *PaneMessageLinkUpdate) SetPane(v *WorkPane) *PaneMessageLinkUpdate {
-	return _u.SetPaneID(v.ID)
-}
-
-// SetMessage sets the "message" edge to the Message entity.
-func (_u *PaneMessageLinkUpdate) SetMessage(v *Message) *PaneMessageLinkUpdate {
-	return _u.SetMessageID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *PaneMessageLinkUpdate) SetLatestEvidence(v *Evidence) *PaneMessageLinkUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -349,18 +295,6 @@ func (_u *PaneMessageLinkUpdate) SetLatestEvidence(v *Evidence) *PaneMessageLink
 // Mutation returns the PaneMessageLinkMutation object of the builder.
 func (_u *PaneMessageLinkUpdate) Mutation() *PaneMessageLinkMutation {
 	return _u.mutation
-}
-
-// ClearPane clears the "pane" edge to the WorkPane entity.
-func (_u *PaneMessageLinkUpdate) ClearPane() *PaneMessageLinkUpdate {
-	_u.mutation.ClearPane()
-	return _u
-}
-
-// ClearMessage clears the "message" edge to the Message entity.
-func (_u *PaneMessageLinkUpdate) ClearMessage() *PaneMessageLinkUpdate {
-	_u.mutation.ClearMessage()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -407,11 +341,6 @@ func (_u *PaneMessageLinkUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *PaneMessageLinkUpdate) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := panemessagelink.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "PaneMessageLink.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := panemessagelink.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "PaneMessageLink.freshness_state": %w`, err)}
@@ -442,9 +371,6 @@ func (_u *PaneMessageLinkUpdate) sqlSave(ctx context.Context) (_node int, err er
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(panemessagelink.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(panemessagelink.FieldEvidenceCount, field.TypeInt, value)
@@ -515,64 +441,6 @@ func (_u *PaneMessageLinkUpdate) sqlSave(ctx context.Context) (_node int, err er
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(panemessagelink.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.PaneCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panemessagelink.PaneTable,
-			Columns: []string{panemessagelink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PaneIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panemessagelink.PaneTable,
-			Columns: []string{panemessagelink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.MessageCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panemessagelink.MessageTable,
-			Columns: []string{panemessagelink.MessageColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.MessageIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panemessagelink.MessageTable,
-			Columns: []string{panemessagelink.MessageColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -620,48 +488,6 @@ type PaneMessageLinkUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *PaneMessageLinkMutation
-}
-
-// SetPaneID sets the "pane_id" field.
-func (_u *PaneMessageLinkUpdateOne) SetPaneID(v int) *PaneMessageLinkUpdateOne {
-	_u.mutation.SetPaneID(v)
-	return _u
-}
-
-// SetNillablePaneID sets the "pane_id" field if the given value is not nil.
-func (_u *PaneMessageLinkUpdateOne) SetNillablePaneID(v *int) *PaneMessageLinkUpdateOne {
-	if v != nil {
-		_u.SetPaneID(*v)
-	}
-	return _u
-}
-
-// SetMessageID sets the "message_id" field.
-func (_u *PaneMessageLinkUpdateOne) SetMessageID(v int) *PaneMessageLinkUpdateOne {
-	_u.mutation.SetMessageID(v)
-	return _u
-}
-
-// SetNillableMessageID sets the "message_id" field if the given value is not nil.
-func (_u *PaneMessageLinkUpdateOne) SetNillableMessageID(v *int) *PaneMessageLinkUpdateOne {
-	if v != nil {
-		_u.SetMessageID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *PaneMessageLinkUpdateOne) SetRelationKind(v panemessagelink.RelationKind) *PaneMessageLinkUpdateOne {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *PaneMessageLinkUpdateOne) SetNillableRelationKind(v *panemessagelink.RelationKind) *PaneMessageLinkUpdateOne {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
-	return _u
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -922,16 +748,6 @@ func (_u *PaneMessageLinkUpdateOne) SetUpdatedAt(v time.Time) *PaneMessageLinkUp
 	return _u
 }
 
-// SetPane sets the "pane" edge to the WorkPane entity.
-func (_u *PaneMessageLinkUpdateOne) SetPane(v *WorkPane) *PaneMessageLinkUpdateOne {
-	return _u.SetPaneID(v.ID)
-}
-
-// SetMessage sets the "message" edge to the Message entity.
-func (_u *PaneMessageLinkUpdateOne) SetMessage(v *Message) *PaneMessageLinkUpdateOne {
-	return _u.SetMessageID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *PaneMessageLinkUpdateOne) SetLatestEvidence(v *Evidence) *PaneMessageLinkUpdateOne {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -940,18 +756,6 @@ func (_u *PaneMessageLinkUpdateOne) SetLatestEvidence(v *Evidence) *PaneMessageL
 // Mutation returns the PaneMessageLinkMutation object of the builder.
 func (_u *PaneMessageLinkUpdateOne) Mutation() *PaneMessageLinkMutation {
 	return _u.mutation
-}
-
-// ClearPane clears the "pane" edge to the WorkPane entity.
-func (_u *PaneMessageLinkUpdateOne) ClearPane() *PaneMessageLinkUpdateOne {
-	_u.mutation.ClearPane()
-	return _u
-}
-
-// ClearMessage clears the "message" edge to the Message entity.
-func (_u *PaneMessageLinkUpdateOne) ClearMessage() *PaneMessageLinkUpdateOne {
-	_u.mutation.ClearMessage()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -1011,11 +815,6 @@ func (_u *PaneMessageLinkUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *PaneMessageLinkUpdateOne) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := panemessagelink.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "PaneMessageLink.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := panemessagelink.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "PaneMessageLink.freshness_state": %w`, err)}
@@ -1065,9 +864,6 @@ func (_u *PaneMessageLinkUpdateOne) sqlSave(ctx context.Context) (_node *PaneMes
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(panemessagelink.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(panemessagelink.FieldEvidenceCount, field.TypeInt, value)
@@ -1137,64 +933,6 @@ func (_u *PaneMessageLinkUpdateOne) sqlSave(ctx context.Context) (_node *PaneMes
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(panemessagelink.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.PaneCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panemessagelink.PaneTable,
-			Columns: []string{panemessagelink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PaneIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panemessagelink.PaneTable,
-			Columns: []string{panemessagelink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.MessageCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panemessagelink.MessageTable,
-			Columns: []string{panemessagelink.MessageColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.MessageIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panemessagelink.MessageTable,
-			Columns: []string{panemessagelink.MessageColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -579,42 +579,6 @@ type (
 	}
 )
 
-// SetPaneID sets the "pane_id" field.
-func (u *PaneTicketLinkUpsert) SetPaneID(v int) *PaneTicketLinkUpsert {
-	u.Set(paneticketlink.FieldPaneID, v)
-	return u
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PaneTicketLinkUpsert) UpdatePaneID() *PaneTicketLinkUpsert {
-	u.SetExcluded(paneticketlink.FieldPaneID)
-	return u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *PaneTicketLinkUpsert) SetTicketID(v int) *PaneTicketLinkUpsert {
-	u.Set(paneticketlink.FieldTicketID, v)
-	return u
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *PaneTicketLinkUpsert) UpdateTicketID() *PaneTicketLinkUpsert {
-	u.SetExcluded(paneticketlink.FieldTicketID)
-	return u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PaneTicketLinkUpsert) SetRelationKind(v paneticketlink.RelationKind) *PaneTicketLinkUpsert {
-	u.Set(paneticketlink.FieldRelationKind, v)
-	return u
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PaneTicketLinkUpsert) UpdateRelationKind() *PaneTicketLinkUpsert {
-	u.SetExcluded(paneticketlink.FieldRelationKind)
-	return u
-}
-
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
 func (u *PaneTicketLinkUpsert) SetLatestEvidenceID(v int) *PaneTicketLinkUpsert {
 	u.Set(paneticketlink.FieldLatestEvidenceID, v)
@@ -860,6 +824,15 @@ func (u *PaneTicketLinkUpsert) UpdateUpdatedAt() *PaneTicketLinkUpsert {
 func (u *PaneTicketLinkUpsertOne) UpdateNewValues() *PaneTicketLinkUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.PaneID(); exists {
+			s.SetIgnore(paneticketlink.FieldPaneID)
+		}
+		if _, exists := u.create.mutation.TicketID(); exists {
+			s.SetIgnore(paneticketlink.FieldTicketID)
+		}
+		if _, exists := u.create.mutation.RelationKind(); exists {
+			s.SetIgnore(paneticketlink.FieldRelationKind)
+		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(paneticketlink.FieldCreatedAt)
 		}
@@ -892,48 +865,6 @@ func (u *PaneTicketLinkUpsertOne) Update(set func(*PaneTicketLinkUpsert)) *PaneT
 		set(&PaneTicketLinkUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (u *PaneTicketLinkUpsertOne) SetPaneID(v int) *PaneTicketLinkUpsertOne {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.SetPaneID(v)
-	})
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PaneTicketLinkUpsertOne) UpdatePaneID() *PaneTicketLinkUpsertOne {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.UpdatePaneID()
-	})
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *PaneTicketLinkUpsertOne) SetTicketID(v int) *PaneTicketLinkUpsertOne {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.SetTicketID(v)
-	})
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *PaneTicketLinkUpsertOne) UpdateTicketID() *PaneTicketLinkUpsertOne {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.UpdateTicketID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PaneTicketLinkUpsertOne) SetRelationKind(v paneticketlink.RelationKind) *PaneTicketLinkUpsertOne {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PaneTicketLinkUpsertOne) UpdateRelationKind() *PaneTicketLinkUpsertOne {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -1362,6 +1293,15 @@ func (u *PaneTicketLinkUpsertBulk) UpdateNewValues() *PaneTicketLinkUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
+			if _, exists := b.mutation.PaneID(); exists {
+				s.SetIgnore(paneticketlink.FieldPaneID)
+			}
+			if _, exists := b.mutation.TicketID(); exists {
+				s.SetIgnore(paneticketlink.FieldTicketID)
+			}
+			if _, exists := b.mutation.RelationKind(); exists {
+				s.SetIgnore(paneticketlink.FieldRelationKind)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(paneticketlink.FieldCreatedAt)
 			}
@@ -1395,48 +1335,6 @@ func (u *PaneTicketLinkUpsertBulk) Update(set func(*PaneTicketLinkUpsert)) *Pane
 		set(&PaneTicketLinkUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (u *PaneTicketLinkUpsertBulk) SetPaneID(v int) *PaneTicketLinkUpsertBulk {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.SetPaneID(v)
-	})
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PaneTicketLinkUpsertBulk) UpdatePaneID() *PaneTicketLinkUpsertBulk {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.UpdatePaneID()
-	})
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *PaneTicketLinkUpsertBulk) SetTicketID(v int) *PaneTicketLinkUpsertBulk {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.SetTicketID(v)
-	})
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *PaneTicketLinkUpsertBulk) UpdateTicketID() *PaneTicketLinkUpsertBulk {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.UpdateTicketID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PaneTicketLinkUpsertBulk) SetRelationKind(v paneticketlink.RelationKind) *PaneTicketLinkUpsertBulk {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PaneTicketLinkUpsertBulk) UpdateRelationKind() *PaneTicketLinkUpsertBulk {
-	return u.Update(func(s *PaneTicketLinkUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.

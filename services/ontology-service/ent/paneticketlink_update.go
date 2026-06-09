@@ -7,8 +7,6 @@ import (
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/paneticketlink"
 	"cubicle/services/ontology-service/ent/predicate"
-	"cubicle/services/ontology-service/ent/ticket"
-	"cubicle/services/ontology-service/ent/workpane"
 	"errors"
 	"fmt"
 	"time"
@@ -28,48 +26,6 @@ type PaneTicketLinkUpdate struct {
 // Where appends a list predicates to the PaneTicketLinkUpdate builder.
 func (_u *PaneTicketLinkUpdate) Where(ps ...predicate.PaneTicketLink) *PaneTicketLinkUpdate {
 	_u.mutation.Where(ps...)
-	return _u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (_u *PaneTicketLinkUpdate) SetPaneID(v int) *PaneTicketLinkUpdate {
-	_u.mutation.SetPaneID(v)
-	return _u
-}
-
-// SetNillablePaneID sets the "pane_id" field if the given value is not nil.
-func (_u *PaneTicketLinkUpdate) SetNillablePaneID(v *int) *PaneTicketLinkUpdate {
-	if v != nil {
-		_u.SetPaneID(*v)
-	}
-	return _u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (_u *PaneTicketLinkUpdate) SetTicketID(v int) *PaneTicketLinkUpdate {
-	_u.mutation.SetTicketID(v)
-	return _u
-}
-
-// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (_u *PaneTicketLinkUpdate) SetNillableTicketID(v *int) *PaneTicketLinkUpdate {
-	if v != nil {
-		_u.SetTicketID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *PaneTicketLinkUpdate) SetRelationKind(v paneticketlink.RelationKind) *PaneTicketLinkUpdate {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *PaneTicketLinkUpdate) SetNillableRelationKind(v *paneticketlink.RelationKind) *PaneTicketLinkUpdate {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
 	return _u
 }
 
@@ -331,16 +287,6 @@ func (_u *PaneTicketLinkUpdate) SetUpdatedAt(v time.Time) *PaneTicketLinkUpdate 
 	return _u
 }
 
-// SetPane sets the "pane" edge to the WorkPane entity.
-func (_u *PaneTicketLinkUpdate) SetPane(v *WorkPane) *PaneTicketLinkUpdate {
-	return _u.SetPaneID(v.ID)
-}
-
-// SetTicket sets the "ticket" edge to the Ticket entity.
-func (_u *PaneTicketLinkUpdate) SetTicket(v *Ticket) *PaneTicketLinkUpdate {
-	return _u.SetTicketID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *PaneTicketLinkUpdate) SetLatestEvidence(v *Evidence) *PaneTicketLinkUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -349,18 +295,6 @@ func (_u *PaneTicketLinkUpdate) SetLatestEvidence(v *Evidence) *PaneTicketLinkUp
 // Mutation returns the PaneTicketLinkMutation object of the builder.
 func (_u *PaneTicketLinkUpdate) Mutation() *PaneTicketLinkMutation {
 	return _u.mutation
-}
-
-// ClearPane clears the "pane" edge to the WorkPane entity.
-func (_u *PaneTicketLinkUpdate) ClearPane() *PaneTicketLinkUpdate {
-	_u.mutation.ClearPane()
-	return _u
-}
-
-// ClearTicket clears the "ticket" edge to the Ticket entity.
-func (_u *PaneTicketLinkUpdate) ClearTicket() *PaneTicketLinkUpdate {
-	_u.mutation.ClearTicket()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -407,11 +341,6 @@ func (_u *PaneTicketLinkUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *PaneTicketLinkUpdate) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := paneticketlink.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "PaneTicketLink.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := paneticketlink.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "PaneTicketLink.freshness_state": %w`, err)}
@@ -442,9 +371,6 @@ func (_u *PaneTicketLinkUpdate) sqlSave(ctx context.Context) (_node int, err err
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(paneticketlink.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(paneticketlink.FieldEvidenceCount, field.TypeInt, value)
@@ -515,64 +441,6 @@ func (_u *PaneTicketLinkUpdate) sqlSave(ctx context.Context) (_node int, err err
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(paneticketlink.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.PaneCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   paneticketlink.PaneTable,
-			Columns: []string{paneticketlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PaneIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   paneticketlink.PaneTable,
-			Columns: []string{paneticketlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.TicketCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   paneticketlink.TicketTable,
-			Columns: []string{paneticketlink.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   paneticketlink.TicketTable,
-			Columns: []string{paneticketlink.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -620,48 +488,6 @@ type PaneTicketLinkUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *PaneTicketLinkMutation
-}
-
-// SetPaneID sets the "pane_id" field.
-func (_u *PaneTicketLinkUpdateOne) SetPaneID(v int) *PaneTicketLinkUpdateOne {
-	_u.mutation.SetPaneID(v)
-	return _u
-}
-
-// SetNillablePaneID sets the "pane_id" field if the given value is not nil.
-func (_u *PaneTicketLinkUpdateOne) SetNillablePaneID(v *int) *PaneTicketLinkUpdateOne {
-	if v != nil {
-		_u.SetPaneID(*v)
-	}
-	return _u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (_u *PaneTicketLinkUpdateOne) SetTicketID(v int) *PaneTicketLinkUpdateOne {
-	_u.mutation.SetTicketID(v)
-	return _u
-}
-
-// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (_u *PaneTicketLinkUpdateOne) SetNillableTicketID(v *int) *PaneTicketLinkUpdateOne {
-	if v != nil {
-		_u.SetTicketID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *PaneTicketLinkUpdateOne) SetRelationKind(v paneticketlink.RelationKind) *PaneTicketLinkUpdateOne {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *PaneTicketLinkUpdateOne) SetNillableRelationKind(v *paneticketlink.RelationKind) *PaneTicketLinkUpdateOne {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
-	return _u
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -922,16 +748,6 @@ func (_u *PaneTicketLinkUpdateOne) SetUpdatedAt(v time.Time) *PaneTicketLinkUpda
 	return _u
 }
 
-// SetPane sets the "pane" edge to the WorkPane entity.
-func (_u *PaneTicketLinkUpdateOne) SetPane(v *WorkPane) *PaneTicketLinkUpdateOne {
-	return _u.SetPaneID(v.ID)
-}
-
-// SetTicket sets the "ticket" edge to the Ticket entity.
-func (_u *PaneTicketLinkUpdateOne) SetTicket(v *Ticket) *PaneTicketLinkUpdateOne {
-	return _u.SetTicketID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *PaneTicketLinkUpdateOne) SetLatestEvidence(v *Evidence) *PaneTicketLinkUpdateOne {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -940,18 +756,6 @@ func (_u *PaneTicketLinkUpdateOne) SetLatestEvidence(v *Evidence) *PaneTicketLin
 // Mutation returns the PaneTicketLinkMutation object of the builder.
 func (_u *PaneTicketLinkUpdateOne) Mutation() *PaneTicketLinkMutation {
 	return _u.mutation
-}
-
-// ClearPane clears the "pane" edge to the WorkPane entity.
-func (_u *PaneTicketLinkUpdateOne) ClearPane() *PaneTicketLinkUpdateOne {
-	_u.mutation.ClearPane()
-	return _u
-}
-
-// ClearTicket clears the "ticket" edge to the Ticket entity.
-func (_u *PaneTicketLinkUpdateOne) ClearTicket() *PaneTicketLinkUpdateOne {
-	_u.mutation.ClearTicket()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -1011,11 +815,6 @@ func (_u *PaneTicketLinkUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *PaneTicketLinkUpdateOne) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := paneticketlink.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "PaneTicketLink.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := paneticketlink.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "PaneTicketLink.freshness_state": %w`, err)}
@@ -1065,9 +864,6 @@ func (_u *PaneTicketLinkUpdateOne) sqlSave(ctx context.Context) (_node *PaneTick
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(paneticketlink.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(paneticketlink.FieldEvidenceCount, field.TypeInt, value)
@@ -1137,64 +933,6 @@ func (_u *PaneTicketLinkUpdateOne) sqlSave(ctx context.Context) (_node *PaneTick
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(paneticketlink.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.PaneCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   paneticketlink.PaneTable,
-			Columns: []string{paneticketlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PaneIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   paneticketlink.PaneTable,
-			Columns: []string{paneticketlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.TicketCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   paneticketlink.TicketTable,
-			Columns: []string{paneticketlink.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   paneticketlink.TicketTable,
-			Columns: []string{paneticketlink.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{

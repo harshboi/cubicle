@@ -1,6 +1,11 @@
 package schema
 
 import (
+	"context"
+	"fmt"
+
+	"cubicle/services/ontology-service/internal/ontology"
+
 	"entgo.io/ent"
 	entschema "entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
@@ -28,12 +33,15 @@ func (WorkPane) Fields() []ent.Field {
 		stableKeyFields(),
 		[]ent.Field{
 			field.Int("work_surface_id").
+				Immutable().
 				Comment("Parent WorkSurface row that owns this pane."),
 			field.Enum("pane_kind").
 				Values(paneKindValues()...).
+				Immutable().
 				Comment("Specific bounded view represented by this pane."),
 			field.Enum("target_kind").
 				Values(targetKindValues()...).
+				Immutable().
 				Comment("Only target kind this pane is allowed to expose."),
 			field.String("display_name").
 				NotEmpty().
@@ -60,6 +68,30 @@ func (WorkPane) Fields() []ent.Field {
 	)
 }
 
+// Hooks rejects WorkPane rows whose pane kind and target kind disagree.
+func (WorkPane) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validateWorkPaneTargetKind(),
+	}
+}
+
+func validateWorkPaneTargetKind() ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, mutation ent.Mutation) (ent.Value, error) {
+			paneKindValue, paneKindWasSet := mutation.Field("pane_kind")
+			targetKindValue, targetKindWasSet := mutation.Field("target_kind")
+			if paneKindWasSet && targetKindWasSet {
+				paneKind := ontology.PaneKind(fmt.Sprint(paneKindValue))
+				targetKind := ontology.TargetKind(fmt.Sprint(targetKindValue))
+				if err := ontology.ValidatePaneTargetKind(paneKind, targetKind); err != nil {
+					return nil, err
+				}
+			}
+			return next.Mutate(ctx, mutation)
+		})
+	}
+}
+
 // Edges connects a pane to its parent surface and concrete target association
 // lists. Each target edge uses a typed Through schema so link metadata is stored
 // on the relationship row.
@@ -69,6 +101,7 @@ func (WorkPane) Edges() []ent.Edge {
 			Ref("panes").
 			Unique().
 			Required().
+			Immutable().
 			Field("work_surface_id").
 			Comment("Parent surface that owns this pane."),
 		edge.To("documents", Document.Type).

@@ -579,42 +579,6 @@ type (
 	}
 )
 
-// SetWorkstreamID sets the "workstream_id" field.
-func (u *WorkstreamTicketUpsert) SetWorkstreamID(v int) *WorkstreamTicketUpsert {
-	u.Set(workstreamticket.FieldWorkstreamID, v)
-	return u
-}
-
-// UpdateWorkstreamID sets the "workstream_id" field to the value that was provided on create.
-func (u *WorkstreamTicketUpsert) UpdateWorkstreamID() *WorkstreamTicketUpsert {
-	u.SetExcluded(workstreamticket.FieldWorkstreamID)
-	return u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *WorkstreamTicketUpsert) SetTicketID(v int) *WorkstreamTicketUpsert {
-	u.Set(workstreamticket.FieldTicketID, v)
-	return u
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *WorkstreamTicketUpsert) UpdateTicketID() *WorkstreamTicketUpsert {
-	u.SetExcluded(workstreamticket.FieldTicketID)
-	return u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *WorkstreamTicketUpsert) SetRelationKind(v workstreamticket.RelationKind) *WorkstreamTicketUpsert {
-	u.Set(workstreamticket.FieldRelationKind, v)
-	return u
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *WorkstreamTicketUpsert) UpdateRelationKind() *WorkstreamTicketUpsert {
-	u.SetExcluded(workstreamticket.FieldRelationKind)
-	return u
-}
-
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
 func (u *WorkstreamTicketUpsert) SetLatestEvidenceID(v int) *WorkstreamTicketUpsert {
 	u.Set(workstreamticket.FieldLatestEvidenceID, v)
@@ -860,6 +824,15 @@ func (u *WorkstreamTicketUpsert) UpdateUpdatedAt() *WorkstreamTicketUpsert {
 func (u *WorkstreamTicketUpsertOne) UpdateNewValues() *WorkstreamTicketUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.WorkstreamID(); exists {
+			s.SetIgnore(workstreamticket.FieldWorkstreamID)
+		}
+		if _, exists := u.create.mutation.TicketID(); exists {
+			s.SetIgnore(workstreamticket.FieldTicketID)
+		}
+		if _, exists := u.create.mutation.RelationKind(); exists {
+			s.SetIgnore(workstreamticket.FieldRelationKind)
+		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(workstreamticket.FieldCreatedAt)
 		}
@@ -892,48 +865,6 @@ func (u *WorkstreamTicketUpsertOne) Update(set func(*WorkstreamTicketUpsert)) *W
 		set(&WorkstreamTicketUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetWorkstreamID sets the "workstream_id" field.
-func (u *WorkstreamTicketUpsertOne) SetWorkstreamID(v int) *WorkstreamTicketUpsertOne {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.SetWorkstreamID(v)
-	})
-}
-
-// UpdateWorkstreamID sets the "workstream_id" field to the value that was provided on create.
-func (u *WorkstreamTicketUpsertOne) UpdateWorkstreamID() *WorkstreamTicketUpsertOne {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.UpdateWorkstreamID()
-	})
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *WorkstreamTicketUpsertOne) SetTicketID(v int) *WorkstreamTicketUpsertOne {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.SetTicketID(v)
-	})
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *WorkstreamTicketUpsertOne) UpdateTicketID() *WorkstreamTicketUpsertOne {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.UpdateTicketID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *WorkstreamTicketUpsertOne) SetRelationKind(v workstreamticket.RelationKind) *WorkstreamTicketUpsertOne {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *WorkstreamTicketUpsertOne) UpdateRelationKind() *WorkstreamTicketUpsertOne {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -1362,6 +1293,15 @@ func (u *WorkstreamTicketUpsertBulk) UpdateNewValues() *WorkstreamTicketUpsertBu
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
+			if _, exists := b.mutation.WorkstreamID(); exists {
+				s.SetIgnore(workstreamticket.FieldWorkstreamID)
+			}
+			if _, exists := b.mutation.TicketID(); exists {
+				s.SetIgnore(workstreamticket.FieldTicketID)
+			}
+			if _, exists := b.mutation.RelationKind(); exists {
+				s.SetIgnore(workstreamticket.FieldRelationKind)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(workstreamticket.FieldCreatedAt)
 			}
@@ -1395,48 +1335,6 @@ func (u *WorkstreamTicketUpsertBulk) Update(set func(*WorkstreamTicketUpsert)) *
 		set(&WorkstreamTicketUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetWorkstreamID sets the "workstream_id" field.
-func (u *WorkstreamTicketUpsertBulk) SetWorkstreamID(v int) *WorkstreamTicketUpsertBulk {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.SetWorkstreamID(v)
-	})
-}
-
-// UpdateWorkstreamID sets the "workstream_id" field to the value that was provided on create.
-func (u *WorkstreamTicketUpsertBulk) UpdateWorkstreamID() *WorkstreamTicketUpsertBulk {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.UpdateWorkstreamID()
-	})
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *WorkstreamTicketUpsertBulk) SetTicketID(v int) *WorkstreamTicketUpsertBulk {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.SetTicketID(v)
-	})
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *WorkstreamTicketUpsertBulk) UpdateTicketID() *WorkstreamTicketUpsertBulk {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.UpdateTicketID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *WorkstreamTicketUpsertBulk) SetRelationKind(v workstreamticket.RelationKind) *WorkstreamTicketUpsertBulk {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *WorkstreamTicketUpsertBulk) UpdateRelationKind() *WorkstreamTicketUpsertBulk {
-	return u.Update(func(s *WorkstreamTicketUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.

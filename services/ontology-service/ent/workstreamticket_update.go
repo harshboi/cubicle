@@ -6,8 +6,6 @@ import (
 	"context"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/predicate"
-	"cubicle/services/ontology-service/ent/ticket"
-	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 	"errors"
 	"fmt"
@@ -28,48 +26,6 @@ type WorkstreamTicketUpdate struct {
 // Where appends a list predicates to the WorkstreamTicketUpdate builder.
 func (_u *WorkstreamTicketUpdate) Where(ps ...predicate.WorkstreamTicket) *WorkstreamTicketUpdate {
 	_u.mutation.Where(ps...)
-	return _u
-}
-
-// SetWorkstreamID sets the "workstream_id" field.
-func (_u *WorkstreamTicketUpdate) SetWorkstreamID(v int) *WorkstreamTicketUpdate {
-	_u.mutation.SetWorkstreamID(v)
-	return _u
-}
-
-// SetNillableWorkstreamID sets the "workstream_id" field if the given value is not nil.
-func (_u *WorkstreamTicketUpdate) SetNillableWorkstreamID(v *int) *WorkstreamTicketUpdate {
-	if v != nil {
-		_u.SetWorkstreamID(*v)
-	}
-	return _u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (_u *WorkstreamTicketUpdate) SetTicketID(v int) *WorkstreamTicketUpdate {
-	_u.mutation.SetTicketID(v)
-	return _u
-}
-
-// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (_u *WorkstreamTicketUpdate) SetNillableTicketID(v *int) *WorkstreamTicketUpdate {
-	if v != nil {
-		_u.SetTicketID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *WorkstreamTicketUpdate) SetRelationKind(v workstreamticket.RelationKind) *WorkstreamTicketUpdate {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *WorkstreamTicketUpdate) SetNillableRelationKind(v *workstreamticket.RelationKind) *WorkstreamTicketUpdate {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
 	return _u
 }
 
@@ -331,16 +287,6 @@ func (_u *WorkstreamTicketUpdate) SetUpdatedAt(v time.Time) *WorkstreamTicketUpd
 	return _u
 }
 
-// SetWorkstream sets the "workstream" edge to the Workstream entity.
-func (_u *WorkstreamTicketUpdate) SetWorkstream(v *Workstream) *WorkstreamTicketUpdate {
-	return _u.SetWorkstreamID(v.ID)
-}
-
-// SetTicket sets the "ticket" edge to the Ticket entity.
-func (_u *WorkstreamTicketUpdate) SetTicket(v *Ticket) *WorkstreamTicketUpdate {
-	return _u.SetTicketID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *WorkstreamTicketUpdate) SetLatestEvidence(v *Evidence) *WorkstreamTicketUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -349,18 +295,6 @@ func (_u *WorkstreamTicketUpdate) SetLatestEvidence(v *Evidence) *WorkstreamTick
 // Mutation returns the WorkstreamTicketMutation object of the builder.
 func (_u *WorkstreamTicketUpdate) Mutation() *WorkstreamTicketMutation {
 	return _u.mutation
-}
-
-// ClearWorkstream clears the "workstream" edge to the Workstream entity.
-func (_u *WorkstreamTicketUpdate) ClearWorkstream() *WorkstreamTicketUpdate {
-	_u.mutation.ClearWorkstream()
-	return _u
-}
-
-// ClearTicket clears the "ticket" edge to the Ticket entity.
-func (_u *WorkstreamTicketUpdate) ClearTicket() *WorkstreamTicketUpdate {
-	_u.mutation.ClearTicket()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -407,11 +341,6 @@ func (_u *WorkstreamTicketUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *WorkstreamTicketUpdate) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := workstreamticket.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "WorkstreamTicket.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := workstreamticket.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "WorkstreamTicket.freshness_state": %w`, err)}
@@ -442,9 +371,6 @@ func (_u *WorkstreamTicketUpdate) sqlSave(ctx context.Context) (_node int, err e
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(workstreamticket.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(workstreamticket.FieldEvidenceCount, field.TypeInt, value)
@@ -515,64 +441,6 @@ func (_u *WorkstreamTicketUpdate) sqlSave(ctx context.Context) (_node int, err e
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workstreamticket.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.WorkstreamCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   workstreamticket.WorkstreamTable,
-			Columns: []string{workstreamticket.WorkstreamColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workstream.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.WorkstreamIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   workstreamticket.WorkstreamTable,
-			Columns: []string{workstreamticket.WorkstreamColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workstream.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.TicketCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   workstreamticket.TicketTable,
-			Columns: []string{workstreamticket.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   workstreamticket.TicketTable,
-			Columns: []string{workstreamticket.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -620,48 +488,6 @@ type WorkstreamTicketUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *WorkstreamTicketMutation
-}
-
-// SetWorkstreamID sets the "workstream_id" field.
-func (_u *WorkstreamTicketUpdateOne) SetWorkstreamID(v int) *WorkstreamTicketUpdateOne {
-	_u.mutation.SetWorkstreamID(v)
-	return _u
-}
-
-// SetNillableWorkstreamID sets the "workstream_id" field if the given value is not nil.
-func (_u *WorkstreamTicketUpdateOne) SetNillableWorkstreamID(v *int) *WorkstreamTicketUpdateOne {
-	if v != nil {
-		_u.SetWorkstreamID(*v)
-	}
-	return _u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (_u *WorkstreamTicketUpdateOne) SetTicketID(v int) *WorkstreamTicketUpdateOne {
-	_u.mutation.SetTicketID(v)
-	return _u
-}
-
-// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (_u *WorkstreamTicketUpdateOne) SetNillableTicketID(v *int) *WorkstreamTicketUpdateOne {
-	if v != nil {
-		_u.SetTicketID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *WorkstreamTicketUpdateOne) SetRelationKind(v workstreamticket.RelationKind) *WorkstreamTicketUpdateOne {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *WorkstreamTicketUpdateOne) SetNillableRelationKind(v *workstreamticket.RelationKind) *WorkstreamTicketUpdateOne {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
-	return _u
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -922,16 +748,6 @@ func (_u *WorkstreamTicketUpdateOne) SetUpdatedAt(v time.Time) *WorkstreamTicket
 	return _u
 }
 
-// SetWorkstream sets the "workstream" edge to the Workstream entity.
-func (_u *WorkstreamTicketUpdateOne) SetWorkstream(v *Workstream) *WorkstreamTicketUpdateOne {
-	return _u.SetWorkstreamID(v.ID)
-}
-
-// SetTicket sets the "ticket" edge to the Ticket entity.
-func (_u *WorkstreamTicketUpdateOne) SetTicket(v *Ticket) *WorkstreamTicketUpdateOne {
-	return _u.SetTicketID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *WorkstreamTicketUpdateOne) SetLatestEvidence(v *Evidence) *WorkstreamTicketUpdateOne {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -940,18 +756,6 @@ func (_u *WorkstreamTicketUpdateOne) SetLatestEvidence(v *Evidence) *WorkstreamT
 // Mutation returns the WorkstreamTicketMutation object of the builder.
 func (_u *WorkstreamTicketUpdateOne) Mutation() *WorkstreamTicketMutation {
 	return _u.mutation
-}
-
-// ClearWorkstream clears the "workstream" edge to the Workstream entity.
-func (_u *WorkstreamTicketUpdateOne) ClearWorkstream() *WorkstreamTicketUpdateOne {
-	_u.mutation.ClearWorkstream()
-	return _u
-}
-
-// ClearTicket clears the "ticket" edge to the Ticket entity.
-func (_u *WorkstreamTicketUpdateOne) ClearTicket() *WorkstreamTicketUpdateOne {
-	_u.mutation.ClearTicket()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -1011,11 +815,6 @@ func (_u *WorkstreamTicketUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *WorkstreamTicketUpdateOne) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := workstreamticket.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "WorkstreamTicket.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := workstreamticket.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "WorkstreamTicket.freshness_state": %w`, err)}
@@ -1065,9 +864,6 @@ func (_u *WorkstreamTicketUpdateOne) sqlSave(ctx context.Context) (_node *Workst
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(workstreamticket.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(workstreamticket.FieldEvidenceCount, field.TypeInt, value)
@@ -1137,64 +933,6 @@ func (_u *WorkstreamTicketUpdateOne) sqlSave(ctx context.Context) (_node *Workst
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workstreamticket.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.WorkstreamCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   workstreamticket.WorkstreamTable,
-			Columns: []string{workstreamticket.WorkstreamColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workstream.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.WorkstreamIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   workstreamticket.WorkstreamTable,
-			Columns: []string{workstreamticket.WorkstreamColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workstream.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.TicketCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   workstreamticket.TicketTable,
-			Columns: []string{workstreamticket.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   workstreamticket.TicketTable,
-			Columns: []string{workstreamticket.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{

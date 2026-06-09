@@ -4,11 +4,9 @@ package ent
 
 import (
 	"context"
-	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/panedocumentlink"
 	"cubicle/services/ontology-service/ent/predicate"
-	"cubicle/services/ontology-service/ent/workpane"
 	"errors"
 	"fmt"
 	"time"
@@ -28,48 +26,6 @@ type PaneDocumentLinkUpdate struct {
 // Where appends a list predicates to the PaneDocumentLinkUpdate builder.
 func (_u *PaneDocumentLinkUpdate) Where(ps ...predicate.PaneDocumentLink) *PaneDocumentLinkUpdate {
 	_u.mutation.Where(ps...)
-	return _u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (_u *PaneDocumentLinkUpdate) SetPaneID(v int) *PaneDocumentLinkUpdate {
-	_u.mutation.SetPaneID(v)
-	return _u
-}
-
-// SetNillablePaneID sets the "pane_id" field if the given value is not nil.
-func (_u *PaneDocumentLinkUpdate) SetNillablePaneID(v *int) *PaneDocumentLinkUpdate {
-	if v != nil {
-		_u.SetPaneID(*v)
-	}
-	return _u
-}
-
-// SetDocumentID sets the "document_id" field.
-func (_u *PaneDocumentLinkUpdate) SetDocumentID(v int) *PaneDocumentLinkUpdate {
-	_u.mutation.SetDocumentID(v)
-	return _u
-}
-
-// SetNillableDocumentID sets the "document_id" field if the given value is not nil.
-func (_u *PaneDocumentLinkUpdate) SetNillableDocumentID(v *int) *PaneDocumentLinkUpdate {
-	if v != nil {
-		_u.SetDocumentID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *PaneDocumentLinkUpdate) SetRelationKind(v panedocumentlink.RelationKind) *PaneDocumentLinkUpdate {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *PaneDocumentLinkUpdate) SetNillableRelationKind(v *panedocumentlink.RelationKind) *PaneDocumentLinkUpdate {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
 	return _u
 }
 
@@ -331,16 +287,6 @@ func (_u *PaneDocumentLinkUpdate) SetUpdatedAt(v time.Time) *PaneDocumentLinkUpd
 	return _u
 }
 
-// SetPane sets the "pane" edge to the WorkPane entity.
-func (_u *PaneDocumentLinkUpdate) SetPane(v *WorkPane) *PaneDocumentLinkUpdate {
-	return _u.SetPaneID(v.ID)
-}
-
-// SetDocument sets the "document" edge to the Document entity.
-func (_u *PaneDocumentLinkUpdate) SetDocument(v *Document) *PaneDocumentLinkUpdate {
-	return _u.SetDocumentID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *PaneDocumentLinkUpdate) SetLatestEvidence(v *Evidence) *PaneDocumentLinkUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -349,18 +295,6 @@ func (_u *PaneDocumentLinkUpdate) SetLatestEvidence(v *Evidence) *PaneDocumentLi
 // Mutation returns the PaneDocumentLinkMutation object of the builder.
 func (_u *PaneDocumentLinkUpdate) Mutation() *PaneDocumentLinkMutation {
 	return _u.mutation
-}
-
-// ClearPane clears the "pane" edge to the WorkPane entity.
-func (_u *PaneDocumentLinkUpdate) ClearPane() *PaneDocumentLinkUpdate {
-	_u.mutation.ClearPane()
-	return _u
-}
-
-// ClearDocument clears the "document" edge to the Document entity.
-func (_u *PaneDocumentLinkUpdate) ClearDocument() *PaneDocumentLinkUpdate {
-	_u.mutation.ClearDocument()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -407,11 +341,6 @@ func (_u *PaneDocumentLinkUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *PaneDocumentLinkUpdate) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := panedocumentlink.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "PaneDocumentLink.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := panedocumentlink.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "PaneDocumentLink.freshness_state": %w`, err)}
@@ -442,9 +371,6 @@ func (_u *PaneDocumentLinkUpdate) sqlSave(ctx context.Context) (_node int, err e
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(panedocumentlink.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(panedocumentlink.FieldEvidenceCount, field.TypeInt, value)
@@ -515,64 +441,6 @@ func (_u *PaneDocumentLinkUpdate) sqlSave(ctx context.Context) (_node int, err e
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(panedocumentlink.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.PaneCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panedocumentlink.PaneTable,
-			Columns: []string{panedocumentlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PaneIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panedocumentlink.PaneTable,
-			Columns: []string{panedocumentlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.DocumentCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panedocumentlink.DocumentTable,
-			Columns: []string{panedocumentlink.DocumentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.DocumentIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panedocumentlink.DocumentTable,
-			Columns: []string{panedocumentlink.DocumentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -620,48 +488,6 @@ type PaneDocumentLinkUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *PaneDocumentLinkMutation
-}
-
-// SetPaneID sets the "pane_id" field.
-func (_u *PaneDocumentLinkUpdateOne) SetPaneID(v int) *PaneDocumentLinkUpdateOne {
-	_u.mutation.SetPaneID(v)
-	return _u
-}
-
-// SetNillablePaneID sets the "pane_id" field if the given value is not nil.
-func (_u *PaneDocumentLinkUpdateOne) SetNillablePaneID(v *int) *PaneDocumentLinkUpdateOne {
-	if v != nil {
-		_u.SetPaneID(*v)
-	}
-	return _u
-}
-
-// SetDocumentID sets the "document_id" field.
-func (_u *PaneDocumentLinkUpdateOne) SetDocumentID(v int) *PaneDocumentLinkUpdateOne {
-	_u.mutation.SetDocumentID(v)
-	return _u
-}
-
-// SetNillableDocumentID sets the "document_id" field if the given value is not nil.
-func (_u *PaneDocumentLinkUpdateOne) SetNillableDocumentID(v *int) *PaneDocumentLinkUpdateOne {
-	if v != nil {
-		_u.SetDocumentID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *PaneDocumentLinkUpdateOne) SetRelationKind(v panedocumentlink.RelationKind) *PaneDocumentLinkUpdateOne {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *PaneDocumentLinkUpdateOne) SetNillableRelationKind(v *panedocumentlink.RelationKind) *PaneDocumentLinkUpdateOne {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
-	return _u
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -922,16 +748,6 @@ func (_u *PaneDocumentLinkUpdateOne) SetUpdatedAt(v time.Time) *PaneDocumentLink
 	return _u
 }
 
-// SetPane sets the "pane" edge to the WorkPane entity.
-func (_u *PaneDocumentLinkUpdateOne) SetPane(v *WorkPane) *PaneDocumentLinkUpdateOne {
-	return _u.SetPaneID(v.ID)
-}
-
-// SetDocument sets the "document" edge to the Document entity.
-func (_u *PaneDocumentLinkUpdateOne) SetDocument(v *Document) *PaneDocumentLinkUpdateOne {
-	return _u.SetDocumentID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *PaneDocumentLinkUpdateOne) SetLatestEvidence(v *Evidence) *PaneDocumentLinkUpdateOne {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -940,18 +756,6 @@ func (_u *PaneDocumentLinkUpdateOne) SetLatestEvidence(v *Evidence) *PaneDocumen
 // Mutation returns the PaneDocumentLinkMutation object of the builder.
 func (_u *PaneDocumentLinkUpdateOne) Mutation() *PaneDocumentLinkMutation {
 	return _u.mutation
-}
-
-// ClearPane clears the "pane" edge to the WorkPane entity.
-func (_u *PaneDocumentLinkUpdateOne) ClearPane() *PaneDocumentLinkUpdateOne {
-	_u.mutation.ClearPane()
-	return _u
-}
-
-// ClearDocument clears the "document" edge to the Document entity.
-func (_u *PaneDocumentLinkUpdateOne) ClearDocument() *PaneDocumentLinkUpdateOne {
-	_u.mutation.ClearDocument()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -1011,11 +815,6 @@ func (_u *PaneDocumentLinkUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *PaneDocumentLinkUpdateOne) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := panedocumentlink.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "PaneDocumentLink.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := panedocumentlink.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "PaneDocumentLink.freshness_state": %w`, err)}
@@ -1065,9 +864,6 @@ func (_u *PaneDocumentLinkUpdateOne) sqlSave(ctx context.Context) (_node *PaneDo
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(panedocumentlink.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(panedocumentlink.FieldEvidenceCount, field.TypeInt, value)
@@ -1137,64 +933,6 @@ func (_u *PaneDocumentLinkUpdateOne) sqlSave(ctx context.Context) (_node *PaneDo
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(panedocumentlink.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.PaneCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panedocumentlink.PaneTable,
-			Columns: []string{panedocumentlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PaneIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panedocumentlink.PaneTable,
-			Columns: []string{panedocumentlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.DocumentCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panedocumentlink.DocumentTable,
-			Columns: []string{panedocumentlink.DocumentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.DocumentIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panedocumentlink.DocumentTable,
-			Columns: []string{panedocumentlink.DocumentColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{

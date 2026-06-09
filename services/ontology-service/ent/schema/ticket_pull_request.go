@@ -23,8 +23,10 @@ func (TicketPullRequest) Fields() []ent.Field {
 	return appendFields(
 		[]ent.Field{
 			field.Int("ticket_id").
+				Immutable().
 				Comment("Source Ticket endpoint for this association."),
 			field.Int("pull_request_id").
+				Immutable().
 				Comment("Target PullRequest endpoint for this association."),
 		},
 		linkFields([]string{relationImplementedBy}),
@@ -37,11 +39,13 @@ func (TicketPullRequest) Edges() []ent.Edge {
 		edge.To("ticket", Ticket.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("ticket_id").
 			Comment("Ticket endpoint for this association."),
 		edge.To("pull_request", PullRequest.Type).
 			Unique().
 			Required().
+			Immutable().
 			Field("pull_request_id").
 			Comment("Pull request endpoint for this association."),
 		edge.To("latest_evidence", Evidence.Type).

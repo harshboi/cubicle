@@ -579,42 +579,6 @@ type (
 	}
 )
 
-// SetPaneID sets the "pane_id" field.
-func (u *PaneDocumentLinkUpsert) SetPaneID(v int) *PaneDocumentLinkUpsert {
-	u.Set(panedocumentlink.FieldPaneID, v)
-	return u
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PaneDocumentLinkUpsert) UpdatePaneID() *PaneDocumentLinkUpsert {
-	u.SetExcluded(panedocumentlink.FieldPaneID)
-	return u
-}
-
-// SetDocumentID sets the "document_id" field.
-func (u *PaneDocumentLinkUpsert) SetDocumentID(v int) *PaneDocumentLinkUpsert {
-	u.Set(panedocumentlink.FieldDocumentID, v)
-	return u
-}
-
-// UpdateDocumentID sets the "document_id" field to the value that was provided on create.
-func (u *PaneDocumentLinkUpsert) UpdateDocumentID() *PaneDocumentLinkUpsert {
-	u.SetExcluded(panedocumentlink.FieldDocumentID)
-	return u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PaneDocumentLinkUpsert) SetRelationKind(v panedocumentlink.RelationKind) *PaneDocumentLinkUpsert {
-	u.Set(panedocumentlink.FieldRelationKind, v)
-	return u
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PaneDocumentLinkUpsert) UpdateRelationKind() *PaneDocumentLinkUpsert {
-	u.SetExcluded(panedocumentlink.FieldRelationKind)
-	return u
-}
-
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
 func (u *PaneDocumentLinkUpsert) SetLatestEvidenceID(v int) *PaneDocumentLinkUpsert {
 	u.Set(panedocumentlink.FieldLatestEvidenceID, v)
@@ -860,6 +824,15 @@ func (u *PaneDocumentLinkUpsert) UpdateUpdatedAt() *PaneDocumentLinkUpsert {
 func (u *PaneDocumentLinkUpsertOne) UpdateNewValues() *PaneDocumentLinkUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.PaneID(); exists {
+			s.SetIgnore(panedocumentlink.FieldPaneID)
+		}
+		if _, exists := u.create.mutation.DocumentID(); exists {
+			s.SetIgnore(panedocumentlink.FieldDocumentID)
+		}
+		if _, exists := u.create.mutation.RelationKind(); exists {
+			s.SetIgnore(panedocumentlink.FieldRelationKind)
+		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(panedocumentlink.FieldCreatedAt)
 		}
@@ -892,48 +865,6 @@ func (u *PaneDocumentLinkUpsertOne) Update(set func(*PaneDocumentLinkUpsert)) *P
 		set(&PaneDocumentLinkUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (u *PaneDocumentLinkUpsertOne) SetPaneID(v int) *PaneDocumentLinkUpsertOne {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.SetPaneID(v)
-	})
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PaneDocumentLinkUpsertOne) UpdatePaneID() *PaneDocumentLinkUpsertOne {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.UpdatePaneID()
-	})
-}
-
-// SetDocumentID sets the "document_id" field.
-func (u *PaneDocumentLinkUpsertOne) SetDocumentID(v int) *PaneDocumentLinkUpsertOne {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.SetDocumentID(v)
-	})
-}
-
-// UpdateDocumentID sets the "document_id" field to the value that was provided on create.
-func (u *PaneDocumentLinkUpsertOne) UpdateDocumentID() *PaneDocumentLinkUpsertOne {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.UpdateDocumentID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PaneDocumentLinkUpsertOne) SetRelationKind(v panedocumentlink.RelationKind) *PaneDocumentLinkUpsertOne {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PaneDocumentLinkUpsertOne) UpdateRelationKind() *PaneDocumentLinkUpsertOne {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -1362,6 +1293,15 @@ func (u *PaneDocumentLinkUpsertBulk) UpdateNewValues() *PaneDocumentLinkUpsertBu
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
+			if _, exists := b.mutation.PaneID(); exists {
+				s.SetIgnore(panedocumentlink.FieldPaneID)
+			}
+			if _, exists := b.mutation.DocumentID(); exists {
+				s.SetIgnore(panedocumentlink.FieldDocumentID)
+			}
+			if _, exists := b.mutation.RelationKind(); exists {
+				s.SetIgnore(panedocumentlink.FieldRelationKind)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(panedocumentlink.FieldCreatedAt)
 			}
@@ -1395,48 +1335,6 @@ func (u *PaneDocumentLinkUpsertBulk) Update(set func(*PaneDocumentLinkUpsert)) *
 		set(&PaneDocumentLinkUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (u *PaneDocumentLinkUpsertBulk) SetPaneID(v int) *PaneDocumentLinkUpsertBulk {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.SetPaneID(v)
-	})
-}
-
-// UpdatePaneID sets the "pane_id" field to the value that was provided on create.
-func (u *PaneDocumentLinkUpsertBulk) UpdatePaneID() *PaneDocumentLinkUpsertBulk {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.UpdatePaneID()
-	})
-}
-
-// SetDocumentID sets the "document_id" field.
-func (u *PaneDocumentLinkUpsertBulk) SetDocumentID(v int) *PaneDocumentLinkUpsertBulk {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.SetDocumentID(v)
-	})
-}
-
-// UpdateDocumentID sets the "document_id" field to the value that was provided on create.
-func (u *PaneDocumentLinkUpsertBulk) UpdateDocumentID() *PaneDocumentLinkUpsertBulk {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.UpdateDocumentID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *PaneDocumentLinkUpsertBulk) SetRelationKind(v panedocumentlink.RelationKind) *PaneDocumentLinkUpsertBulk {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *PaneDocumentLinkUpsertBulk) UpdateRelationKind() *PaneDocumentLinkUpsertBulk {
-	return u.Update(func(s *PaneDocumentLinkUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.

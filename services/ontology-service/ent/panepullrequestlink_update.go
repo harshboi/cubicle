@@ -7,8 +7,6 @@ import (
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/panepullrequestlink"
 	"cubicle/services/ontology-service/ent/predicate"
-	"cubicle/services/ontology-service/ent/pullrequest"
-	"cubicle/services/ontology-service/ent/workpane"
 	"errors"
 	"fmt"
 	"time"
@@ -28,48 +26,6 @@ type PanePullRequestLinkUpdate struct {
 // Where appends a list predicates to the PanePullRequestLinkUpdate builder.
 func (_u *PanePullRequestLinkUpdate) Where(ps ...predicate.PanePullRequestLink) *PanePullRequestLinkUpdate {
 	_u.mutation.Where(ps...)
-	return _u
-}
-
-// SetPaneID sets the "pane_id" field.
-func (_u *PanePullRequestLinkUpdate) SetPaneID(v int) *PanePullRequestLinkUpdate {
-	_u.mutation.SetPaneID(v)
-	return _u
-}
-
-// SetNillablePaneID sets the "pane_id" field if the given value is not nil.
-func (_u *PanePullRequestLinkUpdate) SetNillablePaneID(v *int) *PanePullRequestLinkUpdate {
-	if v != nil {
-		_u.SetPaneID(*v)
-	}
-	return _u
-}
-
-// SetPullRequestID sets the "pull_request_id" field.
-func (_u *PanePullRequestLinkUpdate) SetPullRequestID(v int) *PanePullRequestLinkUpdate {
-	_u.mutation.SetPullRequestID(v)
-	return _u
-}
-
-// SetNillablePullRequestID sets the "pull_request_id" field if the given value is not nil.
-func (_u *PanePullRequestLinkUpdate) SetNillablePullRequestID(v *int) *PanePullRequestLinkUpdate {
-	if v != nil {
-		_u.SetPullRequestID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *PanePullRequestLinkUpdate) SetRelationKind(v panepullrequestlink.RelationKind) *PanePullRequestLinkUpdate {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *PanePullRequestLinkUpdate) SetNillableRelationKind(v *panepullrequestlink.RelationKind) *PanePullRequestLinkUpdate {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
 	return _u
 }
 
@@ -331,16 +287,6 @@ func (_u *PanePullRequestLinkUpdate) SetUpdatedAt(v time.Time) *PanePullRequestL
 	return _u
 }
 
-// SetPane sets the "pane" edge to the WorkPane entity.
-func (_u *PanePullRequestLinkUpdate) SetPane(v *WorkPane) *PanePullRequestLinkUpdate {
-	return _u.SetPaneID(v.ID)
-}
-
-// SetPullRequest sets the "pull_request" edge to the PullRequest entity.
-func (_u *PanePullRequestLinkUpdate) SetPullRequest(v *PullRequest) *PanePullRequestLinkUpdate {
-	return _u.SetPullRequestID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *PanePullRequestLinkUpdate) SetLatestEvidence(v *Evidence) *PanePullRequestLinkUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -349,18 +295,6 @@ func (_u *PanePullRequestLinkUpdate) SetLatestEvidence(v *Evidence) *PanePullReq
 // Mutation returns the PanePullRequestLinkMutation object of the builder.
 func (_u *PanePullRequestLinkUpdate) Mutation() *PanePullRequestLinkMutation {
 	return _u.mutation
-}
-
-// ClearPane clears the "pane" edge to the WorkPane entity.
-func (_u *PanePullRequestLinkUpdate) ClearPane() *PanePullRequestLinkUpdate {
-	_u.mutation.ClearPane()
-	return _u
-}
-
-// ClearPullRequest clears the "pull_request" edge to the PullRequest entity.
-func (_u *PanePullRequestLinkUpdate) ClearPullRequest() *PanePullRequestLinkUpdate {
-	_u.mutation.ClearPullRequest()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -407,11 +341,6 @@ func (_u *PanePullRequestLinkUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *PanePullRequestLinkUpdate) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := panepullrequestlink.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "PanePullRequestLink.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := panepullrequestlink.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "PanePullRequestLink.freshness_state": %w`, err)}
@@ -442,9 +371,6 @@ func (_u *PanePullRequestLinkUpdate) sqlSave(ctx context.Context) (_node int, er
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(panepullrequestlink.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(panepullrequestlink.FieldEvidenceCount, field.TypeInt, value)
@@ -515,64 +441,6 @@ func (_u *PanePullRequestLinkUpdate) sqlSave(ctx context.Context) (_node int, er
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(panepullrequestlink.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.PaneCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panepullrequestlink.PaneTable,
-			Columns: []string{panepullrequestlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PaneIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panepullrequestlink.PaneTable,
-			Columns: []string{panepullrequestlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.PullRequestCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panepullrequestlink.PullRequestTable,
-			Columns: []string{panepullrequestlink.PullRequestColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PullRequestIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panepullrequestlink.PullRequestTable,
-			Columns: []string{panepullrequestlink.PullRequestColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -620,48 +488,6 @@ type PanePullRequestLinkUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *PanePullRequestLinkMutation
-}
-
-// SetPaneID sets the "pane_id" field.
-func (_u *PanePullRequestLinkUpdateOne) SetPaneID(v int) *PanePullRequestLinkUpdateOne {
-	_u.mutation.SetPaneID(v)
-	return _u
-}
-
-// SetNillablePaneID sets the "pane_id" field if the given value is not nil.
-func (_u *PanePullRequestLinkUpdateOne) SetNillablePaneID(v *int) *PanePullRequestLinkUpdateOne {
-	if v != nil {
-		_u.SetPaneID(*v)
-	}
-	return _u
-}
-
-// SetPullRequestID sets the "pull_request_id" field.
-func (_u *PanePullRequestLinkUpdateOne) SetPullRequestID(v int) *PanePullRequestLinkUpdateOne {
-	_u.mutation.SetPullRequestID(v)
-	return _u
-}
-
-// SetNillablePullRequestID sets the "pull_request_id" field if the given value is not nil.
-func (_u *PanePullRequestLinkUpdateOne) SetNillablePullRequestID(v *int) *PanePullRequestLinkUpdateOne {
-	if v != nil {
-		_u.SetPullRequestID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *PanePullRequestLinkUpdateOne) SetRelationKind(v panepullrequestlink.RelationKind) *PanePullRequestLinkUpdateOne {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *PanePullRequestLinkUpdateOne) SetNillableRelationKind(v *panepullrequestlink.RelationKind) *PanePullRequestLinkUpdateOne {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
-	return _u
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -922,16 +748,6 @@ func (_u *PanePullRequestLinkUpdateOne) SetUpdatedAt(v time.Time) *PanePullReque
 	return _u
 }
 
-// SetPane sets the "pane" edge to the WorkPane entity.
-func (_u *PanePullRequestLinkUpdateOne) SetPane(v *WorkPane) *PanePullRequestLinkUpdateOne {
-	return _u.SetPaneID(v.ID)
-}
-
-// SetPullRequest sets the "pull_request" edge to the PullRequest entity.
-func (_u *PanePullRequestLinkUpdateOne) SetPullRequest(v *PullRequest) *PanePullRequestLinkUpdateOne {
-	return _u.SetPullRequestID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *PanePullRequestLinkUpdateOne) SetLatestEvidence(v *Evidence) *PanePullRequestLinkUpdateOne {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -940,18 +756,6 @@ func (_u *PanePullRequestLinkUpdateOne) SetLatestEvidence(v *Evidence) *PanePull
 // Mutation returns the PanePullRequestLinkMutation object of the builder.
 func (_u *PanePullRequestLinkUpdateOne) Mutation() *PanePullRequestLinkMutation {
 	return _u.mutation
-}
-
-// ClearPane clears the "pane" edge to the WorkPane entity.
-func (_u *PanePullRequestLinkUpdateOne) ClearPane() *PanePullRequestLinkUpdateOne {
-	_u.mutation.ClearPane()
-	return _u
-}
-
-// ClearPullRequest clears the "pull_request" edge to the PullRequest entity.
-func (_u *PanePullRequestLinkUpdateOne) ClearPullRequest() *PanePullRequestLinkUpdateOne {
-	_u.mutation.ClearPullRequest()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -1011,11 +815,6 @@ func (_u *PanePullRequestLinkUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *PanePullRequestLinkUpdateOne) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := panepullrequestlink.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "PanePullRequestLink.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := panepullrequestlink.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "PanePullRequestLink.freshness_state": %w`, err)}
@@ -1065,9 +864,6 @@ func (_u *PanePullRequestLinkUpdateOne) sqlSave(ctx context.Context) (_node *Pan
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(panepullrequestlink.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(panepullrequestlink.FieldEvidenceCount, field.TypeInt, value)
@@ -1137,64 +933,6 @@ func (_u *PanePullRequestLinkUpdateOne) sqlSave(ctx context.Context) (_node *Pan
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(panepullrequestlink.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.PaneCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panepullrequestlink.PaneTable,
-			Columns: []string{panepullrequestlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PaneIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panepullrequestlink.PaneTable,
-			Columns: []string{panepullrequestlink.PaneColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(workpane.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.PullRequestCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panepullrequestlink.PullRequestTable,
-			Columns: []string{panepullrequestlink.PullRequestColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PullRequestIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   panepullrequestlink.PullRequestTable,
-			Columns: []string{panepullrequestlink.PullRequestColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{

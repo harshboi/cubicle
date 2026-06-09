@@ -6,8 +6,6 @@ import (
 	"context"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/predicate"
-	"cubicle/services/ontology-service/ent/pullrequest"
-	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"errors"
 	"fmt"
@@ -28,48 +26,6 @@ type TicketPullRequestUpdate struct {
 // Where appends a list predicates to the TicketPullRequestUpdate builder.
 func (_u *TicketPullRequestUpdate) Where(ps ...predicate.TicketPullRequest) *TicketPullRequestUpdate {
 	_u.mutation.Where(ps...)
-	return _u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (_u *TicketPullRequestUpdate) SetTicketID(v int) *TicketPullRequestUpdate {
-	_u.mutation.SetTicketID(v)
-	return _u
-}
-
-// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (_u *TicketPullRequestUpdate) SetNillableTicketID(v *int) *TicketPullRequestUpdate {
-	if v != nil {
-		_u.SetTicketID(*v)
-	}
-	return _u
-}
-
-// SetPullRequestID sets the "pull_request_id" field.
-func (_u *TicketPullRequestUpdate) SetPullRequestID(v int) *TicketPullRequestUpdate {
-	_u.mutation.SetPullRequestID(v)
-	return _u
-}
-
-// SetNillablePullRequestID sets the "pull_request_id" field if the given value is not nil.
-func (_u *TicketPullRequestUpdate) SetNillablePullRequestID(v *int) *TicketPullRequestUpdate {
-	if v != nil {
-		_u.SetPullRequestID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *TicketPullRequestUpdate) SetRelationKind(v ticketpullrequest.RelationKind) *TicketPullRequestUpdate {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *TicketPullRequestUpdate) SetNillableRelationKind(v *ticketpullrequest.RelationKind) *TicketPullRequestUpdate {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
 	return _u
 }
 
@@ -331,16 +287,6 @@ func (_u *TicketPullRequestUpdate) SetUpdatedAt(v time.Time) *TicketPullRequestU
 	return _u
 }
 
-// SetTicket sets the "ticket" edge to the Ticket entity.
-func (_u *TicketPullRequestUpdate) SetTicket(v *Ticket) *TicketPullRequestUpdate {
-	return _u.SetTicketID(v.ID)
-}
-
-// SetPullRequest sets the "pull_request" edge to the PullRequest entity.
-func (_u *TicketPullRequestUpdate) SetPullRequest(v *PullRequest) *TicketPullRequestUpdate {
-	return _u.SetPullRequestID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *TicketPullRequestUpdate) SetLatestEvidence(v *Evidence) *TicketPullRequestUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -349,18 +295,6 @@ func (_u *TicketPullRequestUpdate) SetLatestEvidence(v *Evidence) *TicketPullReq
 // Mutation returns the TicketPullRequestMutation object of the builder.
 func (_u *TicketPullRequestUpdate) Mutation() *TicketPullRequestMutation {
 	return _u.mutation
-}
-
-// ClearTicket clears the "ticket" edge to the Ticket entity.
-func (_u *TicketPullRequestUpdate) ClearTicket() *TicketPullRequestUpdate {
-	_u.mutation.ClearTicket()
-	return _u
-}
-
-// ClearPullRequest clears the "pull_request" edge to the PullRequest entity.
-func (_u *TicketPullRequestUpdate) ClearPullRequest() *TicketPullRequestUpdate {
-	_u.mutation.ClearPullRequest()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -407,11 +341,6 @@ func (_u *TicketPullRequestUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *TicketPullRequestUpdate) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := ticketpullrequest.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "TicketPullRequest.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := ticketpullrequest.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "TicketPullRequest.freshness_state": %w`, err)}
@@ -442,9 +371,6 @@ func (_u *TicketPullRequestUpdate) sqlSave(ctx context.Context) (_node int, err 
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(ticketpullrequest.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(ticketpullrequest.FieldEvidenceCount, field.TypeInt, value)
@@ -515,64 +441,6 @@ func (_u *TicketPullRequestUpdate) sqlSave(ctx context.Context) (_node int, err 
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ticketpullrequest.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if _u.mutation.TicketCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketpullrequest.TicketTable,
-			Columns: []string{ticketpullrequest.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketpullrequest.TicketTable,
-			Columns: []string{ticketpullrequest.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.PullRequestCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketpullrequest.PullRequestTable,
-			Columns: []string{ticketpullrequest.PullRequestColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PullRequestIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketpullrequest.PullRequestTable,
-			Columns: []string{ticketpullrequest.PullRequestColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -620,48 +488,6 @@ type TicketPullRequestUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TicketPullRequestMutation
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (_u *TicketPullRequestUpdateOne) SetTicketID(v int) *TicketPullRequestUpdateOne {
-	_u.mutation.SetTicketID(v)
-	return _u
-}
-
-// SetNillableTicketID sets the "ticket_id" field if the given value is not nil.
-func (_u *TicketPullRequestUpdateOne) SetNillableTicketID(v *int) *TicketPullRequestUpdateOne {
-	if v != nil {
-		_u.SetTicketID(*v)
-	}
-	return _u
-}
-
-// SetPullRequestID sets the "pull_request_id" field.
-func (_u *TicketPullRequestUpdateOne) SetPullRequestID(v int) *TicketPullRequestUpdateOne {
-	_u.mutation.SetPullRequestID(v)
-	return _u
-}
-
-// SetNillablePullRequestID sets the "pull_request_id" field if the given value is not nil.
-func (_u *TicketPullRequestUpdateOne) SetNillablePullRequestID(v *int) *TicketPullRequestUpdateOne {
-	if v != nil {
-		_u.SetPullRequestID(*v)
-	}
-	return _u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (_u *TicketPullRequestUpdateOne) SetRelationKind(v ticketpullrequest.RelationKind) *TicketPullRequestUpdateOne {
-	_u.mutation.SetRelationKind(v)
-	return _u
-}
-
-// SetNillableRelationKind sets the "relation_kind" field if the given value is not nil.
-func (_u *TicketPullRequestUpdateOne) SetNillableRelationKind(v *ticketpullrequest.RelationKind) *TicketPullRequestUpdateOne {
-	if v != nil {
-		_u.SetRelationKind(*v)
-	}
-	return _u
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -922,16 +748,6 @@ func (_u *TicketPullRequestUpdateOne) SetUpdatedAt(v time.Time) *TicketPullReque
 	return _u
 }
 
-// SetTicket sets the "ticket" edge to the Ticket entity.
-func (_u *TicketPullRequestUpdateOne) SetTicket(v *Ticket) *TicketPullRequestUpdateOne {
-	return _u.SetTicketID(v.ID)
-}
-
-// SetPullRequest sets the "pull_request" edge to the PullRequest entity.
-func (_u *TicketPullRequestUpdateOne) SetPullRequest(v *PullRequest) *TicketPullRequestUpdateOne {
-	return _u.SetPullRequestID(v.ID)
-}
-
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *TicketPullRequestUpdateOne) SetLatestEvidence(v *Evidence) *TicketPullRequestUpdateOne {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -940,18 +756,6 @@ func (_u *TicketPullRequestUpdateOne) SetLatestEvidence(v *Evidence) *TicketPull
 // Mutation returns the TicketPullRequestMutation object of the builder.
 func (_u *TicketPullRequestUpdateOne) Mutation() *TicketPullRequestMutation {
 	return _u.mutation
-}
-
-// ClearTicket clears the "ticket" edge to the Ticket entity.
-func (_u *TicketPullRequestUpdateOne) ClearTicket() *TicketPullRequestUpdateOne {
-	_u.mutation.ClearTicket()
-	return _u
-}
-
-// ClearPullRequest clears the "pull_request" edge to the PullRequest entity.
-func (_u *TicketPullRequestUpdateOne) ClearPullRequest() *TicketPullRequestUpdateOne {
-	_u.mutation.ClearPullRequest()
-	return _u
 }
 
 // ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
@@ -1011,11 +815,6 @@ func (_u *TicketPullRequestUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *TicketPullRequestUpdateOne) check() error {
-	if v, ok := _u.mutation.RelationKind(); ok {
-		if err := ticketpullrequest.RelationKindValidator(v); err != nil {
-			return &ValidationError{Name: "relation_kind", err: fmt.Errorf(`ent: validator failed for field "TicketPullRequest.relation_kind": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.FreshnessState(); ok {
 		if err := ticketpullrequest.FreshnessStateValidator(v); err != nil {
 			return &ValidationError{Name: "freshness_state", err: fmt.Errorf(`ent: validator failed for field "TicketPullRequest.freshness_state": %w`, err)}
@@ -1065,9 +864,6 @@ func (_u *TicketPullRequestUpdateOne) sqlSave(ctx context.Context) (_node *Ticke
 				ps[i](selector)
 			}
 		}
-	}
-	if value, ok := _u.mutation.RelationKind(); ok {
-		_spec.SetField(ticketpullrequest.FieldRelationKind, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.EvidenceCount(); ok {
 		_spec.SetField(ticketpullrequest.FieldEvidenceCount, field.TypeInt, value)
@@ -1137,64 +933,6 @@ func (_u *TicketPullRequestUpdateOne) sqlSave(ctx context.Context) (_node *Ticke
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(ticketpullrequest.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if _u.mutation.TicketCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketpullrequest.TicketTable,
-			Columns: []string{ticketpullrequest.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TicketIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketpullrequest.TicketTable,
-			Columns: []string{ticketpullrequest.TicketColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.PullRequestCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketpullrequest.PullRequestTable,
-			Columns: []string{ticketpullrequest.PullRequestColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PullRequestIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   ticketpullrequest.PullRequestTable,
-			Columns: []string{ticketpullrequest.PullRequestColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{

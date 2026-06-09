@@ -331,7 +331,9 @@ func (_c *WorkPaneCreate) Mutation() *WorkPaneMutation {
 
 // Save creates the WorkPane in the database.
 func (_c *WorkPaneCreate) Save(ctx context.Context) (*WorkPane, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -358,7 +360,7 @@ func (_c *WorkPaneCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *WorkPaneCreate) defaults() {
+func (_c *WorkPaneCreate) defaults() error {
 	if _, ok := _c.mutation.TargetCount(); !ok {
 		v := workpane.DefaultTargetCount
 		_c.mutation.SetTargetCount(v)
@@ -392,13 +394,20 @@ func (_c *WorkPaneCreate) defaults() {
 		_c.mutation.SetConfidence(v)
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if workpane.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized workpane.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := workpane.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if workpane.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized workpane.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := workpane.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -741,42 +750,6 @@ func (u *WorkPaneUpsert) UpdateKey() *WorkPaneUpsert {
 	return u
 }
 
-// SetWorkSurfaceID sets the "work_surface_id" field.
-func (u *WorkPaneUpsert) SetWorkSurfaceID(v int) *WorkPaneUpsert {
-	u.Set(workpane.FieldWorkSurfaceID, v)
-	return u
-}
-
-// UpdateWorkSurfaceID sets the "work_surface_id" field to the value that was provided on create.
-func (u *WorkPaneUpsert) UpdateWorkSurfaceID() *WorkPaneUpsert {
-	u.SetExcluded(workpane.FieldWorkSurfaceID)
-	return u
-}
-
-// SetPaneKind sets the "pane_kind" field.
-func (u *WorkPaneUpsert) SetPaneKind(v workpane.PaneKind) *WorkPaneUpsert {
-	u.Set(workpane.FieldPaneKind, v)
-	return u
-}
-
-// UpdatePaneKind sets the "pane_kind" field to the value that was provided on create.
-func (u *WorkPaneUpsert) UpdatePaneKind() *WorkPaneUpsert {
-	u.SetExcluded(workpane.FieldPaneKind)
-	return u
-}
-
-// SetTargetKind sets the "target_kind" field.
-func (u *WorkPaneUpsert) SetTargetKind(v workpane.TargetKind) *WorkPaneUpsert {
-	u.Set(workpane.FieldTargetKind, v)
-	return u
-}
-
-// UpdateTargetKind sets the "target_kind" field to the value that was provided on create.
-func (u *WorkPaneUpsert) UpdateTargetKind() *WorkPaneUpsert {
-	u.SetExcluded(workpane.FieldTargetKind)
-	return u
-}
-
 // SetDisplayName sets the "display_name" field.
 func (u *WorkPaneUpsert) SetDisplayName(v string) *WorkPaneUpsert {
 	u.Set(workpane.FieldDisplayName, v)
@@ -1010,6 +983,15 @@ func (u *WorkPaneUpsert) UpdateUpdatedAt() *WorkPaneUpsert {
 func (u *WorkPaneUpsertOne) UpdateNewValues() *WorkPaneUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.WorkSurfaceID(); exists {
+			s.SetIgnore(workpane.FieldWorkSurfaceID)
+		}
+		if _, exists := u.create.mutation.PaneKind(); exists {
+			s.SetIgnore(workpane.FieldPaneKind)
+		}
+		if _, exists := u.create.mutation.TargetKind(); exists {
+			s.SetIgnore(workpane.FieldTargetKind)
+		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(workpane.FieldCreatedAt)
 		}
@@ -1055,48 +1037,6 @@ func (u *WorkPaneUpsertOne) SetKey(v string) *WorkPaneUpsertOne {
 func (u *WorkPaneUpsertOne) UpdateKey() *WorkPaneUpsertOne {
 	return u.Update(func(s *WorkPaneUpsert) {
 		s.UpdateKey()
-	})
-}
-
-// SetWorkSurfaceID sets the "work_surface_id" field.
-func (u *WorkPaneUpsertOne) SetWorkSurfaceID(v int) *WorkPaneUpsertOne {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.SetWorkSurfaceID(v)
-	})
-}
-
-// UpdateWorkSurfaceID sets the "work_surface_id" field to the value that was provided on create.
-func (u *WorkPaneUpsertOne) UpdateWorkSurfaceID() *WorkPaneUpsertOne {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.UpdateWorkSurfaceID()
-	})
-}
-
-// SetPaneKind sets the "pane_kind" field.
-func (u *WorkPaneUpsertOne) SetPaneKind(v workpane.PaneKind) *WorkPaneUpsertOne {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.SetPaneKind(v)
-	})
-}
-
-// UpdatePaneKind sets the "pane_kind" field to the value that was provided on create.
-func (u *WorkPaneUpsertOne) UpdatePaneKind() *WorkPaneUpsertOne {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.UpdatePaneKind()
-	})
-}
-
-// SetTargetKind sets the "target_kind" field.
-func (u *WorkPaneUpsertOne) SetTargetKind(v workpane.TargetKind) *WorkPaneUpsertOne {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.SetTargetKind(v)
-	})
-}
-
-// UpdateTargetKind sets the "target_kind" field to the value that was provided on create.
-func (u *WorkPaneUpsertOne) UpdateTargetKind() *WorkPaneUpsertOne {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.UpdateTargetKind()
 	})
 }
 
@@ -1535,6 +1475,15 @@ func (u *WorkPaneUpsertBulk) UpdateNewValues() *WorkPaneUpsertBulk {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
+			if _, exists := b.mutation.WorkSurfaceID(); exists {
+				s.SetIgnore(workpane.FieldWorkSurfaceID)
+			}
+			if _, exists := b.mutation.PaneKind(); exists {
+				s.SetIgnore(workpane.FieldPaneKind)
+			}
+			if _, exists := b.mutation.TargetKind(); exists {
+				s.SetIgnore(workpane.FieldTargetKind)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(workpane.FieldCreatedAt)
 			}
@@ -1581,48 +1530,6 @@ func (u *WorkPaneUpsertBulk) SetKey(v string) *WorkPaneUpsertBulk {
 func (u *WorkPaneUpsertBulk) UpdateKey() *WorkPaneUpsertBulk {
 	return u.Update(func(s *WorkPaneUpsert) {
 		s.UpdateKey()
-	})
-}
-
-// SetWorkSurfaceID sets the "work_surface_id" field.
-func (u *WorkPaneUpsertBulk) SetWorkSurfaceID(v int) *WorkPaneUpsertBulk {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.SetWorkSurfaceID(v)
-	})
-}
-
-// UpdateWorkSurfaceID sets the "work_surface_id" field to the value that was provided on create.
-func (u *WorkPaneUpsertBulk) UpdateWorkSurfaceID() *WorkPaneUpsertBulk {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.UpdateWorkSurfaceID()
-	})
-}
-
-// SetPaneKind sets the "pane_kind" field.
-func (u *WorkPaneUpsertBulk) SetPaneKind(v workpane.PaneKind) *WorkPaneUpsertBulk {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.SetPaneKind(v)
-	})
-}
-
-// UpdatePaneKind sets the "pane_kind" field to the value that was provided on create.
-func (u *WorkPaneUpsertBulk) UpdatePaneKind() *WorkPaneUpsertBulk {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.UpdatePaneKind()
-	})
-}
-
-// SetTargetKind sets the "target_kind" field.
-func (u *WorkPaneUpsertBulk) SetTargetKind(v workpane.TargetKind) *WorkPaneUpsertBulk {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.SetTargetKind(v)
-	})
-}
-
-// UpdateTargetKind sets the "target_kind" field to the value that was provided on create.
-func (u *WorkPaneUpsertBulk) UpdateTargetKind() *WorkPaneUpsertBulk {
-	return u.Update(func(s *WorkPaneUpsert) {
-		s.UpdateTargetKind()
 	})
 }
 

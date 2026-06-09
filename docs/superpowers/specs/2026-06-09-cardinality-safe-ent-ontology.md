@@ -134,6 +134,44 @@ Person
  +-- target objects
 ```
 
+## Invariants
+
+Pane vocabulary is centralized in `internal/ontology`, not duplicated across
+GraphQL, Ent schema files, and future writer code.
+
+```text
+PaneKind
+ |
+ +-- implies exactly one SurfaceKind
+ +-- implies exactly one TargetKind
+ +-- implies exactly one RelationKind
+```
+
+Example:
+
+```text
+documents_created
+ |
+ +-- surface_kind = documents
+ +-- target_kind  = document
+ +-- relation     = created
+```
+
+The enforcement split is intentional:
+
+| Rule | Enforcement |
+|---|---|
+| `WorkPane.pane_kind` and `WorkPane.target_kind` agree | Ent schema hook. |
+| `WorkPane` belongs under the implied `WorkSurface.surface_kind` | Generated Ent client hook from `internal/ontologyhooks.Register`. |
+| `Pane*Link` uses the target table implied by the parent pane | Generated Ent client hook from `internal/ontologyhooks.Register`. |
+| `Pane*Link.relation_kind` matches the parent pane kind | Generated Ent client hook from `internal/ontologyhooks.Register`. |
+| Link endpoints and relation identity do not mutate after create | Ent immutable fields and regenerated update builders. |
+
+All ontology writer code must use a generated Ent client with
+`ontologyhooks.Register(client)` installed before writes. The public GraphQL
+mutation layer should call through that registered client instead of exposing a
+raw unhooked Ent client.
+
 ## GraphQL Direction
 
 Current service state:

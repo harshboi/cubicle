@@ -579,42 +579,6 @@ type (
 	}
 )
 
-// SetTicketID sets the "ticket_id" field.
-func (u *TicketDocumentFragmentUpsert) SetTicketID(v int) *TicketDocumentFragmentUpsert {
-	u.Set(ticketdocumentfragment.FieldTicketID, v)
-	return u
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *TicketDocumentFragmentUpsert) UpdateTicketID() *TicketDocumentFragmentUpsert {
-	u.SetExcluded(ticketdocumentfragment.FieldTicketID)
-	return u
-}
-
-// SetDocumentFragmentID sets the "document_fragment_id" field.
-func (u *TicketDocumentFragmentUpsert) SetDocumentFragmentID(v int) *TicketDocumentFragmentUpsert {
-	u.Set(ticketdocumentfragment.FieldDocumentFragmentID, v)
-	return u
-}
-
-// UpdateDocumentFragmentID sets the "document_fragment_id" field to the value that was provided on create.
-func (u *TicketDocumentFragmentUpsert) UpdateDocumentFragmentID() *TicketDocumentFragmentUpsert {
-	u.SetExcluded(ticketdocumentfragment.FieldDocumentFragmentID)
-	return u
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *TicketDocumentFragmentUpsert) SetRelationKind(v ticketdocumentfragment.RelationKind) *TicketDocumentFragmentUpsert {
-	u.Set(ticketdocumentfragment.FieldRelationKind, v)
-	return u
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *TicketDocumentFragmentUpsert) UpdateRelationKind() *TicketDocumentFragmentUpsert {
-	u.SetExcluded(ticketdocumentfragment.FieldRelationKind)
-	return u
-}
-
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
 func (u *TicketDocumentFragmentUpsert) SetLatestEvidenceID(v int) *TicketDocumentFragmentUpsert {
 	u.Set(ticketdocumentfragment.FieldLatestEvidenceID, v)
@@ -860,6 +824,15 @@ func (u *TicketDocumentFragmentUpsert) UpdateUpdatedAt() *TicketDocumentFragment
 func (u *TicketDocumentFragmentUpsertOne) UpdateNewValues() *TicketDocumentFragmentUpsertOne {
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
+		if _, exists := u.create.mutation.TicketID(); exists {
+			s.SetIgnore(ticketdocumentfragment.FieldTicketID)
+		}
+		if _, exists := u.create.mutation.DocumentFragmentID(); exists {
+			s.SetIgnore(ticketdocumentfragment.FieldDocumentFragmentID)
+		}
+		if _, exists := u.create.mutation.RelationKind(); exists {
+			s.SetIgnore(ticketdocumentfragment.FieldRelationKind)
+		}
 		if _, exists := u.create.mutation.CreatedAt(); exists {
 			s.SetIgnore(ticketdocumentfragment.FieldCreatedAt)
 		}
@@ -892,48 +865,6 @@ func (u *TicketDocumentFragmentUpsertOne) Update(set func(*TicketDocumentFragmen
 		set(&TicketDocumentFragmentUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *TicketDocumentFragmentUpsertOne) SetTicketID(v int) *TicketDocumentFragmentUpsertOne {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.SetTicketID(v)
-	})
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *TicketDocumentFragmentUpsertOne) UpdateTicketID() *TicketDocumentFragmentUpsertOne {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.UpdateTicketID()
-	})
-}
-
-// SetDocumentFragmentID sets the "document_fragment_id" field.
-func (u *TicketDocumentFragmentUpsertOne) SetDocumentFragmentID(v int) *TicketDocumentFragmentUpsertOne {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.SetDocumentFragmentID(v)
-	})
-}
-
-// UpdateDocumentFragmentID sets the "document_fragment_id" field to the value that was provided on create.
-func (u *TicketDocumentFragmentUpsertOne) UpdateDocumentFragmentID() *TicketDocumentFragmentUpsertOne {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.UpdateDocumentFragmentID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *TicketDocumentFragmentUpsertOne) SetRelationKind(v ticketdocumentfragment.RelationKind) *TicketDocumentFragmentUpsertOne {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *TicketDocumentFragmentUpsertOne) UpdateRelationKind() *TicketDocumentFragmentUpsertOne {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
@@ -1362,6 +1293,15 @@ func (u *TicketDocumentFragmentUpsertBulk) UpdateNewValues() *TicketDocumentFrag
 	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		for _, b := range u.create.builders {
+			if _, exists := b.mutation.TicketID(); exists {
+				s.SetIgnore(ticketdocumentfragment.FieldTicketID)
+			}
+			if _, exists := b.mutation.DocumentFragmentID(); exists {
+				s.SetIgnore(ticketdocumentfragment.FieldDocumentFragmentID)
+			}
+			if _, exists := b.mutation.RelationKind(); exists {
+				s.SetIgnore(ticketdocumentfragment.FieldRelationKind)
+			}
 			if _, exists := b.mutation.CreatedAt(); exists {
 				s.SetIgnore(ticketdocumentfragment.FieldCreatedAt)
 			}
@@ -1395,48 +1335,6 @@ func (u *TicketDocumentFragmentUpsertBulk) Update(set func(*TicketDocumentFragme
 		set(&TicketDocumentFragmentUpsert{UpdateSet: update})
 	}))
 	return u
-}
-
-// SetTicketID sets the "ticket_id" field.
-func (u *TicketDocumentFragmentUpsertBulk) SetTicketID(v int) *TicketDocumentFragmentUpsertBulk {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.SetTicketID(v)
-	})
-}
-
-// UpdateTicketID sets the "ticket_id" field to the value that was provided on create.
-func (u *TicketDocumentFragmentUpsertBulk) UpdateTicketID() *TicketDocumentFragmentUpsertBulk {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.UpdateTicketID()
-	})
-}
-
-// SetDocumentFragmentID sets the "document_fragment_id" field.
-func (u *TicketDocumentFragmentUpsertBulk) SetDocumentFragmentID(v int) *TicketDocumentFragmentUpsertBulk {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.SetDocumentFragmentID(v)
-	})
-}
-
-// UpdateDocumentFragmentID sets the "document_fragment_id" field to the value that was provided on create.
-func (u *TicketDocumentFragmentUpsertBulk) UpdateDocumentFragmentID() *TicketDocumentFragmentUpsertBulk {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.UpdateDocumentFragmentID()
-	})
-}
-
-// SetRelationKind sets the "relation_kind" field.
-func (u *TicketDocumentFragmentUpsertBulk) SetRelationKind(v ticketdocumentfragment.RelationKind) *TicketDocumentFragmentUpsertBulk {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.SetRelationKind(v)
-	})
-}
-
-// UpdateRelationKind sets the "relation_kind" field to the value that was provided on create.
-func (u *TicketDocumentFragmentUpsertBulk) UpdateRelationKind() *TicketDocumentFragmentUpsertBulk {
-	return u.Update(func(s *TicketDocumentFragmentUpsert) {
-		s.UpdateRelationKind()
-	})
 }
 
 // SetLatestEvidenceID sets the "latest_evidence_id" field.
