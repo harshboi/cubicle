@@ -20,9 +20,9 @@ type Expander interface {
 
 // Writer is the ingestion-side object/association boundary.
 //
-// Keeping writes separate from reads lets fixtures and future crawlers seed the
-// graph without depending on HTTP-only behavior. Both MemoryStore and future
-// EntStore implementations should satisfy this interface.
+// Keeping writes separate from reads lets explicit sample-data setup and future
+// crawlers seed the graph without depending on HTTP-only behavior. Both
+// MemoryStore and future EntStore implementations should satisfy this interface.
 type Writer interface {
 	// UpsertObject inserts or replaces one object by its stable domain key.
 	UpsertObject(context.Context, domain.Object) error
@@ -37,7 +37,7 @@ type Store interface {
 	// Expander gives server/query code the read side of the graph contract.
 	Expander
 
-	// Writer gives fixture and crawler code the mutation side of the graph
-	// contract.
+	// Writer gives sample-data setup and crawler code the mutation side of the
+	// graph contract.
 	Writer
 }
