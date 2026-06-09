@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"cubicle/services/ontology-service/internal/domain"
+	"cubicle/services/ontology-service/internal/ontology"
 )
 
 const (
@@ -107,17 +108,17 @@ func mapJira(record SnapshotRecord, batch *domain.IngestBatch, observedAt time.T
 		if err := json.Unmarshal(record.Body, &page); err != nil {
 			return fmt.Errorf("decode Jira search page: %w", err)
 		}
-		batch.Nodes = append(batch.Nodes, workstreamNode(record, observedAt, mapperVersion))
+		batch.Objects = append(batch.Objects, workstreamNode(record, observedAt, mapperVersion))
 		for _, issue := range page.Issues {
 			ticket := ticketNode(issue, record, observedAt, mapperVersion)
 			action := actionNode(issue.Key, record, observedAt, mapperVersion)
 			containsEvidence := evidence(record, "jira-component:"+issue.Key, issue.Fields.Summary, "Jira Autoscaler component includes "+issue.Key, 1, observedAt)
 			actionEvidence := evidence(record, "jira-action:"+issue.Key, issue.Fields.Summary, "Ticket still needs action in Jira status "+issue.Fields.Status.Name, 0.85, observedAt)
-			batch.Nodes = append(batch.Nodes, ticket, action)
+			batch.Objects = append(batch.Objects, ticket, action)
 			batch.Evidence = append(batch.Evidence, containsEvidence, actionEvidence)
-			batch.Edges = append(batch.Edges,
-				edge(domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"}, ticket.Ref(), domain.PredicateContains, containsEvidence, record, observedAt, mapperVersion),
-				edge(ticket.Ref(), action.Ref(), domain.PredicateNeedsAction, actionEvidence, record, observedAt, mapperVersion),
+			batch.Associations = append(batch.Associations,
+				edge(domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"}, ticket.Ref(), ontology.AssocContains, containsEvidence, record, observedAt, mapperVersion),
+				edge(ticket.Ref(), action.Ref(), ontology.AssocNeedsAction, actionEvidence, record, observedAt, mapperVersion),
 			)
 		}
 	case "jira_remote_links":
@@ -132,12 +133,12 @@ func mapJira(record SnapshotRecord, batch *domain.IngestBatch, observedAt time.T
 			}
 			pr := prNode(repo, number, link.Title, link.URL, record, observedAt, mapperVersion)
 			ev := evidence(record, "jira-remote-link:"+links.IssueKey+":pr:"+strconv.Itoa(number), link.URL, "Jira remote link connects "+links.IssueKey+" to PR #"+strconv.Itoa(number), 1, observedAt)
-			batch.Nodes = append(batch.Nodes, pr)
+			batch.Objects = append(batch.Objects, pr)
 			batch.Evidence = append(batch.Evidence, ev)
-			batch.Edges = append(batch.Edges, edge(
-				domain.NodeRef{Kind: domain.KindTicket, Key: "ticket:" + links.IssueKey},
+			batch.Associations = append(batch.Associations, edge(
+				domain.ObjectRef{ObjectType: ontology.ObjectTicket, Key: "ticket:" + links.IssueKey},
 				pr.Ref(),
-				domain.PredicateImplementedBy,
+				ontology.AssocImplementedBy,
 				ev,
 				record,
 				observedAt,
@@ -155,14 +156,14 @@ func mapGitHub(record SnapshotRecord, batch *domain.IngestBatch, observedAt time
 	}
 	repo := "apache/flink-kubernetes-operator"
 	prNode := prNode(repo, pr.Number, pr.Title, pr.HTMLURL, record, observedAt, mapperVersion)
-	batch.Nodes = append(batch.Nodes, prNode)
+	batch.Objects = append(batch.Objects, prNode)
 	for _, issueKey := range issueKeys(pr.Title + " " + pr.Body) {
 		ev := evidence(record, "github-pr:"+strconv.Itoa(pr.Number)+":issue:"+issueKey, pr.Title, "GitHub PR references "+issueKey, 0.95, observedAt)
 		batch.Evidence = append(batch.Evidence, ev)
-		batch.Edges = append(batch.Edges, edge(
-			domain.NodeRef{Kind: domain.KindTicket, Key: "ticket:" + issueKey},
+		batch.Associations = append(batch.Associations, edge(
+			domain.ObjectRef{ObjectType: ontology.ObjectTicket, Key: "ticket:" + issueKey},
 			prNode.Ref(),
-			domain.PredicateImplementedBy,
+			ontology.AssocImplementedBy,
 			ev,
 			record,
 			observedAt,
@@ -172,17 +173,17 @@ func mapGitHub(record SnapshotRecord, batch *domain.IngestBatch, observedAt time
 	for _, file := range pr.Files {
 		codeFile := codeFileNode(repo, file.Filename, record, observedAt, mapperVersion)
 		ev := evidence(record, "github-pr:"+strconv.Itoa(pr.Number)+":file:"+file.Filename, file.Filename, "PR changes "+file.Filename, 1, observedAt)
-		batch.Nodes = append(batch.Nodes, codeFile)
+		batch.Objects = append(batch.Objects, codeFile)
 		batch.Evidence = append(batch.Evidence, ev)
-		batch.Edges = append(batch.Edges, edge(prNode.Ref(), codeFile.Ref(), domain.PredicateChangesFile, ev, record, observedAt, mapperVersion))
+		batch.Associations = append(batch.Associations, edge(prNode.Ref(), codeFile.Ref(), ontology.AssocChangesFile, ev, record, observedAt, mapperVersion))
 	}
 	return nil
 }
 
 func mapDocs(record SnapshotRecord, batch *domain.IngestBatch, observedAt time.Time, mapperVersion string) {
 	path := record.SourceObjectID
-	doc := domain.Node{
-		Kind:           domain.KindDocument,
+	doc := domain.Object{
+		ObjectType:     ontology.ObjectDocument,
 		Key:            "document:apache/flink-kubernetes-operator:" + path,
 		Title:          filepath.Base(path),
 		SourceURL:      record.SourceURL,
@@ -191,11 +192,11 @@ func mapDocs(record SnapshotRecord, batch *domain.IngestBatch, observedAt time.T
 		ObservedAt:     observedAt,
 		PropertiesJSON: `{"format":"markdown"}`,
 	}
-	batch.Nodes = append(batch.Nodes, doc)
+	batch.Objects = append(batch.Objects, doc)
 	text := string(record.Body)
 	for _, issueKey := range issueKeys(text) {
-		fragment := domain.Node{
-			Kind:           domain.KindDocumentFragment,
+		fragment := domain.Object{
+			ObjectType:     ontology.ObjectDocumentFragment,
 			Key:            "document_fragment:apache/flink-kubernetes-operator:" + path + "#" + strings.ToLower(issueKey),
 			Title:          "Docs mention " + issueKey,
 			SourceURL:      record.SourceURL,
@@ -206,12 +207,12 @@ func mapDocs(record SnapshotRecord, batch *domain.IngestBatch, observedAt time.T
 		}
 		containsEv := evidence(record, "docs:"+issueKey+":contains", issueKey, "Document contains fragment for "+issueKey, 1, observedAt)
 		supportsEv := evidence(record, "docs:"+issueKey+":supports", issueKey, "Docs describe expected behavior for "+issueKey, 0.75, observedAt)
-		batch.Nodes = append(batch.Nodes, fragment)
+		batch.Objects = append(batch.Objects, fragment)
 		batch.Evidence = append(batch.Evidence, containsEv, supportsEv)
-		batch.Edges = append(batch.Edges,
-			edge(doc.Ref(), fragment.Ref(), domain.PredicateContains, containsEv, record, observedAt, mapperVersion),
-			edge(domain.NodeRef{Kind: domain.KindTicket, Key: "ticket:" + issueKey}, fragment.Ref(), domain.PredicateSupports, supportsEv, record, observedAt, mapperVersion),
-			edge(fragment.Ref(), doc.Ref(), domain.PredicateDocuments, containsEv, record, observedAt, mapperVersion),
+		batch.Associations = append(batch.Associations,
+			edge(doc.Ref(), fragment.Ref(), ontology.AssocContains, containsEv, record, observedAt, mapperVersion),
+			edge(domain.ObjectRef{ObjectType: ontology.ObjectTicket, Key: "ticket:" + issueKey}, fragment.Ref(), ontology.AssocSupports, supportsEv, record, observedAt, mapperVersion),
+			edge(fragment.Ref(), doc.Ref(), ontology.AssocDocuments, containsEv, record, observedAt, mapperVersion),
 		)
 	}
 }
@@ -222,8 +223,8 @@ func mapPonyMail(record SnapshotRecord, batch *domain.IngestBatch, observedAt ti
 		return fmt.Errorf("decode Pony Mail search: %w", err)
 	}
 	for _, message := range search.Messages {
-		msg := domain.Node{
-			Kind:           domain.KindMessage,
+		msg := domain.Object{
+			ObjectType:     ontology.ObjectMessage,
 			Key:            "message:ponymail:" + message.ID,
 			Title:          message.Subject,
 			ExternalID:     message.ID,
@@ -233,14 +234,14 @@ func mapPonyMail(record SnapshotRecord, batch *domain.IngestBatch, observedAt ti
 			ObservedAt:     observedAt,
 			PropertiesJSON: `{"list":"dev@flink.apache.org"}`,
 		}
-		batch.Nodes = append(batch.Nodes, msg)
+		batch.Objects = append(batch.Objects, msg)
 		for _, issueKey := range issueKeys(message.Subject + " " + message.Body) {
 			ev := evidence(record, "ponymail:"+message.ID+":"+issueKey, message.Subject, "Mailing list discusses "+issueKey, 0.7, observedAt)
 			batch.Evidence = append(batch.Evidence, ev)
-			batch.Edges = append(batch.Edges, edge(
-				domain.NodeRef{Kind: domain.KindTicket, Key: "ticket:" + issueKey},
+			batch.Associations = append(batch.Associations, edge(
+				domain.ObjectRef{ObjectType: ontology.ObjectTicket, Key: "ticket:" + issueKey},
 				msg.Ref(),
-				domain.PredicateDiscussedIn,
+				ontology.AssocDiscussedIn,
 				ev,
 				record,
 				observedAt,
@@ -251,9 +252,9 @@ func mapPonyMail(record SnapshotRecord, batch *domain.IngestBatch, observedAt ti
 	return nil
 }
 
-func workstreamNode(record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Node {
-	return domain.Node{
-		Kind:          domain.KindWorkstream,
+func workstreamNode(record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Object {
+	return domain.Object{
+		ObjectType:    ontology.ObjectWorkstream,
 		Key:           "workstream:flink-autoscaler",
 		Title:         "Flink Autoscaler",
 		SourceURL:     record.SourceURL,
@@ -263,9 +264,9 @@ func workstreamNode(record SnapshotRecord, observedAt time.Time, mapperVersion s
 	}
 }
 
-func ticketNode(issue jiraIssue, record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Node {
-	return domain.Node{
-		Kind:           domain.KindTicket,
+func ticketNode(issue jiraIssue, record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Object {
+	return domain.Object{
+		ObjectType:     ontology.ObjectTicket,
 		Key:            "ticket:" + issue.Key,
 		Title:          issue.Fields.Summary,
 		ExternalID:     issue.Key,
@@ -277,9 +278,9 @@ func ticketNode(issue jiraIssue, record SnapshotRecord, observedAt time.Time, ma
 	}
 }
 
-func actionNode(issueKey string, record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Node {
-	return domain.Node{
-		Kind:          domain.KindActionCandidate,
+func actionNode(issueKey string, record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Object {
+	return domain.Object{
+		ObjectType:    ontology.ObjectActionCandidate,
 		Key:           "action_candidate:" + issueKey + ":follow-up",
 		Title:         "Follow up on " + issueKey,
 		SourceURL:     "https://issues.apache.org/jira/browse/" + issueKey,
@@ -289,9 +290,9 @@ func actionNode(issueKey string, record SnapshotRecord, observedAt time.Time, ma
 	}
 }
 
-func prNode(repo string, number int, title, sourceURL string, record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Node {
-	return domain.Node{
-		Kind:           domain.KindPullRequest,
+func prNode(repo string, number int, title, sourceURL string, record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Object {
+	return domain.Object{
+		ObjectType:     ontology.ObjectPullRequest,
 		Key:            "pr:" + repo + "#" + strconv.Itoa(number),
 		Title:          title,
 		ExternalID:     repo + "#" + strconv.Itoa(number),
@@ -303,9 +304,9 @@ func prNode(repo string, number int, title, sourceURL string, record SnapshotRec
 	}
 }
 
-func codeFileNode(repo, path string, record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Node {
-	return domain.Node{
-		Kind:          domain.KindCodeFile,
+func codeFileNode(repo, path string, record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Object {
+	return domain.Object{
+		ObjectType:    ontology.ObjectCodeFile,
 		Key:           "code_file:" + repo + ":" + path,
 		Title:         filepath.Base(path),
 		SourceURL:     "https://github.com/" + repo + "/blob/main/" + path,
@@ -315,12 +316,12 @@ func codeFileNode(repo, path string, record SnapshotRecord, observedAt time.Time
 	}
 }
 
-func edge(from, to domain.NodeRef, predicate domain.Predicate, ev domain.Evidence, record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Edge {
-	return domain.Edge{
-		From: from,
-		To:   to,
-		Metadata: domain.EdgeMetadata{
-			Predicate:      predicate,
+func edge(from, to domain.ObjectRef, predicate domain.AssociationType, ev domain.Evidence, record SnapshotRecord, observedAt time.Time, mapperVersion string) domain.Association {
+	return domain.Association{
+		From:            from,
+		To:              to,
+		AssociationType: predicate,
+		Metadata: domain.AssociationMetadata{
 			EvidenceKey:    ev.EvidenceKey,
 			SourceURL:      record.SourceURL,
 			SnapshotKey:    record.SnapshotKey,

@@ -10,6 +10,7 @@ import (
 
 	"cubicle/services/ontology-service/internal/domain"
 	"cubicle/services/ontology-service/internal/graphstore"
+	"cubicle/services/ontology-service/internal/ontology"
 )
 
 func TestGraphUpsertThenExpandReturnsImportedData(t *testing.T) {
@@ -17,15 +18,16 @@ func TestGraphUpsertThenExpandReturnsImportedData(t *testing.T) {
 	router := NewRouter(store, slog.Default())
 
 	body := `{
-		"nodes": [
-			{"kind":"workstream","key":"workstream:test","title":"Test Workstream"},
-			{"kind":"ticket","key":"ticket:TEST-1","title":"Imported ticket"}
+		"objects": [
+			{"object_type":"workstream","key":"workstream:test","title":"Test Workstream"},
+			{"object_type":"ticket","key":"ticket:TEST-1","title":"Imported ticket"}
 		],
-		"edges": [
+		"associations": [
 			{
-				"from":{"kind":"workstream","key":"workstream:test"},
-				"to":{"kind":"ticket","key":"ticket:TEST-1"},
-				"metadata":{"predicate":"contains","evidence_key":"evidence:test","source":"crawler","confidence":1}
+				"from":{"object_type":"workstream","key":"workstream:test"},
+				"to":{"object_type":"ticket","key":"ticket:TEST-1"},
+				"association_type":"contains",
+				"metadata":{"evidence_key":"evidence:test","source":"crawler","confidence":1}
 			}
 		]
 	}`
@@ -42,14 +44,14 @@ func TestGraphUpsertThenExpandReturnsImportedData(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
 		t.Fatalf("upsert response is not JSON: %v", err)
 	}
-	if response.NodeCount != 2 || response.EdgeCount != 1 {
+	if response.ObjectCount != 2 || response.AssociationCount != 1 {
 		t.Fatalf("unexpected upsert counts: %#v", response)
 	}
 
 	graph, err := store.Expand(t.Context(), domain.ExpandRequest{
-		Start:        domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:test"},
-		Depth:        1,
-		LimitPerNode: 10,
+		Start:          domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:test"},
+		Depth:          1,
+		LimitPerObject: 10,
 	})
 	if err != nil {
 		t.Fatalf("expand imported graph: %v", err)
@@ -59,10 +61,10 @@ func TestGraphUpsertThenExpandReturnsImportedData(t *testing.T) {
 
 func assertGraphNode(t *testing.T, graph domain.Neighborhood, key string) {
 	t.Helper()
-	for _, node := range graph.Nodes {
+	for _, node := range graph.Objects {
 		if node.Key == key {
 			return
 		}
 	}
-	t.Fatalf("missing node %s in %#v", key, graph.Nodes)
+	t.Fatalf("missing object %s in %#v", key, graph.Objects)
 }

@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+const (
+	testObjectWorkstream ObjectType      = "workstream"
+	testObjectTicket     ObjectType      = "ticket"
+	testAssocContains    AssociationType = "contains"
+)
+
 func TestIngestBatchDefaultsSourceFactMetadata(t *testing.T) {
 	observedAt := time.Date(2026, 6, 7, 12, 0, 0, 0, time.UTC)
 	batch := IngestBatch{
@@ -15,16 +21,16 @@ func TestIngestBatchDefaultsSourceFactMetadata(t *testing.T) {
 		Slice:          "flink-autoscaler",
 		MapperVersion:  "flink-fixture/v1",
 		ObservedAt:     observedAt,
-		Nodes: []Node{{
-			Kind:  KindTicket,
-			Key:   "ticket:FLINK-39743",
-			Title: "Autoscaler bug",
+		Objects: []Object{{
+			ObjectType: testObjectTicket,
+			Key:        "ticket:FLINK-39743",
+			Title:      "Autoscaler bug",
 		}},
-		Edges: []Edge{{
-			From: NodeRef{Kind: KindWorkstream, Key: "workstream:flink-autoscaler"},
-			To:   NodeRef{Kind: KindTicket, Key: "ticket:FLINK-39743"},
-			Metadata: EdgeMetadata{
-				Predicate:   PredicateContains,
+		Associations: []Association{{
+			From:            ObjectRef{ObjectType: testObjectWorkstream, Key: "workstream:flink-autoscaler"},
+			To:              ObjectRef{ObjectType: testObjectTicket, Key: "ticket:FLINK-39743"},
+			AssociationType: testAssocContains,
+			Metadata: AssociationMetadata{
 				EvidenceKey: "evidence:jira:FLINK-39743",
 			},
 		}},
@@ -32,7 +38,7 @@ func TestIngestBatchDefaultsSourceFactMetadata(t *testing.T) {
 
 	defaulted := batch.WithDefaults()
 
-	node := defaulted.Nodes[0]
+	node := defaulted.Objects[0]
 	if node.Source != "jira" || node.SourceInstance != "apache-jira" {
 		t.Fatalf("node source metadata = %q/%q", node.Source, node.SourceInstance)
 	}
@@ -46,7 +52,7 @@ func TestIngestBatchDefaultsSourceFactMetadata(t *testing.T) {
 		t.Fatalf("node observed_at = %s", node.ObservedAt)
 	}
 
-	metadata := defaulted.Edges[0].Metadata
+	metadata := defaulted.Associations[0].Metadata
 	if metadata.Source != "jira" || metadata.SourceInstance != "apache-jira" {
 		t.Fatalf("edge source metadata = %q/%q", metadata.Source, metadata.SourceInstance)
 	}
@@ -72,16 +78,14 @@ func TestIngestBatchValidateRejectsMissingRequiredFields(t *testing.T) {
 		RunKey:         "run:flink:fixture:1",
 		Source:         "jira",
 		SourceInstance: "apache-jira",
-		Nodes: []Node{{
-			Kind: KindTicket,
-			Key:  "ticket:FLINK-39743",
+		Objects: []Object{{
+			ObjectType: testObjectTicket,
+			Key:        "ticket:FLINK-39743",
 		}},
-		Edges: []Edge{{
-			From: NodeRef{Kind: KindWorkstream, Key: "workstream:flink-autoscaler"},
-			To:   NodeRef{Kind: KindTicket, Key: "ticket:FLINK-39743"},
-			Metadata: EdgeMetadata{
-				Predicate: PredicateContains,
-			},
+		Associations: []Association{{
+			From:            ObjectRef{ObjectType: testObjectWorkstream, Key: "workstream:flink-autoscaler"},
+			To:              ObjectRef{ObjectType: testObjectTicket, Key: "ticket:FLINK-39743"},
+			AssociationType: testAssocContains,
 		}},
 	}
 
@@ -100,12 +104,12 @@ func TestSourceStatusJSONFieldsStayStable(t *testing.T) {
 		LastAttemptedRunKey:  "run:flink:fixture:1",
 		LastErrorKey:         "",
 		NextAllowedAt:        time.Date(2026, 6, 7, 13, 0, 0, 0, time.UTC),
-		CountsByKind: map[Kind]int{
-			KindTicket: 1,
+		CountsByObjectType: map[ObjectType]int{
+			testObjectTicket: 1,
 		},
 	}
 
-	if status.Source != "jira" || status.CountsByKind[KindTicket] != 1 {
+	if status.Source != "jira" || status.CountsByObjectType[testObjectTicket] != 1 {
 		t.Fatalf("unexpected source status: %#v", status)
 	}
 }

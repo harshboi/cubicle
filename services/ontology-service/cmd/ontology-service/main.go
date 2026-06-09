@@ -278,8 +278,8 @@ func ingestFlinkWithWriter(ctx context.Context, cfg ingestFlinkConfig, writer gr
 		"flink_fixture_ingested",
 		"runs_completed", result.RunsCompleted,
 		"snapshots_written", result.SnapshotsWritten,
-		"nodes_upserted", result.NodesUpserted,
-		"edges_upserted", result.EdgesUpserted,
+		"objects_upserted", result.ObjectsUpserted,
+		"associations_upserted", result.AssociationsUpserted,
 		"evidence_upserted", result.EvidenceUpserted,
 		"events_upserted", result.EventsUpserted,
 	)

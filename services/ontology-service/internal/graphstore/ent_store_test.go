@@ -8,6 +8,7 @@ import (
 
 	"cubicle/services/ontology-service/ent"
 	"cubicle/services/ontology-service/internal/domain"
+	"cubicle/services/ontology-service/internal/ontology"
 	"cubicle/services/ontology-service/internal/storage"
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
@@ -19,33 +20,33 @@ func TestEntStoreExpandReturnsPersistedGraphWithEvidence(t *testing.T) {
 	store := NewEntStore(client)
 	observedAt := time.Date(2026, 6, 7, 10, 0, 0, 0, time.UTC)
 
-	nodes := []domain.Node{
-		{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler", Title: "Flink Autoscaler", Source: "fixture", Visibility: "public", FreshnessState: "fresh", ObservedAt: observedAt},
-		{Kind: domain.KindTicket, Key: "ticket:FLINK-39743", Title: "Incorrect Expected Processing Rate Computation", Source: "jira", ExternalID: "FLINK-39743", Visibility: "public", FreshnessState: "fresh", ObservedAt: observedAt},
-		{Kind: domain.KindPullRequest, Key: "pr:apache/flink-kubernetes-operator#1127", Title: "[FLINK-39743] Fix expected processing rate", Source: "github", ExternalID: "apache/flink-kubernetes-operator#1127", Visibility: "public", FreshnessState: "fresh", ObservedAt: observedAt},
-		{Kind: domain.KindCodeFile, Key: "file:JobVertexScaler.java", Title: "JobVertexScaler.java", Source: "github", Visibility: "public", FreshnessState: "fresh", ObservedAt: observedAt},
+	nodes := []domain.Object{
+		{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler", Title: "Flink Autoscaler", Source: "fixture", Visibility: "public", FreshnessState: "fresh", ObservedAt: observedAt},
+		{ObjectType: ontology.ObjectTicket, Key: "ticket:FLINK-39743", Title: "Incorrect Expected Processing Rate Computation", Source: "jira", ExternalID: "FLINK-39743", Visibility: "public", FreshnessState: "fresh", ObservedAt: observedAt},
+		{ObjectType: ontology.ObjectPullRequest, Key: "pr:apache/flink-kubernetes-operator#1127", Title: "[FLINK-39743] Fix expected processing rate", Source: "github", ExternalID: "apache/flink-kubernetes-operator#1127", Visibility: "public", FreshnessState: "fresh", ObservedAt: observedAt},
+		{ObjectType: ontology.ObjectCodeFile, Key: "file:JobVertexScaler.java", Title: "JobVertexScaler.java", Source: "github", Visibility: "public", FreshnessState: "fresh", ObservedAt: observedAt},
 	}
 	for _, node := range nodes {
-		if err := store.UpsertNode(ctx, node); err != nil {
+		if err := store.UpsertObject(ctx, node); err != nil {
 			t.Fatalf("upsert node %s: %v", node.Key, err)
 		}
 	}
 
-	edges := []domain.Edge{
-		edge("workstream:flink-autoscaler", domain.KindWorkstream, domain.PredicateContains, "ticket:FLINK-39743", domain.KindTicket, "evidence:jira-component", observedAt),
-		edge("ticket:FLINK-39743", domain.KindTicket, domain.PredicateImplementedBy, "pr:apache/flink-kubernetes-operator#1127", domain.KindPullRequest, "evidence:jira-remote-link", observedAt),
-		edge("pr:apache/flink-kubernetes-operator#1127", domain.KindPullRequest, domain.PredicateChangesFile, "file:JobVertexScaler.java", domain.KindCodeFile, "evidence:github-files", observedAt),
+	edges := []domain.Association{
+		edge("workstream:flink-autoscaler", ontology.ObjectWorkstream, ontology.AssocContains, "ticket:FLINK-39743", ontology.ObjectTicket, "evidence:jira-component", observedAt),
+		edge("ticket:FLINK-39743", ontology.ObjectTicket, ontology.AssocImplementedBy, "pr:apache/flink-kubernetes-operator#1127", ontology.ObjectPullRequest, "evidence:jira-remote-link", observedAt),
+		edge("pr:apache/flink-kubernetes-operator#1127", ontology.ObjectPullRequest, ontology.AssocChangesFile, "file:JobVertexScaler.java", ontology.ObjectCodeFile, "evidence:github-files", observedAt),
 	}
 	for _, edge := range edges {
-		if err := store.UpsertEdge(ctx, edge); err != nil {
+		if err := store.UpsertAssociation(ctx, edge); err != nil {
 			t.Fatalf("upsert edge %s: %v", edge.Key, err)
 		}
 	}
 
 	graph, err := store.Expand(ctx, domain.ExpandRequest{
-		Start:        domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
-		Depth:        3,
-		LimitPerNode: 10,
+		Start:          domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:          3,
+		LimitPerObject: 10,
 	})
 	if err != nil {
 		t.Fatalf("expand persisted graph: %v", err)
@@ -54,9 +55,9 @@ func TestEntStoreExpandReturnsPersistedGraphWithEvidence(t *testing.T) {
 	assertNode(t, graph, "ticket:FLINK-39743")
 	assertNode(t, graph, "pr:apache/flink-kubernetes-operator#1127")
 	assertNode(t, graph, "file:JobVertexScaler.java")
-	assertEdge(t, graph, "workstream:flink-autoscaler", domain.PredicateContains, "ticket:FLINK-39743")
-	assertEdge(t, graph, "ticket:FLINK-39743", domain.PredicateImplementedBy, "pr:apache/flink-kubernetes-operator#1127")
-	assertEdge(t, graph, "pr:apache/flink-kubernetes-operator#1127", domain.PredicateChangesFile, "file:JobVertexScaler.java")
+	assertEdge(t, graph, "workstream:flink-autoscaler", ontology.AssocContains, "ticket:FLINK-39743")
+	assertEdge(t, graph, "ticket:FLINK-39743", ontology.AssocImplementedBy, "pr:apache/flink-kubernetes-operator#1127")
+	assertEdge(t, graph, "pr:apache/flink-kubernetes-operator#1127", ontology.AssocChangesFile, "file:JobVertexScaler.java")
 }
 
 func TestEntStoreRoundTripsIngestFactMetadata(t *testing.T) {
@@ -66,8 +67,8 @@ func TestEntStoreRoundTripsIngestFactMetadata(t *testing.T) {
 	observedAt := time.Date(2026, 6, 7, 10, 0, 0, 0, time.UTC)
 	sourceUpdatedAt := time.Date(2026, 6, 6, 18, 30, 0, 0, time.UTC)
 
-	if err := store.UpsertNode(ctx, domain.Node{
-		Kind:           domain.KindWorkstream,
+	if err := store.UpsertObject(ctx, domain.Object{
+		ObjectType:     ontology.ObjectWorkstream,
 		Key:            "workstream:flink-autoscaler",
 		Title:          "Flink Autoscaler",
 		Source:         "fixture",
@@ -77,8 +78,8 @@ func TestEntStoreRoundTripsIngestFactMetadata(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("upsert workstream: %v", err)
 	}
-	if err := store.UpsertNode(ctx, domain.Node{
-		Kind:            domain.KindTicket,
+	if err := store.UpsertObject(ctx, domain.Object{
+		ObjectType:      ontology.ObjectTicket,
 		Key:             "ticket:FLINK-39743",
 		Title:           "Autoscaler bug",
 		Source:          "jira",
@@ -95,11 +96,11 @@ func TestEntStoreRoundTripsIngestFactMetadata(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("upsert ticket: %v", err)
 	}
-	if err := store.UpsertEdge(ctx, domain.Edge{
-		From: domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
-		To:   domain.NodeRef{Kind: domain.KindTicket, Key: "ticket:FLINK-39743"},
-		Metadata: domain.EdgeMetadata{
-			Predicate:       domain.PredicateContains,
+	if err := store.UpsertAssociation(ctx, domain.Association{
+		From:            domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		To:              domain.ObjectRef{ObjectType: ontology.ObjectTicket, Key: "ticket:FLINK-39743"},
+		AssociationType: ontology.AssocContains,
+		Metadata: domain.AssociationMetadata{
 			EvidenceKey:     "evidence:jira:FLINK-39743",
 			Source:          "jira",
 			SourceInstance:  "apache-jira",
@@ -118,15 +119,15 @@ func TestEntStoreRoundTripsIngestFactMetadata(t *testing.T) {
 	}
 
 	graph, err := store.Expand(ctx, domain.ExpandRequest{
-		Start:        domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
-		Depth:        1,
-		LimitPerNode: 10,
+		Start:          domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:          1,
+		LimitPerObject: 10,
 	})
 	if err != nil {
 		t.Fatalf("expand persisted graph: %v", err)
 	}
 
-	node := nodeByKey(t, graph, "ticket:FLINK-39743")
+	node := objectByKey(t, graph, "ticket:FLINK-39743")
 	if node.SourceInstance != "apache-jira" || node.SourceURL == "" || node.SnapshotKey == "" || node.MapperVersion == "" {
 		t.Fatalf("node ingest metadata was not preserved: %#v", node)
 	}
@@ -134,7 +135,7 @@ func TestEntStoreRoundTripsIngestFactMetadata(t *testing.T) {
 		t.Fatalf("node source details were not preserved: %#v", node)
 	}
 
-	graphEdge := edgeByPredicate(t, graph, domain.PredicateContains)
+	graphEdge := edgeByPredicate(t, graph, ontology.AssocContains)
 	metadata := graphEdge.Metadata
 	if metadata.SourceInstance != "apache-jira" || metadata.SourceURL == "" || metadata.SnapshotKey == "" || metadata.MapperVersion == "" {
 		t.Fatalf("edge ingest metadata was not preserved: %#v", metadata)
@@ -144,26 +145,76 @@ func TestEntStoreRoundTripsIngestFactMetadata(t *testing.T) {
 	}
 }
 
-func nodeByKey(t *testing.T, graph domain.Neighborhood, key string) domain.Node {
+func TestEntStoreAssociationIdentityIgnoresEvidenceKey(t *testing.T) {
+	ctx := context.Background()
+	client := openEntClient(t, ctx)
+	store := NewEntStore(client)
+
+	objects := []domain.Object{
+		{ObjectType: "custom_system", Key: "custom:system:atlas", Title: "Atlas"},
+		{ObjectType: "custom_artifact", Key: "custom:artifact:readiness", Title: "Readiness note"},
+	}
+	for _, object := range objects {
+		if err := store.UpsertObject(ctx, object); err != nil {
+			t.Fatalf("upsert object %s: %v", object.Key, err)
+		}
+	}
+
+	association := domain.Association{
+		From:            objects[0].Ref(),
+		To:              objects[1].Ref(),
+		AssociationType: "custom_depends_on",
+		Metadata: domain.AssociationMetadata{
+			EvidenceKey: "evidence:first",
+			Confidence:  0.7,
+		},
+	}
+	if err := store.UpsertAssociation(ctx, association); err != nil {
+		t.Fatalf("upsert first association: %v", err)
+	}
+	association.Metadata.EvidenceKey = "evidence:latest"
+	association.Metadata.Confidence = 0.9
+	if err := store.UpsertAssociation(ctx, association); err != nil {
+		t.Fatalf("upsert replacement association: %v", err)
+	}
+
+	graph, err := store.Expand(ctx, domain.ExpandRequest{
+		Start:            objects[0].Ref(),
+		AssociationTypes: []domain.AssociationType{"custom_depends_on"},
+		Depth:            1,
+		LimitPerObject:   10,
+	})
+	if err != nil {
+		t.Fatalf("expand custom graph: %v", err)
+	}
+	if len(graph.Associations) != 1 {
+		t.Fatalf("expected one logical association, got %#v", graph.Associations)
+	}
+	if graph.Associations[0].Metadata.EvidenceKey != "evidence:latest" {
+		t.Fatalf("association evidence was not replaced: %#v", graph.Associations[0])
+	}
+}
+
+func objectByKey(t *testing.T, graph domain.Neighborhood, key string) domain.Object {
 	t.Helper()
-	for _, node := range graph.Nodes {
+	for _, node := range graph.Objects {
 		if node.Key == key {
 			return node
 		}
 	}
-	t.Fatalf("expected node %q in graph; got %#v", key, graph.Nodes)
-	return domain.Node{}
+	t.Fatalf("expected node %q in graph; got %#v", key, graph.Objects)
+	return domain.Object{}
 }
 
-func edgeByPredicate(t *testing.T, graph domain.Neighborhood, predicate domain.Predicate) domain.Edge {
+func edgeByPredicate(t *testing.T, graph domain.Neighborhood, predicate domain.AssociationType) domain.Association {
 	t.Helper()
-	for _, edge := range graph.Edges {
-		if edge.Metadata.Predicate == predicate {
+	for _, edge := range graph.Associations {
+		if edge.AssociationType == predicate {
 			return edge
 		}
 	}
-	t.Fatalf("expected edge with predicate %q in graph; got %#v", predicate, graph.Edges)
-	return domain.Edge{}
+	t.Fatalf("expected edge with predicate %q in graph; got %#v", predicate, graph.Associations)
+	return domain.Association{}
 }
 
 func openEntClient(t *testing.T, ctx context.Context) *ent.Client {

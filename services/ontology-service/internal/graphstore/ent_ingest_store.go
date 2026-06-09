@@ -185,13 +185,13 @@ func (s *EntStore) WriteMappedBatch(ctx context.Context, batch domain.IngestBatc
 			return domain.IngestBatchResult{}, err
 		}
 	}
-	for _, node := range batch.Nodes {
-		if err := upsertNode(ctx, client, node); err != nil {
+	for _, node := range batch.Objects {
+		if err := upsertObject(ctx, client, node); err != nil {
 			return domain.IngestBatchResult{}, err
 		}
 	}
-	for _, edge := range batch.Edges {
-		if err := upsertEdge(ctx, client, edge); err != nil {
+	for _, edge := range batch.Associations {
+		if err := upsertAssociation(ctx, client, edge); err != nil {
 			return domain.IngestBatchResult{}, err
 		}
 	}
@@ -208,12 +208,12 @@ func (s *EntStore) WriteMappedBatch(ctx context.Context, batch domain.IngestBatc
 	}
 	committed = true
 	return domain.IngestBatchResult{
-		RunKey:            batch.RunKey,
-		NodesUpserted:     len(batch.Nodes),
-		EdgesUpserted:     len(batch.Edges),
-		EvidenceUpserted:  len(batch.Evidence),
-		EventsUpserted:    len(batch.Events),
-		CheckpointUpdated: checkpointUpdated,
+		RunKey:               batch.RunKey,
+		ObjectsUpserted:      len(batch.Objects),
+		AssociationsUpserted: len(batch.Associations),
+		EvidenceUpserted:     len(batch.Evidence),
+		EventsUpserted:       len(batch.Events),
+		CheckpointUpdated:    checkpointUpdated,
 	}, nil
 }
 
@@ -307,7 +307,7 @@ func (s *EntStore) ListSourceStatus(ctx context.Context) ([]domain.SourceStatus,
 	}
 	statuses := make([]domain.SourceStatus, 0, len(checkpoints))
 	for _, checkpoint := range checkpoints {
-		counts, err := s.countNodesByKind(ctx, checkpoint.Source, checkpoint.SourceInstance)
+		counts, err := s.countObjectsByType(ctx, checkpoint.Source, checkpoint.SourceInstance)
 		if err != nil {
 			return nil, err
 		}
@@ -320,7 +320,7 @@ func (s *EntStore) ListSourceStatus(ctx context.Context) ([]domain.SourceStatus,
 			LastAttemptedRunKey:  checkpoint.LastAttemptedRunKey,
 			LastErrorKey:         checkpoint.LastErrorKey,
 			NextAllowedAt:        checkpoint.NextAllowedAt,
-			CountsByKind:         counts,
+			CountsByObjectType:   counts,
 		})
 	}
 	return statuses, nil
@@ -380,12 +380,12 @@ func snapshotKeys(batch domain.IngestBatch) []string {
 			seen[key] = true
 		}
 	}
-	for _, node := range batch.Nodes {
+	for _, node := range batch.Objects {
 		if node.SnapshotKey != "" {
 			seen[node.SnapshotKey] = true
 		}
 	}
-	for _, edge := range batch.Edges {
+	for _, edge := range batch.Associations {
 		if edge.Metadata.SnapshotKey != "" {
 			seen[edge.Metadata.SnapshotKey] = true
 		}
@@ -412,7 +412,7 @@ func ensureEvidenceReferences(ctx context.Context, client *ent.Client, batch dom
 	for _, evidence := range batch.Evidence {
 		batchEvidence[evidence.EvidenceKey] = true
 	}
-	for _, edge := range batch.Edges {
+	for _, edge := range batch.Associations {
 		if batchEvidence[edge.Metadata.EvidenceKey] {
 			continue
 		}
@@ -427,17 +427,17 @@ func ensureEvidenceReferences(ctx context.Context, client *ent.Client, batch dom
 
 func ensureEdgeEndpoints(ctx context.Context, client *ent.Client, batch domain.IngestBatch) error {
 	batchNodes := make(map[string]bool)
-	for _, node := range batch.Nodes {
+	for _, node := range batch.Objects {
 		batchNodes[node.Key] = true
 	}
-	for _, edge := range batch.Edges {
+	for _, edge := range batch.Associations {
 		if !batchNodes[edge.From.Key] {
-			if _, err := nodeByKeyWithClient(ctx, client, edge.From.Key); err != nil {
+			if _, err := objectByKeyWithClient(ctx, client, edge.From.Key); err != nil {
 				return err
 			}
 		}
 		if !batchNodes[edge.To.Key] {
-			if _, err := nodeByKeyWithClient(ctx, client, edge.To.Key); err != nil {
+			if _, err := objectByKeyWithClient(ctx, client, edge.To.Key); err != nil {
 				return err
 			}
 		}
@@ -631,16 +631,16 @@ func upsertSourceCheckpoint(ctx context.Context, client *ent.Client, update sour
 		Exec(ctx)
 }
 
-func (s *EntStore) countNodesByKind(ctx context.Context, source, sourceInstance string) (map[domain.Kind]int, error) {
+func (s *EntStore) countObjectsByType(ctx context.Context, source, sourceInstance string) (map[domain.ObjectType]int, error) {
 	nodes, err := s.client.OntologyNode.Query().
 		Where(ontologynode.SourceEQ(source), ontologynode.SourceInstanceEQ(sourceInstance)).
 		All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	counts := make(map[domain.Kind]int)
+	counts := make(map[domain.ObjectType]int)
 	for _, node := range nodes {
-		counts[domain.Kind(node.Kind)]++
+		counts[domain.ObjectType(node.Kind)]++
 	}
 	return counts, nil
 }

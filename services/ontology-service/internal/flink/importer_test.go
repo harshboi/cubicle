@@ -8,6 +8,7 @@ import (
 	"cubicle/services/ontology-service/ent"
 	"cubicle/services/ontology-service/internal/domain"
 	"cubicle/services/ontology-service/internal/graphstore"
+	"cubicle/services/ontology-service/internal/ontology"
 	"cubicle/services/ontology-service/internal/storage"
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
@@ -61,14 +62,14 @@ func TestFixtureImporterReplaysThroughEntStoreIdempotently(t *testing.T) {
 	if err != nil {
 		t.Fatalf("second import: %v", err)
 	}
-	if first.NodesUpserted != second.NodesUpserted || first.EdgesUpserted != second.EdgesUpserted {
+	if first.ObjectsUpserted != second.ObjectsUpserted || first.AssociationsUpserted != second.AssociationsUpserted {
 		t.Fatalf("replay changed counts: first=%#v second=%#v", first, second)
 	}
 
 	graph, err := store.Expand(ctx, domain.ExpandRequest{
-		Start:        domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
-		Depth:        3,
-		LimitPerNode: 20,
+		Start:          domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:          3,
+		LimitPerObject: 20,
 	})
 	if err != nil {
 		t.Fatalf("expand imported graph: %v", err)
@@ -76,9 +77,9 @@ func TestFixtureImporterReplaysThroughEntStoreIdempotently(t *testing.T) {
 	assertNode(t, graph, "ticket:FLINK-39743")
 	assertNode(t, graph, "pr:apache/flink-kubernetes-operator#1234")
 	assertNode(t, graph, "document:apache/flink-kubernetes-operator:docs/content/docs/custom-resource/autoscaler.md")
-	assertEdge(t, graph, domain.PredicateImplementedBy)
-	assertEdge(t, graph, domain.PredicateChangesFile)
-	assertEdge(t, graph, domain.PredicateDiscussedIn)
+	assertEdge(t, graph, ontology.AssocImplementedBy)
+	assertEdge(t, graph, ontology.AssocChangesFile)
+	assertEdge(t, graph, ontology.AssocDiscussedIn)
 }
 
 func openEntClient(t *testing.T, ctx context.Context) *ent.Client {
@@ -98,22 +99,22 @@ func openEntClient(t *testing.T, ctx context.Context) *ent.Client {
 
 func assertNode(t *testing.T, graph domain.Neighborhood, key string) {
 	t.Helper()
-	for _, node := range graph.Nodes {
+	for _, node := range graph.Objects {
 		if node.Key == key {
 			return
 		}
 	}
-	t.Fatalf("missing node %q in %#v", key, graph.Nodes)
+	t.Fatalf("missing node %q in %#v", key, graph.Objects)
 }
 
-func assertEdge(t *testing.T, graph domain.Neighborhood, predicate domain.Predicate) {
+func assertEdge(t *testing.T, graph domain.Neighborhood, predicate domain.AssociationType) {
 	t.Helper()
-	for _, edge := range graph.Edges {
-		if edge.Metadata.Predicate == predicate {
+	for _, edge := range graph.Associations {
+		if edge.AssociationType == predicate {
 			return
 		}
 	}
-	t.Fatalf("missing edge predicate %q in %#v", predicate, graph.Edges)
+	t.Fatalf("missing edge predicate %q in %#v", predicate, graph.Associations)
 }
 
 type recordingIngestWriter struct {
@@ -155,11 +156,11 @@ func (w *recordingIngestWriter) WriteMappedBatch(_ context.Context, batch domain
 		w.sawSnapshotBeforeBatch = true
 	}
 	return domain.IngestBatchResult{
-		RunKey:           batch.RunKey,
-		NodesUpserted:    len(batch.Nodes),
-		EdgesUpserted:    len(batch.Edges),
-		EvidenceUpserted: len(batch.Evidence),
-		EventsUpserted:   len(batch.Events),
+		RunKey:               batch.RunKey,
+		ObjectsUpserted:      len(batch.Objects),
+		AssociationsUpserted: len(batch.Associations),
+		EvidenceUpserted:     len(batch.Evidence),
+		EventsUpserted:       len(batch.Events),
 	}, nil
 }
 

@@ -66,8 +66,8 @@ func (c Client) WriteMappedBatch(ctx context.Context, batch domain.IngestBatch) 
 		MapperVersion: batch.MapperVersion,
 		SnapshotKeys:  batch.SnapshotKeys,
 		ObservedAt:    batch.ObservedAt,
-		Nodes:         batch.Nodes,
-		Edges:         batch.Edges,
+		Objects:       batch.Objects,
+		Associations:  batch.Associations,
 		Evidence:      batch.Evidence,
 		Events:        batch.Events,
 		Checkpoint:    batch.Checkpoint,
@@ -155,8 +155,8 @@ type ingestBatchBody struct {
 	MapperVersion string                        `json:"mapper_version,omitempty"`
 	SnapshotKeys  []string                      `json:"snapshot_keys,omitempty"`
 	ObservedAt    time.Time                     `json:"observed_at,omitempty"`
-	Nodes         []domain.Node                 `json:"nodes,omitempty"`
-	Edges         []domain.Edge                 `json:"edges,omitempty"`
+	Objects       []domain.Object               `json:"objects,omitempty"`
+	Associations  []domain.Association          `json:"associations,omitempty"`
 	Evidence      []domain.Evidence             `json:"evidence,omitempty"`
 	Events        []domain.SourceEvent          `json:"events,omitempty"`
 	Checkpoint    *domain.SourceCheckpointWrite `json:"checkpoint,omitempty"`

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"cubicle/services/ontology-service/internal/domain"
+	"cubicle/services/ontology-service/internal/ontology"
 	snapshotstore "cubicle/services/ontology-service/internal/snapshot"
 )
 
@@ -29,26 +30,26 @@ func TestMapperBuildsEvidenceBackedFlinkGraph(t *testing.T) {
 	assertMappedNode(t, all, "code_file:apache/flink-kubernetes-operator:src/main/java/org/apache/flink/kubernetes/operator/autoscaler/Autoscaler.java")
 	assertMappedNode(t, all, "document_fragment:apache/flink-kubernetes-operator:docs/content/docs/custom-resource/autoscaler.md#flink-39743")
 	assertMappedNode(t, all, "message:ponymail:dev:20260607:flink-39743")
-	assertMappedEdge(t, all, domain.PredicateContains)
-	assertMappedEdge(t, all, domain.PredicateImplementedBy)
-	assertMappedEdge(t, all, domain.PredicateChangesFile)
-	assertMappedEdge(t, all, domain.PredicateSupports)
-	assertMappedEdge(t, all, domain.PredicateDiscussedIn)
-	assertMappedEdge(t, all, domain.PredicateNeedsAction)
+	assertMappedEdge(t, all, ontology.AssocContains)
+	assertMappedEdge(t, all, ontology.AssocImplementedBy)
+	assertMappedEdge(t, all, ontology.AssocChangesFile)
+	assertMappedEdge(t, all, ontology.AssocSupports)
+	assertMappedEdge(t, all, ontology.AssocDiscussedIn)
+	assertMappedEdge(t, all, ontology.AssocNeedsAction)
 }
 
 func flattenBatches(batches []domain.IngestBatch) domain.IngestBatch {
 	var all domain.IngestBatch
 	for _, batch := range batches {
-		all.Nodes = append(all.Nodes, batch.Nodes...)
-		all.Edges = append(all.Edges, batch.Edges...)
+		all.Objects = append(all.Objects, batch.Objects...)
+		all.Associations = append(all.Associations, batch.Associations...)
 	}
 	return all
 }
 
 func assertMappedNode(t *testing.T, batch domain.IngestBatch, key string) {
 	t.Helper()
-	for _, node := range batch.Nodes {
+	for _, node := range batch.Objects {
 		if node.Key == key {
 			return
 		}
@@ -56,10 +57,10 @@ func assertMappedNode(t *testing.T, batch domain.IngestBatch, key string) {
 	t.Fatalf("missing node %q", key)
 }
 
-func assertMappedEdge(t *testing.T, batch domain.IngestBatch, predicate domain.Predicate) {
+func assertMappedEdge(t *testing.T, batch domain.IngestBatch, predicate domain.AssociationType) {
 	t.Helper()
-	for _, edge := range batch.Edges {
-		if edge.Metadata.Predicate == predicate {
+	for _, edge := range batch.Associations {
+		if edge.AssociationType == predicate {
 			return
 		}
 	}

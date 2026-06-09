@@ -49,18 +49,19 @@ func TestIngestHTTPFlowAndSources(t *testing.T) {
 
 	rec = postJSON(t, router, "/v1/ingest/runs/"+runPath+"/batches", `{
 		"snapshot_keys":["snapshot:jira:FLINK-39743"],
-		"nodes":[
-			{"kind":"workstream","key":"workstream:flink-autoscaler","title":"Flink Autoscaler"},
-			{"kind":"ticket","key":"ticket:FLINK-39743","title":"Autoscaler bug","snapshot_key":"snapshot:jira:FLINK-39743"}
+		"objects":[
+			{"object_type":"workstream","key":"workstream:flink-autoscaler","title":"Flink Autoscaler"},
+			{"object_type":"ticket","key":"ticket:FLINK-39743","title":"Autoscaler bug","snapshot_key":"snapshot:jira:FLINK-39743"}
 		],
 		"evidence":[
 			{"evidence_key":"evidence:jira:FLINK-39743","snapshot_key":"snapshot:jira:FLINK-39743","text_hash":"sha256:evidence","summary":"Ticket is in the autoscaler component."}
 		],
-		"edges":[
+		"associations":[
 			{
-				"from":{"kind":"workstream","key":"workstream:flink-autoscaler"},
-				"to":{"kind":"ticket","key":"ticket:FLINK-39743"},
-				"metadata":{"predicate":"contains","evidence_key":"evidence:jira:FLINK-39743","snapshot_key":"snapshot:jira:FLINK-39743"}
+				"from":{"object_type":"workstream","key":"workstream:flink-autoscaler"},
+				"to":{"object_type":"ticket","key":"ticket:FLINK-39743"},
+				"association_type":"contains",
+				"metadata":{"evidence_key":"evidence:jira:FLINK-39743","snapshot_key":"snapshot:jira:FLINK-39743"}
 			}
 		],
 		"checkpoint":{"checkpoint_key":"jira-start-at","checkpoint_value":"50"}
@@ -72,7 +73,7 @@ func TestIngestHTTPFlowAndSources(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &batchResult); err != nil {
 		t.Fatalf("batch result JSON: %v", err)
 	}
-	if batchResult.NodesUpserted != 2 || batchResult.EdgesUpserted != 1 {
+	if batchResult.ObjectsUpserted != 2 || batchResult.AssociationsUpserted != 1 {
 		t.Fatalf("unexpected batch result: %#v", batchResult)
 	}
 

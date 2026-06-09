@@ -32,33 +32,33 @@ type ExpandOutput struct {
 
 // GraphUpsertRequest is the crawler-facing write DTO.
 //
-// Nodes are written before edges so a simple crawler can send one small batch
+// Objects are written before associations so a simple crawler can send one small batch
 // without manually ordering endpoint creation across multiple HTTP calls.
 type GraphUpsertRequest struct {
-	Nodes []domain.Node     `json:"nodes"`
-	Edges []GraphUpsertEdge `json:"edges"`
+	Objects      []domain.Object          `json:"objects"`
+	Associations []GraphUpsertAssociation `json:"associations"`
 }
 
-// GraphUpsertEdge is intentionally looser than domain.Edge.
+// GraphUpsertAssociation is intentionally looser than domain.Association.
 //
-// The persisted graph still gets a full domain edge, but simple crawlers should
-// not have to calculate Cubicle's edge key or supply optional freshness fields
+// The persisted graph still gets a full domain association, but simple crawlers
+// should not have to calculate Cubicle's association key or supply freshness fields
 // for a first local import.
-type GraphUpsertEdge struct {
-	Key      string                  `json:"key,omitempty"`
-	From     domain.NodeRef          `json:"from"`
-	To       domain.NodeRef          `json:"to"`
-	Metadata GraphUpsertEdgeMetadata `json:"metadata"`
+type GraphUpsertAssociation struct {
+	Key             string                         `json:"key,omitempty"`
+	From            domain.ObjectRef               `json:"from"`
+	To              domain.ObjectRef               `json:"to"`
+	AssociationType domain.AssociationType         `json:"association_type"`
+	Metadata        GraphUpsertAssociationMetadata `json:"metadata"`
 }
 
-type GraphUpsertEdgeMetadata struct {
-	Predicate      domain.Predicate `json:"predicate"`
-	EvidenceKey    string           `json:"evidence_key"`
-	Source         string           `json:"source,omitempty"`
-	Confidence     float64          `json:"confidence,omitempty"`
-	Visibility     string           `json:"visibility,omitempty"`
-	FreshnessState string           `json:"freshness_state,omitempty"`
-	ObservedAt     time.Time        `json:"observed_at,omitempty"`
+type GraphUpsertAssociationMetadata struct {
+	EvidenceKey    string    `json:"evidence_key"`
+	Source         string    `json:"source,omitempty"`
+	Confidence     float64   `json:"confidence,omitempty"`
+	Visibility     string    `json:"visibility,omitempty"`
+	FreshnessState string    `json:"freshness_state,omitempty"`
+	ObservedAt     time.Time `json:"observed_at,omitempty"`
 }
 
 type GraphUpsertInput struct {
@@ -66,8 +66,8 @@ type GraphUpsertInput struct {
 }
 
 type GraphUpsertResponse struct {
-	NodeCount int `json:"node_count"`
-	EdgeCount int `json:"edge_count"`
+	ObjectCount      int `json:"object_count"`
+	AssociationCount int `json:"association_count"`
 }
 
 type GraphUpsertOutput struct {

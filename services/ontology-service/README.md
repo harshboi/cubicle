@@ -220,10 +220,10 @@ curl -s http://127.0.0.1:48080/openapi.json
 curl -s http://127.0.0.1:48080/v1/workstreams/flink-autoscaler/overview
 curl -s -X POST http://127.0.0.1:48080/v1/graph/upsert \
   -H 'Content-Type: application/json' \
-  -d '{"nodes":[{"kind":"workstream","key":"workstream:test","title":"Test Workstream"},{"kind":"ticket","key":"ticket:TEST-1","title":"Imported ticket"}],"edges":[{"from":{"kind":"workstream","key":"workstream:test"},"to":{"kind":"ticket","key":"ticket:TEST-1"},"metadata":{"predicate":"contains","evidence_key":"evidence:test","source":"crawler","confidence":1}}]}'
+  -d '{"objects":[{"object_type":"workstream","key":"workstream:test","title":"Test Workstream"},{"object_type":"ticket","key":"ticket:TEST-1","title":"Imported ticket"}],"associations":[{"from":{"object_type":"workstream","key":"workstream:test"},"to":{"object_type":"ticket","key":"ticket:TEST-1"},"association_type":"contains","metadata":{"evidence_key":"evidence:test","source":"crawler","confidence":1}}]}'
 curl -s -X POST http://127.0.0.1:48080/v1/graph/expand \
   -H 'Content-Type: application/json' \
-  -d '{"start":{"kind":"workstream","key":"workstream:flink-autoscaler"},"depth":2,"limit_per_node":10}'
+  -d '{"start":{"object_type":"workstream","key":"workstream:flink-autoscaler"},"depth":2,"limit_per_object":10}'
 ```
 
 Expected health response:
@@ -238,7 +238,7 @@ Expected health response:
 internal/domain
  |
  +-- graph.go
-       -> API-safe graph DTOs: nodes, edges, predicates, expansion requests
+       -> API-safe graph DTOs: objects, associations, expansion requests
 
 internal/graphstore
  |

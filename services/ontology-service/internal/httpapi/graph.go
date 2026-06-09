@@ -20,7 +20,7 @@ func registerGraph(api huma.API, store graphstore.Expander) {
 	}, func(ctx context.Context, input *ExpandInput) (*ExpandOutput, error) {
 		graph, err := store.Expand(ctx, input.Body)
 		if err != nil {
-			if errors.Is(err, graphstore.ErrInvalidExpansion) || errors.Is(err, graphstore.ErrMissingNode) {
+			if errors.Is(err, graphstore.ErrInvalidExpansion) || errors.Is(err, graphstore.ErrMissingObject) {
 				return nil, huma.Error400BadRequest(err.Error())
 			}
 			return nil, huma.Error500InternalServerError("graph expansion failed")

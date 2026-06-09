@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"cubicle/services/ontology-service/internal/domain"
+	"cubicle/services/ontology-service/internal/ontology"
 )
 
 func TestEntStoreIngestRunSnapshotBatchAndComplete(t *testing.T) {
@@ -57,12 +58,12 @@ func TestEntStoreIngestRunSnapshotBatchAndComplete(t *testing.T) {
 		MapperVersion:  run.MapperVersion,
 		SnapshotKeys:   []string{snapshot.SnapshotKey},
 		ObservedAt:     observedAt,
-		Nodes: []domain.Node{{
-			Kind:  domain.KindWorkstream,
-			Key:   "workstream:flink-autoscaler",
-			Title: "Flink Autoscaler",
+		Objects: []domain.Object{{
+			ObjectType: ontology.ObjectWorkstream,
+			Key:        "workstream:flink-autoscaler",
+			Title:      "Flink Autoscaler",
 		}, {
-			Kind:        domain.KindTicket,
+			ObjectType:  ontology.ObjectTicket,
 			Key:         "ticket:FLINK-39743",
 			Title:       "Autoscaler bug",
 			ExternalID:  "FLINK-39743",
@@ -78,11 +79,11 @@ func TestEntStoreIngestRunSnapshotBatchAndComplete(t *testing.T) {
 			Confidence:  1,
 			ObservedAt:  observedAt,
 		}},
-		Edges: []domain.Edge{{
-			From: domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
-			To:   domain.NodeRef{Kind: domain.KindTicket, Key: "ticket:FLINK-39743"},
-			Metadata: domain.EdgeMetadata{
-				Predicate:   domain.PredicateContains,
+		Associations: []domain.Association{{
+			From:            domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+			To:              domain.ObjectRef{ObjectType: ontology.ObjectTicket, Key: "ticket:FLINK-39743"},
+			AssociationType: ontology.AssocContains,
+			Metadata: domain.AssociationMetadata{
 				EvidenceKey: "evidence:jira:FLINK-39743",
 				SnapshotKey: snapshot.SnapshotKey,
 			},
@@ -96,7 +97,7 @@ func TestEntStoreIngestRunSnapshotBatchAndComplete(t *testing.T) {
 	if err != nil {
 		t.Fatalf("write mapped batch: %v", err)
 	}
-	if result.NodesUpserted != 2 || result.EdgesUpserted != 1 || result.EvidenceUpserted != 1 || !result.CheckpointUpdated {
+	if result.ObjectsUpserted != 2 || result.AssociationsUpserted != 1 || result.EvidenceUpserted != 1 || !result.CheckpointUpdated {
 		t.Fatalf("unexpected batch result: %#v", result)
 	}
 
@@ -126,8 +127,8 @@ func TestEntStoreIngestRunSnapshotBatchAndComplete(t *testing.T) {
 	if status.Status != domain.SourceStatusHealthy || status.LastSuccessfulRunKey != run.RunKey {
 		t.Fatalf("unexpected source status: %#v", status)
 	}
-	if status.CountsByKind[domain.KindTicket] != 1 {
-		t.Fatalf("ticket count = %d in %#v", status.CountsByKind[domain.KindTicket], status.CountsByKind)
+	if status.CountsByObjectType[ontology.ObjectTicket] != 1 {
+		t.Fatalf("ticket count = %d in %#v", status.CountsByObjectType[ontology.ObjectTicket], status.CountsByObjectType)
 	}
 }
 
@@ -190,16 +191,16 @@ func TestEntStoreWriteMappedBatchRollsBackOnMissingEdgeEndpoint(t *testing.T) {
 		Slice:          start.Slice,
 		MapperVersion:  start.MapperVersion,
 		SnapshotKeys:   []string{snapshot.SnapshotKey},
-		Nodes: []domain.Node{{
-			Kind:  domain.KindWorkstream,
-			Key:   "workstream:flink-autoscaler",
-			Title: "Flink Autoscaler",
+		Objects: []domain.Object{{
+			ObjectType: ontology.ObjectWorkstream,
+			Key:        "workstream:flink-autoscaler",
+			Title:      "Flink Autoscaler",
 		}},
-		Edges: []domain.Edge{{
-			From: domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
-			To:   domain.NodeRef{Kind: domain.KindTicket, Key: "ticket:FLINK-39743"},
-			Metadata: domain.EdgeMetadata{
-				Predicate:   domain.PredicateContains,
+		Associations: []domain.Association{{
+			From:            domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+			To:              domain.ObjectRef{ObjectType: ontology.ObjectTicket, Key: "ticket:FLINK-39743"},
+			AssociationType: ontology.AssocContains,
+			Metadata: domain.AssociationMetadata{
 				EvidenceKey: "evidence:jira:FLINK-39743",
 				SnapshotKey: snapshot.SnapshotKey,
 			},
@@ -210,16 +211,16 @@ func TestEntStoreWriteMappedBatchRollsBackOnMissingEdgeEndpoint(t *testing.T) {
 			TextHash:    "sha256:evidence",
 		}},
 	})
-	if !errors.Is(err, ErrMissingNode) {
+	if !errors.Is(err, ErrMissingObject) {
 		t.Fatalf("expected missing node error, got %v", err)
 	}
 
 	_, err = store.Expand(ctx, domain.ExpandRequest{
-		Start:        domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
-		Depth:        1,
-		LimitPerNode: 10,
+		Start:          domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:          1,
+		LimitPerObject: 10,
 	})
-	if !errors.Is(err, ErrMissingNode) {
+	if !errors.Is(err, ErrMissingObject) {
 		t.Fatalf("expected rollback to remove partially inserted node, got %v", err)
 	}
 }

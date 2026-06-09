@@ -25,7 +25,7 @@ func registerWorkstreams(api huma.API, store graphstore.Expander) {
 		if err != nil {
 			if errors.Is(err, query.ErrInvalidWorkstream) ||
 				errors.Is(err, graphstore.ErrInvalidExpansion) ||
-				errors.Is(err, graphstore.ErrMissingNode) {
+				errors.Is(err, graphstore.ErrMissingObject) {
 				return nil, huma.Error400BadRequest(err.Error())
 			}
 			return nil, huma.Error500InternalServerError("workstream overview failed")

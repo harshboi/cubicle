@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"cubicle/services/ontology-service/internal/domain"
+	"cubicle/services/ontology-service/internal/ontology"
 	snapshotstore "cubicle/services/ontology-service/internal/snapshot"
 )
 
@@ -45,7 +46,7 @@ func TestFixtureImporterIsSourceNeutral(t *testing.T) {
 	if err != nil {
 		t.Fatalf("import custom fixture: %v", err)
 	}
-	if result.RunsCompleted != 1 || result.SnapshotsWritten != 1 || result.NodesUpserted != 1 {
+	if result.RunsCompleted != 1 || result.SnapshotsWritten != 1 || result.ObjectsUpserted != 1 {
 		t.Fatalf("unexpected import result: %#v", result)
 	}
 	if writer.batch.Source != "custom" || writer.batch.SourceInstance != "example/project" {
@@ -78,7 +79,7 @@ func TestImporterAcceptsAlreadyFetchedSnapshotRecords(t *testing.T) {
 	if err != nil {
 		t.Fatalf("import fetched records: %v", err)
 	}
-	if result.RunsCompleted != 1 || result.NodesUpserted != 1 {
+	if result.RunsCompleted != 1 || result.ObjectsUpserted != 1 {
 		t.Fatalf("unexpected import result: %#v", result)
 	}
 	if writer.snapshot.BodyRef != "sha256/body" {
@@ -160,8 +161,8 @@ func (fakeMapper) Map(records []SnapshotRecord, opts MapOptions) ([]domain.Inges
 		MapperVersion:  "custom-fixture/v1",
 		SnapshotKeys:   []string{records[0].SnapshotKey},
 		ObservedAt:     opts.ObservedAt,
-		Nodes: []domain.Node{{
-			Kind:        domain.KindTicket,
+		Objects: []domain.Object{{
+			ObjectType:  ontology.ObjectTicket,
 			Key:         "ticket:TICKET-1",
 			Title:       "TICKET-1",
 			SnapshotKey: records[0].SnapshotKey,
@@ -209,11 +210,11 @@ func (w *recordingWriter) WriteSnapshot(_ context.Context, snapshot domain.Sourc
 func (w *recordingWriter) WriteMappedBatch(_ context.Context, batch domain.IngestBatch) (domain.IngestBatchResult, error) {
 	w.batch = batch
 	return domain.IngestBatchResult{
-		RunKey:           batch.RunKey,
-		NodesUpserted:    len(batch.Nodes),
-		EdgesUpserted:    len(batch.Edges),
-		EvidenceUpserted: len(batch.Evidence),
-		EventsUpserted:   len(batch.Events),
+		RunKey:               batch.RunKey,
+		ObjectsUpserted:      len(batch.Objects),
+		AssociationsUpserted: len(batch.Associations),
+		EvidenceUpserted:     len(batch.Evidence),
+		EventsUpserted:       len(batch.Events),
 	}, nil
 }
 

@@ -6,7 +6,7 @@ import (
 	"cubicle/services/ontology-service/internal/domain"
 )
 
-// Expander is the first small graphstore boundary consumed by higher layers.
+// Expander is the first small object/association boundary consumed by higher layers.
 //
 // In Go, small consumer-facing interfaces are preferred over broad DAO-style
 // interfaces. The HTTP layer only needs bounded expansion for the first server
@@ -16,14 +16,14 @@ type Expander interface {
 	Expand(context.Context, domain.ExpandRequest) (domain.Neighborhood, error)
 }
 
-// Writer is the ingestion-side graph boundary.
+// Writer is the ingestion-side object/association boundary.
 //
 // Keeping writes separate from reads lets fixtures and future crawlers seed the
 // graph without depending on HTTP-only behavior. Both MemoryStore and EntStore
 // satisfy this interface.
 type Writer interface {
-	UpsertNode(context.Context, domain.Node) error
-	UpsertEdge(context.Context, domain.Edge) error
+	UpsertObject(context.Context, domain.Object) error
+	UpsertAssociation(context.Context, domain.Association) error
 }
 
 // Store is the full local graph boundary used by HTTP composition.

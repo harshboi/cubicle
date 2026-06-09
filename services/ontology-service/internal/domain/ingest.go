@@ -151,20 +151,20 @@ type IngestBatch struct {
 	MapperVersion  string                 `json:"mapper_version,omitempty"`
 	SnapshotKeys   []string               `json:"snapshot_keys,omitempty"`
 	ObservedAt     time.Time              `json:"observed_at,omitempty"`
-	Nodes          []Node                 `json:"nodes,omitempty"`
-	Edges          []Edge                 `json:"edges,omitempty"`
+	Objects        []Object               `json:"objects,omitempty"`
+	Associations   []Association          `json:"associations,omitempty"`
 	Evidence       []Evidence             `json:"evidence,omitempty"`
 	Events         []SourceEvent          `json:"events,omitempty"`
 	Checkpoint     *SourceCheckpointWrite `json:"checkpoint,omitempty"`
 }
 
 type IngestBatchResult struct {
-	RunKey            string `json:"run_key"`
-	NodesUpserted     int    `json:"nodes_upserted"`
-	EdgesUpserted     int    `json:"edges_upserted"`
-	EvidenceUpserted  int    `json:"evidence_upserted"`
-	EventsUpserted    int    `json:"events_upserted"`
-	CheckpointUpdated bool   `json:"checkpoint_updated"`
+	RunKey               string `json:"run_key"`
+	ObjectsUpserted      int    `json:"objects_upserted"`
+	AssociationsUpserted int    `json:"associations_upserted"`
+	EvidenceUpserted     int    `json:"evidence_upserted"`
+	EventsUpserted       int    `json:"events_upserted"`
+	CheckpointUpdated    bool   `json:"checkpoint_updated"`
 }
 
 type IngestRunComplete struct {
@@ -186,23 +186,23 @@ func (c IngestRunComplete) Validate() error {
 }
 
 type SourceStatus struct {
-	Source               string            `json:"source"`
-	SourceInstance       string            `json:"source_instance"`
-	Slice                string            `json:"slice,omitempty"`
-	Status               SourceStatusValue `json:"status"`
-	LastSuccessfulRunKey string            `json:"last_successful_run_key,omitempty"`
-	LastAttemptedRunKey  string            `json:"last_attempted_run_key,omitempty"`
-	LastErrorKey         string            `json:"last_error_key,omitempty"`
-	NextAllowedAt        time.Time         `json:"next_allowed_at,omitempty"`
-	CountsByKind         map[Kind]int      `json:"counts_by_kind,omitempty"`
+	Source               string             `json:"source"`
+	SourceInstance       string             `json:"source_instance"`
+	Slice                string             `json:"slice,omitempty"`
+	Status               SourceStatusValue  `json:"status"`
+	LastSuccessfulRunKey string             `json:"last_successful_run_key,omitempty"`
+	LastAttemptedRunKey  string             `json:"last_attempted_run_key,omitempty"`
+	LastErrorKey         string             `json:"last_error_key,omitempty"`
+	NextAllowedAt        time.Time          `json:"next_allowed_at,omitempty"`
+	CountsByObjectType   map[ObjectType]int `json:"counts_by_object_type,omitempty"`
 }
 
 func (b IngestBatch) WithDefaults() IngestBatch {
 	if b.ObservedAt.IsZero() {
 		b.ObservedAt = time.Now().UTC()
 	}
-	for i := range b.Nodes {
-		node := &b.Nodes[i]
+	for i := range b.Objects {
+		node := &b.Objects[i]
 		if node.Source == "" {
 			node.Source = b.Source
 		}
@@ -222,8 +222,8 @@ func (b IngestBatch) WithDefaults() IngestBatch {
 			node.ObservedAt = b.ObservedAt
 		}
 	}
-	for i := range b.Edges {
-		metadata := &b.Edges[i].Metadata
+	for i := range b.Associations {
+		metadata := &b.Associations[i].Metadata
 		if metadata.Source == "" {
 			metadata.Source = b.Source
 		}
@@ -253,20 +253,20 @@ func (b IngestBatch) Validate() error {
 	if b.RunKey == "" || b.Source == "" || b.SourceInstance == "" {
 		return fmt.Errorf("%w: run_key, source, and source_instance are required", ErrInvalidIngestBatch)
 	}
-	for _, node := range b.Nodes {
-		if node.Kind == "" || node.Key == "" {
-			return fmt.Errorf("%w: every node needs kind and key", ErrInvalidIngestBatch)
+	for _, node := range b.Objects {
+		if node.ObjectType == "" || node.Key == "" {
+			return fmt.Errorf("%w: every object needs object_type and key", ErrInvalidIngestBatch)
 		}
 	}
-	for _, edge := range b.Edges {
-		if edge.From.Kind == "" || edge.From.Key == "" || edge.To.Kind == "" || edge.To.Key == "" {
-			return fmt.Errorf("%w: every edge needs from and to refs", ErrInvalidIngestBatch)
+	for _, edge := range b.Associations {
+		if edge.From.ObjectType == "" || edge.From.Key == "" || edge.To.ObjectType == "" || edge.To.Key == "" {
+			return fmt.Errorf("%w: every association needs from and to refs", ErrInvalidIngestBatch)
 		}
-		if edge.Metadata.Predicate == "" {
-			return fmt.Errorf("%w: every edge needs a predicate", ErrInvalidIngestBatch)
+		if edge.AssociationType == "" {
+			return fmt.Errorf("%w: every association needs association_type", ErrInvalidIngestBatch)
 		}
 		if edge.Metadata.EvidenceKey == "" {
-			return fmt.Errorf("%w: every edge needs an evidence_key", ErrInvalidIngestBatch)
+			return fmt.Errorf("%w: every association needs an evidence_key", ErrInvalidIngestBatch)
 		}
 	}
 	for _, evidence := range b.Evidence {

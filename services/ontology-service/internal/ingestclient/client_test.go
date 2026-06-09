@@ -18,6 +18,7 @@ import (
 	"cubicle/services/ontology-service/internal/graphstore"
 	"cubicle/services/ontology-service/internal/httpapi"
 	"cubicle/services/ontology-service/internal/ingestpipeline"
+	"cubicle/services/ontology-service/internal/ontology"
 	"cubicle/services/ontology-service/internal/storage"
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
@@ -44,15 +45,15 @@ func TestHTTPClientRunsFixtureImportThroughIngestRoutes(t *testing.T) {
 	}
 
 	graph, err := store.Expand(ctx, domain.ExpandRequest{
-		Start:        domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:custom-project"},
-		Depth:        1,
-		LimitPerNode: 20,
+		Start:          domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:custom-project"},
+		Depth:          1,
+		LimitPerObject: 20,
 	})
 	if err != nil {
 		t.Fatalf("expand imported graph: %v", err)
 	}
 	assertHTTPImportedNode(t, graph, "ticket:TICKET-1")
-	assertHTTPImportedEdge(t, graph, domain.PredicateContains)
+	assertHTTPImportedEdge(t, graph, ontology.AssocContains)
 
 	statuses, err := client.ListSourceStatus(ctx)
 	if err != nil {
@@ -121,22 +122,22 @@ func openEntStore(t *testing.T, ctx context.Context) *graphstore.EntStore {
 
 func assertHTTPImportedNode(t *testing.T, graph domain.Neighborhood, key string) {
 	t.Helper()
-	for _, node := range graph.Nodes {
+	for _, node := range graph.Objects {
 		if node.Key == key {
 			return
 		}
 	}
-	t.Fatalf("missing node %q in %#v", key, graph.Nodes)
+	t.Fatalf("missing node %q in %#v", key, graph.Objects)
 }
 
-func assertHTTPImportedEdge(t *testing.T, graph domain.Neighborhood, predicate domain.Predicate) {
+func assertHTTPImportedEdge(t *testing.T, graph domain.Neighborhood, predicate domain.AssociationType) {
 	t.Helper()
-	for _, edge := range graph.Edges {
-		if edge.Metadata.Predicate == predicate {
+	for _, edge := range graph.Associations {
+		if edge.AssociationType == predicate {
 			return
 		}
 	}
-	t.Fatalf("missing edge predicate %q in %#v", predicate, graph.Edges)
+	t.Fatalf("missing edge predicate %q in %#v", predicate, graph.Associations)
 }
 
 func testLogger() *slog.Logger {
@@ -176,13 +177,13 @@ func (httpFakeMapper) Map(records []ingestpipeline.SnapshotRecord, opts ingestpi
 		MapperVersion:  "custom-fixture/v1",
 		SnapshotKeys:   []string{records[0].SnapshotKey},
 		ObservedAt:     opts.ObservedAt,
-		Nodes: []domain.Node{{
-			Kind:        domain.KindWorkstream,
+		Objects: []domain.Object{{
+			ObjectType:  ontology.ObjectWorkstream,
 			Key:         "workstream:custom-project",
 			Title:       "Custom Project",
 			SnapshotKey: records[0].SnapshotKey,
 		}, {
-			Kind:        domain.KindTicket,
+			ObjectType:  ontology.ObjectTicket,
 			Key:         "ticket:TICKET-1",
 			Title:       "TICKET-1",
 			SnapshotKey: records[0].SnapshotKey,
@@ -192,11 +193,11 @@ func (httpFakeMapper) Map(records []ingestpipeline.SnapshotRecord, opts ingestpi
 			SnapshotKey: records[0].SnapshotKey,
 			TextHash:    "sha256:evidence",
 		}},
-		Edges: []domain.Edge{{
-			From: domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:custom-project"},
-			To:   domain.NodeRef{Kind: domain.KindTicket, Key: "ticket:TICKET-1"},
-			Metadata: domain.EdgeMetadata{
-				Predicate:   domain.PredicateContains,
+		Associations: []domain.Association{{
+			From:            domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:custom-project"},
+			To:              domain.ObjectRef{ObjectType: ontology.ObjectTicket, Key: "ticket:TICKET-1"},
+			AssociationType: ontology.AssocContains,
+			Metadata: domain.AssociationMetadata{
 				EvidenceKey: "evidence:custom:TICKET-1",
 				SnapshotKey: records[0].SnapshotKey,
 			},

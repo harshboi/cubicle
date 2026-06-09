@@ -58,8 +58,8 @@ type IngestBatchBody struct {
 	MapperVersion string                        `json:"mapper_version,omitempty"`
 	SnapshotKeys  []string                      `json:"snapshot_keys,omitempty"`
 	ObservedAt    time.Time                     `json:"observed_at,omitempty"`
-	Nodes         []domain.Node                 `json:"nodes,omitempty"`
-	Edges         []domain.Edge                 `json:"edges,omitempty"`
+	Objects       []domain.Object               `json:"objects,omitempty"`
+	Associations  []domain.Association          `json:"associations,omitempty"`
 	Evidence      []domain.Evidence             `json:"evidence,omitempty"`
 	Events        []domain.SourceEvent          `json:"events,omitempty"`
 	Checkpoint    *domain.SourceCheckpointWrite `json:"checkpoint,omitempty"`
@@ -137,17 +137,18 @@ func registerIngest(api huma.API, store graphstore.IngestWriter) {
 		Errors:      []int{http.StatusBadRequest, http.StatusConflict},
 		RequestBody: jsonRequestExample("mapped custom ticket batch", map[string]any{
 			"snapshot_keys": []string{"snapshot:custom:ticket:1"},
-			"nodes": []map[string]any{
-				{"kind": "workstream", "key": "workstream:custom-project", "title": "Custom Project"},
-				{"kind": "ticket", "key": "ticket:TICKET-1", "title": "Example ticket", "snapshot_key": "snapshot:custom:ticket:1"},
+			"objects": []map[string]any{
+				{"object_type": "workstream", "key": "workstream:custom-project", "title": "Custom Project"},
+				{"object_type": "ticket", "key": "ticket:TICKET-1", "title": "Example ticket", "snapshot_key": "snapshot:custom:ticket:1"},
 			},
 			"evidence": []map[string]any{
 				{"evidence_key": "evidence:custom:TICKET-1", "snapshot_key": "snapshot:custom:ticket:1", "text_hash": "sha256:evidence-text"},
 			},
-			"edges": []map[string]any{{
-				"from":     map[string]any{"kind": "workstream", "key": "workstream:custom-project"},
-				"to":       map[string]any{"kind": "ticket", "key": "ticket:TICKET-1"},
-				"metadata": map[string]any{"predicate": "contains", "evidence_key": "evidence:custom:TICKET-1", "snapshot_key": "snapshot:custom:ticket:1"},
+			"associations": []map[string]any{{
+				"from":             map[string]any{"object_type": "workstream", "key": "workstream:custom-project"},
+				"to":               map[string]any{"object_type": "ticket", "key": "ticket:TICKET-1"},
+				"association_type": "contains",
+				"metadata":         map[string]any{"evidence_key": "evidence:custom:TICKET-1", "snapshot_key": "snapshot:custom:ticket:1"},
 			}},
 			"checkpoint": map[string]any{"checkpoint_key": "fixture-manifest", "checkpoint_value": "snapshot:custom:ticket:1"},
 		}),
@@ -223,8 +224,8 @@ func (b IngestBatchBody) toDomain(runID string) domain.IngestBatch {
 		MapperVersion: b.MapperVersion,
 		SnapshotKeys:  b.SnapshotKeys,
 		ObservedAt:    b.ObservedAt,
-		Nodes:         b.Nodes,
-		Edges:         b.Edges,
+		Objects:       b.Objects,
+		Associations:  b.Associations,
 		Evidence:      b.Evidence,
 		Events:        b.Events,
 		Checkpoint:    b.Checkpoint,
@@ -266,7 +267,7 @@ func ingestHTTPError(err error) error {
 		return huma.Error400BadRequest(string(domain.IngestErrorSnapshotNotFound)+": "+err.Error(), err)
 	case errors.Is(err, graphstore.ErrInvalidIngest),
 		errors.Is(err, graphstore.ErrInvalidExpansion),
-		errors.Is(err, graphstore.ErrMissingNode):
+		errors.Is(err, graphstore.ErrMissingObject):
 		return huma.Error400BadRequest(string(domain.IngestErrorValidationFailed)+": "+err.Error(), err)
 	default:
 		return huma.Error500InternalServerError("ingest request failed")

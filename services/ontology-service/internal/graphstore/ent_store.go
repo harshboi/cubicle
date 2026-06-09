@@ -10,7 +10,7 @@ import (
 	"cubicle/services/ontology-service/internal/domain"
 )
 
-// EntStore persists ontology nodes and graph edges through Ent.
+// EntStore persists ontology objects and associations through Ent.
 //
 // It deliberately implements the same graph-facing behavior as MemoryStore.
 // That lets higher layers depend on the AssociationStore-style contract instead
@@ -24,139 +24,139 @@ func NewEntStore(client *ent.Client) *EntStore {
 	return &EntStore{client: client}
 }
 
-func (s *EntStore) UpsertNode(ctx context.Context, node domain.Node) error {
-	return upsertNode(ctx, s.client, node)
+func (s *EntStore) UpsertObject(ctx context.Context, node domain.Object) error {
+	return upsertObject(ctx, s.client, node)
 }
 
-func upsertNode(ctx context.Context, client *ent.Client, node domain.Node) error {
-	if node.Kind == "" || node.Key == "" {
-		return fmt.Errorf("%w: kind and key are required", ErrMissingNode)
+func upsertObject(ctx context.Context, client *ent.Client, object domain.Object) error {
+	if object.ObjectType == "" || object.Key == "" {
+		return fmt.Errorf("%w: object_type and key are required", ErrMissingObject)
 	}
 	existing, err := client.OntologyNode.Query().
-		Where(ontologynode.KeyEQ(node.Key)).
+		Where(ontologynode.KeyEQ(object.Key)).
 		Only(ctx)
 	if err == nil {
 		return existing.Update().
-			SetKind(string(node.Kind)).
-			SetTitle(node.Title).
-			SetSource(node.Source).
-			SetSourceInstance(node.SourceInstance).
-			SetExternalID(node.ExternalID).
-			SetSourceURL(node.SourceURL).
-			SetSnapshotKey(node.SnapshotKey).
-			SetMapperVersion(node.MapperVersion).
-			SetVisibility(node.Visibility).
-			SetFreshnessState(node.FreshnessState).
-			SetObservedAt(node.ObservedAt).
-			SetSourceUpdatedAt(node.SourceUpdatedAt).
-			SetPropertiesJSON(node.PropertiesJSON).
+			SetKind(string(object.ObjectType)).
+			SetTitle(object.Title).
+			SetSource(object.Source).
+			SetSourceInstance(object.SourceInstance).
+			SetExternalID(object.ExternalID).
+			SetSourceURL(object.SourceURL).
+			SetSnapshotKey(object.SnapshotKey).
+			SetMapperVersion(object.MapperVersion).
+			SetVisibility(object.Visibility).
+			SetFreshnessState(object.FreshnessState).
+			SetObservedAt(object.ObservedAt).
+			SetSourceUpdatedAt(object.SourceUpdatedAt).
+			SetPropertiesJSON(object.PropertiesJSON).
 			Exec(ctx)
 	}
 	if !ent.IsNotFound(err) {
 		return err
 	}
 	return client.OntologyNode.Create().
-		SetKey(node.Key).
-		SetKind(string(node.Kind)).
-		SetTitle(node.Title).
-		SetSource(node.Source).
-		SetSourceInstance(node.SourceInstance).
-		SetExternalID(node.ExternalID).
-		SetSourceURL(node.SourceURL).
-		SetSnapshotKey(node.SnapshotKey).
-		SetMapperVersion(node.MapperVersion).
-		SetVisibility(node.Visibility).
-		SetFreshnessState(node.FreshnessState).
-		SetObservedAt(node.ObservedAt).
-		SetSourceUpdatedAt(node.SourceUpdatedAt).
-		SetPropertiesJSON(node.PropertiesJSON).
+		SetKey(object.Key).
+		SetKind(string(object.ObjectType)).
+		SetTitle(object.Title).
+		SetSource(object.Source).
+		SetSourceInstance(object.SourceInstance).
+		SetExternalID(object.ExternalID).
+		SetSourceURL(object.SourceURL).
+		SetSnapshotKey(object.SnapshotKey).
+		SetMapperVersion(object.MapperVersion).
+		SetVisibility(object.Visibility).
+		SetFreshnessState(object.FreshnessState).
+		SetObservedAt(object.ObservedAt).
+		SetSourceUpdatedAt(object.SourceUpdatedAt).
+		SetPropertiesJSON(object.PropertiesJSON).
 		Exec(ctx)
 }
 
-func (s *EntStore) UpsertEdge(ctx context.Context, edge domain.Edge) error {
-	return upsertEdge(ctx, s.client, edge)
+func (s *EntStore) UpsertAssociation(ctx context.Context, association domain.Association) error {
+	return upsertAssociation(ctx, s.client, association)
 }
 
-func upsertEdge(ctx context.Context, client *ent.Client, edge domain.Edge) error {
-	if edge.From.Key == "" || edge.To.Key == "" || edge.Metadata.Predicate == "" {
-		return fmt.Errorf("%w: from, to, and predicate are required", ErrInvalidExpansion)
+func upsertAssociation(ctx context.Context, client *ent.Client, association domain.Association) error {
+	if association.From.Key == "" || association.To.Key == "" || association.AssociationType == "" {
+		return fmt.Errorf("%w: from, to, and association_type are required", ErrInvalidExpansion)
 	}
-	if _, err := nodeByKeyWithClient(ctx, client, edge.From.Key); err != nil {
+	if _, err := objectByKeyWithClient(ctx, client, association.From.Key); err != nil {
 		return err
 	}
-	if _, err := nodeByKeyWithClient(ctx, client, edge.To.Key); err != nil {
+	if _, err := objectByKeyWithClient(ctx, client, association.To.Key); err != nil {
 		return err
 	}
-	if edge.Key == "" {
-		edge.Key = edgeKey(edge)
+	if association.Key == "" {
+		association.Key = associationKey(association)
 	}
 	existing, err := client.GraphEdge.Query().
-		Where(graphedge.KeyEQ(edge.Key)).
+		Where(graphedge.KeyEQ(association.Key)).
 		Only(ctx)
 	if err == nil {
 		return existing.Update().
-			SetFromKind(string(edge.From.Kind)).
-			SetFromKey(edge.From.Key).
-			SetToKind(string(edge.To.Kind)).
-			SetToKey(edge.To.Key).
-			SetPredicate(string(edge.Metadata.Predicate)).
-			SetEvidenceKey(edge.Metadata.EvidenceKey).
-			SetSource(edge.Metadata.Source).
-			SetSourceInstance(edge.Metadata.SourceInstance).
-			SetSourceURL(edge.Metadata.SourceURL).
-			SetSnapshotKey(edge.Metadata.SnapshotKey).
-			SetMapperVersion(edge.Metadata.MapperVersion).
-			SetConfidence(edge.Metadata.Confidence).
-			SetVisibility(edge.Metadata.Visibility).
-			SetFreshnessState(edge.Metadata.FreshnessState).
-			SetObservedAt(edge.Metadata.ObservedAt).
-			SetSourceUpdatedAt(edge.Metadata.SourceUpdatedAt).
-			SetPropertiesJSON(edge.Metadata.PropertiesJSON).
+			SetFromKind(string(association.From.ObjectType)).
+			SetFromKey(association.From.Key).
+			SetToKind(string(association.To.ObjectType)).
+			SetToKey(association.To.Key).
+			SetPredicate(string(association.AssociationType)).
+			SetEvidenceKey(association.Metadata.EvidenceKey).
+			SetSource(association.Metadata.Source).
+			SetSourceInstance(association.Metadata.SourceInstance).
+			SetSourceURL(association.Metadata.SourceURL).
+			SetSnapshotKey(association.Metadata.SnapshotKey).
+			SetMapperVersion(association.Metadata.MapperVersion).
+			SetConfidence(association.Metadata.Confidence).
+			SetVisibility(association.Metadata.Visibility).
+			SetFreshnessState(association.Metadata.FreshnessState).
+			SetObservedAt(association.Metadata.ObservedAt).
+			SetSourceUpdatedAt(association.Metadata.SourceUpdatedAt).
+			SetPropertiesJSON(association.Metadata.PropertiesJSON).
 			Exec(ctx)
 	}
 	if !ent.IsNotFound(err) {
 		return err
 	}
 	return client.GraphEdge.Create().
-		SetKey(edge.Key).
-		SetFromKind(string(edge.From.Kind)).
-		SetFromKey(edge.From.Key).
-		SetToKind(string(edge.To.Kind)).
-		SetToKey(edge.To.Key).
-		SetPredicate(string(edge.Metadata.Predicate)).
-		SetEvidenceKey(edge.Metadata.EvidenceKey).
-		SetSource(edge.Metadata.Source).
-		SetSourceInstance(edge.Metadata.SourceInstance).
-		SetSourceURL(edge.Metadata.SourceURL).
-		SetSnapshotKey(edge.Metadata.SnapshotKey).
-		SetMapperVersion(edge.Metadata.MapperVersion).
-		SetConfidence(edge.Metadata.Confidence).
-		SetVisibility(edge.Metadata.Visibility).
-		SetFreshnessState(edge.Metadata.FreshnessState).
-		SetObservedAt(edge.Metadata.ObservedAt).
-		SetSourceUpdatedAt(edge.Metadata.SourceUpdatedAt).
-		SetPropertiesJSON(edge.Metadata.PropertiesJSON).
+		SetKey(association.Key).
+		SetFromKind(string(association.From.ObjectType)).
+		SetFromKey(association.From.Key).
+		SetToKind(string(association.To.ObjectType)).
+		SetToKey(association.To.Key).
+		SetPredicate(string(association.AssociationType)).
+		SetEvidenceKey(association.Metadata.EvidenceKey).
+		SetSource(association.Metadata.Source).
+		SetSourceInstance(association.Metadata.SourceInstance).
+		SetSourceURL(association.Metadata.SourceURL).
+		SetSnapshotKey(association.Metadata.SnapshotKey).
+		SetMapperVersion(association.Metadata.MapperVersion).
+		SetConfidence(association.Metadata.Confidence).
+		SetVisibility(association.Metadata.Visibility).
+		SetFreshnessState(association.Metadata.FreshnessState).
+		SetObservedAt(association.Metadata.ObservedAt).
+		SetSourceUpdatedAt(association.Metadata.SourceUpdatedAt).
+		SetPropertiesJSON(association.Metadata.PropertiesJSON).
 		Exec(ctx)
 }
 
 func (s *EntStore) Expand(ctx context.Context, req domain.ExpandRequest) (domain.Neighborhood, error) {
-	if req.Start.Kind == "" || req.Start.Key == "" || req.Depth < 0 || req.LimitPerNode <= 0 {
+	if req.Start.ObjectType == "" || req.Start.Key == "" || req.Depth < 0 || req.LimitPerObject <= 0 {
 		return domain.Neighborhood{}, fmt.Errorf("%w: start, non-negative depth, and positive limit are required", ErrInvalidExpansion)
 	}
-	start, err := s.nodeByKey(ctx, req.Start.Key)
+	start, err := s.objectByKey(ctx, req.Start.Key)
 	if err != nil {
 		return domain.Neighborhood{}, err
 	}
 
-	allowedPredicates := predicateSet(req.Predicates)
-	seenNodes := map[string]bool{req.Start.Key: true}
-	seenEdges := make(map[string]bool)
-	nodes := []domain.Node{nodeToDomain(start)}
-	edges := make([]domain.Edge, 0)
-	frontier := []domain.NodeRef{req.Start}
+	allowedTypes := associationTypeSet(req.AssociationTypes)
+	seenObjects := map[string]bool{req.Start.Key: true}
+	seenAssociations := make(map[string]bool)
+	objects := []domain.Object{objectToDomain(start)}
+	associations := make([]domain.Association, 0)
+	frontier := []domain.ObjectRef{req.Start}
 
 	for depth := 0; depth < req.Depth && len(frontier) > 0; depth++ {
-		next := make([]domain.NodeRef, 0)
+		next := make([]domain.ObjectRef, 0)
 		for _, ref := range frontier {
 			graphEdges, err := s.client.GraphEdge.Query().
 				Where(graphedge.FromKeyEQ(ref.Key)).
@@ -168,52 +168,52 @@ func (s *EntStore) Expand(ctx context.Context, req domain.ExpandRequest) (domain
 
 			used := 0
 			for _, graphEdge := range graphEdges {
-				edge := edgeToDomain(graphEdge)
-				if len(allowedPredicates) > 0 && !allowedPredicates[edge.Metadata.Predicate] {
+				association := associationToDomain(graphEdge)
+				if len(allowedTypes) > 0 && !allowedTypes[association.AssociationType] {
 					continue
 				}
 				used++
-				if used > req.LimitPerNode {
+				if used > req.LimitPerObject {
 					break
 				}
-				if !seenEdges[edge.Key] {
-					seenEdges[edge.Key] = true
-					edges = append(edges, edge)
+				if !seenAssociations[association.Key] {
+					seenAssociations[association.Key] = true
+					associations = append(associations, association)
 				}
-				if !seenNodes[edge.To.Key] {
-					node, err := s.nodeByKey(ctx, edge.To.Key)
+				if !seenObjects[association.To.Key] {
+					object, err := s.objectByKey(ctx, association.To.Key)
 					if err != nil {
 						return domain.Neighborhood{}, err
 					}
-					seenNodes[edge.To.Key] = true
-					nodes = append(nodes, nodeToDomain(node))
-					next = append(next, edge.To)
+					seenObjects[association.To.Key] = true
+					objects = append(objects, objectToDomain(object))
+					next = append(next, association.To)
 				}
 			}
 		}
 		frontier = next
 	}
 
-	return domain.Neighborhood{Nodes: nodes, Edges: edges}, nil
+	return domain.Neighborhood{Objects: objects, Associations: associations}, nil
 }
 
-func (s *EntStore) nodeByKey(ctx context.Context, key string) (*ent.OntologyNode, error) {
-	return nodeByKeyWithClient(ctx, s.client, key)
+func (s *EntStore) objectByKey(ctx context.Context, key string) (*ent.OntologyNode, error) {
+	return objectByKeyWithClient(ctx, s.client, key)
 }
 
-func nodeByKeyWithClient(ctx context.Context, client *ent.Client, key string) (*ent.OntologyNode, error) {
+func objectByKeyWithClient(ctx context.Context, client *ent.Client, key string) (*ent.OntologyNode, error) {
 	node, err := client.OntologyNode.Query().
 		Where(ontologynode.KeyEQ(key)).
 		Only(ctx)
 	if ent.IsNotFound(err) {
-		return nil, fmt.Errorf("%w: %s", ErrMissingNode, key)
+		return nil, fmt.Errorf("%w: %s", ErrMissingObject, key)
 	}
 	return node, err
 }
 
-func nodeToDomain(node *ent.OntologyNode) domain.Node {
-	return domain.Node{
-		Kind:            domain.Kind(node.Kind),
+func objectToDomain(node *ent.OntologyNode) domain.Object {
+	return domain.Object{
+		ObjectType:      domain.ObjectType(node.Kind),
 		Key:             node.Key,
 		Title:           node.Title,
 		Source:          node.Source,
@@ -230,13 +230,13 @@ func nodeToDomain(node *ent.OntologyNode) domain.Node {
 	}
 }
 
-func edgeToDomain(edge *ent.GraphEdge) domain.Edge {
-	return domain.Edge{
-		Key:  edge.Key,
-		From: domain.NodeRef{Kind: domain.Kind(edge.FromKind), Key: edge.FromKey},
-		To:   domain.NodeRef{Kind: domain.Kind(edge.ToKind), Key: edge.ToKey},
-		Metadata: domain.EdgeMetadata{
-			Predicate:       domain.Predicate(edge.Predicate),
+func associationToDomain(edge *ent.GraphEdge) domain.Association {
+	return domain.Association{
+		Key:             edge.Key,
+		From:            domain.ObjectRef{ObjectType: domain.ObjectType(edge.FromKind), Key: edge.FromKey},
+		To:              domain.ObjectRef{ObjectType: domain.ObjectType(edge.ToKind), Key: edge.ToKey},
+		AssociationType: domain.AssociationType(edge.Predicate),
+		Metadata: domain.AssociationMetadata{
 			EvidenceKey:     edge.EvidenceKey,
 			Source:          edge.Source,
 			SourceInstance:  edge.SourceInstance,

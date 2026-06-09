@@ -24,12 +24,12 @@ func TestWorkstreamServiceOverviewClassifiesGraphNodes(t *testing.T) {
 	assertNodeKey(t, overview.CodeFiles, "file:JobVertexScaler.java")
 	assertNodeKey(t, overview.Blockers, "blocker:missing-review")
 	assertNodeKey(t, overview.ActionCandidates, "action:request-review")
-	if len(overview.Edges) == 0 {
+	if len(overview.Associations) == 0 {
 		t.Fatal("expected evidence edges in overview")
 	}
 }
 
-func assertNodeKey(t *testing.T, nodes []domain.Node, key string) {
+func assertNodeKey(t *testing.T, nodes []domain.Object, key string) {
 	t.Helper()
 	for _, node := range nodes {
 		if node.Key == key {

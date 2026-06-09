@@ -15,7 +15,7 @@ import (
 func TestGraphExpandReturnsNeighborhood(t *testing.T) {
 	router := NewRouter(fixtures.NewFlinkAutoscalerStore(), slog.Default())
 
-	body := `{"start":{"kind":"workstream","key":"workstream:flink-autoscaler"},"depth":2,"limit_per_node":10}`
+	body := `{"start":{"object_type":"workstream","key":"workstream:flink-autoscaler"},"depth":2,"limit_per_object":10}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/graph/expand", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
@@ -29,18 +29,18 @@ func TestGraphExpandReturnsNeighborhood(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &graph); err != nil {
 		t.Fatalf("expand response is not graph JSON: %v", err)
 	}
-	if len(graph.Nodes) < 4 {
-		t.Fatalf("expected graph nodes, got %#v", graph.Nodes)
+	if len(graph.Objects) < 4 {
+		t.Fatalf("expected graph objects, got %#v", graph.Objects)
 	}
-	if len(graph.Edges) < 3 {
-		t.Fatalf("expected graph edges, got %#v", graph.Edges)
+	if len(graph.Associations) < 3 {
+		t.Fatalf("expected graph associations, got %#v", graph.Associations)
 	}
 }
 
 func TestGraphExpandRejectsInvalidBounds(t *testing.T) {
 	router := NewRouter(fixtures.NewFlinkAutoscalerStore(), slog.Default())
 
-	body := `{"start":{"kind":"workstream","key":"workstream:flink-autoscaler"},"depth":2,"limit_per_node":0}`
+	body := `{"start":{"object_type":"workstream","key":"workstream:flink-autoscaler"},"depth":2,"limit_per_object":0}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/graph/expand", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()

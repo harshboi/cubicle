@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	ErrMissingNode      = errors.New("missing node")
+	ErrMissingObject    = errors.New("missing object")
 	ErrInvalidExpansion = errors.New("invalid expansion request")
 	ErrInvalidIngest    = errors.New("invalid ingest request")
 	ErrIngestConflict   = errors.New("ingest conflict")
@@ -19,99 +19,99 @@ var (
 )
 
 type MemoryStore struct {
-	nodes map[string]domain.Node
-	edges map[string]domain.Edge
-	out   map[string][]string
+	objects      map[string]domain.Object
+	associations map[string]domain.Association
+	out          map[string][]string
 }
 
 // NewMemoryStore creates an empty graphstore for tests, fixtures, and the first
 // localhost server slice.
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
-		nodes: make(map[string]domain.Node),
-		edges: make(map[string]domain.Edge),
-		out:   make(map[string][]string),
+		objects:      make(map[string]domain.Object),
+		associations: make(map[string]domain.Association),
+		out:          make(map[string][]string),
 	}
 }
 
-// UpsertNode inserts or replaces a node by its stable domain key.
-func (s *MemoryStore) UpsertNode(_ context.Context, node domain.Node) error {
-	if node.Kind == "" || node.Key == "" {
-		return fmt.Errorf("%w: kind and key are required", ErrMissingNode)
+// UpsertObject inserts or replaces an object by its stable domain key.
+func (s *MemoryStore) UpsertObject(_ context.Context, object domain.Object) error {
+	if object.ObjectType == "" || object.Key == "" {
+		return fmt.Errorf("%w: object_type and key are required", ErrMissingObject)
 	}
-	s.nodes[node.Key] = node
+	s.objects[object.Key] = object
 	return nil
 }
 
-// UpsertEdge inserts or replaces an evidence-backed relationship.
+// UpsertAssociation inserts or replaces an evidence-backed relationship.
 //
-// The store requires both endpoint nodes to exist first. That mirrors the
-// invariant the Ent store should enforce later: an edge is not authoritative if
+// The store requires both endpoint objects to exist first. That mirrors the
+// invariant the Ent store should enforce later: an association is not authoritative if
 // it points at objects the graph cannot return.
-func (s *MemoryStore) UpsertEdge(_ context.Context, edge domain.Edge) error {
-	if edge.From.Key == "" || edge.To.Key == "" || edge.Metadata.Predicate == "" {
-		return fmt.Errorf("%w: from, to, and predicate are required", ErrInvalidExpansion)
+func (s *MemoryStore) UpsertAssociation(_ context.Context, association domain.Association) error {
+	if association.From.Key == "" || association.To.Key == "" || association.AssociationType == "" {
+		return fmt.Errorf("%w: from, to, and association_type are required", ErrInvalidExpansion)
 	}
-	if _, ok := s.nodes[edge.From.Key]; !ok {
-		return fmt.Errorf("%w: %s", ErrMissingNode, edge.From.Key)
+	if _, ok := s.objects[association.From.Key]; !ok {
+		return fmt.Errorf("%w: %s", ErrMissingObject, association.From.Key)
 	}
-	if _, ok := s.nodes[edge.To.Key]; !ok {
-		return fmt.Errorf("%w: %s", ErrMissingNode, edge.To.Key)
+	if _, ok := s.objects[association.To.Key]; !ok {
+		return fmt.Errorf("%w: %s", ErrMissingObject, association.To.Key)
 	}
-	if edge.Key == "" {
-		edge.Key = edgeKey(edge)
+	if association.Key == "" {
+		association.Key = associationKey(association)
 	}
-	if _, exists := s.edges[edge.Key]; !exists {
-		s.out[edge.From.Key] = append(s.out[edge.From.Key], edge.Key)
+	if _, exists := s.associations[association.Key]; !exists {
+		s.out[association.From.Key] = append(s.out[association.From.Key], association.Key)
 	}
-	s.edges[edge.Key] = edge
+	s.associations[association.Key] = association
 	return nil
 }
 
-// Expand performs deterministic breadth-first traversal from a start node.
+// Expand performs deterministic breadth-first traversal from a start object.
 //
 // Deterministic ordering is important for tests, OpenAPI examples, and Swift UI
-// snapshots. The implementation sorts edge keys at each hop so the same graph
+// snapshots. The implementation sorts association keys at each hop so the same graph
 // always yields the same response order.
 func (s *MemoryStore) Expand(_ context.Context, req domain.ExpandRequest) (domain.Neighborhood, error) {
-	if req.Start.Kind == "" || req.Start.Key == "" || req.Depth < 0 || req.LimitPerNode <= 0 {
+	if req.Start.ObjectType == "" || req.Start.Key == "" || req.Depth < 0 || req.LimitPerObject <= 0 {
 		return domain.Neighborhood{}, fmt.Errorf("%w: start, non-negative depth, and positive limit are required", ErrInvalidExpansion)
 	}
-	if _, ok := s.nodes[req.Start.Key]; !ok {
-		return domain.Neighborhood{}, fmt.Errorf("%w: %s", ErrMissingNode, req.Start.Key)
+	if _, ok := s.objects[req.Start.Key]; !ok {
+		return domain.Neighborhood{}, fmt.Errorf("%w: %s", ErrMissingObject, req.Start.Key)
 	}
 
-	allowedPredicates := predicateSet(req.Predicates)
-	seenNodes := map[string]bool{req.Start.Key: true}
-	seenEdges := make(map[string]bool)
-	nodeOrder := []string{req.Start.Key}
-	edgeOrder := make([]string, 0)
-	frontier := []domain.NodeRef{req.Start}
+	allowedTypes := associationTypeSet(req.AssociationTypes)
+	seenObjects := map[string]bool{req.Start.Key: true}
+	seenAssociations := make(map[string]bool)
+	objectOrder := []string{req.Start.Key}
+	associationOrder := make([]string, 0)
+	frontier := []domain.ObjectRef{req.Start}
 
 	for depth := 0; depth < req.Depth && len(frontier) > 0; depth++ {
-		next := make([]domain.NodeRef, 0)
+		next := make([]domain.ObjectRef, 0)
 		for _, ref := range frontier {
-			edgeKeys := append([]string(nil), s.out[ref.Key]...)
-			sort.Strings(edgeKeys)
+			associationKeys := append([]string(nil), s.out[ref.Key]...)
+			sort.Strings(associationKeys)
 
 			used := 0
-			for _, key := range edgeKeys {
-				if used >= req.LimitPerNode {
+			for _, key := range associationKeys {
+				if used >= req.LimitPerObject {
 					break
 				}
-				edge := s.edges[key]
-				if len(allowedPredicates) > 0 && !allowedPredicates[edge.Metadata.Predicate] {
+				association := s.associations[key]
+				if len(allowedTypes) > 0 && !allowedTypes[association.AssociationType] {
 					continue
 				}
 				used++
-				if !seenEdges[key] {
-					seenEdges[key] = true
-					edgeOrder = append(edgeOrder, key)
+				if !seenAssociations[key] {
+					seenAssociations[key] = true
+					associationOrder = append(associationOrder, key)
 				}
-				if !seenNodes[edge.To.Key] {
-					seenNodes[edge.To.Key] = true
-					nodeOrder = append(nodeOrder, edge.To.Key)
-					next = append(next, edge.To)
+				if !seenObjects[association.To.Key] {
+					seenObjects[association.To.Key] = true
+					objectOrder = append(objectOrder, association.To.Key)
+					next = append(next, association.To)
 				}
 			}
 		}
@@ -119,32 +119,31 @@ func (s *MemoryStore) Expand(_ context.Context, req domain.ExpandRequest) (domai
 	}
 
 	graph := domain.Neighborhood{
-		Nodes: make([]domain.Node, 0, len(nodeOrder)),
-		Edges: make([]domain.Edge, 0, len(edgeOrder)),
+		Objects:      make([]domain.Object, 0, len(objectOrder)),
+		Associations: make([]domain.Association, 0, len(associationOrder)),
 	}
-	for _, key := range nodeOrder {
-		graph.Nodes = append(graph.Nodes, s.nodes[key])
+	for _, key := range objectOrder {
+		graph.Objects = append(graph.Objects, s.objects[key])
 	}
-	for _, key := range edgeOrder {
-		graph.Edges = append(graph.Edges, s.edges[key])
+	for _, key := range associationOrder {
+		graph.Associations = append(graph.Associations, s.associations[key])
 	}
 	return graph, nil
 }
 
-func predicateSet(predicates []domain.Predicate) map[domain.Predicate]bool {
-	if len(predicates) == 0 {
+func associationTypeSet(types []domain.AssociationType) map[domain.AssociationType]bool {
+	if len(types) == 0 {
 		return nil
 	}
-	set := make(map[domain.Predicate]bool, len(predicates))
-	for _, predicate := range predicates {
-		set[predicate] = true
+	set := make(map[domain.AssociationType]bool, len(types))
+	for _, typ := range types {
+		set[typ] = true
 	}
 	return set
 }
 
-func edgeKey(edge domain.Edge) string {
-	return string(edge.From.Kind) + ":" + edge.From.Key +
-		"|" + string(edge.Metadata.Predicate) +
-		"|" + string(edge.To.Kind) + ":" + edge.To.Key +
-		"|" + edge.Metadata.EvidenceKey
+func associationKey(association domain.Association) string {
+	return string(association.From.ObjectType) + ":" + association.From.Key +
+		"|" + string(association.AssociationType) +
+		"|" + string(association.To.ObjectType) + ":" + association.To.Key
 }

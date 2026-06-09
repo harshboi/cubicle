@@ -14,6 +14,7 @@ import (
 	"cubicle/services/ontology-service/internal/domain"
 	"cubicle/services/ontology-service/internal/flink"
 	"cubicle/services/ontology-service/internal/httpapi"
+	"cubicle/services/ontology-service/internal/ontology"
 )
 
 func TestParseServeConfigDefaultsToLocalhost(t *testing.T) {
@@ -232,15 +233,15 @@ func TestOpenGraphStoreSeedsFixtureIntoSQLite(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	graph, err := expander.Expand(ctx, domain.ExpandRequest{
-		Start:        domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
-		Depth:        2,
-		LimitPerNode: 10,
+		Start:          domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:          2,
+		LimitPerObject: 10,
 	})
 	if err != nil {
 		t.Fatalf("expand seeded graph: %v", err)
 	}
-	if len(graph.Nodes) == 0 || len(graph.Edges) == 0 {
-		t.Fatalf("expected seeded graph, got %d nodes and %d edges", len(graph.Nodes), len(graph.Edges))
+	if len(graph.Objects) == 0 || len(graph.Associations) == 0 {
+		t.Fatalf("expected seeded graph, got %d nodes and %d edges", len(graph.Objects), len(graph.Associations))
 	}
 }
 
@@ -265,15 +266,15 @@ func TestRunIngestFlinkImportsFixtureIntoSQLite(t *testing.T) {
 	}
 	t.Cleanup(cleanup)
 	graph, err := expander.Expand(ctx, domain.ExpandRequest{
-		Start:        domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
-		Depth:        3,
-		LimitPerNode: 20,
+		Start:          domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:          3,
+		LimitPerObject: 20,
 	})
 	if err != nil {
 		t.Fatalf("expand imported graph: %v", err)
 	}
-	if len(graph.Nodes) < 5 || len(graph.Edges) < 5 {
-		t.Fatalf("expected Flink fixture graph, got %d nodes and %d edges", len(graph.Nodes), len(graph.Edges))
+	if len(graph.Objects) < 5 || len(graph.Associations) < 5 {
+		t.Fatalf("expected Flink fixture graph, got %d nodes and %d edges", len(graph.Objects), len(graph.Associations))
 	}
 }
 
@@ -310,15 +311,15 @@ func TestRunIngestFlinkCanWriteThroughHTTPIngestURL(t *testing.T) {
 	}
 
 	graph, err := store.Expand(ctx, domain.ExpandRequest{
-		Start:        domain.NodeRef{Kind: domain.KindWorkstream, Key: "workstream:flink-autoscaler"},
-		Depth:        3,
-		LimitPerNode: 20,
-		Predicates:   []domain.Predicate{domain.PredicateImplementedBy, domain.PredicateChangesFile, domain.PredicateDiscussedIn, domain.PredicateContains},
+		Start:            domain.ObjectRef{ObjectType: ontology.ObjectWorkstream, Key: "workstream:flink-autoscaler"},
+		Depth:            3,
+		LimitPerObject:   20,
+		AssociationTypes: []domain.AssociationType{ontology.AssocImplementedBy, ontology.AssocChangesFile, ontology.AssocDiscussedIn, ontology.AssocContains},
 	})
 	if err != nil {
 		t.Fatalf("expand imported graph: %v", err)
 	}
-	if len(graph.Nodes) < 4 {
+	if len(graph.Objects) < 4 {
 		t.Fatalf("expected HTTP-imported Flink fixture graph, got %#v", graph)
 	}
 	if flink.FixtureMapperVersion == "" {

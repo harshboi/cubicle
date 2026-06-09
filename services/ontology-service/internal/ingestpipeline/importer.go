@@ -36,12 +36,12 @@ type ImportConfig struct {
 }
 
 type FixtureImportResult struct {
-	RunsCompleted    int
-	SnapshotsWritten int
-	NodesUpserted    int
-	EdgesUpserted    int
-	EvidenceUpserted int
-	EventsUpserted   int
+	RunsCompleted        int
+	SnapshotsWritten     int
+	ObjectsUpserted      int
+	AssociationsUpserted int
+	EvidenceUpserted     int
+	EventsUpserted       int
 }
 
 type Importer struct {
@@ -131,8 +131,8 @@ func (i Importer) ImportRecords(ctx context.Context, records []SnapshotRecord, c
 		if err != nil {
 			return FixtureImportResult{}, err
 		}
-		result.NodesUpserted += batchResult.NodesUpserted
-		result.EdgesUpserted += batchResult.EdgesUpserted
+		result.ObjectsUpserted += batchResult.ObjectsUpserted
+		result.AssociationsUpserted += batchResult.AssociationsUpserted
 		result.EvidenceUpserted += batchResult.EvidenceUpserted
 		result.EventsUpserted += batchResult.EventsUpserted
 		if _, err := i.writer.CompleteIngestRun(ctx, domain.IngestRunComplete{
