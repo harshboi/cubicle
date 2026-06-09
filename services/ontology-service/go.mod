@@ -6,6 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.17.90
 	github.com/gin-gonic/gin v1.12.0
 	github.com/mattn/go-sqlite3 v1.14.45
+	github.com/o3co/go.hocon v1.7.0
 	github.com/vektah/gqlparser/v2 v2.5.33
 )
 

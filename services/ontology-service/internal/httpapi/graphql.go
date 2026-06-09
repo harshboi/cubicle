@@ -10,12 +10,14 @@ import (
 )
 
 // registerGraphQL mounts Cubicle's GraphQL API and local development playground.
-func registerGraphQL(router gin.IRouter) {
+func registerGraphQL(router gin.IRouter, options RouterOptions) {
 	executableSchema := generated.NewExecutableSchema(generated.Config{
 		Resolvers: &ontologygraphql.Resolver{},
 	})
 	server := handler.NewDefaultServer(executableSchema)
 
 	router.POST("/graphql", gin.WrapH(server))
-	router.GET("/playground", gin.WrapH(playground.Handler("Cubicle Ontology GraphQL", "/graphql")))
+	if options.GraphQLPlaygroundEnabled {
+		router.GET("/playground", gin.WrapH(playground.Handler("Cubicle Ontology GraphQL", "/graphql")))
+	}
 }

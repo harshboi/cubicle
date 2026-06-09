@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -74,5 +75,38 @@ func TestGraphQLPlaygroundIsMounted(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "Cubicle Ontology GraphQL") {
 		t.Fatalf("playground response did not contain title: %s", rec.Body.String())
+	}
+}
+
+func TestGraphQLPlaygroundCanBeDisabled(t *testing.T) {
+	router := NewRouterWithOptions(slog.Default(), RouterOptions{
+		GraphQLPlaygroundEnabled: false,
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/playground", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestRequestLoggerUsesURLPathForUnmatchedRoutes(t *testing.T) {
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&logs, nil))
+	router := NewRouterWithOptions(logger, RouterOptions{
+		GraphQLPlaygroundEnabled: false,
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/playground", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(logs.String(), "path=/playground") {
+		t.Fatalf("expected unmatched request path in logs, got: %s", logs.String())
 	}
 }
