@@ -50,7 +50,17 @@ Start with the transition research note when planning or implementing changes:
 
 - `../../tmp/source-evidence-spine-transition-research.md`
 
-Read the raw debate artifacts only when you need the reasoning trail or want to challenge the ruling:
+Read the raw debate artifacts only when you need the reasoning trail or want to challenge the ruling.
+
+Initial debate mailbox files:
+
+- `references/debate/graph-debate-live.md`
+- `references/debate/graph-debate-meta.md`
+- `references/debate/graph-debate-palantir.md`
+- `references/debate/graph-debate-glean.md`
+- `references/debate/graph-debate-obsidian.md`
+
+Final foundations debate mailbox files:
 
 - `references/debate/graph-foundations-live-chat.md`
 - `references/debate/graph-foundations-meta.md`
