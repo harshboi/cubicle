@@ -8,11 +8,15 @@ import (
 	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/evidenceanchor"
+	"cubicle/services/ontology-service/ent/externalidentity"
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/messagelensresult"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
+	"cubicle/services/ontology-service/ent/sourceobservation"
+	"cubicle/services/ontology-service/ent/sourcerun"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"cubicle/services/ontology-service/ent/ticketlensresult"
@@ -95,11 +99,15 @@ func checkColumn(t, c string) error {
 			documentfragment.Table:       documentfragment.ValidColumn,
 			documentlensresult.Table:     documentlensresult.ValidColumn,
 			evidence.Table:               evidence.ValidColumn,
+			evidenceanchor.Table:         evidenceanchor.ValidColumn,
+			externalidentity.Table:       externalidentity.ValidColumn,
 			message.Table:                message.ValidColumn,
 			messagelensresult.Table:      messagelensresult.ValidColumn,
 			person.Table:                 person.ValidColumn,
 			pullrequest.Table:            pullrequest.ValidColumn,
 			pullrequestlensresult.Table:  pullrequestlensresult.ValidColumn,
+			sourceobservation.Table:      sourceobservation.ValidColumn,
+			sourcerun.Table:              sourcerun.ValidColumn,
 			ticket.Table:                 ticket.ValidColumn,
 			ticketdocumentfragment.Table: ticketdocumentfragment.ValidColumn,
 			ticketlensresult.Table:       ticketlensresult.ValidColumn,

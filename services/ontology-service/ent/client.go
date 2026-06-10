@@ -15,11 +15,15 @@ import (
 	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/evidenceanchor"
+	"cubicle/services/ontology-service/ent/externalidentity"
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/messagelensresult"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
+	"cubicle/services/ontology-service/ent/sourceobservation"
+	"cubicle/services/ontology-service/ent/sourcerun"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"cubicle/services/ontology-service/ent/ticketlensresult"
@@ -50,6 +54,10 @@ type Client struct {
 	DocumentLensResult *DocumentLensResultClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
+	// EvidenceAnchor is the client for interacting with the EvidenceAnchor builders.
+	EvidenceAnchor *EvidenceAnchorClient
+	// ExternalIdentity is the client for interacting with the ExternalIdentity builders.
+	ExternalIdentity *ExternalIdentityClient
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
 	// MessageLensResult is the client for interacting with the MessageLensResult builders.
@@ -60,6 +68,10 @@ type Client struct {
 	PullRequest *PullRequestClient
 	// PullRequestLensResult is the client for interacting with the PullRequestLensResult builders.
 	PullRequestLensResult *PullRequestLensResultClient
+	// SourceObservation is the client for interacting with the SourceObservation builders.
+	SourceObservation *SourceObservationClient
+	// SourceRun is the client for interacting with the SourceRun builders.
+	SourceRun *SourceRunClient
 	// Ticket is the client for interacting with the Ticket builders.
 	Ticket *TicketClient
 	// TicketDocumentFragment is the client for interacting with the TicketDocumentFragment builders.
@@ -95,11 +107,15 @@ func (c *Client) init() {
 	c.DocumentFragment = NewDocumentFragmentClient(c.config)
 	c.DocumentLensResult = NewDocumentLensResultClient(c.config)
 	c.Evidence = NewEvidenceClient(c.config)
+	c.EvidenceAnchor = NewEvidenceAnchorClient(c.config)
+	c.ExternalIdentity = NewExternalIdentityClient(c.config)
 	c.Message = NewMessageClient(c.config)
 	c.MessageLensResult = NewMessageLensResultClient(c.config)
 	c.Person = NewPersonClient(c.config)
 	c.PullRequest = NewPullRequestClient(c.config)
 	c.PullRequestLensResult = NewPullRequestLensResultClient(c.config)
+	c.SourceObservation = NewSourceObservationClient(c.config)
+	c.SourceRun = NewSourceRunClient(c.config)
 	c.Ticket = NewTicketClient(c.config)
 	c.TicketDocumentFragment = NewTicketDocumentFragmentClient(c.config)
 	c.TicketLensResult = NewTicketLensResultClient(c.config)
@@ -206,11 +222,15 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		DocumentFragment:       NewDocumentFragmentClient(cfg),
 		DocumentLensResult:     NewDocumentLensResultClient(cfg),
 		Evidence:               NewEvidenceClient(cfg),
+		EvidenceAnchor:         NewEvidenceAnchorClient(cfg),
+		ExternalIdentity:       NewExternalIdentityClient(cfg),
 		Message:                NewMessageClient(cfg),
 		MessageLensResult:      NewMessageLensResultClient(cfg),
 		Person:                 NewPersonClient(cfg),
 		PullRequest:            NewPullRequestClient(cfg),
 		PullRequestLensResult:  NewPullRequestLensResultClient(cfg),
+		SourceObservation:      NewSourceObservationClient(cfg),
+		SourceRun:              NewSourceRunClient(cfg),
 		Ticket:                 NewTicketClient(cfg),
 		TicketDocumentFragment: NewTicketDocumentFragmentClient(cfg),
 		TicketLensResult:       NewTicketLensResultClient(cfg),
@@ -244,11 +264,15 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		DocumentFragment:       NewDocumentFragmentClient(cfg),
 		DocumentLensResult:     NewDocumentLensResultClient(cfg),
 		Evidence:               NewEvidenceClient(cfg),
+		EvidenceAnchor:         NewEvidenceAnchorClient(cfg),
+		ExternalIdentity:       NewExternalIdentityClient(cfg),
 		Message:                NewMessageClient(cfg),
 		MessageLensResult:      NewMessageLensResultClient(cfg),
 		Person:                 NewPersonClient(cfg),
 		PullRequest:            NewPullRequestClient(cfg),
 		PullRequestLensResult:  NewPullRequestLensResultClient(cfg),
+		SourceObservation:      NewSourceObservationClient(cfg),
+		SourceRun:              NewSourceRunClient(cfg),
 		Ticket:                 NewTicketClient(cfg),
 		TicketDocumentFragment: NewTicketDocumentFragmentClient(cfg),
 		TicketLensResult:       NewTicketLensResultClient(cfg),
@@ -288,8 +312,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence, c.Message,
-		c.MessageLensResult, c.Person, c.PullRequest, c.PullRequestLensResult,
+		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence,
+		c.EvidenceAnchor, c.ExternalIdentity, c.Message, c.MessageLensResult, c.Person,
+		c.PullRequest, c.PullRequestLensResult, c.SourceObservation, c.SourceRun,
 		c.Ticket, c.TicketDocumentFragment, c.TicketLensResult, c.TicketMessage,
 		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.WorkLensWindow, c.Workstream,
 		c.WorkstreamTicket,
@@ -302,8 +327,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence, c.Message,
-		c.MessageLensResult, c.Person, c.PullRequest, c.PullRequestLensResult,
+		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence,
+		c.EvidenceAnchor, c.ExternalIdentity, c.Message, c.MessageLensResult, c.Person,
+		c.PullRequest, c.PullRequestLensResult, c.SourceObservation, c.SourceRun,
 		c.Ticket, c.TicketDocumentFragment, c.TicketLensResult, c.TicketMessage,
 		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.WorkLensWindow, c.Workstream,
 		c.WorkstreamTicket,
@@ -323,6 +349,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.DocumentLensResult.mutate(ctx, m)
 	case *EvidenceMutation:
 		return c.Evidence.mutate(ctx, m)
+	case *EvidenceAnchorMutation:
+		return c.EvidenceAnchor.mutate(ctx, m)
+	case *ExternalIdentityMutation:
+		return c.ExternalIdentity.mutate(ctx, m)
 	case *MessageMutation:
 		return c.Message.mutate(ctx, m)
 	case *MessageLensResultMutation:
@@ -333,6 +363,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.PullRequest.mutate(ctx, m)
 	case *PullRequestLensResultMutation:
 		return c.PullRequestLensResult.mutate(ctx, m)
+	case *SourceObservationMutation:
+		return c.SourceObservation.mutate(ctx, m)
+	case *SourceRunMutation:
+		return c.SourceRun.mutate(ctx, m)
 	case *TicketMutation:
 		return c.Ticket.mutate(ctx, m)
 	case *TicketDocumentFragmentMutation:
@@ -926,6 +960,22 @@ func (c *EvidenceClient) GetX(ctx context.Context, id int) *Evidence {
 	return obj
 }
 
+// QueryEvidenceAnchor queries the evidence_anchor edge of a Evidence.
+func (c *EvidenceClient) QueryEvidenceAnchor(_m *Evidence) *EvidenceAnchorQuery {
+	query := (&EvidenceAnchorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidence.Table, evidence.FieldID, id),
+			sqlgraph.To(evidenceanchor.Table, evidenceanchor.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidence.EvidenceAnchorTable, evidence.EvidenceAnchorColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *EvidenceClient) Hooks() []Hook {
 	return c.hooks.Evidence
@@ -948,6 +998,352 @@ func (c *EvidenceClient) mutate(ctx context.Context, m *EvidenceMutation) (Value
 		return (&EvidenceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Evidence mutation op: %q", m.Op())
+	}
+}
+
+// EvidenceAnchorClient is a client for the EvidenceAnchor schema.
+type EvidenceAnchorClient struct {
+	config
+}
+
+// NewEvidenceAnchorClient returns a client for the EvidenceAnchor from the given config.
+func NewEvidenceAnchorClient(c config) *EvidenceAnchorClient {
+	return &EvidenceAnchorClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `evidenceanchor.Hooks(f(g(h())))`.
+func (c *EvidenceAnchorClient) Use(hooks ...Hook) {
+	c.hooks.EvidenceAnchor = append(c.hooks.EvidenceAnchor, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `evidenceanchor.Intercept(f(g(h())))`.
+func (c *EvidenceAnchorClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EvidenceAnchor = append(c.inters.EvidenceAnchor, interceptors...)
+}
+
+// Create returns a builder for creating a EvidenceAnchor entity.
+func (c *EvidenceAnchorClient) Create() *EvidenceAnchorCreate {
+	mutation := newEvidenceAnchorMutation(c.config, OpCreate)
+	return &EvidenceAnchorCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EvidenceAnchor entities.
+func (c *EvidenceAnchorClient) CreateBulk(builders ...*EvidenceAnchorCreate) *EvidenceAnchorCreateBulk {
+	return &EvidenceAnchorCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EvidenceAnchorClient) MapCreateBulk(slice any, setFunc func(*EvidenceAnchorCreate, int)) *EvidenceAnchorCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EvidenceAnchorCreateBulk{err: fmt.Errorf("calling to EvidenceAnchorClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EvidenceAnchorCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EvidenceAnchorCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EvidenceAnchor.
+func (c *EvidenceAnchorClient) Update() *EvidenceAnchorUpdate {
+	mutation := newEvidenceAnchorMutation(c.config, OpUpdate)
+	return &EvidenceAnchorUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EvidenceAnchorClient) UpdateOne(_m *EvidenceAnchor) *EvidenceAnchorUpdateOne {
+	mutation := newEvidenceAnchorMutation(c.config, OpUpdateOne, withEvidenceAnchor(_m))
+	return &EvidenceAnchorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EvidenceAnchorClient) UpdateOneID(id int) *EvidenceAnchorUpdateOne {
+	mutation := newEvidenceAnchorMutation(c.config, OpUpdateOne, withEvidenceAnchorID(id))
+	return &EvidenceAnchorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EvidenceAnchor.
+func (c *EvidenceAnchorClient) Delete() *EvidenceAnchorDelete {
+	mutation := newEvidenceAnchorMutation(c.config, OpDelete)
+	return &EvidenceAnchorDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EvidenceAnchorClient) DeleteOne(_m *EvidenceAnchor) *EvidenceAnchorDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EvidenceAnchorClient) DeleteOneID(id int) *EvidenceAnchorDeleteOne {
+	builder := c.Delete().Where(evidenceanchor.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EvidenceAnchorDeleteOne{builder}
+}
+
+// Query returns a query builder for EvidenceAnchor.
+func (c *EvidenceAnchorClient) Query() *EvidenceAnchorQuery {
+	return &EvidenceAnchorQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEvidenceAnchor},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EvidenceAnchor entity by its id.
+func (c *EvidenceAnchorClient) Get(ctx context.Context, id int) (*EvidenceAnchor, error) {
+	return c.Query().Where(evidenceanchor.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EvidenceAnchorClient) GetX(ctx context.Context, id int) *EvidenceAnchor {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySourceObservation queries the source_observation edge of a EvidenceAnchor.
+func (c *EvidenceAnchorClient) QuerySourceObservation(_m *EvidenceAnchor) *SourceObservationQuery {
+	query := (&SourceObservationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceanchor.Table, evidenceanchor.FieldID, id),
+			sqlgraph.To(sourceobservation.Table, sourceobservation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, evidenceanchor.SourceObservationTable, evidenceanchor.SourceObservationColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEvidences queries the evidences edge of a EvidenceAnchor.
+func (c *EvidenceAnchorClient) QueryEvidences(_m *EvidenceAnchor) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceanchor.Table, evidenceanchor.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, evidenceanchor.EvidencesTable, evidenceanchor.EvidencesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EvidenceAnchorClient) Hooks() []Hook {
+	return c.hooks.EvidenceAnchor
+}
+
+// Interceptors returns the client interceptors.
+func (c *EvidenceAnchorClient) Interceptors() []Interceptor {
+	return c.inters.EvidenceAnchor
+}
+
+func (c *EvidenceAnchorClient) mutate(ctx context.Context, m *EvidenceAnchorMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EvidenceAnchorCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EvidenceAnchorUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EvidenceAnchorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EvidenceAnchorDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EvidenceAnchor mutation op: %q", m.Op())
+	}
+}
+
+// ExternalIdentityClient is a client for the ExternalIdentity schema.
+type ExternalIdentityClient struct {
+	config
+}
+
+// NewExternalIdentityClient returns a client for the ExternalIdentity from the given config.
+func NewExternalIdentityClient(c config) *ExternalIdentityClient {
+	return &ExternalIdentityClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `externalidentity.Hooks(f(g(h())))`.
+func (c *ExternalIdentityClient) Use(hooks ...Hook) {
+	c.hooks.ExternalIdentity = append(c.hooks.ExternalIdentity, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `externalidentity.Intercept(f(g(h())))`.
+func (c *ExternalIdentityClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ExternalIdentity = append(c.inters.ExternalIdentity, interceptors...)
+}
+
+// Create returns a builder for creating a ExternalIdentity entity.
+func (c *ExternalIdentityClient) Create() *ExternalIdentityCreate {
+	mutation := newExternalIdentityMutation(c.config, OpCreate)
+	return &ExternalIdentityCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ExternalIdentity entities.
+func (c *ExternalIdentityClient) CreateBulk(builders ...*ExternalIdentityCreate) *ExternalIdentityCreateBulk {
+	return &ExternalIdentityCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ExternalIdentityClient) MapCreateBulk(slice any, setFunc func(*ExternalIdentityCreate, int)) *ExternalIdentityCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ExternalIdentityCreateBulk{err: fmt.Errorf("calling to ExternalIdentityClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ExternalIdentityCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ExternalIdentityCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ExternalIdentity.
+func (c *ExternalIdentityClient) Update() *ExternalIdentityUpdate {
+	mutation := newExternalIdentityMutation(c.config, OpUpdate)
+	return &ExternalIdentityUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ExternalIdentityClient) UpdateOne(_m *ExternalIdentity) *ExternalIdentityUpdateOne {
+	mutation := newExternalIdentityMutation(c.config, OpUpdateOne, withExternalIdentity(_m))
+	return &ExternalIdentityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ExternalIdentityClient) UpdateOneID(id int) *ExternalIdentityUpdateOne {
+	mutation := newExternalIdentityMutation(c.config, OpUpdateOne, withExternalIdentityID(id))
+	return &ExternalIdentityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ExternalIdentity.
+func (c *ExternalIdentityClient) Delete() *ExternalIdentityDelete {
+	mutation := newExternalIdentityMutation(c.config, OpDelete)
+	return &ExternalIdentityDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ExternalIdentityClient) DeleteOne(_m *ExternalIdentity) *ExternalIdentityDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ExternalIdentityClient) DeleteOneID(id int) *ExternalIdentityDeleteOne {
+	builder := c.Delete().Where(externalidentity.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ExternalIdentityDeleteOne{builder}
+}
+
+// Query returns a query builder for ExternalIdentity.
+func (c *ExternalIdentityClient) Query() *ExternalIdentityQuery {
+	return &ExternalIdentityQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeExternalIdentity},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ExternalIdentity entity by its id.
+func (c *ExternalIdentityClient) Get(ctx context.Context, id int) (*ExternalIdentity, error) {
+	return c.Query().Where(externalidentity.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ExternalIdentityClient) GetX(ctx context.Context, id int) *ExternalIdentity {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryObservations queries the observations edge of a ExternalIdentity.
+func (c *ExternalIdentityClient) QueryObservations(_m *ExternalIdentity) *SourceObservationQuery {
+	query := (&SourceObservationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(externalidentity.Table, externalidentity.FieldID, id),
+			sqlgraph.To(sourceobservation.Table, sourceobservation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, externalidentity.ObservationsTable, externalidentity.ObservationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReplacedByIdentity queries the replaced_by_identity edge of a ExternalIdentity.
+func (c *ExternalIdentityClient) QueryReplacedByIdentity(_m *ExternalIdentity) *ExternalIdentityQuery {
+	query := (&ExternalIdentityClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(externalidentity.Table, externalidentity.FieldID, id),
+			sqlgraph.To(externalidentity.Table, externalidentity.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, externalidentity.ReplacedByIdentityTable, externalidentity.ReplacedByIdentityColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReplacedIdentities queries the replaced_identities edge of a ExternalIdentity.
+func (c *ExternalIdentityClient) QueryReplacedIdentities(_m *ExternalIdentity) *ExternalIdentityQuery {
+	query := (&ExternalIdentityClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(externalidentity.Table, externalidentity.FieldID, id),
+			sqlgraph.To(externalidentity.Table, externalidentity.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, externalidentity.ReplacedIdentitiesTable, externalidentity.ReplacedIdentitiesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ExternalIdentityClient) Hooks() []Hook {
+	return c.hooks.ExternalIdentity
+}
+
+// Interceptors returns the client interceptors.
+func (c *ExternalIdentityClient) Interceptors() []Interceptor {
+	return c.inters.ExternalIdentity
+}
+
+func (c *ExternalIdentityClient) mutate(ctx context.Context, m *ExternalIdentityMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ExternalIdentityCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ExternalIdentityUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ExternalIdentityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ExternalIdentityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ExternalIdentity mutation op: %q", m.Op())
 	}
 }
 
@@ -1687,6 +2083,336 @@ func (c *PullRequestLensResultClient) mutate(ctx context.Context, m *PullRequest
 		return (&PullRequestLensResultDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown PullRequestLensResult mutation op: %q", m.Op())
+	}
+}
+
+// SourceObservationClient is a client for the SourceObservation schema.
+type SourceObservationClient struct {
+	config
+}
+
+// NewSourceObservationClient returns a client for the SourceObservation from the given config.
+func NewSourceObservationClient(c config) *SourceObservationClient {
+	return &SourceObservationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sourceobservation.Hooks(f(g(h())))`.
+func (c *SourceObservationClient) Use(hooks ...Hook) {
+	c.hooks.SourceObservation = append(c.hooks.SourceObservation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sourceobservation.Intercept(f(g(h())))`.
+func (c *SourceObservationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SourceObservation = append(c.inters.SourceObservation, interceptors...)
+}
+
+// Create returns a builder for creating a SourceObservation entity.
+func (c *SourceObservationClient) Create() *SourceObservationCreate {
+	mutation := newSourceObservationMutation(c.config, OpCreate)
+	return &SourceObservationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SourceObservation entities.
+func (c *SourceObservationClient) CreateBulk(builders ...*SourceObservationCreate) *SourceObservationCreateBulk {
+	return &SourceObservationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SourceObservationClient) MapCreateBulk(slice any, setFunc func(*SourceObservationCreate, int)) *SourceObservationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SourceObservationCreateBulk{err: fmt.Errorf("calling to SourceObservationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SourceObservationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SourceObservationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SourceObservation.
+func (c *SourceObservationClient) Update() *SourceObservationUpdate {
+	mutation := newSourceObservationMutation(c.config, OpUpdate)
+	return &SourceObservationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SourceObservationClient) UpdateOne(_m *SourceObservation) *SourceObservationUpdateOne {
+	mutation := newSourceObservationMutation(c.config, OpUpdateOne, withSourceObservation(_m))
+	return &SourceObservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SourceObservationClient) UpdateOneID(id int) *SourceObservationUpdateOne {
+	mutation := newSourceObservationMutation(c.config, OpUpdateOne, withSourceObservationID(id))
+	return &SourceObservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SourceObservation.
+func (c *SourceObservationClient) Delete() *SourceObservationDelete {
+	mutation := newSourceObservationMutation(c.config, OpDelete)
+	return &SourceObservationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SourceObservationClient) DeleteOne(_m *SourceObservation) *SourceObservationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SourceObservationClient) DeleteOneID(id int) *SourceObservationDeleteOne {
+	builder := c.Delete().Where(sourceobservation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SourceObservationDeleteOne{builder}
+}
+
+// Query returns a query builder for SourceObservation.
+func (c *SourceObservationClient) Query() *SourceObservationQuery {
+	return &SourceObservationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSourceObservation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SourceObservation entity by its id.
+func (c *SourceObservationClient) Get(ctx context.Context, id int) (*SourceObservation, error) {
+	return c.Query().Where(sourceobservation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SourceObservationClient) GetX(ctx context.Context, id int) *SourceObservation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySourceRun queries the source_run edge of a SourceObservation.
+func (c *SourceObservationClient) QuerySourceRun(_m *SourceObservation) *SourceRunQuery {
+	query := (&SourceRunClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sourceobservation.Table, sourceobservation.FieldID, id),
+			sqlgraph.To(sourcerun.Table, sourcerun.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, sourceobservation.SourceRunTable, sourceobservation.SourceRunColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryExternalIdentity queries the external_identity edge of a SourceObservation.
+func (c *SourceObservationClient) QueryExternalIdentity(_m *SourceObservation) *ExternalIdentityQuery {
+	query := (&ExternalIdentityClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sourceobservation.Table, sourceobservation.FieldID, id),
+			sqlgraph.To(externalidentity.Table, externalidentity.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, sourceobservation.ExternalIdentityTable, sourceobservation.ExternalIdentityColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEvidenceAnchors queries the evidence_anchors edge of a SourceObservation.
+func (c *SourceObservationClient) QueryEvidenceAnchors(_m *SourceObservation) *EvidenceAnchorQuery {
+	query := (&EvidenceAnchorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sourceobservation.Table, sourceobservation.FieldID, id),
+			sqlgraph.To(evidenceanchor.Table, evidenceanchor.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, sourceobservation.EvidenceAnchorsTable, sourceobservation.EvidenceAnchorsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SourceObservationClient) Hooks() []Hook {
+	return c.hooks.SourceObservation
+}
+
+// Interceptors returns the client interceptors.
+func (c *SourceObservationClient) Interceptors() []Interceptor {
+	return c.inters.SourceObservation
+}
+
+func (c *SourceObservationClient) mutate(ctx context.Context, m *SourceObservationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SourceObservationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SourceObservationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SourceObservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SourceObservationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SourceObservation mutation op: %q", m.Op())
+	}
+}
+
+// SourceRunClient is a client for the SourceRun schema.
+type SourceRunClient struct {
+	config
+}
+
+// NewSourceRunClient returns a client for the SourceRun from the given config.
+func NewSourceRunClient(c config) *SourceRunClient {
+	return &SourceRunClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `sourcerun.Hooks(f(g(h())))`.
+func (c *SourceRunClient) Use(hooks ...Hook) {
+	c.hooks.SourceRun = append(c.hooks.SourceRun, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `sourcerun.Intercept(f(g(h())))`.
+func (c *SourceRunClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SourceRun = append(c.inters.SourceRun, interceptors...)
+}
+
+// Create returns a builder for creating a SourceRun entity.
+func (c *SourceRunClient) Create() *SourceRunCreate {
+	mutation := newSourceRunMutation(c.config, OpCreate)
+	return &SourceRunCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SourceRun entities.
+func (c *SourceRunClient) CreateBulk(builders ...*SourceRunCreate) *SourceRunCreateBulk {
+	return &SourceRunCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SourceRunClient) MapCreateBulk(slice any, setFunc func(*SourceRunCreate, int)) *SourceRunCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SourceRunCreateBulk{err: fmt.Errorf("calling to SourceRunClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SourceRunCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SourceRunCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SourceRun.
+func (c *SourceRunClient) Update() *SourceRunUpdate {
+	mutation := newSourceRunMutation(c.config, OpUpdate)
+	return &SourceRunUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SourceRunClient) UpdateOne(_m *SourceRun) *SourceRunUpdateOne {
+	mutation := newSourceRunMutation(c.config, OpUpdateOne, withSourceRun(_m))
+	return &SourceRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SourceRunClient) UpdateOneID(id int) *SourceRunUpdateOne {
+	mutation := newSourceRunMutation(c.config, OpUpdateOne, withSourceRunID(id))
+	return &SourceRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SourceRun.
+func (c *SourceRunClient) Delete() *SourceRunDelete {
+	mutation := newSourceRunMutation(c.config, OpDelete)
+	return &SourceRunDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SourceRunClient) DeleteOne(_m *SourceRun) *SourceRunDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SourceRunClient) DeleteOneID(id int) *SourceRunDeleteOne {
+	builder := c.Delete().Where(sourcerun.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SourceRunDeleteOne{builder}
+}
+
+// Query returns a query builder for SourceRun.
+func (c *SourceRunClient) Query() *SourceRunQuery {
+	return &SourceRunQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSourceRun},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SourceRun entity by its id.
+func (c *SourceRunClient) Get(ctx context.Context, id int) (*SourceRun, error) {
+	return c.Query().Where(sourcerun.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SourceRunClient) GetX(ctx context.Context, id int) *SourceRun {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryObservations queries the observations edge of a SourceRun.
+func (c *SourceRunClient) QueryObservations(_m *SourceRun) *SourceObservationQuery {
+	query := (&SourceObservationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(sourcerun.Table, sourcerun.FieldID, id),
+			sqlgraph.To(sourceobservation.Table, sourceobservation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, sourcerun.ObservationsTable, sourcerun.ObservationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SourceRunClient) Hooks() []Hook {
+	return c.hooks.SourceRun
+}
+
+// Interceptors returns the client interceptors.
+func (c *SourceRunClient) Interceptors() []Interceptor {
+	return c.inters.SourceRun
+}
+
+func (c *SourceRunClient) mutate(ctx context.Context, m *SourceRunMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SourceRunCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SourceRunUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SourceRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SourceRunDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SourceRun mutation op: %q", m.Op())
 	}
 }
 
@@ -3413,14 +4139,16 @@ func (c *WorkstreamTicketClient) mutate(ctx context.Context, m *WorkstreamTicket
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Document, DocumentFragment, DocumentLensResult, Evidence, Message,
-		MessageLensResult, Person, PullRequest, PullRequestLensResult, Ticket,
+		Document, DocumentFragment, DocumentLensResult, Evidence, EvidenceAnchor,
+		ExternalIdentity, Message, MessageLensResult, Person, PullRequest,
+		PullRequestLensResult, SourceObservation, SourceRun, Ticket,
 		TicketDocumentFragment, TicketLensResult, TicketMessage, TicketPullRequest,
 		WorkArea, WorkLens, WorkLensWindow, Workstream, WorkstreamTicket []ent.Hook
 	}
 	inters struct {
-		Document, DocumentFragment, DocumentLensResult, Evidence, Message,
-		MessageLensResult, Person, PullRequest, PullRequestLensResult, Ticket,
+		Document, DocumentFragment, DocumentLensResult, Evidence, EvidenceAnchor,
+		ExternalIdentity, Message, MessageLensResult, Person, PullRequest,
+		PullRequestLensResult, SourceObservation, SourceRun, Ticket,
 		TicketDocumentFragment, TicketLensResult, TicketMessage, TicketPullRequest,
 		WorkArea, WorkLens, WorkLensWindow, Workstream,
 		WorkstreamTicket []ent.Interceptor

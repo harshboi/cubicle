@@ -56,6 +56,30 @@ func (f EvidenceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EvidenceMutation", m)
 }
 
+// The EvidenceAnchorFunc type is an adapter to allow the use of ordinary
+// function as EvidenceAnchor mutator.
+type EvidenceAnchorFunc func(context.Context, *ent.EvidenceAnchorMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EvidenceAnchorFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EvidenceAnchorMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EvidenceAnchorMutation", m)
+}
+
+// The ExternalIdentityFunc type is an adapter to allow the use of ordinary
+// function as ExternalIdentity mutator.
+type ExternalIdentityFunc func(context.Context, *ent.ExternalIdentityMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ExternalIdentityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ExternalIdentityMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ExternalIdentityMutation", m)
+}
+
 // The MessageFunc type is an adapter to allow the use of ordinary
 // function as Message mutator.
 type MessageFunc func(context.Context, *ent.MessageMutation) (ent.Value, error)
@@ -114,6 +138,30 @@ func (f PullRequestLensResultFunc) Mutate(ctx context.Context, m ent.Mutation) (
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PullRequestLensResultMutation", m)
+}
+
+// The SourceObservationFunc type is an adapter to allow the use of ordinary
+// function as SourceObservation mutator.
+type SourceObservationFunc func(context.Context, *ent.SourceObservationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SourceObservationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SourceObservationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SourceObservationMutation", m)
+}
+
+// The SourceRunFunc type is an adapter to allow the use of ordinary
+// function as SourceRun mutator.
+type SourceRunFunc func(context.Context, *ent.SourceRunMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SourceRunFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SourceRunMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SourceRunMutation", m)
 }
 
 // The TicketFunc type is an adapter to allow the use of ordinary

@@ -20,6 +20,10 @@ type Tx struct {
 	DocumentLensResult *DocumentLensResultClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
+	// EvidenceAnchor is the client for interacting with the EvidenceAnchor builders.
+	EvidenceAnchor *EvidenceAnchorClient
+	// ExternalIdentity is the client for interacting with the ExternalIdentity builders.
+	ExternalIdentity *ExternalIdentityClient
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
 	// MessageLensResult is the client for interacting with the MessageLensResult builders.
@@ -30,6 +34,10 @@ type Tx struct {
 	PullRequest *PullRequestClient
 	// PullRequestLensResult is the client for interacting with the PullRequestLensResult builders.
 	PullRequestLensResult *PullRequestLensResultClient
+	// SourceObservation is the client for interacting with the SourceObservation builders.
+	SourceObservation *SourceObservationClient
+	// SourceRun is the client for interacting with the SourceRun builders.
+	SourceRun *SourceRunClient
 	// Ticket is the client for interacting with the Ticket builders.
 	Ticket *TicketClient
 	// TicketDocumentFragment is the client for interacting with the TicketDocumentFragment builders.
@@ -185,11 +193,15 @@ func (tx *Tx) init() {
 	tx.DocumentFragment = NewDocumentFragmentClient(tx.config)
 	tx.DocumentLensResult = NewDocumentLensResultClient(tx.config)
 	tx.Evidence = NewEvidenceClient(tx.config)
+	tx.EvidenceAnchor = NewEvidenceAnchorClient(tx.config)
+	tx.ExternalIdentity = NewExternalIdentityClient(tx.config)
 	tx.Message = NewMessageClient(tx.config)
 	tx.MessageLensResult = NewMessageLensResultClient(tx.config)
 	tx.Person = NewPersonClient(tx.config)
 	tx.PullRequest = NewPullRequestClient(tx.config)
 	tx.PullRequestLensResult = NewPullRequestLensResultClient(tx.config)
+	tx.SourceObservation = NewSourceObservationClient(tx.config)
+	tx.SourceRun = NewSourceRunClient(tx.config)
 	tx.Ticket = NewTicketClient(tx.config)
 	tx.TicketDocumentFragment = NewTicketDocumentFragmentClient(tx.config)
 	tx.TicketLensResult = NewTicketLensResultClient(tx.config)

@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/evidenceanchor"
 	"errors"
 	"fmt"
 	"time"
@@ -80,6 +81,20 @@ func (_c *EvidenceCreate) SetSourceUpdatedAt(v time.Time) *EvidenceCreate {
 func (_c *EvidenceCreate) SetNillableSourceUpdatedAt(v *time.Time) *EvidenceCreate {
 	if v != nil {
 		_c.SetSourceUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetEvidenceAnchorID sets the "evidence_anchor_id" field.
+func (_c *EvidenceCreate) SetEvidenceAnchorID(v int) *EvidenceCreate {
+	_c.mutation.SetEvidenceAnchorID(v)
+	return _c
+}
+
+// SetNillableEvidenceAnchorID sets the "evidence_anchor_id" field if the given value is not nil.
+func (_c *EvidenceCreate) SetNillableEvidenceAnchorID(v *int) *EvidenceCreate {
+	if v != nil {
+		_c.SetEvidenceAnchorID(*v)
 	}
 	return _c
 }
@@ -208,6 +223,11 @@ func (_c *EvidenceCreate) SetNillableUpdatedAt(v *time.Time) *EvidenceCreate {
 		_c.SetUpdatedAt(*v)
 	}
 	return _c
+}
+
+// SetEvidenceAnchor sets the "evidence_anchor" edge to the EvidenceAnchor entity.
+func (_c *EvidenceCreate) SetEvidenceAnchor(v *EvidenceAnchor) *EvidenceCreate {
+	return _c.SetEvidenceAnchorID(v.ID)
 }
 
 // Mutation returns the EvidenceMutation object of the builder.
@@ -385,6 +405,23 @@ func (_c *EvidenceCreate) createSpec() (*Evidence, *sqlgraph.CreateSpec) {
 		_spec.SetField(evidence.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
+	if nodes := _c.mutation.EvidenceAnchorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   evidence.EvidenceAnchorTable,
+			Columns: []string{evidence.EvidenceAnchorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(evidenceanchor.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.EvidenceAnchorID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -518,6 +555,24 @@ func (u *EvidenceUpsert) UpdateSourceUpdatedAt() *EvidenceUpsert {
 // ClearSourceUpdatedAt clears the value of the "source_updated_at" field.
 func (u *EvidenceUpsert) ClearSourceUpdatedAt() *EvidenceUpsert {
 	u.SetNull(evidence.FieldSourceUpdatedAt)
+	return u
+}
+
+// SetEvidenceAnchorID sets the "evidence_anchor_id" field.
+func (u *EvidenceUpsert) SetEvidenceAnchorID(v int) *EvidenceUpsert {
+	u.Set(evidence.FieldEvidenceAnchorID, v)
+	return u
+}
+
+// UpdateEvidenceAnchorID sets the "evidence_anchor_id" field to the value that was provided on create.
+func (u *EvidenceUpsert) UpdateEvidenceAnchorID() *EvidenceUpsert {
+	u.SetExcluded(evidence.FieldEvidenceAnchorID)
+	return u
+}
+
+// ClearEvidenceAnchorID clears the value of the "evidence_anchor_id" field.
+func (u *EvidenceUpsert) ClearEvidenceAnchorID() *EvidenceUpsert {
+	u.SetNull(evidence.FieldEvidenceAnchorID)
 	return u
 }
 
@@ -787,6 +842,27 @@ func (u *EvidenceUpsertOne) UpdateSourceUpdatedAt() *EvidenceUpsertOne {
 func (u *EvidenceUpsertOne) ClearSourceUpdatedAt() *EvidenceUpsertOne {
 	return u.Update(func(s *EvidenceUpsert) {
 		s.ClearSourceUpdatedAt()
+	})
+}
+
+// SetEvidenceAnchorID sets the "evidence_anchor_id" field.
+func (u *EvidenceUpsertOne) SetEvidenceAnchorID(v int) *EvidenceUpsertOne {
+	return u.Update(func(s *EvidenceUpsert) {
+		s.SetEvidenceAnchorID(v)
+	})
+}
+
+// UpdateEvidenceAnchorID sets the "evidence_anchor_id" field to the value that was provided on create.
+func (u *EvidenceUpsertOne) UpdateEvidenceAnchorID() *EvidenceUpsertOne {
+	return u.Update(func(s *EvidenceUpsert) {
+		s.UpdateEvidenceAnchorID()
+	})
+}
+
+// ClearEvidenceAnchorID clears the value of the "evidence_anchor_id" field.
+func (u *EvidenceUpsertOne) ClearEvidenceAnchorID() *EvidenceUpsertOne {
+	return u.Update(func(s *EvidenceUpsert) {
+		s.ClearEvidenceAnchorID()
 	})
 }
 
@@ -1243,6 +1319,27 @@ func (u *EvidenceUpsertBulk) UpdateSourceUpdatedAt() *EvidenceUpsertBulk {
 func (u *EvidenceUpsertBulk) ClearSourceUpdatedAt() *EvidenceUpsertBulk {
 	return u.Update(func(s *EvidenceUpsert) {
 		s.ClearSourceUpdatedAt()
+	})
+}
+
+// SetEvidenceAnchorID sets the "evidence_anchor_id" field.
+func (u *EvidenceUpsertBulk) SetEvidenceAnchorID(v int) *EvidenceUpsertBulk {
+	return u.Update(func(s *EvidenceUpsert) {
+		s.SetEvidenceAnchorID(v)
+	})
+}
+
+// UpdateEvidenceAnchorID sets the "evidence_anchor_id" field to the value that was provided on create.
+func (u *EvidenceUpsertBulk) UpdateEvidenceAnchorID() *EvidenceUpsertBulk {
+	return u.Update(func(s *EvidenceUpsert) {
+		s.UpdateEvidenceAnchorID()
+	})
+}
+
+// ClearEvidenceAnchorID clears the value of the "evidence_anchor_id" field.
+func (u *EvidenceUpsertBulk) ClearEvidenceAnchorID() *EvidenceUpsertBulk {
+	return u.Update(func(s *EvidenceUpsert) {
+		s.ClearEvidenceAnchorID()
 	})
 }
 

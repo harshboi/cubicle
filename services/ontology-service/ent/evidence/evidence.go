@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -24,6 +25,8 @@ const (
 	FieldObservedAt = "observed_at"
 	// FieldSourceUpdatedAt holds the string denoting the source_updated_at field in the database.
 	FieldSourceUpdatedAt = "source_updated_at"
+	// FieldEvidenceAnchorID holds the string denoting the evidence_anchor_id field in the database.
+	FieldEvidenceAnchorID = "evidence_anchor_id"
 	// FieldSource holds the string denoting the source field in the database.
 	FieldSource = "source"
 	// FieldSourceInstance holds the string denoting the source_instance field in the database.
@@ -42,8 +45,17 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeEvidenceAnchor holds the string denoting the evidence_anchor edge name in mutations.
+	EdgeEvidenceAnchor = "evidence_anchor"
 	// Table holds the table name of the evidence in the database.
 	Table = "evidences"
+	// EvidenceAnchorTable is the table that holds the evidence_anchor relation/edge.
+	EvidenceAnchorTable = "evidences"
+	// EvidenceAnchorInverseTable is the table name for the EvidenceAnchor entity.
+	// It exists in this package in order to avoid circular dependency with the "evidenceanchor" package.
+	EvidenceAnchorInverseTable = "evidence_anchors"
+	// EvidenceAnchorColumn is the table column denoting the evidence_anchor relation/edge.
+	EvidenceAnchorColumn = "evidence_anchor_id"
 )
 
 // Columns holds all SQL columns for evidence fields.
@@ -54,6 +66,7 @@ var Columns = []string{
 	FieldTextHash,
 	FieldObservedAt,
 	FieldSourceUpdatedAt,
+	FieldEvidenceAnchorID,
 	FieldSource,
 	FieldSourceInstance,
 	FieldExternalID,
@@ -178,6 +191,11 @@ func BySourceUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSourceUpdatedAt, opts...).ToFunc()
 }
 
+// ByEvidenceAnchorID orders the results by the evidence_anchor_id field.
+func ByEvidenceAnchorID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEvidenceAnchorID, opts...).ToFunc()
+}
+
 // BySource orders the results by the source field.
 func BySource(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSource, opts...).ToFunc()
@@ -221,4 +239,18 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByEvidenceAnchorField orders the results by evidence_anchor field.
+func ByEvidenceAnchorField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEvidenceAnchorStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newEvidenceAnchorStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EvidenceAnchorInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, EvidenceAnchorTable, EvidenceAnchorColumn),
+	)
 }

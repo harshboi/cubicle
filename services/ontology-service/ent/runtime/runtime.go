@@ -7,12 +7,16 @@ import (
 	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/evidenceanchor"
+	"cubicle/services/ontology-service/ent/externalidentity"
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/messagelensresult"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
 	"cubicle/services/ontology-service/ent/schema"
+	"cubicle/services/ontology-service/ent/sourceobservation"
+	"cubicle/services/ontology-service/ent/sourcerun"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"cubicle/services/ontology-service/ent/ticketlensresult"
@@ -121,19 +125,91 @@ func init() {
 	// evidence.KeyValidator is a validator for the "key" field. It is called by the builders before save.
 	evidence.KeyValidator = evidenceDescKey.Validators[0].(func(string) error)
 	// evidenceDescConfidence is the schema descriptor for confidence field.
-	evidenceDescConfidence := evidenceFields[11].Descriptor()
+	evidenceDescConfidence := evidenceFields[12].Descriptor()
 	// evidence.DefaultConfidence holds the default value on creation for the confidence field.
 	evidence.DefaultConfidence = evidenceDescConfidence.Default.(float64)
 	// evidenceDescCreatedAt is the schema descriptor for created_at field.
-	evidenceDescCreatedAt := evidenceFields[12].Descriptor()
+	evidenceDescCreatedAt := evidenceFields[13].Descriptor()
 	// evidence.DefaultCreatedAt holds the default value on creation for the created_at field.
 	evidence.DefaultCreatedAt = evidenceDescCreatedAt.Default.(func() time.Time)
 	// evidenceDescUpdatedAt is the schema descriptor for updated_at field.
-	evidenceDescUpdatedAt := evidenceFields[13].Descriptor()
+	evidenceDescUpdatedAt := evidenceFields[14].Descriptor()
 	// evidence.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	evidence.DefaultUpdatedAt = evidenceDescUpdatedAt.Default.(func() time.Time)
 	// evidence.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	evidence.UpdateDefaultUpdatedAt = evidenceDescUpdatedAt.UpdateDefault.(func() time.Time)
+	evidenceanchorFields := schema.EvidenceAnchor{}.Fields()
+	_ = evidenceanchorFields
+	// evidenceanchorDescAnchorKind is the schema descriptor for anchor_kind field.
+	evidenceanchorDescAnchorKind := evidenceanchorFields[1].Descriptor()
+	// evidenceanchor.AnchorKindValidator is a validator for the "anchor_kind" field. It is called by the builders before save.
+	evidenceanchor.AnchorKindValidator = evidenceanchorDescAnchorKind.Validators[0].(func(string) error)
+	// evidenceanchorDescAnchorLocator is the schema descriptor for anchor_locator field.
+	evidenceanchorDescAnchorLocator := evidenceanchorFields[2].Descriptor()
+	// evidenceanchor.AnchorLocatorValidator is a validator for the "anchor_locator" field. It is called by the builders before save.
+	evidenceanchor.AnchorLocatorValidator = evidenceanchorDescAnchorLocator.Validators[0].(func(string) error)
+	// evidenceanchorDescSourceSpanKey is the schema descriptor for source_span_key field.
+	evidenceanchorDescSourceSpanKey := evidenceanchorFields[3].Descriptor()
+	// evidenceanchor.SourceSpanKeyValidator is a validator for the "source_span_key" field. It is called by the builders before save.
+	evidenceanchor.SourceSpanKeyValidator = evidenceanchorDescSourceSpanKey.Validators[0].(func(string) error)
+	// evidenceanchorDescTextHash is the schema descriptor for text_hash field.
+	evidenceanchorDescTextHash := evidenceanchorFields[5].Descriptor()
+	// evidenceanchor.TextHashValidator is a validator for the "text_hash" field. It is called by the builders before save.
+	evidenceanchor.TextHashValidator = evidenceanchorDescTextHash.Validators[0].(func(string) error)
+	// evidenceanchorDescTextPreview is the schema descriptor for text_preview field.
+	evidenceanchorDescTextPreview := evidenceanchorFields[6].Descriptor()
+	// evidenceanchor.TextPreviewValidator is a validator for the "text_preview" field. It is called by the builders before save.
+	evidenceanchor.TextPreviewValidator = evidenceanchorDescTextPreview.Validators[0].(func(string) error)
+	// evidenceanchorDescTextPreviewTruncated is the schema descriptor for text_preview_truncated field.
+	evidenceanchorDescTextPreviewTruncated := evidenceanchorFields[7].Descriptor()
+	// evidenceanchor.DefaultTextPreviewTruncated holds the default value on creation for the text_preview_truncated field.
+	evidenceanchor.DefaultTextPreviewTruncated = evidenceanchorDescTextPreviewTruncated.Default.(bool)
+	// evidenceanchorDescLexicalFingerprint is the schema descriptor for lexical_fingerprint field.
+	evidenceanchorDescLexicalFingerprint := evidenceanchorFields[8].Descriptor()
+	// evidenceanchor.LexicalFingerprintValidator is a validator for the "lexical_fingerprint" field. It is called by the builders before save.
+	evidenceanchor.LexicalFingerprintValidator = evidenceanchorDescLexicalFingerprint.Validators[0].(func(string) error)
+	// evidenceanchorDescCreatedAt is the schema descriptor for created_at field.
+	evidenceanchorDescCreatedAt := evidenceanchorFields[9].Descriptor()
+	// evidenceanchor.DefaultCreatedAt holds the default value on creation for the created_at field.
+	evidenceanchor.DefaultCreatedAt = evidenceanchorDescCreatedAt.Default.(func() time.Time)
+	// evidenceanchorDescUpdatedAt is the schema descriptor for updated_at field.
+	evidenceanchorDescUpdatedAt := evidenceanchorFields[10].Descriptor()
+	// evidenceanchor.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	evidenceanchor.DefaultUpdatedAt = evidenceanchorDescUpdatedAt.Default.(func() time.Time)
+	// evidenceanchor.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	evidenceanchor.UpdateDefaultUpdatedAt = evidenceanchorDescUpdatedAt.UpdateDefault.(func() time.Time)
+	externalidentityFields := schema.ExternalIdentity{}.Fields()
+	_ = externalidentityFields
+	// externalidentityDescTargetKind is the schema descriptor for target_kind field.
+	externalidentityDescTargetKind := externalidentityFields[0].Descriptor()
+	// externalidentity.TargetKindValidator is a validator for the "target_kind" field. It is called by the builders before save.
+	externalidentity.TargetKindValidator = externalidentityDescTargetKind.Validators[0].(func(string) error)
+	// externalidentityDescSourceKey is the schema descriptor for source_key field.
+	externalidentityDescSourceKey := externalidentityFields[2].Descriptor()
+	// externalidentity.SourceKeyValidator is a validator for the "source_key" field. It is called by the builders before save.
+	externalidentity.SourceKeyValidator = externalidentityDescSourceKey.Validators[0].(func(string) error)
+	// externalidentityDescSourceInstance is the schema descriptor for source_instance field.
+	externalidentityDescSourceInstance := externalidentityFields[3].Descriptor()
+	// externalidentity.SourceInstanceValidator is a validator for the "source_instance" field. It is called by the builders before save.
+	externalidentity.SourceInstanceValidator = externalidentityDescSourceInstance.Validators[0].(func(string) error)
+	// externalidentityDescExternalKind is the schema descriptor for external_kind field.
+	externalidentityDescExternalKind := externalidentityFields[4].Descriptor()
+	// externalidentity.ExternalKindValidator is a validator for the "external_kind" field. It is called by the builders before save.
+	externalidentity.ExternalKindValidator = externalidentityDescExternalKind.Validators[0].(func(string) error)
+	// externalidentityDescExternalID is the schema descriptor for external_id field.
+	externalidentityDescExternalID := externalidentityFields[5].Descriptor()
+	// externalidentity.ExternalIDValidator is a validator for the "external_id" field. It is called by the builders before save.
+	externalidentity.ExternalIDValidator = externalidentityDescExternalID.Validators[0].(func(string) error)
+	// externalidentityDescCreatedAt is the schema descriptor for created_at field.
+	externalidentityDescCreatedAt := externalidentityFields[10].Descriptor()
+	// externalidentity.DefaultCreatedAt holds the default value on creation for the created_at field.
+	externalidentity.DefaultCreatedAt = externalidentityDescCreatedAt.Default.(func() time.Time)
+	// externalidentityDescUpdatedAt is the schema descriptor for updated_at field.
+	externalidentityDescUpdatedAt := externalidentityFields[11].Descriptor()
+	// externalidentity.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	externalidentity.DefaultUpdatedAt = externalidentityDescUpdatedAt.Default.(func() time.Time)
+	// externalidentity.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	externalidentity.UpdateDefaultUpdatedAt = externalidentityDescUpdatedAt.UpdateDefault.(func() time.Time)
 	messageFields := schema.Message{}.Fields()
 	_ = messageFields
 	// messageDescKey is the schema descriptor for key field.
@@ -274,6 +350,74 @@ func init() {
 	pullrequestlensresult.DefaultUpdatedAt = pullrequestlensresultDescUpdatedAt.Default.(func() time.Time)
 	// pullrequestlensresult.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	pullrequestlensresult.UpdateDefaultUpdatedAt = pullrequestlensresultDescUpdatedAt.UpdateDefault.(func() time.Time)
+	sourceobservationFields := schema.SourceObservation{}.Fields()
+	_ = sourceobservationFields
+	// sourceobservationDescObservedKind is the schema descriptor for observed_kind field.
+	sourceobservationDescObservedKind := sourceobservationFields[2].Descriptor()
+	// sourceobservation.ObservedKindValidator is a validator for the "observed_kind" field. It is called by the builders before save.
+	sourceobservation.ObservedKindValidator = sourceobservationDescObservedKind.Validators[0].(func(string) error)
+	// sourceobservationDescIsDeleted is the schema descriptor for is_deleted field.
+	sourceobservationDescIsDeleted := sourceobservationFields[5].Descriptor()
+	// sourceobservation.DefaultIsDeleted holds the default value on creation for the is_deleted field.
+	sourceobservation.DefaultIsDeleted = sourceobservationDescIsDeleted.Default.(bool)
+	// sourceobservationDescPermissionPolicyKey is the schema descriptor for permission_policy_key field.
+	sourceobservationDescPermissionPolicyKey := sourceobservationFields[7].Descriptor()
+	// sourceobservation.DefaultPermissionPolicyKey holds the default value on creation for the permission_policy_key field.
+	sourceobservation.DefaultPermissionPolicyKey = sourceobservationDescPermissionPolicyKey.Default.(string)
+	// sourceobservation.PermissionPolicyKeyValidator is a validator for the "permission_policy_key" field. It is called by the builders before save.
+	sourceobservation.PermissionPolicyKeyValidator = sourceobservationDescPermissionPolicyKey.Validators[0].(func(string) error)
+	// sourceobservationDescVisibilityHash is the schema descriptor for visibility_hash field.
+	sourceobservationDescVisibilityHash := sourceobservationFields[8].Descriptor()
+	// sourceobservation.DefaultVisibilityHash holds the default value on creation for the visibility_hash field.
+	sourceobservation.DefaultVisibilityHash = sourceobservationDescVisibilityHash.Default.(string)
+	// sourceobservation.VisibilityHashValidator is a validator for the "visibility_hash" field. It is called by the builders before save.
+	sourceobservation.VisibilityHashValidator = sourceobservationDescVisibilityHash.Validators[0].(func(string) error)
+	// sourceobservationDescContentHash is the schema descriptor for content_hash field.
+	sourceobservationDescContentHash := sourceobservationFields[10].Descriptor()
+	// sourceobservation.ContentHashValidator is a validator for the "content_hash" field. It is called by the builders before save.
+	sourceobservation.ContentHashValidator = sourceobservationDescContentHash.Validators[0].(func(string) error)
+	// sourceobservationDescCreatedAt is the schema descriptor for created_at field.
+	sourceobservationDescCreatedAt := sourceobservationFields[11].Descriptor()
+	// sourceobservation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	sourceobservation.DefaultCreatedAt = sourceobservationDescCreatedAt.Default.(func() time.Time)
+	// sourceobservationDescUpdatedAt is the schema descriptor for updated_at field.
+	sourceobservationDescUpdatedAt := sourceobservationFields[12].Descriptor()
+	// sourceobservation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	sourceobservation.DefaultUpdatedAt = sourceobservationDescUpdatedAt.Default.(func() time.Time)
+	// sourceobservation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	sourceobservation.UpdateDefaultUpdatedAt = sourceobservationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	sourcerunFields := schema.SourceRun{}.Fields()
+	_ = sourcerunFields
+	// sourcerunDescRunKey is the schema descriptor for run_key field.
+	sourcerunDescRunKey := sourcerunFields[0].Descriptor()
+	// sourcerun.RunKeyValidator is a validator for the "run_key" field. It is called by the builders before save.
+	sourcerun.RunKeyValidator = sourcerunDescRunKey.Validators[0].(func(string) error)
+	// sourcerunDescSourceKey is the schema descriptor for source_key field.
+	sourcerunDescSourceKey := sourcerunFields[1].Descriptor()
+	// sourcerun.SourceKeyValidator is a validator for the "source_key" field. It is called by the builders before save.
+	sourcerun.SourceKeyValidator = sourcerunDescSourceKey.Validators[0].(func(string) error)
+	// sourcerunDescSourceInstance is the schema descriptor for source_instance field.
+	sourcerunDescSourceInstance := sourcerunFields[2].Descriptor()
+	// sourcerun.SourceInstanceValidator is a validator for the "source_instance" field. It is called by the builders before save.
+	sourcerun.SourceInstanceValidator = sourcerunDescSourceInstance.Validators[0].(func(string) error)
+	// sourcerunDescScopeKind is the schema descriptor for scope_kind field.
+	sourcerunDescScopeKind := sourcerunFields[3].Descriptor()
+	// sourcerun.ScopeKindValidator is a validator for the "scope_kind" field. It is called by the builders before save.
+	sourcerun.ScopeKindValidator = sourcerunDescScopeKind.Validators[0].(func(string) error)
+	// sourcerunDescScopeKey is the schema descriptor for scope_key field.
+	sourcerunDescScopeKey := sourcerunFields[4].Descriptor()
+	// sourcerun.ScopeKeyValidator is a validator for the "scope_key" field. It is called by the builders before save.
+	sourcerun.ScopeKeyValidator = sourcerunDescScopeKey.Validators[0].(func(string) error)
+	// sourcerunDescCreatedAt is the schema descriptor for created_at field.
+	sourcerunDescCreatedAt := sourcerunFields[13].Descriptor()
+	// sourcerun.DefaultCreatedAt holds the default value on creation for the created_at field.
+	sourcerun.DefaultCreatedAt = sourcerunDescCreatedAt.Default.(func() time.Time)
+	// sourcerunDescUpdatedAt is the schema descriptor for updated_at field.
+	sourcerunDescUpdatedAt := sourcerunFields[14].Descriptor()
+	// sourcerun.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	sourcerun.DefaultUpdatedAt = sourcerunDescUpdatedAt.Default.(func() time.Time)
+	// sourcerun.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	sourcerun.UpdateDefaultUpdatedAt = sourcerunDescUpdatedAt.UpdateDefault.(func() time.Time)
 	ticketFields := schema.Ticket{}.Fields()
 	_ = ticketFields
 	// ticketDescKey is the schema descriptor for key field.

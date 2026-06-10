@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	entschema "entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -34,6 +35,9 @@ func (Evidence) Fields() []ent.Field {
 			field.Time("source_updated_at").
 				Optional().
 				Comment("Source-reported update time for freshness checks."),
+			field.Int("evidence_anchor_id").
+				Optional().
+				Comment("Optional EvidenceAnchor row that contains the exact source span for this graph claim."),
 		},
 		sourceFields(),
 		qualityFields(),
@@ -41,10 +45,21 @@ func (Evidence) Fields() []ent.Field {
 	)
 }
 
+// Edges connects Evidence to the exact source anchor it cites.
+func (Evidence) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.To("evidence_anchor", EvidenceAnchor.Type).
+			Unique().
+			Field("evidence_anchor_id").
+			Comment("Exact source span cited by this evidence row."),
+	}
+}
+
 // Indexes supports citation lookup by source and content hash.
 func (Evidence) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("source", "source_instance"),
 		index.Fields("text_hash"),
+		index.Fields("evidence_anchor_id"),
 	}
 }

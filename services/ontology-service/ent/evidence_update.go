@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/evidenceanchor"
 	"cubicle/services/ontology-service/ent/predicate"
 	"errors"
 	"fmt"
@@ -119,6 +120,26 @@ func (_u *EvidenceUpdate) SetNillableSourceUpdatedAt(v *time.Time) *EvidenceUpda
 // ClearSourceUpdatedAt clears the value of the "source_updated_at" field.
 func (_u *EvidenceUpdate) ClearSourceUpdatedAt() *EvidenceUpdate {
 	_u.mutation.ClearSourceUpdatedAt()
+	return _u
+}
+
+// SetEvidenceAnchorID sets the "evidence_anchor_id" field.
+func (_u *EvidenceUpdate) SetEvidenceAnchorID(v int) *EvidenceUpdate {
+	_u.mutation.SetEvidenceAnchorID(v)
+	return _u
+}
+
+// SetNillableEvidenceAnchorID sets the "evidence_anchor_id" field if the given value is not nil.
+func (_u *EvidenceUpdate) SetNillableEvidenceAnchorID(v *int) *EvidenceUpdate {
+	if v != nil {
+		_u.SetEvidenceAnchorID(*v)
+	}
+	return _u
+}
+
+// ClearEvidenceAnchorID clears the value of the "evidence_anchor_id" field.
+func (_u *EvidenceUpdate) ClearEvidenceAnchorID() *EvidenceUpdate {
+	_u.mutation.ClearEvidenceAnchorID()
 	return _u
 }
 
@@ -257,9 +278,20 @@ func (_u *EvidenceUpdate) SetUpdatedAt(v time.Time) *EvidenceUpdate {
 	return _u
 }
 
+// SetEvidenceAnchor sets the "evidence_anchor" edge to the EvidenceAnchor entity.
+func (_u *EvidenceUpdate) SetEvidenceAnchor(v *EvidenceAnchor) *EvidenceUpdate {
+	return _u.SetEvidenceAnchorID(v.ID)
+}
+
 // Mutation returns the EvidenceMutation object of the builder.
 func (_u *EvidenceUpdate) Mutation() *EvidenceMutation {
 	return _u.mutation
+}
+
+// ClearEvidenceAnchor clears the "evidence_anchor" edge to the EvidenceAnchor entity.
+func (_u *EvidenceUpdate) ClearEvidenceAnchor() *EvidenceUpdate {
+	_u.mutation.ClearEvidenceAnchor()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -396,6 +428,35 @@ func (_u *EvidenceUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(evidence.FieldUpdatedAt, field.TypeTime, value)
 	}
+	if _u.mutation.EvidenceAnchorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   evidence.EvidenceAnchorTable,
+			Columns: []string{evidence.EvidenceAnchorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(evidenceanchor.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EvidenceAnchorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   evidence.EvidenceAnchorTable,
+			Columns: []string{evidence.EvidenceAnchorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(evidenceanchor.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{evidence.Label}
@@ -507,6 +568,26 @@ func (_u *EvidenceUpdateOne) SetNillableSourceUpdatedAt(v *time.Time) *EvidenceU
 // ClearSourceUpdatedAt clears the value of the "source_updated_at" field.
 func (_u *EvidenceUpdateOne) ClearSourceUpdatedAt() *EvidenceUpdateOne {
 	_u.mutation.ClearSourceUpdatedAt()
+	return _u
+}
+
+// SetEvidenceAnchorID sets the "evidence_anchor_id" field.
+func (_u *EvidenceUpdateOne) SetEvidenceAnchorID(v int) *EvidenceUpdateOne {
+	_u.mutation.SetEvidenceAnchorID(v)
+	return _u
+}
+
+// SetNillableEvidenceAnchorID sets the "evidence_anchor_id" field if the given value is not nil.
+func (_u *EvidenceUpdateOne) SetNillableEvidenceAnchorID(v *int) *EvidenceUpdateOne {
+	if v != nil {
+		_u.SetEvidenceAnchorID(*v)
+	}
+	return _u
+}
+
+// ClearEvidenceAnchorID clears the value of the "evidence_anchor_id" field.
+func (_u *EvidenceUpdateOne) ClearEvidenceAnchorID() *EvidenceUpdateOne {
+	_u.mutation.ClearEvidenceAnchorID()
 	return _u
 }
 
@@ -645,9 +726,20 @@ func (_u *EvidenceUpdateOne) SetUpdatedAt(v time.Time) *EvidenceUpdateOne {
 	return _u
 }
 
+// SetEvidenceAnchor sets the "evidence_anchor" edge to the EvidenceAnchor entity.
+func (_u *EvidenceUpdateOne) SetEvidenceAnchor(v *EvidenceAnchor) *EvidenceUpdateOne {
+	return _u.SetEvidenceAnchorID(v.ID)
+}
+
 // Mutation returns the EvidenceMutation object of the builder.
 func (_u *EvidenceUpdateOne) Mutation() *EvidenceMutation {
 	return _u.mutation
+}
+
+// ClearEvidenceAnchor clears the "evidence_anchor" edge to the EvidenceAnchor entity.
+func (_u *EvidenceUpdateOne) ClearEvidenceAnchor() *EvidenceUpdateOne {
+	_u.mutation.ClearEvidenceAnchor()
+	return _u
 }
 
 // Where appends a list predicates to the EvidenceUpdate builder.
@@ -813,6 +905,35 @@ func (_u *EvidenceUpdateOne) sqlSave(ctx context.Context) (_node *Evidence, err 
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(evidence.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.EvidenceAnchorCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   evidence.EvidenceAnchorTable,
+			Columns: []string{evidence.EvidenceAnchorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(evidenceanchor.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EvidenceAnchorIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   evidence.EvidenceAnchorTable,
+			Columns: []string{evidence.EvidenceAnchorColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(evidenceanchor.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Evidence{config: _u.config}
 	_spec.Assign = _node.assignValues

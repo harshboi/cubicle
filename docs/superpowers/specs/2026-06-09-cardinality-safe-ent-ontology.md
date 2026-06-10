@@ -49,18 +49,20 @@ This mirrors the useful part of Meta TAO-style association lists: keep a stable
 object graph, then page and rank bounded association lists before expanding the
 target objects. `WorkLensWindow` adds one more cardinality boundary so a single
 long-lived lens does not become a hot parent for years of messages or document
-activity.
+activity. Source crawl truth lives in the Source Evidence Spine, not in the
+serving windows.
 
 ## Table Model
 
-The schema has 19 tables.
+The schema has 23 tables.
 
 | Group | Tables | Purpose |
 |---|---|---|
 | Core objects | `persons`, `workstreams`, `tickets`, `pull_requests`, `documents`, `document_fragments`, `messages`, `evidences` | Real workplace things and citations. |
-| Cardinality control | `work_areas`, `work_lenses`, `work_lens_windows` | Bounded person graph nodes that organize high-cardinality activity and crawler checkpoints. |
+| Cardinality control | `work_areas`, `work_lenses`, `work_lens_windows` | Bounded person graph nodes that organize high-cardinality activity and serving materialization. |
 | Execution links | `workstream_tickets`, `ticket_pull_requests`, `ticket_document_fragments`, `ticket_messages` | Typed Through edges for operational context. |
 | Lens result links | `document_lens_results`, `pull_request_lens_results`, `ticket_lens_results`, `message_lens_results` | Typed Through edges from lenses to target objects. |
+| Source Evidence Spine | `source_runs`, `external_identities`, `source_observations`, `evidence_anchors` | Crawl coverage, source identity, observed source state, permissions, deletion state, and exact citations. |
 
 ## Person-Centered Topology
 
@@ -129,12 +131,16 @@ event_count
 first_seen_at
 last_activity_at
 rank_score
-source / source_instance / external_id / source_url
 freshness_state
 visibility
 confidence
 created_at / updated_at
 ```
+
+The legacy `source`, `source_instance`, `external_id`, and `source_url` fields
+on object and result rows are display/cache hints. They are not the source of
+truth for identity, crawl coverage, deletion state, permission state, or exact
+citations once the Source Evidence Spine is present.
 
 Efficient read shape:
 
@@ -157,6 +163,48 @@ Person
  |
  +-- target objects
 ```
+
+## Source Evidence Spine
+
+Source facts need different lifecycles than graph-serving rows:
+
+```text
+serving graph                     source evidence spine
+ |                                |
+ +-- WorkLensWindow               +-- SourceRun
+ |   -> bounded read partition    |   -> crawl coverage, cursor, failure status
+ |                                |
+ +-- *LensResult                  +-- ExternalIdentity
+ |   -> ranked relation result    |   -> provider ID, alias, rename, merge, tombstone
+ |                                |
+ +-- Evidence                     +-- SourceObservation
+ |   -> graph-claim support       |   -> observed state, permissions, source hash
+ |                                |
+ +-- target object                +-- EvidenceAnchor
+     -> canonical Cubicle row         -> exact paragraph/message/comment span
+```
+
+The intended evidence read path is:
+
+```text
+Evidence
+ |
+ +-- EvidenceAnchor
+ |
+ +-- SourceObservation
+ |     where is_deleted = false
+ |     where permission_policy_key in viewer policies
+ |     where visibility_hash in viewer visibility set
+ |
+ +-- SourceRun
+       where status = complete
+       or status = partial with an explicit product warning
+```
+
+This keeps the typed ontology graph efficient for product queries while giving
+future search, RAG, and ML flows a citeable source trail. It also prevents
+`WorkLensWindow` from carrying two unrelated meanings: a serving partition and a
+connector crawl checkpoint.
 
 ## Invariants
 

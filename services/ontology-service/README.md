@@ -24,6 +24,8 @@ Ent typed ontology
  |
  +-- Person -> WorkArea -> WorkLens -> WorkLensWindow -> *LensResult -> target
  |
+ +-- SourceRun -> SourceObservation -> EvidenceAnchor -> Evidence
+ |
 v
 SQLite local POC database
 ```
@@ -40,6 +42,7 @@ included now
  +-- Ent runtime startup, migration, and ontology hook registration
  +-- HOCON/env/flag runtime configuration
  +-- typed Ent schemas for the cardinality-safe ontology
+ +-- Source Evidence Spine schemas for source coverage, identity, observations, and citations
 
 deferred
  |
@@ -238,7 +241,7 @@ Person
                      +-- Message
 ```
 
-The schema has 19 ontology tables.
+The schema has 23 ontology tables.
 
 ```text
 core objects
@@ -271,12 +274,62 @@ lens result links
  +-- pull_request_lens_results
  +-- ticket_lens_results
  +-- message_lens_results
+
+source evidence spine
+ |
+ +-- source_runs
+ +-- external_identities
+ +-- source_observations
+ +-- evidence_anchors
 ```
 
 Each `*LensResult` row stores relation metadata, freshness, rank score,
-activity timestamps, source identity, visibility, confidence, and evidence
-counts. Query code should select bounded `WorkLensWindow` rows first, then page
-and rank result rows before loading targets.
+activity timestamps, visibility hints, confidence, and evidence counts. Query
+code should select bounded `WorkLensWindow` rows first, then page and rank
+result rows before loading targets.
+
+Source identity and source-observation authority live in the Source Evidence
+Spine. Existing `source`, `source_instance`, `external_id`, and `source_url`
+fields on object/link rows are local display/cache fields until writers migrate
+to `ExternalIdentity` and `SourceObservation`.
+
+## Source Evidence Spine
+
+```text
+current overloaded fields          source evidence spine
+ |                                  |
+ +-- WorkLensWindow                 +-- SourceRun
+ |   -> serving partition           |   -> crawl coverage and failure authority
+ |                                  |
+ +-- LensResult.source/external_id  +-- ExternalIdentity
+ |   -> display/cache hint          |   -> aliases, moves, merges, deleted IDs
+ |                                  |
+ +-- Evidence.excerpt               +-- SourceObservation
+ |   -> citation text only          |   -> observed state, permissions, content hash
+ |                                  |
+ +-- source_url on target rows      +-- EvidenceAnchor
+     -> open-link hint                  -> exact citeable source span
+```
+
+The read path for evidence-backed answers is explicit:
+
+```text
+Evidence
+ |
+ +-- EvidenceAnchor
+ |     -> exact paragraph, message, comment, or review-comment span
+ |
+ +-- SourceObservation
+ |     where is_deleted = false
+ |     where permission_policy_key and visibility_hash match the viewer
+ |
+ +-- SourceRun
+       where status in complete, optionally partial with a visible warning
+```
+
+This keeps search and LLM answers source-grounded without making arbitrary text
+chunks the canonical graph. `WorkLensWindow` remains a bounded serving/read
+partition; `SourceRun` owns crawl checkpoints and coverage explanation.
 
 ## Current Packages
 
@@ -291,6 +344,18 @@ graph
 
 ent/schema
  |
+ +-- source_run.go
+ |     -> source crawl coverage and checkpoint authority
+ |
+ +-- external_identity.go
+ |     -> source-native IDs mapped to typed Cubicle objects
+ |
+ +-- source_observation.go
+ |     -> observed item state, visibility, deletion, and content hash
+ |
+ +-- evidence_anchor.go
+ |     -> exact citeable spans inside observed source items
+ |
  +-- work_area.go
  |     -> bounded person-owned work domain
  |
@@ -298,7 +363,7 @@ ent/schema
  |     -> bounded saved view under a work area
  |
  +-- work_lens_window.go
- |     -> bounded partition for paging and crawler checkpoints
+ |     -> bounded partition for paging and serving materialization
  |
  +-- *_lens_result.go
        -> metadata-bearing Through edges to targets
@@ -312,6 +377,11 @@ internal/ontologyhooks
  |
  +-- lens_hooks.go
        -> cross-row invariant checks for WorkLens and results
+
+internal/sourcespine
+ |
+ +-- source_spine.go
+       -> source target validation and permission-gated evidence-anchor queries
 
 internal/entstore
  |
@@ -363,7 +433,11 @@ cmd/ontology-service
 
 - Use typed Ent schemas, not durable generic `Object` / `Association` tables.
 - Keep high-cardinality activity behind `WorkLens -> WorkLensWindow -> *LensResult`.
-- Use `WorkLensWindow` for source/time/rank bounded reads and crawler checkpoints.
+- Use `WorkLensWindow` for source/time/rank bounded reads and serving materialization.
+- Use `SourceRun` for source crawl coverage, checkpoints, partial failure, and
+  rate-limit explanation.
+- Use `ExternalIdentity -> SourceObservation -> EvidenceAnchor` for source
+  identity, item state, permissions, deletion, content hashes, and citations.
 - Keep result table endpoint and relation identity immutable.
 - Build runtime writers through `internal/entstore.Open`, which migrates schema
   and installs `ontologyhooks.Register(client)`.
@@ -403,4 +477,8 @@ Person ontology foundation
  +-- Cardinality docs
  |
  +-- Ent runtime + WorkLensWindow cardinality hardening
+ |
+ +-- Graph foundation handoff docs and skill
+ |
+ +-- Source Evidence Spine
 ```

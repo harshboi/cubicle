@@ -86,6 +86,58 @@ func TestMessageLensResultCarriesPagingIndex(t *testing.T) {
 	assertColumn(t, table, "evidence_count")
 }
 
+// TestSourceEvidenceSpineDeclaresCoverageIdentityObservationAndAnchorTables
+// documents the source-neutral provenance spine that later ingestion and query
+// code must use before returning evidence text.
+func TestSourceEvidenceSpineDeclaresCoverageIdentityObservationAndAnchorTables(t *testing.T) {
+	sourceRuns := findTable(t, "source_runs")
+	assertColumn(t, sourceRuns, "run_key")
+	assertColumn(t, sourceRuns, "source_key")
+	assertColumn(t, sourceRuns, "source_instance")
+	assertColumn(t, sourceRuns, "scope_kind")
+	assertColumn(t, sourceRuns, "scope_key")
+	assertColumn(t, sourceRuns, "status")
+	assertColumn(t, sourceRuns, "checkpoint_token")
+	assertUniqueIndexColumns(t, sourceRuns, []string{"source_key", "source_instance", "run_key"})
+	assertIndexColumns(t, sourceRuns, []string{"source_key", "source_instance", "scope_kind", "scope_key", "started_at"})
+
+	externalIdentities := findTable(t, "external_identities")
+	assertColumn(t, externalIdentities, "target_kind")
+	assertColumn(t, externalIdentities, "target_id")
+	assertColumn(t, externalIdentities, "external_kind")
+	assertColumn(t, externalIdentities, "external_id")
+	assertColumn(t, externalIdentities, "identity_status")
+	assertColumn(t, externalIdentities, "replaced_by_identity_id")
+	assertUniqueIndexColumns(t, externalIdentities, []string{"source_key", "source_instance", "external_kind", "external_id"})
+	assertIndexColumns(t, externalIdentities, []string{"target_kind", "target_id", "identity_status"})
+
+	sourceObservations := findTable(t, "source_observations")
+	assertColumn(t, sourceObservations, "source_run_id")
+	assertColumn(t, sourceObservations, "external_identity_id")
+	assertColumn(t, sourceObservations, "observed_kind")
+	assertColumn(t, sourceObservations, "is_deleted")
+	assertColumn(t, sourceObservations, "permission_policy_key")
+	assertColumn(t, sourceObservations, "visibility_hash")
+	assertColumn(t, sourceObservations, "content_hash")
+	assertUniqueIndexColumns(t, sourceObservations, []string{"source_run_id", "external_identity_id"})
+	assertIndexColumns(t, sourceObservations, []string{"permission_policy_key", "visibility_hash"})
+
+	evidenceAnchors := findTable(t, "evidence_anchors")
+	assertColumn(t, evidenceAnchors, "source_observation_id")
+	assertColumn(t, evidenceAnchors, "anchor_kind")
+	assertColumn(t, evidenceAnchors, "anchor_locator")
+	assertColumn(t, evidenceAnchors, "source_span_key")
+	assertColumn(t, evidenceAnchors, "text_hash")
+	assertColumn(t, evidenceAnchors, "text_preview")
+	assertColumn(t, evidenceAnchors, "text_preview_truncated")
+	assertColumn(t, evidenceAnchors, "lexical_fingerprint")
+	assertUniqueIndexColumns(t, evidenceAnchors, []string{"source_observation_id", "anchor_kind", "source_span_key", "text_hash"})
+
+	evidences := findTable(t, "evidences")
+	assertColumn(t, evidences, "evidence_anchor_id")
+	assertIndexColumns(t, evidences, []string{"evidence_anchor_id"})
+}
+
 // TestWorkLensRejectsMismatchedTargetKind proves lens kind is semantic truth.
 func TestWorkLensRejectsMismatchedTargetKind(t *testing.T) {
 	ctx := context.Background()
@@ -171,4 +223,25 @@ func assertIndexColumns(t *testing.T, table *entsqlschema.Table, names []string)
 		}
 	}
 	t.Fatalf("table %q missing index over columns %#v", table.Name, names)
+}
+
+// assertUniqueIndexColumns fails if table does not contain a matching unique index.
+func assertUniqueIndexColumns(t *testing.T, table *entsqlschema.Table, names []string) {
+	t.Helper()
+	for _, idx := range table.Indexes {
+		if !idx.Unique || len(idx.Columns) != len(names) {
+			continue
+		}
+		matches := true
+		for i, column := range idx.Columns {
+			if column.Name != names[i] {
+				matches = false
+				break
+			}
+		}
+		if matches {
+			return
+		}
+	}
+	t.Fatalf("table %q missing unique index over columns %#v", table.Name, names)
 }

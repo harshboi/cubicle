@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -77,6 +78,11 @@ func ObservedAt(v time.Time) predicate.Evidence {
 // SourceUpdatedAt applies equality check predicate on the "source_updated_at" field. It's identical to SourceUpdatedAtEQ.
 func SourceUpdatedAt(v time.Time) predicate.Evidence {
 	return predicate.Evidence(sql.FieldEQ(FieldSourceUpdatedAt, v))
+}
+
+// EvidenceAnchorID applies equality check predicate on the "evidence_anchor_id" field. It's identical to EvidenceAnchorIDEQ.
+func EvidenceAnchorID(v int) predicate.Evidence {
+	return predicate.Evidence(sql.FieldEQ(FieldEvidenceAnchorID, v))
 }
 
 // Source applies equality check predicate on the "source" field. It's identical to SourceEQ.
@@ -427,6 +433,36 @@ func SourceUpdatedAtIsNil() predicate.Evidence {
 // SourceUpdatedAtNotNil applies the NotNil predicate on the "source_updated_at" field.
 func SourceUpdatedAtNotNil() predicate.Evidence {
 	return predicate.Evidence(sql.FieldNotNull(FieldSourceUpdatedAt))
+}
+
+// EvidenceAnchorIDEQ applies the EQ predicate on the "evidence_anchor_id" field.
+func EvidenceAnchorIDEQ(v int) predicate.Evidence {
+	return predicate.Evidence(sql.FieldEQ(FieldEvidenceAnchorID, v))
+}
+
+// EvidenceAnchorIDNEQ applies the NEQ predicate on the "evidence_anchor_id" field.
+func EvidenceAnchorIDNEQ(v int) predicate.Evidence {
+	return predicate.Evidence(sql.FieldNEQ(FieldEvidenceAnchorID, v))
+}
+
+// EvidenceAnchorIDIn applies the In predicate on the "evidence_anchor_id" field.
+func EvidenceAnchorIDIn(vs ...int) predicate.Evidence {
+	return predicate.Evidence(sql.FieldIn(FieldEvidenceAnchorID, vs...))
+}
+
+// EvidenceAnchorIDNotIn applies the NotIn predicate on the "evidence_anchor_id" field.
+func EvidenceAnchorIDNotIn(vs ...int) predicate.Evidence {
+	return predicate.Evidence(sql.FieldNotIn(FieldEvidenceAnchorID, vs...))
+}
+
+// EvidenceAnchorIDIsNil applies the IsNil predicate on the "evidence_anchor_id" field.
+func EvidenceAnchorIDIsNil() predicate.Evidence {
+	return predicate.Evidence(sql.FieldIsNull(FieldEvidenceAnchorID))
+}
+
+// EvidenceAnchorIDNotNil applies the NotNil predicate on the "evidence_anchor_id" field.
+func EvidenceAnchorIDNotNil() predicate.Evidence {
+	return predicate.Evidence(sql.FieldNotNull(FieldEvidenceAnchorID))
 }
 
 // SourceEQ applies the EQ predicate on the "source" field.
@@ -887,6 +923,29 @@ func UpdatedAtLT(v time.Time) predicate.Evidence {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Evidence {
 	return predicate.Evidence(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// HasEvidenceAnchor applies the HasEdge predicate on the "evidence_anchor" edge.
+func HasEvidenceAnchor() predicate.Evidence {
+	return predicate.Evidence(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, EvidenceAnchorTable, EvidenceAnchorColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEvidenceAnchorWith applies the HasEdge predicate on the "evidence_anchor" edge with a given conditions (other predicates).
+func HasEvidenceAnchorWith(preds ...predicate.EvidenceAnchor) predicate.Evidence {
+	return predicate.Evidence(func(s *sql.Selector) {
+		step := newEvidenceAnchorStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

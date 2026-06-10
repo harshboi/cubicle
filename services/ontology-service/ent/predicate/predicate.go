@@ -18,6 +18,12 @@ type DocumentLensResult func(*sql.Selector)
 // Evidence is the predicate function for evidence builders.
 type Evidence func(*sql.Selector)
 
+// EvidenceAnchor is the predicate function for evidenceanchor builders.
+type EvidenceAnchor func(*sql.Selector)
+
+// ExternalIdentity is the predicate function for externalidentity builders.
+type ExternalIdentity func(*sql.Selector)
+
 // Message is the predicate function for message builders.
 type Message func(*sql.Selector)
 
@@ -32,6 +38,12 @@ type PullRequest func(*sql.Selector)
 
 // PullRequestLensResult is the predicate function for pullrequestlensresult builders.
 type PullRequestLensResult func(*sql.Selector)
+
+// SourceObservation is the predicate function for sourceobservation builders.
+type SourceObservation func(*sql.Selector)
+
+// SourceRun is the predicate function for sourcerun builders.
+type SourceRun func(*sql.Selector)
 
 // Ticket is the predicate function for ticket builders.
 type Ticket func(*sql.Selector)

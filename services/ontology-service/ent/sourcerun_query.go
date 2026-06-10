@@ -4,9 +4,10 @@ package ent
 
 import (
 	"context"
-	"cubicle/services/ontology-service/ent/evidence"
-	"cubicle/services/ontology-service/ent/evidenceanchor"
 	"cubicle/services/ontology-service/ent/predicate"
+	"cubicle/services/ontology-service/ent/sourceobservation"
+	"cubicle/services/ontology-service/ent/sourcerun"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -16,53 +17,53 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// EvidenceQuery is the builder for querying Evidence entities.
-type EvidenceQuery struct {
+// SourceRunQuery is the builder for querying SourceRun entities.
+type SourceRunQuery struct {
 	config
-	ctx                *QueryContext
-	order              []evidence.OrderOption
-	inters             []Interceptor
-	predicates         []predicate.Evidence
-	withEvidenceAnchor *EvidenceAnchorQuery
+	ctx              *QueryContext
+	order            []sourcerun.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.SourceRun
+	withObservations *SourceObservationQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the EvidenceQuery builder.
-func (_q *EvidenceQuery) Where(ps ...predicate.Evidence) *EvidenceQuery {
+// Where adds a new predicate for the SourceRunQuery builder.
+func (_q *SourceRunQuery) Where(ps ...predicate.SourceRun) *SourceRunQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *EvidenceQuery) Limit(limit int) *EvidenceQuery {
+func (_q *SourceRunQuery) Limit(limit int) *SourceRunQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *EvidenceQuery) Offset(offset int) *EvidenceQuery {
+func (_q *SourceRunQuery) Offset(offset int) *SourceRunQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *EvidenceQuery) Unique(unique bool) *EvidenceQuery {
+func (_q *SourceRunQuery) Unique(unique bool) *SourceRunQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *EvidenceQuery) Order(o ...evidence.OrderOption) *EvidenceQuery {
+func (_q *SourceRunQuery) Order(o ...sourcerun.OrderOption) *SourceRunQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryEvidenceAnchor chains the current query on the "evidence_anchor" edge.
-func (_q *EvidenceQuery) QueryEvidenceAnchor() *EvidenceAnchorQuery {
-	query := (&EvidenceAnchorClient{config: _q.config}).Query()
+// QueryObservations chains the current query on the "observations" edge.
+func (_q *SourceRunQuery) QueryObservations() *SourceObservationQuery {
+	query := (&SourceObservationClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -72,9 +73,9 @@ func (_q *EvidenceQuery) QueryEvidenceAnchor() *EvidenceAnchorQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(evidence.Table, evidence.FieldID, selector),
-			sqlgraph.To(evidenceanchor.Table, evidenceanchor.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, evidence.EvidenceAnchorTable, evidence.EvidenceAnchorColumn),
+			sqlgraph.From(sourcerun.Table, sourcerun.FieldID, selector),
+			sqlgraph.To(sourceobservation.Table, sourceobservation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, sourcerun.ObservationsTable, sourcerun.ObservationsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -82,21 +83,21 @@ func (_q *EvidenceQuery) QueryEvidenceAnchor() *EvidenceAnchorQuery {
 	return query
 }
 
-// First returns the first Evidence entity from the query.
-// Returns a *NotFoundError when no Evidence was found.
-func (_q *EvidenceQuery) First(ctx context.Context) (*Evidence, error) {
+// First returns the first SourceRun entity from the query.
+// Returns a *NotFoundError when no SourceRun was found.
+func (_q *SourceRunQuery) First(ctx context.Context) (*SourceRun, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{evidence.Label}
+		return nil, &NotFoundError{sourcerun.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *EvidenceQuery) FirstX(ctx context.Context) *Evidence {
+func (_q *SourceRunQuery) FirstX(ctx context.Context) *SourceRun {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -104,22 +105,22 @@ func (_q *EvidenceQuery) FirstX(ctx context.Context) *Evidence {
 	return node
 }
 
-// FirstID returns the first Evidence ID from the query.
-// Returns a *NotFoundError when no Evidence ID was found.
-func (_q *EvidenceQuery) FirstID(ctx context.Context) (id int, err error) {
+// FirstID returns the first SourceRun ID from the query.
+// Returns a *NotFoundError when no SourceRun ID was found.
+func (_q *SourceRunQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{evidence.Label}
+		err = &NotFoundError{sourcerun.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *EvidenceQuery) FirstIDX(ctx context.Context) int {
+func (_q *SourceRunQuery) FirstIDX(ctx context.Context) int {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -127,10 +128,10 @@ func (_q *EvidenceQuery) FirstIDX(ctx context.Context) int {
 	return id
 }
 
-// Only returns a single Evidence entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Evidence entity is found.
-// Returns a *NotFoundError when no Evidence entities are found.
-func (_q *EvidenceQuery) Only(ctx context.Context) (*Evidence, error) {
+// Only returns a single SourceRun entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one SourceRun entity is found.
+// Returns a *NotFoundError when no SourceRun entities are found.
+func (_q *SourceRunQuery) Only(ctx context.Context) (*SourceRun, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -139,14 +140,14 @@ func (_q *EvidenceQuery) Only(ctx context.Context) (*Evidence, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{evidence.Label}
+		return nil, &NotFoundError{sourcerun.Label}
 	default:
-		return nil, &NotSingularError{evidence.Label}
+		return nil, &NotSingularError{sourcerun.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *EvidenceQuery) OnlyX(ctx context.Context) *Evidence {
+func (_q *SourceRunQuery) OnlyX(ctx context.Context) *SourceRun {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -154,10 +155,10 @@ func (_q *EvidenceQuery) OnlyX(ctx context.Context) *Evidence {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Evidence ID in the query.
-// Returns a *NotSingularError when more than one Evidence ID is found.
+// OnlyID is like Only, but returns the only SourceRun ID in the query.
+// Returns a *NotSingularError when more than one SourceRun ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *EvidenceQuery) OnlyID(ctx context.Context) (id int, err error) {
+func (_q *SourceRunQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -166,15 +167,15 @@ func (_q *EvidenceQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{evidence.Label}
+		err = &NotFoundError{sourcerun.Label}
 	default:
-		err = &NotSingularError{evidence.Label}
+		err = &NotSingularError{sourcerun.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *EvidenceQuery) OnlyIDX(ctx context.Context) int {
+func (_q *SourceRunQuery) OnlyIDX(ctx context.Context) int {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -182,18 +183,18 @@ func (_q *EvidenceQuery) OnlyIDX(ctx context.Context) int {
 	return id
 }
 
-// All executes the query and returns a list of Evidences.
-func (_q *EvidenceQuery) All(ctx context.Context) ([]*Evidence, error) {
+// All executes the query and returns a list of SourceRuns.
+func (_q *SourceRunQuery) All(ctx context.Context) ([]*SourceRun, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Evidence, *EvidenceQuery]()
-	return withInterceptors[[]*Evidence](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*SourceRun, *SourceRunQuery]()
+	return withInterceptors[[]*SourceRun](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *EvidenceQuery) AllX(ctx context.Context) []*Evidence {
+func (_q *SourceRunQuery) AllX(ctx context.Context) []*SourceRun {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -201,20 +202,20 @@ func (_q *EvidenceQuery) AllX(ctx context.Context) []*Evidence {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Evidence IDs.
-func (_q *EvidenceQuery) IDs(ctx context.Context) (ids []int, err error) {
+// IDs executes the query and returns a list of SourceRun IDs.
+func (_q *SourceRunQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(evidence.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(sourcerun.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *EvidenceQuery) IDsX(ctx context.Context) []int {
+func (_q *SourceRunQuery) IDsX(ctx context.Context) []int {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -223,16 +224,16 @@ func (_q *EvidenceQuery) IDsX(ctx context.Context) []int {
 }
 
 // Count returns the count of the given query.
-func (_q *EvidenceQuery) Count(ctx context.Context) (int, error) {
+func (_q *SourceRunQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*EvidenceQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*SourceRunQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *EvidenceQuery) CountX(ctx context.Context) int {
+func (_q *SourceRunQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -241,7 +242,7 @@ func (_q *EvidenceQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *EvidenceQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *SourceRunQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -254,7 +255,7 @@ func (_q *EvidenceQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *EvidenceQuery) ExistX(ctx context.Context) bool {
+func (_q *SourceRunQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -262,33 +263,33 @@ func (_q *EvidenceQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the EvidenceQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the SourceRunQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *EvidenceQuery) Clone() *EvidenceQuery {
+func (_q *SourceRunQuery) Clone() *SourceRunQuery {
 	if _q == nil {
 		return nil
 	}
-	return &EvidenceQuery{
-		config:             _q.config,
-		ctx:                _q.ctx.Clone(),
-		order:              append([]evidence.OrderOption{}, _q.order...),
-		inters:             append([]Interceptor{}, _q.inters...),
-		predicates:         append([]predicate.Evidence{}, _q.predicates...),
-		withEvidenceAnchor: _q.withEvidenceAnchor.Clone(),
+	return &SourceRunQuery{
+		config:           _q.config,
+		ctx:              _q.ctx.Clone(),
+		order:            append([]sourcerun.OrderOption{}, _q.order...),
+		inters:           append([]Interceptor{}, _q.inters...),
+		predicates:       append([]predicate.SourceRun{}, _q.predicates...),
+		withObservations: _q.withObservations.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithEvidenceAnchor tells the query-builder to eager-load the nodes that are connected to
-// the "evidence_anchor" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *EvidenceQuery) WithEvidenceAnchor(opts ...func(*EvidenceAnchorQuery)) *EvidenceQuery {
-	query := (&EvidenceAnchorClient{config: _q.config}).Query()
+// WithObservations tells the query-builder to eager-load the nodes that are connected to
+// the "observations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *SourceRunQuery) WithObservations(opts ...func(*SourceObservationQuery)) *SourceRunQuery {
+	query := (&SourceObservationClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withEvidenceAnchor = query
+	_q.withObservations = query
 	return _q
 }
 
@@ -298,19 +299,19 @@ func (_q *EvidenceQuery) WithEvidenceAnchor(opts ...func(*EvidenceAnchorQuery)) 
 // Example:
 //
 //	var v []struct {
-//		Key string `json:"key,omitempty"`
+//		RunKey string `json:"run_key,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Evidence.Query().
-//		GroupBy(evidence.FieldKey).
+//	client.SourceRun.Query().
+//		GroupBy(sourcerun.FieldRunKey).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *EvidenceQuery) GroupBy(field string, fields ...string) *EvidenceGroupBy {
+func (_q *SourceRunQuery) GroupBy(field string, fields ...string) *SourceRunGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &EvidenceGroupBy{build: _q}
+	grbuild := &SourceRunGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = evidence.Label
+	grbuild.label = sourcerun.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -321,26 +322,26 @@ func (_q *EvidenceQuery) GroupBy(field string, fields ...string) *EvidenceGroupB
 // Example:
 //
 //	var v []struct {
-//		Key string `json:"key,omitempty"`
+//		RunKey string `json:"run_key,omitempty"`
 //	}
 //
-//	client.Evidence.Query().
-//		Select(evidence.FieldKey).
+//	client.SourceRun.Query().
+//		Select(sourcerun.FieldRunKey).
 //		Scan(ctx, &v)
-func (_q *EvidenceQuery) Select(fields ...string) *EvidenceSelect {
+func (_q *SourceRunQuery) Select(fields ...string) *SourceRunSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &EvidenceSelect{EvidenceQuery: _q}
-	sbuild.label = evidence.Label
+	sbuild := &SourceRunSelect{SourceRunQuery: _q}
+	sbuild.label = sourcerun.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a EvidenceSelect configured with the given aggregations.
-func (_q *EvidenceQuery) Aggregate(fns ...AggregateFunc) *EvidenceSelect {
+// Aggregate returns a SourceRunSelect configured with the given aggregations.
+func (_q *SourceRunQuery) Aggregate(fns ...AggregateFunc) *SourceRunSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *EvidenceQuery) prepareQuery(ctx context.Context) error {
+func (_q *SourceRunQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -352,7 +353,7 @@ func (_q *EvidenceQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !evidence.ValidColumn(f) {
+		if !sourcerun.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -366,19 +367,19 @@ func (_q *EvidenceQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *EvidenceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Evidence, error) {
+func (_q *SourceRunQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*SourceRun, error) {
 	var (
-		nodes       = []*Evidence{}
+		nodes       = []*SourceRun{}
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
-			_q.withEvidenceAnchor != nil,
+			_q.withObservations != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Evidence).scanValues(nil, columns)
+		return (*SourceRun).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Evidence{config: _q.config}
+		node := &SourceRun{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -392,46 +393,48 @@ func (_q *EvidenceQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Evi
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withEvidenceAnchor; query != nil {
-		if err := _q.loadEvidenceAnchor(ctx, query, nodes, nil,
-			func(n *Evidence, e *EvidenceAnchor) { n.Edges.EvidenceAnchor = e }); err != nil {
+	if query := _q.withObservations; query != nil {
+		if err := _q.loadObservations(ctx, query, nodes,
+			func(n *SourceRun) { n.Edges.Observations = []*SourceObservation{} },
+			func(n *SourceRun, e *SourceObservation) { n.Edges.Observations = append(n.Edges.Observations, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *EvidenceQuery) loadEvidenceAnchor(ctx context.Context, query *EvidenceAnchorQuery, nodes []*Evidence, init func(*Evidence), assign func(*Evidence, *EvidenceAnchor)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Evidence)
+func (_q *SourceRunQuery) loadObservations(ctx context.Context, query *SourceObservationQuery, nodes []*SourceRun, init func(*SourceRun), assign func(*SourceRun, *SourceObservation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*SourceRun)
 	for i := range nodes {
-		fk := nodes[i].EvidenceAnchorID
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
 		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(ids) == 0 {
-		return nil
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(sourceobservation.FieldSourceRunID)
 	}
-	query.Where(evidenceanchor.IDIn(ids...))
+	query.Where(predicate.SourceObservation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(sourcerun.ObservationsColumn), fks...))
+	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		fk := n.SourceRunID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "evidence_anchor_id" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "source_run_id" returned %v for node %v`, fk, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
+		assign(node, n)
 	}
 	return nil
 }
 
-func (_q *EvidenceQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *SourceRunQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -440,8 +443,8 @@ func (_q *EvidenceQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *EvidenceQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(evidence.Table, evidence.Columns, sqlgraph.NewFieldSpec(evidence.FieldID, field.TypeInt))
+func (_q *SourceRunQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(sourcerun.Table, sourcerun.Columns, sqlgraph.NewFieldSpec(sourcerun.FieldID, field.TypeInt))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -450,14 +453,11 @@ func (_q *EvidenceQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, evidence.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, sourcerun.FieldID)
 		for i := range fields {
-			if fields[i] != evidence.FieldID {
+			if fields[i] != sourcerun.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
-		}
-		if _q.withEvidenceAnchor != nil {
-			_spec.Node.AddColumnOnce(evidence.FieldEvidenceAnchorID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -483,12 +483,12 @@ func (_q *EvidenceQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *EvidenceQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *SourceRunQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(evidence.Table)
+	t1 := builder.Table(sourcerun.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = evidence.Columns
+		columns = sourcerun.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -515,28 +515,28 @@ func (_q *EvidenceQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// EvidenceGroupBy is the group-by builder for Evidence entities.
-type EvidenceGroupBy struct {
+// SourceRunGroupBy is the group-by builder for SourceRun entities.
+type SourceRunGroupBy struct {
 	selector
-	build *EvidenceQuery
+	build *SourceRunQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *EvidenceGroupBy) Aggregate(fns ...AggregateFunc) *EvidenceGroupBy {
+func (_g *SourceRunGroupBy) Aggregate(fns ...AggregateFunc) *SourceRunGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *EvidenceGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *SourceRunGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*EvidenceQuery, *EvidenceGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*SourceRunQuery, *SourceRunGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *EvidenceGroupBy) sqlScan(ctx context.Context, root *EvidenceQuery, v any) error {
+func (_g *SourceRunGroupBy) sqlScan(ctx context.Context, root *SourceRunQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -563,28 +563,28 @@ func (_g *EvidenceGroupBy) sqlScan(ctx context.Context, root *EvidenceQuery, v a
 	return sql.ScanSlice(rows, v)
 }
 
-// EvidenceSelect is the builder for selecting fields of Evidence entities.
-type EvidenceSelect struct {
-	*EvidenceQuery
+// SourceRunSelect is the builder for selecting fields of SourceRun entities.
+type SourceRunSelect struct {
+	*SourceRunQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *EvidenceSelect) Aggregate(fns ...AggregateFunc) *EvidenceSelect {
+func (_s *SourceRunSelect) Aggregate(fns ...AggregateFunc) *SourceRunSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *EvidenceSelect) Scan(ctx context.Context, v any) error {
+func (_s *SourceRunSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*EvidenceQuery, *EvidenceSelect](ctx, _s.EvidenceQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*SourceRunQuery, *SourceRunSelect](ctx, _s.SourceRunQuery, _s, _s.inters, v)
 }
 
-func (_s *EvidenceSelect) sqlScan(ctx context.Context, root *EvidenceQuery, v any) error {
+func (_s *SourceRunSelect) sqlScan(ctx context.Context, root *SourceRunQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

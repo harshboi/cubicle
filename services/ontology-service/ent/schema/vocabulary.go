@@ -95,12 +95,40 @@ const (
 	documentKindSpec     = "spec"       // documentKindSpec means the document is an explicit design or requirements spec.
 )
 
+const (
+	sourceRunStatusRunning     = "running"      // sourceRunStatusRunning means a connector pass is open or not yet terminal.
+	sourceRunStatusComplete    = "complete"     // sourceRunStatusComplete means the declared source scope was fully crawled.
+	sourceRunStatusPartial     = "partial"      // sourceRunStatusPartial means Cubicle saw some data but not the whole declared scope.
+	sourceRunStatusFailed      = "failed"       // sourceRunStatusFailed means the connector pass failed before producing reliable coverage.
+	sourceRunStatusRateLimited = "rate_limited" // sourceRunStatusRateLimited means source API throttling prevented full coverage.
+)
+
+const (
+	identityStatusActive  = "active"  // identityStatusActive means the source identity currently maps to the target object.
+	identityStatusAlias   = "alias"   // identityStatusAlias means the source identity is an alternate name for the target object.
+	identityStatusRetired = "retired" // identityStatusRetired means the source identity is historical but still resolves to the target.
+	identityStatusMerged  = "merged"  // identityStatusMerged means the source identity was merged into another source identity.
+	identityStatusDeleted = "deleted" // identityStatusDeleted means the source identity was deleted or tombstoned.
+)
+
+const (
+	permissionPolicyUnknown = "unknown" // permissionPolicyUnknown means no source permission policy has been resolved yet.
+)
+
 func freshnessValues() []string {
 	return []string{freshnessFresh, freshnessPartial, freshnessStale, freshnessUnknown}
 }
 
 func visibilityValues() []string {
 	return []string{visibilityUnknown, visibilityPublic, visibilityPrivate, visibilityTeam, visibilityRestricted}
+}
+
+func sourceRunStatusValues() []string {
+	return []string{sourceRunStatusRunning, sourceRunStatusComplete, sourceRunStatusPartial, sourceRunStatusFailed, sourceRunStatusRateLimited}
+}
+
+func identityStatusValues() []string {
+	return []string{identityStatusActive, identityStatusAlias, identityStatusRetired, identityStatusMerged, identityStatusDeleted}
 }
 
 func workAreaKindValues() []string {

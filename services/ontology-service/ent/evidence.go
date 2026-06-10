@@ -4,6 +4,7 @@ package ent
 
 import (
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/evidenceanchor"
 	"fmt"
 	"strings"
 	"time"
@@ -27,6 +28,8 @@ type Evidence struct {
 	ObservedAt time.Time `json:"observed_at,omitempty"`
 	// Source-reported update time for freshness checks.
 	SourceUpdatedAt time.Time `json:"source_updated_at,omitempty"`
+	// Optional EvidenceAnchor row that contains the exact source span for this graph claim.
+	EvidenceAnchorID int `json:"evidence_anchor_id,omitempty"`
 	// Source system that produced or most recently confirmed this row.
 	Source string `json:"source,omitempty"`
 	// Concrete source instance, such as a Jira tenant or GitHub repository.
@@ -44,8 +47,31 @@ type Evidence struct {
 	// Time this row was first created in Cubicle storage.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Time this row was last updated in Cubicle storage.
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the EvidenceQuery when eager-loading is set.
+	Edges        EvidenceEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// EvidenceEdges holds the relations/edges for other nodes in the graph.
+type EvidenceEdges struct {
+	// Exact source span cited by this evidence row.
+	EvidenceAnchor *EvidenceAnchor `json:"evidence_anchor,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// EvidenceAnchorOrErr returns the EvidenceAnchor value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EvidenceEdges) EvidenceAnchorOrErr() (*EvidenceAnchor, error) {
+	if e.EvidenceAnchor != nil {
+		return e.EvidenceAnchor, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: evidenceanchor.Label}
+	}
+	return nil, &NotLoadedError{edge: "evidence_anchor"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -55,7 +81,7 @@ func (*Evidence) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case evidence.FieldConfidence:
 			values[i] = new(sql.NullFloat64)
-		case evidence.FieldID:
+		case evidence.FieldID, evidence.FieldEvidenceAnchorID:
 			values[i] = new(sql.NullInt64)
 		case evidence.FieldKey, evidence.FieldExcerpt, evidence.FieldTextHash, evidence.FieldSource, evidence.FieldSourceInstance, evidence.FieldExternalID, evidence.FieldSourceURL, evidence.FieldFreshnessState, evidence.FieldVisibility:
 			values[i] = new(sql.NullString)
@@ -111,6 +137,12 @@ func (_m *Evidence) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field source_updated_at", values[i])
 			} else if value.Valid {
 				_m.SourceUpdatedAt = value.Time
+			}
+		case evidence.FieldEvidenceAnchorID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field evidence_anchor_id", values[i])
+			} else if value.Valid {
+				_m.EvidenceAnchorID = int(value.Int64)
 			}
 		case evidence.FieldSource:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -179,6 +211,11 @@ func (_m *Evidence) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
+// QueryEvidenceAnchor queries the "evidence_anchor" edge of the Evidence entity.
+func (_m *Evidence) QueryEvidenceAnchor() *EvidenceAnchorQuery {
+	return NewEvidenceClient(_m.config).QueryEvidenceAnchor(_m)
+}
+
 // Update returns a builder for updating this Evidence.
 // Note that you need to call Evidence.Unwrap() before calling this method if this Evidence
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -216,6 +253,9 @@ func (_m *Evidence) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("source_updated_at=")
 	builder.WriteString(_m.SourceUpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("evidence_anchor_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.EvidenceAnchorID))
 	builder.WriteString(", ")
 	builder.WriteString("source=")
 	builder.WriteString(_m.Source)

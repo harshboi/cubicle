@@ -191,12 +191,21 @@ var (
 		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "evidence_anchor_id", Type: field.TypeInt, Nullable: true},
 	}
 	// EvidencesTable holds the schema information for the "evidences" table.
 	EvidencesTable = &schema.Table{
 		Name:       "evidences",
 		Columns:    EvidencesColumns,
 		PrimaryKey: []*schema.Column{EvidencesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "evidences_evidence_anchors_evidence_anchor",
+				Columns:    []*schema.Column{EvidencesColumns[15]},
+				RefColumns: []*schema.Column{EvidenceAnchorsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 		Indexes: []*schema.Index{
 			{
 				Name:    "evidence_source_source_instance",
@@ -207,6 +216,99 @@ var (
 				Name:    "evidence_text_hash",
 				Unique:  false,
 				Columns: []*schema.Column{EvidencesColumns[3]},
+			},
+			{
+				Name:    "evidence_evidence_anchor_id",
+				Unique:  false,
+				Columns: []*schema.Column{EvidencesColumns[15]},
+			},
+		},
+	}
+	// EvidenceAnchorsColumns holds the columns for the "evidence_anchors" table.
+	EvidenceAnchorsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "anchor_kind", Type: field.TypeString},
+		{Name: "anchor_locator", Type: field.TypeString},
+		{Name: "source_span_key", Type: field.TypeString},
+		{Name: "ordinal", Type: field.TypeInt, Nullable: true},
+		{Name: "text_hash", Type: field.TypeString},
+		{Name: "text_preview", Type: field.TypeString, Nullable: true, Size: 512},
+		{Name: "text_preview_truncated", Type: field.TypeBool, Default: false},
+		{Name: "lexical_fingerprint", Type: field.TypeString, Nullable: true, Size: 2048},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "source_observation_id", Type: field.TypeInt},
+	}
+	// EvidenceAnchorsTable holds the schema information for the "evidence_anchors" table.
+	EvidenceAnchorsTable = &schema.Table{
+		Name:       "evidence_anchors",
+		Columns:    EvidenceAnchorsColumns,
+		PrimaryKey: []*schema.Column{EvidenceAnchorsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "evidence_anchors_source_observations_evidence_anchors",
+				Columns:    []*schema.Column{EvidenceAnchorsColumns[11]},
+				RefColumns: []*schema.Column{SourceObservationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "evidenceanchor_source_observation_id_anchor_kind_source_span_key_text_hash",
+				Unique:  true,
+				Columns: []*schema.Column{EvidenceAnchorsColumns[11], EvidenceAnchorsColumns[1], EvidenceAnchorsColumns[3], EvidenceAnchorsColumns[5]},
+			},
+			{
+				Name:    "evidenceanchor_source_observation_id_ordinal",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAnchorsColumns[11], EvidenceAnchorsColumns[4]},
+			},
+		},
+	}
+	// ExternalIdentitiesColumns holds the columns for the "external_identities" table.
+	ExternalIdentitiesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "target_kind", Type: field.TypeString},
+		{Name: "target_id", Type: field.TypeInt},
+		{Name: "source_key", Type: field.TypeString},
+		{Name: "source_instance", Type: field.TypeString},
+		{Name: "external_kind", Type: field.TypeString},
+		{Name: "external_id", Type: field.TypeString},
+		{Name: "identity_status", Type: field.TypeEnum, Enums: []string{"active", "alias", "retired", "merged", "deleted"}, Default: "active"},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "replaced_by_identity_id", Type: field.TypeInt, Nullable: true},
+	}
+	// ExternalIdentitiesTable holds the schema information for the "external_identities" table.
+	ExternalIdentitiesTable = &schema.Table{
+		Name:       "external_identities",
+		Columns:    ExternalIdentitiesColumns,
+		PrimaryKey: []*schema.Column{ExternalIdentitiesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "external_identities_external_identities_replaced_by_identity",
+				Columns:    []*schema.Column{ExternalIdentitiesColumns[12]},
+				RefColumns: []*schema.Column{ExternalIdentitiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "externalidentity_source_key_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{ExternalIdentitiesColumns[3], ExternalIdentitiesColumns[4], ExternalIdentitiesColumns[5], ExternalIdentitiesColumns[6]},
+			},
+			{
+				Name:    "externalidentity_target_kind_target_id_identity_status",
+				Unique:  false,
+				Columns: []*schema.Column{ExternalIdentitiesColumns[1], ExternalIdentitiesColumns[2], ExternalIdentitiesColumns[7]},
+			},
+			{
+				Name:    "externalidentity_replaced_by_identity_id",
+				Unique:  false,
+				Columns: []*schema.Column{ExternalIdentitiesColumns[12]},
 			},
 		},
 	}
@@ -516,6 +618,102 @@ var (
 				Name:    "pullrequestlensresult_pull_request_id",
 				Unique:  false,
 				Columns: []*schema.Column{PullRequestLensResultsColumns[16]},
+			},
+		},
+	}
+	// SourceObservationsColumns holds the columns for the "source_observations" table.
+	SourceObservationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "observed_kind", Type: field.TypeString},
+		{Name: "observed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "is_deleted", Type: field.TypeBool, Default: false},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "permission_policy_key", Type: field.TypeString, Default: "unknown"},
+		{Name: "visibility_hash", Type: field.TypeString, Default: "unknown"},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "content_hash", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "external_identity_id", Type: field.TypeInt},
+		{Name: "source_run_id", Type: field.TypeInt},
+	}
+	// SourceObservationsTable holds the schema information for the "source_observations" table.
+	SourceObservationsTable = &schema.Table{
+		Name:       "source_observations",
+		Columns:    SourceObservationsColumns,
+		PrimaryKey: []*schema.Column{SourceObservationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "source_observations_external_identities_observations",
+				Columns:    []*schema.Column{SourceObservationsColumns[12]},
+				RefColumns: []*schema.Column{ExternalIdentitiesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "source_observations_source_runs_observations",
+				Columns:    []*schema.Column{SourceObservationsColumns[13]},
+				RefColumns: []*schema.Column{SourceRunsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "sourceobservation_source_run_id_external_identity_id",
+				Unique:  true,
+				Columns: []*schema.Column{SourceObservationsColumns[13], SourceObservationsColumns[12]},
+			},
+			{
+				Name:    "sourceobservation_external_identity_id_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{SourceObservationsColumns[12], SourceObservationsColumns[2]},
+			},
+			{
+				Name:    "sourceobservation_source_run_id_observed_kind",
+				Unique:  false,
+				Columns: []*schema.Column{SourceObservationsColumns[13], SourceObservationsColumns[1]},
+			},
+			{
+				Name:    "sourceobservation_permission_policy_key_visibility_hash",
+				Unique:  false,
+				Columns: []*schema.Column{SourceObservationsColumns[6], SourceObservationsColumns[7]},
+			},
+		},
+	}
+	// SourceRunsColumns holds the columns for the "source_runs" table.
+	SourceRunsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "run_key", Type: field.TypeString},
+		{Name: "source_key", Type: field.TypeString},
+		{Name: "source_instance", Type: field.TypeString},
+		{Name: "scope_kind", Type: field.TypeString},
+		{Name: "scope_key", Type: field.TypeString},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"running", "complete", "partial", "failed", "rate_limited"}, Default: "running"},
+		{Name: "started_at", Type: field.TypeTime, Nullable: true},
+		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "coverage_start_at", Type: field.TypeTime, Nullable: true},
+		{Name: "coverage_end_at", Type: field.TypeTime, Nullable: true},
+		{Name: "checkpoint_token", Type: field.TypeString, Nullable: true},
+		{Name: "error_code", Type: field.TypeString, Nullable: true},
+		{Name: "error_message", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// SourceRunsTable holds the schema information for the "source_runs" table.
+	SourceRunsTable = &schema.Table{
+		Name:       "source_runs",
+		Columns:    SourceRunsColumns,
+		PrimaryKey: []*schema.Column{SourceRunsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "sourcerun_source_key_source_instance_run_key",
+				Unique:  true,
+				Columns: []*schema.Column{SourceRunsColumns[2], SourceRunsColumns[3], SourceRunsColumns[1]},
+			},
+			{
+				Name:    "sourcerun_source_key_source_instance_scope_kind_scope_key_started_at",
+				Unique:  false,
+				Columns: []*schema.Column{SourceRunsColumns[2], SourceRunsColumns[3], SourceRunsColumns[4], SourceRunsColumns[5], SourceRunsColumns[7]},
 			},
 		},
 	}
@@ -1068,11 +1266,15 @@ var (
 		DocumentFragmentsTable,
 		DocumentLensResultsTable,
 		EvidencesTable,
+		EvidenceAnchorsTable,
+		ExternalIdentitiesTable,
 		MessagesTable,
 		MessageLensResultsTable,
 		PersonsTable,
 		PullRequestsTable,
 		PullRequestLensResultsTable,
+		SourceObservationsTable,
+		SourceRunsTable,
 		TicketsTable,
 		TicketDocumentFragmentsTable,
 		TicketLensResultsTable,
@@ -1092,6 +1294,9 @@ func init() {
 	DocumentLensResultsTable.ForeignKeys[1].RefTable = DocumentsTable
 	DocumentLensResultsTable.ForeignKeys[2].RefTable = EvidencesTable
 	DocumentLensResultsTable.ForeignKeys[3].RefTable = WorkLensWindowsTable
+	EvidencesTable.ForeignKeys[0].RefTable = EvidenceAnchorsTable
+	EvidenceAnchorsTable.ForeignKeys[0].RefTable = SourceObservationsTable
+	ExternalIdentitiesTable.ForeignKeys[0].RefTable = ExternalIdentitiesTable
 	MessageLensResultsTable.ForeignKeys[0].RefTable = WorkLensesTable
 	MessageLensResultsTable.ForeignKeys[1].RefTable = MessagesTable
 	MessageLensResultsTable.ForeignKeys[2].RefTable = EvidencesTable
@@ -1100,6 +1305,8 @@ func init() {
 	PullRequestLensResultsTable.ForeignKeys[1].RefTable = PullRequestsTable
 	PullRequestLensResultsTable.ForeignKeys[2].RefTable = EvidencesTable
 	PullRequestLensResultsTable.ForeignKeys[3].RefTable = WorkLensWindowsTable
+	SourceObservationsTable.ForeignKeys[0].RefTable = ExternalIdentitiesTable
+	SourceObservationsTable.ForeignKeys[1].RefTable = SourceRunsTable
 	TicketDocumentFragmentsTable.ForeignKeys[0].RefTable = TicketsTable
 	TicketDocumentFragmentsTable.ForeignKeys[1].RefTable = DocumentFragmentsTable
 	TicketDocumentFragmentsTable.ForeignKeys[2].RefTable = EvidencesTable
