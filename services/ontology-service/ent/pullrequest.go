@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/pullrequest"
 	"fmt"
 	"strings"
 	"time"
@@ -12,21 +12,23 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// Ticket is the model entity for the Ticket schema.
-type Ticket struct {
+// PullRequest is the model entity for the PullRequest schema.
+type PullRequest struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Stable source-neutral key used outside SQLite and Ent internals.
 	Key string `json:"key,omitempty"`
-	// Human-readable ticket title.
+	// Repository full name such as owner/name.
+	Repository string `json:"repository,omitempty"`
+	// Source pull-request number within the repository.
+	Number int `json:"number,omitempty"`
+	// Human-readable pull-request title.
 	Title string `json:"title,omitempty"`
-	// Ticket description or source body text.
-	Body string `json:"body,omitempty"`
-	// Normalized ticket lifecycle status.
-	Status ticket.Status `json:"status,omitempty"`
-	// Source priority label when available.
-	Priority string `json:"priority,omitempty"`
+	// Normalized pull-request state.
+	State pullrequest.State `json:"state,omitempty"`
+	// Time the pull request merged, when available.
+	MergedAt time.Time `json:"merged_at,omitempty"`
 	// Short object summary for UI, search snippets, and future LLM context.
 	Summary string `json:"summary,omitempty"`
 	// Normalized text used by V0 Ent-filter search before FTS/vector indexes exist.
@@ -40,9 +42,9 @@ type Ticket struct {
 	// Human-readable source URL when the source provides one.
 	SourceURL string `json:"source_url,omitempty"`
 	// Freshness state for filtering stale or partial graph facts.
-	FreshnessState ticket.FreshnessState `json:"freshness_state,omitempty"`
+	FreshnessState pullrequest.FreshnessState `json:"freshness_state,omitempty"`
 	// Visibility class used by future permission-aware query filtering.
-	Visibility ticket.Visibility `json:"visibility,omitempty"`
+	Visibility pullrequest.Visibility `json:"visibility,omitempty"`
 	// Confidence score for source-backed or inferred facts.
 	Confidence float64 `json:"confidence,omitempty"`
 	// Number of source events collapsed into this graph object or link.
@@ -58,63 +60,41 @@ type Ticket struct {
 	// Time this row was last updated in Cubicle storage.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the TicketQuery when eager-loading is set.
-	Edges        TicketEdges `json:"edges"`
+	// The values are being populated by the PullRequestQuery when eager-loading is set.
+	Edges        PullRequestEdges `json:"edges"`
 	selectValues sql.SelectValues
 }
 
-// TicketEdges holds the relations/edges for other nodes in the graph.
-type TicketEdges struct {
-	// Workstreams that include this ticket.
-	Workstreams []*Workstream `json:"workstreams,omitempty"`
-	// Pull requests that implement this ticket.
-	PullRequests []*PullRequest `json:"pull_requests,omitempty"`
-	// TicketPullRequests holds the value of the ticket_pull_requests edge.
-	TicketPullRequests []*TicketPullRequest `json:"ticket_pull_requests,omitempty"`
+// PullRequestEdges holds the relations/edges for other nodes in the graph.
+type PullRequestEdges struct {
+	// Tickets this pull request implements.
+	Tickets []*Ticket `json:"tickets,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [1]bool
 }
 
-// WorkstreamsOrErr returns the Workstreams value or an error if the edge
+// TicketsOrErr returns the Tickets value or an error if the edge
 // was not loaded in eager-loading.
-func (e TicketEdges) WorkstreamsOrErr() ([]*Workstream, error) {
+func (e PullRequestEdges) TicketsOrErr() ([]*Ticket, error) {
 	if e.loadedTypes[0] {
-		return e.Workstreams, nil
+		return e.Tickets, nil
 	}
-	return nil, &NotLoadedError{edge: "workstreams"}
-}
-
-// PullRequestsOrErr returns the PullRequests value or an error if the edge
-// was not loaded in eager-loading.
-func (e TicketEdges) PullRequestsOrErr() ([]*PullRequest, error) {
-	if e.loadedTypes[1] {
-		return e.PullRequests, nil
-	}
-	return nil, &NotLoadedError{edge: "pull_requests"}
-}
-
-// TicketPullRequestsOrErr returns the TicketPullRequests value or an error if the edge
-// was not loaded in eager-loading.
-func (e TicketEdges) TicketPullRequestsOrErr() ([]*TicketPullRequest, error) {
-	if e.loadedTypes[2] {
-		return e.TicketPullRequests, nil
-	}
-	return nil, &NotLoadedError{edge: "ticket_pull_requests"}
+	return nil, &NotLoadedError{edge: "tickets"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Ticket) scanValues(columns []string) ([]any, error) {
+func (*PullRequest) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case ticket.FieldConfidence, ticket.FieldRankScore:
+		case pullrequest.FieldConfidence, pullrequest.FieldRankScore:
 			values[i] = new(sql.NullFloat64)
-		case ticket.FieldID, ticket.FieldEventCount:
+		case pullrequest.FieldID, pullrequest.FieldNumber, pullrequest.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case ticket.FieldKey, ticket.FieldTitle, ticket.FieldBody, ticket.FieldStatus, ticket.FieldPriority, ticket.FieldSummary, ticket.FieldSearchText, ticket.FieldSource, ticket.FieldSourceInstance, ticket.FieldExternalID, ticket.FieldSourceURL, ticket.FieldFreshnessState, ticket.FieldVisibility:
+		case pullrequest.FieldKey, pullrequest.FieldRepository, pullrequest.FieldTitle, pullrequest.FieldState, pullrequest.FieldSummary, pullrequest.FieldSearchText, pullrequest.FieldSource, pullrequest.FieldSourceInstance, pullrequest.FieldExternalID, pullrequest.FieldSourceURL, pullrequest.FieldFreshnessState, pullrequest.FieldVisibility:
 			values[i] = new(sql.NullString)
-		case ticket.FieldFirstSeenAt, ticket.FieldLastActivityAt, ticket.FieldCreatedAt, ticket.FieldUpdatedAt:
+		case pullrequest.FieldMergedAt, pullrequest.FieldFirstSeenAt, pullrequest.FieldLastActivityAt, pullrequest.FieldCreatedAt, pullrequest.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -124,134 +104,140 @@ func (*Ticket) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the Ticket fields.
-func (_m *Ticket) assignValues(columns []string, values []any) error {
+// to the PullRequest fields.
+func (_m *PullRequest) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case ticket.FieldID:
+		case pullrequest.FieldID:
 			value, ok := values[i].(*sql.NullInt64)
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case ticket.FieldKey:
+		case pullrequest.FieldKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field key", values[i])
 			} else if value.Valid {
 				_m.Key = value.String
 			}
-		case ticket.FieldTitle:
+		case pullrequest.FieldRepository:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field repository", values[i])
+			} else if value.Valid {
+				_m.Repository = value.String
+			}
+		case pullrequest.FieldNumber:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field number", values[i])
+			} else if value.Valid {
+				_m.Number = int(value.Int64)
+			}
+		case pullrequest.FieldTitle:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field title", values[i])
 			} else if value.Valid {
 				_m.Title = value.String
 			}
-		case ticket.FieldBody:
+		case pullrequest.FieldState:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field body", values[i])
+				return fmt.Errorf("unexpected type %T for field state", values[i])
 			} else if value.Valid {
-				_m.Body = value.String
+				_m.State = pullrequest.State(value.String)
 			}
-		case ticket.FieldStatus:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field status", values[i])
+		case pullrequest.FieldMergedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field merged_at", values[i])
 			} else if value.Valid {
-				_m.Status = ticket.Status(value.String)
+				_m.MergedAt = value.Time
 			}
-		case ticket.FieldPriority:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field priority", values[i])
-			} else if value.Valid {
-				_m.Priority = value.String
-			}
-		case ticket.FieldSummary:
+		case pullrequest.FieldSummary:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field summary", values[i])
 			} else if value.Valid {
 				_m.Summary = value.String
 			}
-		case ticket.FieldSearchText:
+		case pullrequest.FieldSearchText:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field search_text", values[i])
 			} else if value.Valid {
 				_m.SearchText = value.String
 			}
-		case ticket.FieldSource:
+		case pullrequest.FieldSource:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field source", values[i])
 			} else if value.Valid {
 				_m.Source = value.String
 			}
-		case ticket.FieldSourceInstance:
+		case pullrequest.FieldSourceInstance:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field source_instance", values[i])
 			} else if value.Valid {
 				_m.SourceInstance = value.String
 			}
-		case ticket.FieldExternalID:
+		case pullrequest.FieldExternalID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field external_id", values[i])
 			} else if value.Valid {
 				_m.ExternalID = value.String
 			}
-		case ticket.FieldSourceURL:
+		case pullrequest.FieldSourceURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field source_url", values[i])
 			} else if value.Valid {
 				_m.SourceURL = value.String
 			}
-		case ticket.FieldFreshnessState:
+		case pullrequest.FieldFreshnessState:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field freshness_state", values[i])
 			} else if value.Valid {
-				_m.FreshnessState = ticket.FreshnessState(value.String)
+				_m.FreshnessState = pullrequest.FreshnessState(value.String)
 			}
-		case ticket.FieldVisibility:
+		case pullrequest.FieldVisibility:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field visibility", values[i])
 			} else if value.Valid {
-				_m.Visibility = ticket.Visibility(value.String)
+				_m.Visibility = pullrequest.Visibility(value.String)
 			}
-		case ticket.FieldConfidence:
+		case pullrequest.FieldConfidence:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field confidence", values[i])
 			} else if value.Valid {
 				_m.Confidence = value.Float64
 			}
-		case ticket.FieldEventCount:
+		case pullrequest.FieldEventCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_count", values[i])
 			} else if value.Valid {
 				_m.EventCount = int(value.Int64)
 			}
-		case ticket.FieldFirstSeenAt:
+		case pullrequest.FieldFirstSeenAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field first_seen_at", values[i])
 			} else if value.Valid {
 				_m.FirstSeenAt = value.Time
 			}
-		case ticket.FieldLastActivityAt:
+		case pullrequest.FieldLastActivityAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field last_activity_at", values[i])
 			} else if value.Valid {
 				_m.LastActivityAt = value.Time
 			}
-		case ticket.FieldRankScore:
+		case pullrequest.FieldRankScore:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field rank_score", values[i])
 			} else if value.Valid {
 				_m.RankScore = value.Float64
 			}
-		case ticket.FieldCreatedAt:
+		case pullrequest.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case ticket.FieldUpdatedAt:
+		case pullrequest.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
@@ -264,64 +250,57 @@ func (_m *Ticket) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the Ticket.
+// Value returns the ent.Value that was dynamically selected and assigned to the PullRequest.
 // This includes values selected through modifiers, order, etc.
-func (_m *Ticket) Value(name string) (ent.Value, error) {
+func (_m *PullRequest) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryWorkstreams queries the "workstreams" edge of the Ticket entity.
-func (_m *Ticket) QueryWorkstreams() *WorkstreamQuery {
-	return NewTicketClient(_m.config).QueryWorkstreams(_m)
+// QueryTickets queries the "tickets" edge of the PullRequest entity.
+func (_m *PullRequest) QueryTickets() *TicketQuery {
+	return NewPullRequestClient(_m.config).QueryTickets(_m)
 }
 
-// QueryPullRequests queries the "pull_requests" edge of the Ticket entity.
-func (_m *Ticket) QueryPullRequests() *PullRequestQuery {
-	return NewTicketClient(_m.config).QueryPullRequests(_m)
-}
-
-// QueryTicketPullRequests queries the "ticket_pull_requests" edge of the Ticket entity.
-func (_m *Ticket) QueryTicketPullRequests() *TicketPullRequestQuery {
-	return NewTicketClient(_m.config).QueryTicketPullRequests(_m)
-}
-
-// Update returns a builder for updating this Ticket.
-// Note that you need to call Ticket.Unwrap() before calling this method if this Ticket
+// Update returns a builder for updating this PullRequest.
+// Note that you need to call PullRequest.Unwrap() before calling this method if this PullRequest
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *Ticket) Update() *TicketUpdateOne {
-	return NewTicketClient(_m.config).UpdateOne(_m)
+func (_m *PullRequest) Update() *PullRequestUpdateOne {
+	return NewPullRequestClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the Ticket entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the PullRequest entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *Ticket) Unwrap() *Ticket {
+func (_m *PullRequest) Unwrap() *PullRequest {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: Ticket is not a transactional entity")
+		panic("ent: PullRequest is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *Ticket) String() string {
+func (_m *PullRequest) String() string {
 	var builder strings.Builder
-	builder.WriteString("Ticket(")
+	builder.WriteString("PullRequest(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("key=")
 	builder.WriteString(_m.Key)
 	builder.WriteString(", ")
+	builder.WriteString("repository=")
+	builder.WriteString(_m.Repository)
+	builder.WriteString(", ")
+	builder.WriteString("number=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Number))
+	builder.WriteString(", ")
 	builder.WriteString("title=")
 	builder.WriteString(_m.Title)
 	builder.WriteString(", ")
-	builder.WriteString("body=")
-	builder.WriteString(_m.Body)
+	builder.WriteString("state=")
+	builder.WriteString(fmt.Sprintf("%v", _m.State))
 	builder.WriteString(", ")
-	builder.WriteString("status=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Status))
-	builder.WriteString(", ")
-	builder.WriteString("priority=")
-	builder.WriteString(_m.Priority)
+	builder.WriteString("merged_at=")
+	builder.WriteString(_m.MergedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("summary=")
 	builder.WriteString(_m.Summary)
@@ -371,5 +350,5 @@ func (_m *Ticket) String() string {
 	return builder.String()
 }
 
-// Tickets is a parsable slice of Ticket.
-type Tickets []*Ticket
+// PullRequests is a parsable slice of PullRequest.
+type PullRequests []*PullRequest

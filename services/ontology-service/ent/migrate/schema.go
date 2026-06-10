@@ -100,6 +100,49 @@ var (
 			},
 		},
 	}
+	// PullRequestsColumns holds the columns for the "pull_requests" table.
+	PullRequestsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "repository", Type: field.TypeString, Nullable: true},
+		{Name: "number", Type: field.TypeInt, Nullable: true},
+		{Name: "title", Type: field.TypeString},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"unknown", "open", "merged", "closed"}, Default: "unknown"},
+		{Name: "merged_at", Type: field.TypeTime, Nullable: true},
+		{Name: "summary", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "search_text", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// PullRequestsTable holds the schema information for the "pull_requests" table.
+	PullRequestsTable = &schema.Table{
+		Name:       "pull_requests",
+		Columns:    PullRequestsColumns,
+		PrimaryKey: []*schema.Column{PullRequestsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "pullrequest_repository_number",
+				Unique:  false,
+				Columns: []*schema.Column{PullRequestsColumns[2], PullRequestsColumns[3]},
+			},
+			{
+				Name:    "pullrequest_state_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{PullRequestsColumns[5], PullRequestsColumns[18]},
+			},
+		},
+	}
 	// TicketsColumns holds the columns for the "tickets" table.
 	TicketsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -139,6 +182,65 @@ var (
 				Name:    "ticket_priority",
 				Unique:  false,
 				Columns: []*schema.Column{TicketsColumns[5]},
+			},
+		},
+	}
+	// TicketPullRequestsColumns holds the columns for the "ticket_pull_requests" table.
+	TicketPullRequestsColumns = []*schema.Column{
+		{Name: "relation_kind", Type: field.TypeEnum, Enums: []string{"implemented_by"}},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "source", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "ticket_id", Type: field.TypeInt},
+		{Name: "pull_request_id", Type: field.TypeInt},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// TicketPullRequestsTable holds the schema information for the "ticket_pull_requests" table.
+	TicketPullRequestsTable = &schema.Table{
+		Name:       "ticket_pull_requests",
+		Columns:    TicketPullRequestsColumns,
+		PrimaryKey: []*schema.Column{TicketPullRequestsColumns[15], TicketPullRequestsColumns[16]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "ticket_pull_requests_tickets_ticket",
+				Columns:    []*schema.Column{TicketPullRequestsColumns[15]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "ticket_pull_requests_pull_requests_pull_request",
+				Columns:    []*schema.Column{TicketPullRequestsColumns[16]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "ticket_pull_requests_evidences_latest_evidence",
+				Columns:    []*schema.Column{TicketPullRequestsColumns[17]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ticketpullrequest_ticket_id_freshness_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{TicketPullRequestsColumns[15], TicketPullRequestsColumns[10], TicketPullRequestsColumns[5], TicketPullRequestsColumns[4]},
+			},
+			{
+				Name:    "ticketpullrequest_pull_request_id",
+				Unique:  false,
+				Columns: []*schema.Column{TicketPullRequestsColumns[16]},
 			},
 		},
 	}
@@ -240,13 +342,18 @@ var (
 	Tables = []*schema.Table{
 		EvidencesTable,
 		PersonsTable,
+		PullRequestsTable,
 		TicketsTable,
+		TicketPullRequestsTable,
 		WorkstreamsTable,
 		WorkstreamTicketsTable,
 	}
 )
 
 func init() {
+	TicketPullRequestsTable.ForeignKeys[0].RefTable = TicketsTable
+	TicketPullRequestsTable.ForeignKeys[1].RefTable = PullRequestsTable
+	TicketPullRequestsTable.ForeignKeys[2].RefTable = EvidencesTable
 	WorkstreamTicketsTable.ForeignKeys[0].RefTable = WorkstreamsTable
 	WorkstreamTicketsTable.ForeignKeys[1].RefTable = TicketsTable
 	WorkstreamTicketsTable.ForeignKeys[2].RefTable = EvidencesTable

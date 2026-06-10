@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"cubicle/services/ontology-service/ent/predicate"
+	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workstream"
 	"errors"
@@ -383,6 +384,21 @@ func (_u *TicketUpdate) AddWorkstreams(v ...*Workstream) *TicketUpdate {
 	return _u.AddWorkstreamIDs(ids...)
 }
 
+// AddPullRequestIDs adds the "pull_requests" edge to the PullRequest entity by IDs.
+func (_u *TicketUpdate) AddPullRequestIDs(ids ...int) *TicketUpdate {
+	_u.mutation.AddPullRequestIDs(ids...)
+	return _u
+}
+
+// AddPullRequests adds the "pull_requests" edges to the PullRequest entity.
+func (_u *TicketUpdate) AddPullRequests(v ...*PullRequest) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPullRequestIDs(ids...)
+}
+
 // Mutation returns the TicketMutation object of the builder.
 func (_u *TicketUpdate) Mutation() *TicketMutation {
 	return _u.mutation
@@ -407,6 +423,27 @@ func (_u *TicketUpdate) RemoveWorkstreams(v ...*Workstream) *TicketUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveWorkstreamIDs(ids...)
+}
+
+// ClearPullRequests clears all "pull_requests" edges to the PullRequest entity.
+func (_u *TicketUpdate) ClearPullRequests() *TicketUpdate {
+	_u.mutation.ClearPullRequests()
+	return _u
+}
+
+// RemovePullRequestIDs removes the "pull_requests" edge to PullRequest entities by IDs.
+func (_u *TicketUpdate) RemovePullRequestIDs(ids ...int) *TicketUpdate {
+	_u.mutation.RemovePullRequestIDs(ids...)
+	return _u
+}
+
+// RemovePullRequests removes "pull_requests" edges to PullRequest entities.
+func (_u *TicketUpdate) RemovePullRequests(v ...*PullRequest) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePullRequestIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -626,6 +663,63 @@ func (_u *TicketUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.PullRequestsTable,
+			Columns: ticket.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		createE := &TicketPullRequestCreate{config: _u.config, mutation: newTicketPullRequestMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPullRequestsIDs(); len(nodes) > 0 && !_u.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.PullRequestsTable,
+			Columns: ticket.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketPullRequestCreate{config: _u.config, mutation: newTicketPullRequestMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PullRequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.PullRequestsTable,
+			Columns: ticket.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketPullRequestCreate{config: _u.config, mutation: newTicketPullRequestMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
@@ -1002,6 +1096,21 @@ func (_u *TicketUpdateOne) AddWorkstreams(v ...*Workstream) *TicketUpdateOne {
 	return _u.AddWorkstreamIDs(ids...)
 }
 
+// AddPullRequestIDs adds the "pull_requests" edge to the PullRequest entity by IDs.
+func (_u *TicketUpdateOne) AddPullRequestIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.AddPullRequestIDs(ids...)
+	return _u
+}
+
+// AddPullRequests adds the "pull_requests" edges to the PullRequest entity.
+func (_u *TicketUpdateOne) AddPullRequests(v ...*PullRequest) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPullRequestIDs(ids...)
+}
+
 // Mutation returns the TicketMutation object of the builder.
 func (_u *TicketUpdateOne) Mutation() *TicketMutation {
 	return _u.mutation
@@ -1026,6 +1135,27 @@ func (_u *TicketUpdateOne) RemoveWorkstreams(v ...*Workstream) *TicketUpdateOne 
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveWorkstreamIDs(ids...)
+}
+
+// ClearPullRequests clears all "pull_requests" edges to the PullRequest entity.
+func (_u *TicketUpdateOne) ClearPullRequests() *TicketUpdateOne {
+	_u.mutation.ClearPullRequests()
+	return _u
+}
+
+// RemovePullRequestIDs removes the "pull_requests" edge to PullRequest entities by IDs.
+func (_u *TicketUpdateOne) RemovePullRequestIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.RemovePullRequestIDs(ids...)
+	return _u
+}
+
+// RemovePullRequests removes "pull_requests" edges to PullRequest entities.
+func (_u *TicketUpdateOne) RemovePullRequests(v ...*PullRequest) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePullRequestIDs(ids...)
 }
 
 // Where appends a list predicates to the TicketUpdate builder.
@@ -1275,6 +1405,63 @@ func (_u *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err erro
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.PullRequestsTable,
+			Columns: ticket.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		createE := &TicketPullRequestCreate{config: _u.config, mutation: newTicketPullRequestMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPullRequestsIDs(); len(nodes) > 0 && !_u.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.PullRequestsTable,
+			Columns: ticket.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketPullRequestCreate{config: _u.config, mutation: newTicketPullRequestMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PullRequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.PullRequestsTable,
+			Columns: ticket.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketPullRequestCreate{config: _u.config, mutation: newTicketPullRequestMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Ticket{config: _u.config}

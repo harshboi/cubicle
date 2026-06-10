@@ -13,7 +13,9 @@ import (
 
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
+	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 
@@ -32,8 +34,12 @@ type Client struct {
 	Evidence *EvidenceClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
+	// PullRequest is the client for interacting with the PullRequest builders.
+	PullRequest *PullRequestClient
 	// Ticket is the client for interacting with the Ticket builders.
 	Ticket *TicketClient
+	// TicketPullRequest is the client for interacting with the TicketPullRequest builders.
+	TicketPullRequest *TicketPullRequestClient
 	// Workstream is the client for interacting with the Workstream builders.
 	Workstream *WorkstreamClient
 	// WorkstreamTicket is the client for interacting with the WorkstreamTicket builders.
@@ -51,7 +57,9 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Evidence = NewEvidenceClient(c.config)
 	c.Person = NewPersonClient(c.config)
+	c.PullRequest = NewPullRequestClient(c.config)
 	c.Ticket = NewTicketClient(c.config)
+	c.TicketPullRequest = NewTicketPullRequestClient(c.config)
 	c.Workstream = NewWorkstreamClient(c.config)
 	c.WorkstreamTicket = NewWorkstreamTicketClient(c.config)
 }
@@ -144,13 +152,15 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		Evidence:         NewEvidenceClient(cfg),
-		Person:           NewPersonClient(cfg),
-		Ticket:           NewTicketClient(cfg),
-		Workstream:       NewWorkstreamClient(cfg),
-		WorkstreamTicket: NewWorkstreamTicketClient(cfg),
+		ctx:               ctx,
+		config:            cfg,
+		Evidence:          NewEvidenceClient(cfg),
+		Person:            NewPersonClient(cfg),
+		PullRequest:       NewPullRequestClient(cfg),
+		Ticket:            NewTicketClient(cfg),
+		TicketPullRequest: NewTicketPullRequestClient(cfg),
+		Workstream:        NewWorkstreamClient(cfg),
+		WorkstreamTicket:  NewWorkstreamTicketClient(cfg),
 	}, nil
 }
 
@@ -168,13 +178,15 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		Evidence:         NewEvidenceClient(cfg),
-		Person:           NewPersonClient(cfg),
-		Ticket:           NewTicketClient(cfg),
-		Workstream:       NewWorkstreamClient(cfg),
-		WorkstreamTicket: NewWorkstreamTicketClient(cfg),
+		ctx:               ctx,
+		config:            cfg,
+		Evidence:          NewEvidenceClient(cfg),
+		Person:            NewPersonClient(cfg),
+		PullRequest:       NewPullRequestClient(cfg),
+		Ticket:            NewTicketClient(cfg),
+		TicketPullRequest: NewTicketPullRequestClient(cfg),
+		Workstream:        NewWorkstreamClient(cfg),
+		WorkstreamTicket:  NewWorkstreamTicketClient(cfg),
 	}, nil
 }
 
@@ -203,21 +215,23 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Evidence.Use(hooks...)
-	c.Person.Use(hooks...)
-	c.Ticket.Use(hooks...)
-	c.Workstream.Use(hooks...)
-	c.WorkstreamTicket.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.Evidence, c.Person, c.PullRequest, c.Ticket, c.TicketPullRequest,
+		c.Workstream, c.WorkstreamTicket,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Evidence.Intercept(interceptors...)
-	c.Person.Intercept(interceptors...)
-	c.Ticket.Intercept(interceptors...)
-	c.Workstream.Intercept(interceptors...)
-	c.WorkstreamTicket.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.Evidence, c.Person, c.PullRequest, c.Ticket, c.TicketPullRequest,
+		c.Workstream, c.WorkstreamTicket,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -227,8 +241,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Evidence.mutate(ctx, m)
 	case *PersonMutation:
 		return c.Person.mutate(ctx, m)
+	case *PullRequestMutation:
+		return c.PullRequest.mutate(ctx, m)
 	case *TicketMutation:
 		return c.Ticket.mutate(ctx, m)
+	case *TicketPullRequestMutation:
+		return c.TicketPullRequest.mutate(ctx, m)
 	case *WorkstreamMutation:
 		return c.Workstream.mutate(ctx, m)
 	case *WorkstreamTicketMutation:
@@ -504,6 +522,155 @@ func (c *PersonClient) mutate(ctx context.Context, m *PersonMutation) (Value, er
 	}
 }
 
+// PullRequestClient is a client for the PullRequest schema.
+type PullRequestClient struct {
+	config
+}
+
+// NewPullRequestClient returns a client for the PullRequest from the given config.
+func NewPullRequestClient(c config) *PullRequestClient {
+	return &PullRequestClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `pullrequest.Hooks(f(g(h())))`.
+func (c *PullRequestClient) Use(hooks ...Hook) {
+	c.hooks.PullRequest = append(c.hooks.PullRequest, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `pullrequest.Intercept(f(g(h())))`.
+func (c *PullRequestClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PullRequest = append(c.inters.PullRequest, interceptors...)
+}
+
+// Create returns a builder for creating a PullRequest entity.
+func (c *PullRequestClient) Create() *PullRequestCreate {
+	mutation := newPullRequestMutation(c.config, OpCreate)
+	return &PullRequestCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PullRequest entities.
+func (c *PullRequestClient) CreateBulk(builders ...*PullRequestCreate) *PullRequestCreateBulk {
+	return &PullRequestCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PullRequestClient) MapCreateBulk(slice any, setFunc func(*PullRequestCreate, int)) *PullRequestCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PullRequestCreateBulk{err: fmt.Errorf("calling to PullRequestClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PullRequestCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PullRequestCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PullRequest.
+func (c *PullRequestClient) Update() *PullRequestUpdate {
+	mutation := newPullRequestMutation(c.config, OpUpdate)
+	return &PullRequestUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PullRequestClient) UpdateOne(_m *PullRequest) *PullRequestUpdateOne {
+	mutation := newPullRequestMutation(c.config, OpUpdateOne, withPullRequest(_m))
+	return &PullRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PullRequestClient) UpdateOneID(id int) *PullRequestUpdateOne {
+	mutation := newPullRequestMutation(c.config, OpUpdateOne, withPullRequestID(id))
+	return &PullRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PullRequest.
+func (c *PullRequestClient) Delete() *PullRequestDelete {
+	mutation := newPullRequestMutation(c.config, OpDelete)
+	return &PullRequestDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PullRequestClient) DeleteOne(_m *PullRequest) *PullRequestDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PullRequestClient) DeleteOneID(id int) *PullRequestDeleteOne {
+	builder := c.Delete().Where(pullrequest.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PullRequestDeleteOne{builder}
+}
+
+// Query returns a query builder for PullRequest.
+func (c *PullRequestClient) Query() *PullRequestQuery {
+	return &PullRequestQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePullRequest},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PullRequest entity by its id.
+func (c *PullRequestClient) Get(ctx context.Context, id int) (*PullRequest, error) {
+	return c.Query().Where(pullrequest.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PullRequestClient) GetX(ctx context.Context, id int) *PullRequest {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTickets queries the tickets edge of a PullRequest.
+func (c *PullRequestClient) QueryTickets(_m *PullRequest) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, pullrequest.TicketsTable, pullrequest.TicketsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PullRequestClient) Hooks() []Hook {
+	return c.hooks.PullRequest
+}
+
+// Interceptors returns the client interceptors.
+func (c *PullRequestClient) Interceptors() []Interceptor {
+	return c.inters.PullRequest
+}
+
+func (c *PullRequestClient) mutate(ctx context.Context, m *PullRequestMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PullRequestCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PullRequestUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PullRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PullRequestDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PullRequest mutation op: %q", m.Op())
+	}
+}
+
 // TicketClient is a client for the Ticket schema.
 type TicketClient struct {
 	config
@@ -628,6 +795,38 @@ func (c *TicketClient) QueryWorkstreams(_m *Ticket) *WorkstreamQuery {
 	return query
 }
 
+// QueryPullRequests queries the pull_requests edge of a Ticket.
+func (c *TicketClient) QueryPullRequests(_m *Ticket) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, ticket.PullRequestsTable, ticket.PullRequestsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicketPullRequests queries the ticket_pull_requests edge of a Ticket.
+func (c *TicketClient) QueryTicketPullRequests(_m *Ticket) *TicketPullRequestQuery {
+	query := (&TicketPullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(ticketpullrequest.Table, ticketpullrequest.TicketColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.TicketPullRequestsTable, ticket.TicketPullRequestsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *TicketClient) Hooks() []Hook {
 	return c.hooks.Ticket
@@ -650,6 +849,129 @@ func (c *TicketClient) mutate(ctx context.Context, m *TicketMutation) (Value, er
 		return (&TicketDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Ticket mutation op: %q", m.Op())
+	}
+}
+
+// TicketPullRequestClient is a client for the TicketPullRequest schema.
+type TicketPullRequestClient struct {
+	config
+}
+
+// NewTicketPullRequestClient returns a client for the TicketPullRequest from the given config.
+func NewTicketPullRequestClient(c config) *TicketPullRequestClient {
+	return &TicketPullRequestClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ticketpullrequest.Hooks(f(g(h())))`.
+func (c *TicketPullRequestClient) Use(hooks ...Hook) {
+	c.hooks.TicketPullRequest = append(c.hooks.TicketPullRequest, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ticketpullrequest.Intercept(f(g(h())))`.
+func (c *TicketPullRequestClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TicketPullRequest = append(c.inters.TicketPullRequest, interceptors...)
+}
+
+// Create returns a builder for creating a TicketPullRequest entity.
+func (c *TicketPullRequestClient) Create() *TicketPullRequestCreate {
+	mutation := newTicketPullRequestMutation(c.config, OpCreate)
+	return &TicketPullRequestCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TicketPullRequest entities.
+func (c *TicketPullRequestClient) CreateBulk(builders ...*TicketPullRequestCreate) *TicketPullRequestCreateBulk {
+	return &TicketPullRequestCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TicketPullRequestClient) MapCreateBulk(slice any, setFunc func(*TicketPullRequestCreate, int)) *TicketPullRequestCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TicketPullRequestCreateBulk{err: fmt.Errorf("calling to TicketPullRequestClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TicketPullRequestCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TicketPullRequestCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TicketPullRequest.
+func (c *TicketPullRequestClient) Update() *TicketPullRequestUpdate {
+	mutation := newTicketPullRequestMutation(c.config, OpUpdate)
+	return &TicketPullRequestUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TicketPullRequestClient) UpdateOne(_m *TicketPullRequest) *TicketPullRequestUpdateOne {
+	mutation := newTicketPullRequestMutation(c.config, OpUpdateOne)
+	mutation.ticket = &_m.TicketID
+	mutation.pull_request = &_m.PullRequestID
+	return &TicketPullRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TicketPullRequest.
+func (c *TicketPullRequestClient) Delete() *TicketPullRequestDelete {
+	mutation := newTicketPullRequestMutation(c.config, OpDelete)
+	return &TicketPullRequestDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Query returns a query builder for TicketPullRequest.
+func (c *TicketPullRequestClient) Query() *TicketPullRequestQuery {
+	return &TicketPullRequestQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTicketPullRequest},
+		inters: c.Interceptors(),
+	}
+}
+
+// QueryTicket queries the ticket edge of a TicketPullRequest.
+func (c *TicketPullRequestClient) QueryTicket(_m *TicketPullRequest) *TicketQuery {
+	return c.Query().
+		Where(ticketpullrequest.TicketID(_m.TicketID), ticketpullrequest.PullRequestID(_m.PullRequestID)).
+		QueryTicket()
+}
+
+// QueryPullRequest queries the pull_request edge of a TicketPullRequest.
+func (c *TicketPullRequestClient) QueryPullRequest(_m *TicketPullRequest) *PullRequestQuery {
+	return c.Query().
+		Where(ticketpullrequest.TicketID(_m.TicketID), ticketpullrequest.PullRequestID(_m.PullRequestID)).
+		QueryPullRequest()
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a TicketPullRequest.
+func (c *TicketPullRequestClient) QueryLatestEvidence(_m *TicketPullRequest) *EvidenceQuery {
+	return c.Query().
+		Where(ticketpullrequest.TicketID(_m.TicketID), ticketpullrequest.PullRequestID(_m.PullRequestID)).
+		QueryLatestEvidence()
+}
+
+// Hooks returns the client hooks.
+func (c *TicketPullRequestClient) Hooks() []Hook {
+	return c.hooks.TicketPullRequest
+}
+
+// Interceptors returns the client interceptors.
+func (c *TicketPullRequestClient) Interceptors() []Interceptor {
+	return c.inters.TicketPullRequest
+}
+
+func (c *TicketPullRequestClient) mutate(ctx context.Context, m *TicketPullRequestMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TicketPullRequestCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TicketPullRequestUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TicketPullRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TicketPullRequestDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TicketPullRequest mutation op: %q", m.Op())
 	}
 }
 
@@ -944,9 +1266,11 @@ func (c *WorkstreamTicketClient) mutate(ctx context.Context, m *WorkstreamTicket
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Evidence, Person, Ticket, Workstream, WorkstreamTicket []ent.Hook
+		Evidence, Person, PullRequest, Ticket, TicketPullRequest, Workstream,
+		WorkstreamTicket []ent.Hook
 	}
 	inters struct {
-		Evidence, Person, Ticket, Workstream, WorkstreamTicket []ent.Interceptor
+		Evidence, Person, PullRequest, Ticket, TicketPullRequest, Workstream,
+		WorkstreamTicket []ent.Interceptor
 	}
 )

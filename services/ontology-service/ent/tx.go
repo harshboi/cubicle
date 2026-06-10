@@ -16,8 +16,12 @@ type Tx struct {
 	Evidence *EvidenceClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
+	// PullRequest is the client for interacting with the PullRequest builders.
+	PullRequest *PullRequestClient
 	// Ticket is the client for interacting with the Ticket builders.
 	Ticket *TicketClient
+	// TicketPullRequest is the client for interacting with the TicketPullRequest builders.
+	TicketPullRequest *TicketPullRequestClient
 	// Workstream is the client for interacting with the Workstream builders.
 	Workstream *WorkstreamClient
 	// WorkstreamTicket is the client for interacting with the WorkstreamTicket builders.
@@ -155,7 +159,9 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Evidence = NewEvidenceClient(tx.config)
 	tx.Person = NewPersonClient(tx.config)
+	tx.PullRequest = NewPullRequestClient(tx.config)
 	tx.Ticket = NewTicketClient(tx.config)
+	tx.TicketPullRequest = NewTicketPullRequestClient(tx.config)
 	tx.Workstream = NewWorkstreamClient(tx.config)
 	tx.WorkstreamTicket = NewWorkstreamTicketClient(tx.config)
 }

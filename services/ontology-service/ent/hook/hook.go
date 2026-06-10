@@ -32,6 +32,18 @@ func (f PersonFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PersonMutation", m)
 }
 
+// The PullRequestFunc type is an adapter to allow the use of ordinary
+// function as PullRequest mutator.
+type PullRequestFunc func(context.Context, *ent.PullRequestMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PullRequestFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PullRequestMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PullRequestMutation", m)
+}
+
 // The TicketFunc type is an adapter to allow the use of ordinary
 // function as Ticket mutator.
 type TicketFunc func(context.Context, *ent.TicketMutation) (ent.Value, error)
@@ -42,6 +54,18 @@ func (f TicketFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketMutation", m)
+}
+
+// The TicketPullRequestFunc type is an adapter to allow the use of ordinary
+// function as TicketPullRequest mutator.
+type TicketPullRequestFunc func(context.Context, *ent.TicketPullRequestMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketPullRequestFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketPullRequestMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketPullRequestMutation", m)
 }
 
 // The WorkstreamFunc type is an adapter to allow the use of ordinary

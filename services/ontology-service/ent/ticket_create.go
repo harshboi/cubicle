@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workstream"
 	"errors"
@@ -302,6 +303,21 @@ func (_c *TicketCreate) AddWorkstreams(v ...*Workstream) *TicketCreate {
 	return _c.AddWorkstreamIDs(ids...)
 }
 
+// AddPullRequestIDs adds the "pull_requests" edge to the PullRequest entity by IDs.
+func (_c *TicketCreate) AddPullRequestIDs(ids ...int) *TicketCreate {
+	_c.mutation.AddPullRequestIDs(ids...)
+	return _c
+}
+
+// AddPullRequests adds the "pull_requests" edges to the PullRequest entity.
+func (_c *TicketCreate) AddPullRequests(v ...*PullRequest) *TicketCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddPullRequestIDs(ids...)
+}
+
 // Mutation returns the TicketMutation object of the builder.
 func (_c *TicketCreate) Mutation() *TicketMutation {
 	return _c.mutation
@@ -549,6 +565,26 @@ func (_c *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.PullRequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.PullRequestsTable,
+			Columns: ticket.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketPullRequestCreate{config: _c.config, mutation: newTicketPullRequestMutation(_c.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

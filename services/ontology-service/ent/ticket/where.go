@@ -1253,6 +1253,52 @@ func HasWorkstreamsWith(preds ...predicate.Workstream) predicate.Ticket {
 	})
 }
 
+// HasPullRequests applies the HasEdge predicate on the "pull_requests" edge.
+func HasPullRequests() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, PullRequestsTable, PullRequestsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPullRequestsWith applies the HasEdge predicate on the "pull_requests" edge with a given conditions (other predicates).
+func HasPullRequestsWith(preds ...predicate.PullRequest) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newPullRequestsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTicketPullRequests applies the HasEdge predicate on the "ticket_pull_requests" edge.
+func HasTicketPullRequests() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, TicketPullRequestsTable, TicketPullRequestsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTicketPullRequestsWith applies the HasEdge predicate on the "ticket_pull_requests" edge with a given conditions (other predicates).
+func HasTicketPullRequestsWith(preds ...predicate.TicketPullRequest) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newTicketPullRequestsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Ticket) predicate.Ticket {
 	return predicate.Ticket(sql.AndPredicates(predicates...))

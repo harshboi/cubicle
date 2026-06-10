@@ -5,8 +5,10 @@ package ent
 import (
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
+	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/schema"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 	"time"
@@ -60,6 +62,38 @@ func init() {
 	person.DefaultUpdatedAt = personDescUpdatedAt.Default.(func() time.Time)
 	// person.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	person.UpdateDefaultUpdatedAt = personDescUpdatedAt.UpdateDefault.(func() time.Time)
+	pullrequestFields := schema.PullRequest{}.Fields()
+	_ = pullrequestFields
+	// pullrequestDescKey is the schema descriptor for key field.
+	pullrequestDescKey := pullrequestFields[0].Descriptor()
+	// pullrequest.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	pullrequest.KeyValidator = pullrequestDescKey.Validators[0].(func(string) error)
+	// pullrequestDescTitle is the schema descriptor for title field.
+	pullrequestDescTitle := pullrequestFields[3].Descriptor()
+	// pullrequest.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	pullrequest.TitleValidator = pullrequestDescTitle.Validators[0].(func(string) error)
+	// pullrequestDescConfidence is the schema descriptor for confidence field.
+	pullrequestDescConfidence := pullrequestFields[14].Descriptor()
+	// pullrequest.DefaultConfidence holds the default value on creation for the confidence field.
+	pullrequest.DefaultConfidence = pullrequestDescConfidence.Default.(float64)
+	// pullrequestDescEventCount is the schema descriptor for event_count field.
+	pullrequestDescEventCount := pullrequestFields[15].Descriptor()
+	// pullrequest.DefaultEventCount holds the default value on creation for the event_count field.
+	pullrequest.DefaultEventCount = pullrequestDescEventCount.Default.(int)
+	// pullrequestDescRankScore is the schema descriptor for rank_score field.
+	pullrequestDescRankScore := pullrequestFields[18].Descriptor()
+	// pullrequest.DefaultRankScore holds the default value on creation for the rank_score field.
+	pullrequest.DefaultRankScore = pullrequestDescRankScore.Default.(float64)
+	// pullrequestDescCreatedAt is the schema descriptor for created_at field.
+	pullrequestDescCreatedAt := pullrequestFields[19].Descriptor()
+	// pullrequest.DefaultCreatedAt holds the default value on creation for the created_at field.
+	pullrequest.DefaultCreatedAt = pullrequestDescCreatedAt.Default.(func() time.Time)
+	// pullrequestDescUpdatedAt is the schema descriptor for updated_at field.
+	pullrequestDescUpdatedAt := pullrequestFields[20].Descriptor()
+	// pullrequest.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	pullrequest.DefaultUpdatedAt = pullrequestDescUpdatedAt.Default.(func() time.Time)
+	// pullrequest.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	pullrequest.UpdateDefaultUpdatedAt = pullrequestDescUpdatedAt.UpdateDefault.(func() time.Time)
 	ticketFields := schema.Ticket{}.Fields()
 	_ = ticketFields
 	// ticketDescKey is the schema descriptor for key field.
@@ -92,6 +126,34 @@ func init() {
 	ticket.DefaultUpdatedAt = ticketDescUpdatedAt.Default.(func() time.Time)
 	// ticket.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	ticket.UpdateDefaultUpdatedAt = ticketDescUpdatedAt.UpdateDefault.(func() time.Time)
+	ticketpullrequestFields := schema.TicketPullRequest{}.Fields()
+	_ = ticketpullrequestFields
+	// ticketpullrequestDescEvidenceCount is the schema descriptor for evidence_count field.
+	ticketpullrequestDescEvidenceCount := ticketpullrequestFields[4].Descriptor()
+	// ticketpullrequest.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
+	ticketpullrequest.DefaultEvidenceCount = ticketpullrequestDescEvidenceCount.Default.(int)
+	// ticketpullrequestDescEventCount is the schema descriptor for event_count field.
+	ticketpullrequestDescEventCount := ticketpullrequestFields[5].Descriptor()
+	// ticketpullrequest.DefaultEventCount holds the default value on creation for the event_count field.
+	ticketpullrequest.DefaultEventCount = ticketpullrequestDescEventCount.Default.(int)
+	// ticketpullrequestDescRankScore is the schema descriptor for rank_score field.
+	ticketpullrequestDescRankScore := ticketpullrequestFields[8].Descriptor()
+	// ticketpullrequest.DefaultRankScore holds the default value on creation for the rank_score field.
+	ticketpullrequest.DefaultRankScore = ticketpullrequestDescRankScore.Default.(float64)
+	// ticketpullrequestDescConfidence is the schema descriptor for confidence field.
+	ticketpullrequestDescConfidence := ticketpullrequestFields[15].Descriptor()
+	// ticketpullrequest.DefaultConfidence holds the default value on creation for the confidence field.
+	ticketpullrequest.DefaultConfidence = ticketpullrequestDescConfidence.Default.(float64)
+	// ticketpullrequestDescCreatedAt is the schema descriptor for created_at field.
+	ticketpullrequestDescCreatedAt := ticketpullrequestFields[16].Descriptor()
+	// ticketpullrequest.DefaultCreatedAt holds the default value on creation for the created_at field.
+	ticketpullrequest.DefaultCreatedAt = ticketpullrequestDescCreatedAt.Default.(func() time.Time)
+	// ticketpullrequestDescUpdatedAt is the schema descriptor for updated_at field.
+	ticketpullrequestDescUpdatedAt := ticketpullrequestFields[17].Descriptor()
+	// ticketpullrequest.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	ticketpullrequest.DefaultUpdatedAt = ticketpullrequestDescUpdatedAt.Default.(func() time.Time)
+	// ticketpullrequest.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	ticketpullrequest.UpdateDefaultUpdatedAt = ticketpullrequestDescUpdatedAt.UpdateDefault.(func() time.Time)
 	workstreamFields := schema.Workstream{}.Fields()
 	_ = workstreamFields
 	// workstreamDescKey is the schema descriptor for key field.
