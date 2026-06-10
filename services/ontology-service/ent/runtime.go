@@ -6,6 +6,7 @@ import (
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/schema"
+	"cubicle/services/ontology-service/ent/workstream"
 	"time"
 )
 
@@ -57,4 +58,36 @@ func init() {
 	person.DefaultUpdatedAt = personDescUpdatedAt.Default.(func() time.Time)
 	// person.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	person.UpdateDefaultUpdatedAt = personDescUpdatedAt.UpdateDefault.(func() time.Time)
+	workstreamFields := schema.Workstream{}.Fields()
+	_ = workstreamFields
+	// workstreamDescKey is the schema descriptor for key field.
+	workstreamDescKey := workstreamFields[0].Descriptor()
+	// workstream.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	workstream.KeyValidator = workstreamDescKey.Validators[0].(func(string) error)
+	// workstreamDescTitle is the schema descriptor for title field.
+	workstreamDescTitle := workstreamFields[1].Descriptor()
+	// workstream.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	workstream.TitleValidator = workstreamDescTitle.Validators[0].(func(string) error)
+	// workstreamDescConfidence is the schema descriptor for confidence field.
+	workstreamDescConfidence := workstreamFields[11].Descriptor()
+	// workstream.DefaultConfidence holds the default value on creation for the confidence field.
+	workstream.DefaultConfidence = workstreamDescConfidence.Default.(float64)
+	// workstreamDescEventCount is the schema descriptor for event_count field.
+	workstreamDescEventCount := workstreamFields[12].Descriptor()
+	// workstream.DefaultEventCount holds the default value on creation for the event_count field.
+	workstream.DefaultEventCount = workstreamDescEventCount.Default.(int)
+	// workstreamDescRankScore is the schema descriptor for rank_score field.
+	workstreamDescRankScore := workstreamFields[15].Descriptor()
+	// workstream.DefaultRankScore holds the default value on creation for the rank_score field.
+	workstream.DefaultRankScore = workstreamDescRankScore.Default.(float64)
+	// workstreamDescCreatedAt is the schema descriptor for created_at field.
+	workstreamDescCreatedAt := workstreamFields[16].Descriptor()
+	// workstream.DefaultCreatedAt holds the default value on creation for the created_at field.
+	workstream.DefaultCreatedAt = workstreamDescCreatedAt.Default.(func() time.Time)
+	// workstreamDescUpdatedAt is the schema descriptor for updated_at field.
+	workstreamDescUpdatedAt := workstreamFields[17].Descriptor()
+	// workstream.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	workstream.DefaultUpdatedAt = workstreamDescUpdatedAt.Default.(func() time.Time)
+	// workstream.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	workstream.UpdateDefaultUpdatedAt = workstreamDescUpdatedAt.UpdateDefault.(func() time.Time)
 }

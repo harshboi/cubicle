@@ -32,6 +32,18 @@ func (f PersonFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PersonMutation", m)
 }
 
+// The WorkstreamFunc type is an adapter to allow the use of ordinary
+// function as Workstream mutator.
+type WorkstreamFunc func(context.Context, *ent.WorkstreamMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkstreamFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkstreamMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkstreamMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

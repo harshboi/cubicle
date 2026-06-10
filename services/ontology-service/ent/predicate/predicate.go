@@ -11,3 +11,6 @@ type Evidence func(*sql.Selector)
 
 // Person is the predicate function for person builders.
 type Person func(*sql.Selector)
+
+// Workstream is the predicate function for workstream builders.
+type Workstream func(*sql.Selector)

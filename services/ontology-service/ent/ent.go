@@ -6,6 +6,7 @@ import (
 	"context"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
+	"cubicle/services/ontology-service/ent/workstream"
 	"errors"
 	"fmt"
 	"reflect"
@@ -74,8 +75,9 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			evidence.Table: evidence.ValidColumn,
-			person.Table:   person.ValidColumn,
+			evidence.Table:   evidence.ValidColumn,
+			person.Table:     person.ValidColumn,
+			workstream.Table: workstream.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

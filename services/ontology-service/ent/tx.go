@@ -16,6 +16,8 @@ type Tx struct {
 	Evidence *EvidenceClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
+	// Workstream is the client for interacting with the Workstream builders.
+	Workstream *WorkstreamClient
 
 	// lazily loaded.
 	client     *Client
@@ -149,6 +151,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Evidence = NewEvidenceClient(tx.config)
 	tx.Person = NewPersonClient(tx.config)
+	tx.Workstream = NewWorkstreamClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

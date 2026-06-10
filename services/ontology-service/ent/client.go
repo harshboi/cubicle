@@ -13,6 +13,7 @@ import (
 
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
+	"cubicle/services/ontology-service/ent/workstream"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -28,6 +29,8 @@ type Client struct {
 	Evidence *EvidenceClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
+	// Workstream is the client for interacting with the Workstream builders.
+	Workstream *WorkstreamClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -41,6 +44,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Evidence = NewEvidenceClient(c.config)
 	c.Person = NewPersonClient(c.config)
+	c.Workstream = NewWorkstreamClient(c.config)
 }
 
 type (
@@ -131,10 +135,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		Evidence: NewEvidenceClient(cfg),
-		Person:   NewPersonClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		Evidence:   NewEvidenceClient(cfg),
+		Person:     NewPersonClient(cfg),
+		Workstream: NewWorkstreamClient(cfg),
 	}, nil
 }
 
@@ -152,10 +157,11 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		Evidence: NewEvidenceClient(cfg),
-		Person:   NewPersonClient(cfg),
+		ctx:        ctx,
+		config:     cfg,
+		Evidence:   NewEvidenceClient(cfg),
+		Person:     NewPersonClient(cfg),
+		Workstream: NewWorkstreamClient(cfg),
 	}, nil
 }
 
@@ -186,6 +192,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.Evidence.Use(hooks...)
 	c.Person.Use(hooks...)
+	c.Workstream.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
@@ -193,6 +200,7 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Evidence.Intercept(interceptors...)
 	c.Person.Intercept(interceptors...)
+	c.Workstream.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -202,6 +210,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Evidence.mutate(ctx, m)
 	case *PersonMutation:
 		return c.Person.mutate(ctx, m)
+	case *WorkstreamMutation:
+		return c.Workstream.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -473,12 +483,145 @@ func (c *PersonClient) mutate(ctx context.Context, m *PersonMutation) (Value, er
 	}
 }
 
+// WorkstreamClient is a client for the Workstream schema.
+type WorkstreamClient struct {
+	config
+}
+
+// NewWorkstreamClient returns a client for the Workstream from the given config.
+func NewWorkstreamClient(c config) *WorkstreamClient {
+	return &WorkstreamClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workstream.Hooks(f(g(h())))`.
+func (c *WorkstreamClient) Use(hooks ...Hook) {
+	c.hooks.Workstream = append(c.hooks.Workstream, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workstream.Intercept(f(g(h())))`.
+func (c *WorkstreamClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Workstream = append(c.inters.Workstream, interceptors...)
+}
+
+// Create returns a builder for creating a Workstream entity.
+func (c *WorkstreamClient) Create() *WorkstreamCreate {
+	mutation := newWorkstreamMutation(c.config, OpCreate)
+	return &WorkstreamCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Workstream entities.
+func (c *WorkstreamClient) CreateBulk(builders ...*WorkstreamCreate) *WorkstreamCreateBulk {
+	return &WorkstreamCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkstreamClient) MapCreateBulk(slice any, setFunc func(*WorkstreamCreate, int)) *WorkstreamCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkstreamCreateBulk{err: fmt.Errorf("calling to WorkstreamClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkstreamCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkstreamCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Workstream.
+func (c *WorkstreamClient) Update() *WorkstreamUpdate {
+	mutation := newWorkstreamMutation(c.config, OpUpdate)
+	return &WorkstreamUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkstreamClient) UpdateOne(_m *Workstream) *WorkstreamUpdateOne {
+	mutation := newWorkstreamMutation(c.config, OpUpdateOne, withWorkstream(_m))
+	return &WorkstreamUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkstreamClient) UpdateOneID(id int) *WorkstreamUpdateOne {
+	mutation := newWorkstreamMutation(c.config, OpUpdateOne, withWorkstreamID(id))
+	return &WorkstreamUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Workstream.
+func (c *WorkstreamClient) Delete() *WorkstreamDelete {
+	mutation := newWorkstreamMutation(c.config, OpDelete)
+	return &WorkstreamDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkstreamClient) DeleteOne(_m *Workstream) *WorkstreamDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkstreamClient) DeleteOneID(id int) *WorkstreamDeleteOne {
+	builder := c.Delete().Where(workstream.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkstreamDeleteOne{builder}
+}
+
+// Query returns a query builder for Workstream.
+func (c *WorkstreamClient) Query() *WorkstreamQuery {
+	return &WorkstreamQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkstream},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Workstream entity by its id.
+func (c *WorkstreamClient) Get(ctx context.Context, id int) (*Workstream, error) {
+	return c.Query().Where(workstream.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkstreamClient) GetX(ctx context.Context, id int) *Workstream {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *WorkstreamClient) Hooks() []Hook {
+	return c.hooks.Workstream
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkstreamClient) Interceptors() []Interceptor {
+	return c.inters.Workstream
+}
+
+func (c *WorkstreamClient) mutate(ctx context.Context, m *WorkstreamMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkstreamCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkstreamUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkstreamUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkstreamDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Workstream mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Evidence, Person []ent.Hook
+		Evidence, Person, Workstream []ent.Hook
 	}
 	inters struct {
-		Evidence, Person []ent.Interceptor
+		Evidence, Person, Workstream []ent.Interceptor
 	}
 )

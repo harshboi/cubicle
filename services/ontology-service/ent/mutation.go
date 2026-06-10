@@ -7,6 +7,7 @@ import (
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/predicate"
+	"cubicle/services/ontology-service/ent/workstream"
 	"errors"
 	"fmt"
 	"sync"
@@ -25,8 +26,9 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeEvidence = "Evidence"
-	TypePerson   = "Person"
+	TypeEvidence   = "Evidence"
+	TypePerson     = "Person"
+	TypeWorkstream = "Workstream"
 )
 
 // EvidenceMutation represents an operation that mutates the Evidence nodes in the graph.
@@ -2811,4 +2813,1505 @@ func (m *PersonMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *PersonMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Person edge %s", name)
+}
+
+// WorkstreamMutation represents an operation that mutates the Workstream nodes in the graph.
+type WorkstreamMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	key              *string
+	title            *string
+	status           *workstream.Status
+	summary          *string
+	search_text      *string
+	source           *string
+	source_instance  *string
+	external_id      *string
+	source_url       *string
+	freshness_state  *workstream.FreshnessState
+	visibility       *workstream.Visibility
+	confidence       *float64
+	addconfidence    *float64
+	event_count      *int
+	addevent_count   *int
+	first_seen_at    *time.Time
+	last_activity_at *time.Time
+	rank_score       *float64
+	addrank_score    *float64
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Workstream, error)
+	predicates       []predicate.Workstream
+}
+
+var _ ent.Mutation = (*WorkstreamMutation)(nil)
+
+// workstreamOption allows management of the mutation configuration using functional options.
+type workstreamOption func(*WorkstreamMutation)
+
+// newWorkstreamMutation creates new mutation for the Workstream entity.
+func newWorkstreamMutation(c config, op Op, opts ...workstreamOption) *WorkstreamMutation {
+	m := &WorkstreamMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWorkstream,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withWorkstreamID sets the ID field of the mutation.
+func withWorkstreamID(id int) workstreamOption {
+	return func(m *WorkstreamMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Workstream
+		)
+		m.oldValue = func(ctx context.Context) (*Workstream, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Workstream.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withWorkstream sets the old Workstream of the mutation.
+func withWorkstream(node *Workstream) workstreamOption {
+	return func(m *WorkstreamMutation) {
+		m.oldValue = func(context.Context) (*Workstream, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WorkstreamMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WorkstreamMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *WorkstreamMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WorkstreamMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Workstream.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetKey sets the "key" field.
+func (m *WorkstreamMutation) SetKey(s string) {
+	m.key = &s
+}
+
+// Key returns the value of the "key" field in the mutation.
+func (m *WorkstreamMutation) Key() (r string, exists bool) {
+	v := m.key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKey returns the old "key" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKey: %w", err)
+	}
+	return oldValue.Key, nil
+}
+
+// ResetKey resets all changes to the "key" field.
+func (m *WorkstreamMutation) ResetKey() {
+	m.key = nil
+}
+
+// SetTitle sets the "title" field.
+func (m *WorkstreamMutation) SetTitle(s string) {
+	m.title = &s
+}
+
+// Title returns the value of the "title" field in the mutation.
+func (m *WorkstreamMutation) Title() (r string, exists bool) {
+	v := m.title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle returns the old "title" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle: %w", err)
+	}
+	return oldValue.Title, nil
+}
+
+// ResetTitle resets all changes to the "title" field.
+func (m *WorkstreamMutation) ResetTitle() {
+	m.title = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *WorkstreamMutation) SetStatus(w workstream.Status) {
+	m.status = &w
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *WorkstreamMutation) Status() (r workstream.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldStatus(ctx context.Context) (v workstream.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *WorkstreamMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetSummary sets the "summary" field.
+func (m *WorkstreamMutation) SetSummary(s string) {
+	m.summary = &s
+}
+
+// Summary returns the value of the "summary" field in the mutation.
+func (m *WorkstreamMutation) Summary() (r string, exists bool) {
+	v := m.summary
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSummary returns the old "summary" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldSummary(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSummary is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSummary requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSummary: %w", err)
+	}
+	return oldValue.Summary, nil
+}
+
+// ClearSummary clears the value of the "summary" field.
+func (m *WorkstreamMutation) ClearSummary() {
+	m.summary = nil
+	m.clearedFields[workstream.FieldSummary] = struct{}{}
+}
+
+// SummaryCleared returns if the "summary" field was cleared in this mutation.
+func (m *WorkstreamMutation) SummaryCleared() bool {
+	_, ok := m.clearedFields[workstream.FieldSummary]
+	return ok
+}
+
+// ResetSummary resets all changes to the "summary" field.
+func (m *WorkstreamMutation) ResetSummary() {
+	m.summary = nil
+	delete(m.clearedFields, workstream.FieldSummary)
+}
+
+// SetSearchText sets the "search_text" field.
+func (m *WorkstreamMutation) SetSearchText(s string) {
+	m.search_text = &s
+}
+
+// SearchText returns the value of the "search_text" field in the mutation.
+func (m *WorkstreamMutation) SearchText() (r string, exists bool) {
+	v := m.search_text
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSearchText returns the old "search_text" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldSearchText(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSearchText is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSearchText requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSearchText: %w", err)
+	}
+	return oldValue.SearchText, nil
+}
+
+// ClearSearchText clears the value of the "search_text" field.
+func (m *WorkstreamMutation) ClearSearchText() {
+	m.search_text = nil
+	m.clearedFields[workstream.FieldSearchText] = struct{}{}
+}
+
+// SearchTextCleared returns if the "search_text" field was cleared in this mutation.
+func (m *WorkstreamMutation) SearchTextCleared() bool {
+	_, ok := m.clearedFields[workstream.FieldSearchText]
+	return ok
+}
+
+// ResetSearchText resets all changes to the "search_text" field.
+func (m *WorkstreamMutation) ResetSearchText() {
+	m.search_text = nil
+	delete(m.clearedFields, workstream.FieldSearchText)
+}
+
+// SetSource sets the "source" field.
+func (m *WorkstreamMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *WorkstreamMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldSource(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ClearSource clears the value of the "source" field.
+func (m *WorkstreamMutation) ClearSource() {
+	m.source = nil
+	m.clearedFields[workstream.FieldSource] = struct{}{}
+}
+
+// SourceCleared returns if the "source" field was cleared in this mutation.
+func (m *WorkstreamMutation) SourceCleared() bool {
+	_, ok := m.clearedFields[workstream.FieldSource]
+	return ok
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *WorkstreamMutation) ResetSource() {
+	m.source = nil
+	delete(m.clearedFields, workstream.FieldSource)
+}
+
+// SetSourceInstance sets the "source_instance" field.
+func (m *WorkstreamMutation) SetSourceInstance(s string) {
+	m.source_instance = &s
+}
+
+// SourceInstance returns the value of the "source_instance" field in the mutation.
+func (m *WorkstreamMutation) SourceInstance() (r string, exists bool) {
+	v := m.source_instance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceInstance returns the old "source_instance" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldSourceInstance(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceInstance is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceInstance requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceInstance: %w", err)
+	}
+	return oldValue.SourceInstance, nil
+}
+
+// ClearSourceInstance clears the value of the "source_instance" field.
+func (m *WorkstreamMutation) ClearSourceInstance() {
+	m.source_instance = nil
+	m.clearedFields[workstream.FieldSourceInstance] = struct{}{}
+}
+
+// SourceInstanceCleared returns if the "source_instance" field was cleared in this mutation.
+func (m *WorkstreamMutation) SourceInstanceCleared() bool {
+	_, ok := m.clearedFields[workstream.FieldSourceInstance]
+	return ok
+}
+
+// ResetSourceInstance resets all changes to the "source_instance" field.
+func (m *WorkstreamMutation) ResetSourceInstance() {
+	m.source_instance = nil
+	delete(m.clearedFields, workstream.FieldSourceInstance)
+}
+
+// SetExternalID sets the "external_id" field.
+func (m *WorkstreamMutation) SetExternalID(s string) {
+	m.external_id = &s
+}
+
+// ExternalID returns the value of the "external_id" field in the mutation.
+func (m *WorkstreamMutation) ExternalID() (r string, exists bool) {
+	v := m.external_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExternalID returns the old "external_id" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldExternalID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExternalID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExternalID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExternalID: %w", err)
+	}
+	return oldValue.ExternalID, nil
+}
+
+// ClearExternalID clears the value of the "external_id" field.
+func (m *WorkstreamMutation) ClearExternalID() {
+	m.external_id = nil
+	m.clearedFields[workstream.FieldExternalID] = struct{}{}
+}
+
+// ExternalIDCleared returns if the "external_id" field was cleared in this mutation.
+func (m *WorkstreamMutation) ExternalIDCleared() bool {
+	_, ok := m.clearedFields[workstream.FieldExternalID]
+	return ok
+}
+
+// ResetExternalID resets all changes to the "external_id" field.
+func (m *WorkstreamMutation) ResetExternalID() {
+	m.external_id = nil
+	delete(m.clearedFields, workstream.FieldExternalID)
+}
+
+// SetSourceURL sets the "source_url" field.
+func (m *WorkstreamMutation) SetSourceURL(s string) {
+	m.source_url = &s
+}
+
+// SourceURL returns the value of the "source_url" field in the mutation.
+func (m *WorkstreamMutation) SourceURL() (r string, exists bool) {
+	v := m.source_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceURL returns the old "source_url" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldSourceURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceURL: %w", err)
+	}
+	return oldValue.SourceURL, nil
+}
+
+// ClearSourceURL clears the value of the "source_url" field.
+func (m *WorkstreamMutation) ClearSourceURL() {
+	m.source_url = nil
+	m.clearedFields[workstream.FieldSourceURL] = struct{}{}
+}
+
+// SourceURLCleared returns if the "source_url" field was cleared in this mutation.
+func (m *WorkstreamMutation) SourceURLCleared() bool {
+	_, ok := m.clearedFields[workstream.FieldSourceURL]
+	return ok
+}
+
+// ResetSourceURL resets all changes to the "source_url" field.
+func (m *WorkstreamMutation) ResetSourceURL() {
+	m.source_url = nil
+	delete(m.clearedFields, workstream.FieldSourceURL)
+}
+
+// SetFreshnessState sets the "freshness_state" field.
+func (m *WorkstreamMutation) SetFreshnessState(ws workstream.FreshnessState) {
+	m.freshness_state = &ws
+}
+
+// FreshnessState returns the value of the "freshness_state" field in the mutation.
+func (m *WorkstreamMutation) FreshnessState() (r workstream.FreshnessState, exists bool) {
+	v := m.freshness_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFreshnessState returns the old "freshness_state" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldFreshnessState(ctx context.Context) (v workstream.FreshnessState, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFreshnessState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFreshnessState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFreshnessState: %w", err)
+	}
+	return oldValue.FreshnessState, nil
+}
+
+// ResetFreshnessState resets all changes to the "freshness_state" field.
+func (m *WorkstreamMutation) ResetFreshnessState() {
+	m.freshness_state = nil
+}
+
+// SetVisibility sets the "visibility" field.
+func (m *WorkstreamMutation) SetVisibility(w workstream.Visibility) {
+	m.visibility = &w
+}
+
+// Visibility returns the value of the "visibility" field in the mutation.
+func (m *WorkstreamMutation) Visibility() (r workstream.Visibility, exists bool) {
+	v := m.visibility
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVisibility returns the old "visibility" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldVisibility(ctx context.Context) (v workstream.Visibility, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVisibility is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVisibility requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVisibility: %w", err)
+	}
+	return oldValue.Visibility, nil
+}
+
+// ResetVisibility resets all changes to the "visibility" field.
+func (m *WorkstreamMutation) ResetVisibility() {
+	m.visibility = nil
+}
+
+// SetConfidence sets the "confidence" field.
+func (m *WorkstreamMutation) SetConfidence(f float64) {
+	m.confidence = &f
+	m.addconfidence = nil
+}
+
+// Confidence returns the value of the "confidence" field in the mutation.
+func (m *WorkstreamMutation) Confidence() (r float64, exists bool) {
+	v := m.confidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfidence returns the old "confidence" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldConfidence(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfidence is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfidence requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfidence: %w", err)
+	}
+	return oldValue.Confidence, nil
+}
+
+// AddConfidence adds f to the "confidence" field.
+func (m *WorkstreamMutation) AddConfidence(f float64) {
+	if m.addconfidence != nil {
+		*m.addconfidence += f
+	} else {
+		m.addconfidence = &f
+	}
+}
+
+// AddedConfidence returns the value that was added to the "confidence" field in this mutation.
+func (m *WorkstreamMutation) AddedConfidence() (r float64, exists bool) {
+	v := m.addconfidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConfidence resets all changes to the "confidence" field.
+func (m *WorkstreamMutation) ResetConfidence() {
+	m.confidence = nil
+	m.addconfidence = nil
+}
+
+// SetEventCount sets the "event_count" field.
+func (m *WorkstreamMutation) SetEventCount(i int) {
+	m.event_count = &i
+	m.addevent_count = nil
+}
+
+// EventCount returns the value of the "event_count" field in the mutation.
+func (m *WorkstreamMutation) EventCount() (r int, exists bool) {
+	v := m.event_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEventCount returns the old "event_count" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldEventCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEventCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEventCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEventCount: %w", err)
+	}
+	return oldValue.EventCount, nil
+}
+
+// AddEventCount adds i to the "event_count" field.
+func (m *WorkstreamMutation) AddEventCount(i int) {
+	if m.addevent_count != nil {
+		*m.addevent_count += i
+	} else {
+		m.addevent_count = &i
+	}
+}
+
+// AddedEventCount returns the value that was added to the "event_count" field in this mutation.
+func (m *WorkstreamMutation) AddedEventCount() (r int, exists bool) {
+	v := m.addevent_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEventCount resets all changes to the "event_count" field.
+func (m *WorkstreamMutation) ResetEventCount() {
+	m.event_count = nil
+	m.addevent_count = nil
+}
+
+// SetFirstSeenAt sets the "first_seen_at" field.
+func (m *WorkstreamMutation) SetFirstSeenAt(t time.Time) {
+	m.first_seen_at = &t
+}
+
+// FirstSeenAt returns the value of the "first_seen_at" field in the mutation.
+func (m *WorkstreamMutation) FirstSeenAt() (r time.Time, exists bool) {
+	v := m.first_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstSeenAt returns the old "first_seen_at" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldFirstSeenAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstSeenAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstSeenAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstSeenAt: %w", err)
+	}
+	return oldValue.FirstSeenAt, nil
+}
+
+// ClearFirstSeenAt clears the value of the "first_seen_at" field.
+func (m *WorkstreamMutation) ClearFirstSeenAt() {
+	m.first_seen_at = nil
+	m.clearedFields[workstream.FieldFirstSeenAt] = struct{}{}
+}
+
+// FirstSeenAtCleared returns if the "first_seen_at" field was cleared in this mutation.
+func (m *WorkstreamMutation) FirstSeenAtCleared() bool {
+	_, ok := m.clearedFields[workstream.FieldFirstSeenAt]
+	return ok
+}
+
+// ResetFirstSeenAt resets all changes to the "first_seen_at" field.
+func (m *WorkstreamMutation) ResetFirstSeenAt() {
+	m.first_seen_at = nil
+	delete(m.clearedFields, workstream.FieldFirstSeenAt)
+}
+
+// SetLastActivityAt sets the "last_activity_at" field.
+func (m *WorkstreamMutation) SetLastActivityAt(t time.Time) {
+	m.last_activity_at = &t
+}
+
+// LastActivityAt returns the value of the "last_activity_at" field in the mutation.
+func (m *WorkstreamMutation) LastActivityAt() (r time.Time, exists bool) {
+	v := m.last_activity_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastActivityAt returns the old "last_activity_at" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldLastActivityAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastActivityAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastActivityAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastActivityAt: %w", err)
+	}
+	return oldValue.LastActivityAt, nil
+}
+
+// ClearLastActivityAt clears the value of the "last_activity_at" field.
+func (m *WorkstreamMutation) ClearLastActivityAt() {
+	m.last_activity_at = nil
+	m.clearedFields[workstream.FieldLastActivityAt] = struct{}{}
+}
+
+// LastActivityAtCleared returns if the "last_activity_at" field was cleared in this mutation.
+func (m *WorkstreamMutation) LastActivityAtCleared() bool {
+	_, ok := m.clearedFields[workstream.FieldLastActivityAt]
+	return ok
+}
+
+// ResetLastActivityAt resets all changes to the "last_activity_at" field.
+func (m *WorkstreamMutation) ResetLastActivityAt() {
+	m.last_activity_at = nil
+	delete(m.clearedFields, workstream.FieldLastActivityAt)
+}
+
+// SetRankScore sets the "rank_score" field.
+func (m *WorkstreamMutation) SetRankScore(f float64) {
+	m.rank_score = &f
+	m.addrank_score = nil
+}
+
+// RankScore returns the value of the "rank_score" field in the mutation.
+func (m *WorkstreamMutation) RankScore() (r float64, exists bool) {
+	v := m.rank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRankScore returns the old "rank_score" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldRankScore(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRankScore is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRankScore requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRankScore: %w", err)
+	}
+	return oldValue.RankScore, nil
+}
+
+// AddRankScore adds f to the "rank_score" field.
+func (m *WorkstreamMutation) AddRankScore(f float64) {
+	if m.addrank_score != nil {
+		*m.addrank_score += f
+	} else {
+		m.addrank_score = &f
+	}
+}
+
+// AddedRankScore returns the value that was added to the "rank_score" field in this mutation.
+func (m *WorkstreamMutation) AddedRankScore() (r float64, exists bool) {
+	v := m.addrank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRankScore resets all changes to the "rank_score" field.
+func (m *WorkstreamMutation) ResetRankScore() {
+	m.rank_score = nil
+	m.addrank_score = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WorkstreamMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WorkstreamMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WorkstreamMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *WorkstreamMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *WorkstreamMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Workstream entity.
+// If the Workstream object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkstreamMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *WorkstreamMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the WorkstreamMutation builder.
+func (m *WorkstreamMutation) Where(ps ...predicate.Workstream) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WorkstreamMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WorkstreamMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Workstream, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WorkstreamMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WorkstreamMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Workstream).
+func (m *WorkstreamMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WorkstreamMutation) Fields() []string {
+	fields := make([]string, 0, 18)
+	if m.key != nil {
+		fields = append(fields, workstream.FieldKey)
+	}
+	if m.title != nil {
+		fields = append(fields, workstream.FieldTitle)
+	}
+	if m.status != nil {
+		fields = append(fields, workstream.FieldStatus)
+	}
+	if m.summary != nil {
+		fields = append(fields, workstream.FieldSummary)
+	}
+	if m.search_text != nil {
+		fields = append(fields, workstream.FieldSearchText)
+	}
+	if m.source != nil {
+		fields = append(fields, workstream.FieldSource)
+	}
+	if m.source_instance != nil {
+		fields = append(fields, workstream.FieldSourceInstance)
+	}
+	if m.external_id != nil {
+		fields = append(fields, workstream.FieldExternalID)
+	}
+	if m.source_url != nil {
+		fields = append(fields, workstream.FieldSourceURL)
+	}
+	if m.freshness_state != nil {
+		fields = append(fields, workstream.FieldFreshnessState)
+	}
+	if m.visibility != nil {
+		fields = append(fields, workstream.FieldVisibility)
+	}
+	if m.confidence != nil {
+		fields = append(fields, workstream.FieldConfidence)
+	}
+	if m.event_count != nil {
+		fields = append(fields, workstream.FieldEventCount)
+	}
+	if m.first_seen_at != nil {
+		fields = append(fields, workstream.FieldFirstSeenAt)
+	}
+	if m.last_activity_at != nil {
+		fields = append(fields, workstream.FieldLastActivityAt)
+	}
+	if m.rank_score != nil {
+		fields = append(fields, workstream.FieldRankScore)
+	}
+	if m.created_at != nil {
+		fields = append(fields, workstream.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, workstream.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WorkstreamMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case workstream.FieldKey:
+		return m.Key()
+	case workstream.FieldTitle:
+		return m.Title()
+	case workstream.FieldStatus:
+		return m.Status()
+	case workstream.FieldSummary:
+		return m.Summary()
+	case workstream.FieldSearchText:
+		return m.SearchText()
+	case workstream.FieldSource:
+		return m.Source()
+	case workstream.FieldSourceInstance:
+		return m.SourceInstance()
+	case workstream.FieldExternalID:
+		return m.ExternalID()
+	case workstream.FieldSourceURL:
+		return m.SourceURL()
+	case workstream.FieldFreshnessState:
+		return m.FreshnessState()
+	case workstream.FieldVisibility:
+		return m.Visibility()
+	case workstream.FieldConfidence:
+		return m.Confidence()
+	case workstream.FieldEventCount:
+		return m.EventCount()
+	case workstream.FieldFirstSeenAt:
+		return m.FirstSeenAt()
+	case workstream.FieldLastActivityAt:
+		return m.LastActivityAt()
+	case workstream.FieldRankScore:
+		return m.RankScore()
+	case workstream.FieldCreatedAt:
+		return m.CreatedAt()
+	case workstream.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WorkstreamMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case workstream.FieldKey:
+		return m.OldKey(ctx)
+	case workstream.FieldTitle:
+		return m.OldTitle(ctx)
+	case workstream.FieldStatus:
+		return m.OldStatus(ctx)
+	case workstream.FieldSummary:
+		return m.OldSummary(ctx)
+	case workstream.FieldSearchText:
+		return m.OldSearchText(ctx)
+	case workstream.FieldSource:
+		return m.OldSource(ctx)
+	case workstream.FieldSourceInstance:
+		return m.OldSourceInstance(ctx)
+	case workstream.FieldExternalID:
+		return m.OldExternalID(ctx)
+	case workstream.FieldSourceURL:
+		return m.OldSourceURL(ctx)
+	case workstream.FieldFreshnessState:
+		return m.OldFreshnessState(ctx)
+	case workstream.FieldVisibility:
+		return m.OldVisibility(ctx)
+	case workstream.FieldConfidence:
+		return m.OldConfidence(ctx)
+	case workstream.FieldEventCount:
+		return m.OldEventCount(ctx)
+	case workstream.FieldFirstSeenAt:
+		return m.OldFirstSeenAt(ctx)
+	case workstream.FieldLastActivityAt:
+		return m.OldLastActivityAt(ctx)
+	case workstream.FieldRankScore:
+		return m.OldRankScore(ctx)
+	case workstream.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case workstream.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Workstream field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkstreamMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case workstream.FieldKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKey(v)
+		return nil
+	case workstream.FieldTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle(v)
+		return nil
+	case workstream.FieldStatus:
+		v, ok := value.(workstream.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case workstream.FieldSummary:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSummary(v)
+		return nil
+	case workstream.FieldSearchText:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSearchText(v)
+		return nil
+	case workstream.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case workstream.FieldSourceInstance:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceInstance(v)
+		return nil
+	case workstream.FieldExternalID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExternalID(v)
+		return nil
+	case workstream.FieldSourceURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceURL(v)
+		return nil
+	case workstream.FieldFreshnessState:
+		v, ok := value.(workstream.FreshnessState)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFreshnessState(v)
+		return nil
+	case workstream.FieldVisibility:
+		v, ok := value.(workstream.Visibility)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisibility(v)
+		return nil
+	case workstream.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfidence(v)
+		return nil
+	case workstream.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventCount(v)
+		return nil
+	case workstream.FieldFirstSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstSeenAt(v)
+		return nil
+	case workstream.FieldLastActivityAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastActivityAt(v)
+		return nil
+	case workstream.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRankScore(v)
+		return nil
+	case workstream.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case workstream.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Workstream field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WorkstreamMutation) AddedFields() []string {
+	var fields []string
+	if m.addconfidence != nil {
+		fields = append(fields, workstream.FieldConfidence)
+	}
+	if m.addevent_count != nil {
+		fields = append(fields, workstream.FieldEventCount)
+	}
+	if m.addrank_score != nil {
+		fields = append(fields, workstream.FieldRankScore)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WorkstreamMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case workstream.FieldConfidence:
+		return m.AddedConfidence()
+	case workstream.FieldEventCount:
+		return m.AddedEventCount()
+	case workstream.FieldRankScore:
+		return m.AddedRankScore()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkstreamMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case workstream.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfidence(v)
+		return nil
+	case workstream.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEventCount(v)
+		return nil
+	case workstream.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRankScore(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Workstream numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WorkstreamMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(workstream.FieldSummary) {
+		fields = append(fields, workstream.FieldSummary)
+	}
+	if m.FieldCleared(workstream.FieldSearchText) {
+		fields = append(fields, workstream.FieldSearchText)
+	}
+	if m.FieldCleared(workstream.FieldSource) {
+		fields = append(fields, workstream.FieldSource)
+	}
+	if m.FieldCleared(workstream.FieldSourceInstance) {
+		fields = append(fields, workstream.FieldSourceInstance)
+	}
+	if m.FieldCleared(workstream.FieldExternalID) {
+		fields = append(fields, workstream.FieldExternalID)
+	}
+	if m.FieldCleared(workstream.FieldSourceURL) {
+		fields = append(fields, workstream.FieldSourceURL)
+	}
+	if m.FieldCleared(workstream.FieldFirstSeenAt) {
+		fields = append(fields, workstream.FieldFirstSeenAt)
+	}
+	if m.FieldCleared(workstream.FieldLastActivityAt) {
+		fields = append(fields, workstream.FieldLastActivityAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WorkstreamMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WorkstreamMutation) ClearField(name string) error {
+	switch name {
+	case workstream.FieldSummary:
+		m.ClearSummary()
+		return nil
+	case workstream.FieldSearchText:
+		m.ClearSearchText()
+		return nil
+	case workstream.FieldSource:
+		m.ClearSource()
+		return nil
+	case workstream.FieldSourceInstance:
+		m.ClearSourceInstance()
+		return nil
+	case workstream.FieldExternalID:
+		m.ClearExternalID()
+		return nil
+	case workstream.FieldSourceURL:
+		m.ClearSourceURL()
+		return nil
+	case workstream.FieldFirstSeenAt:
+		m.ClearFirstSeenAt()
+		return nil
+	case workstream.FieldLastActivityAt:
+		m.ClearLastActivityAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Workstream nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WorkstreamMutation) ResetField(name string) error {
+	switch name {
+	case workstream.FieldKey:
+		m.ResetKey()
+		return nil
+	case workstream.FieldTitle:
+		m.ResetTitle()
+		return nil
+	case workstream.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case workstream.FieldSummary:
+		m.ResetSummary()
+		return nil
+	case workstream.FieldSearchText:
+		m.ResetSearchText()
+		return nil
+	case workstream.FieldSource:
+		m.ResetSource()
+		return nil
+	case workstream.FieldSourceInstance:
+		m.ResetSourceInstance()
+		return nil
+	case workstream.FieldExternalID:
+		m.ResetExternalID()
+		return nil
+	case workstream.FieldSourceURL:
+		m.ResetSourceURL()
+		return nil
+	case workstream.FieldFreshnessState:
+		m.ResetFreshnessState()
+		return nil
+	case workstream.FieldVisibility:
+		m.ResetVisibility()
+		return nil
+	case workstream.FieldConfidence:
+		m.ResetConfidence()
+		return nil
+	case workstream.FieldEventCount:
+		m.ResetEventCount()
+		return nil
+	case workstream.FieldFirstSeenAt:
+		m.ResetFirstSeenAt()
+		return nil
+	case workstream.FieldLastActivityAt:
+		m.ResetLastActivityAt()
+		return nil
+	case workstream.FieldRankScore:
+		m.ResetRankScore()
+		return nil
+	case workstream.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case workstream.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Workstream field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WorkstreamMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WorkstreamMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WorkstreamMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WorkstreamMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WorkstreamMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WorkstreamMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WorkstreamMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Workstream unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WorkstreamMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Workstream edge %s", name)
 }
