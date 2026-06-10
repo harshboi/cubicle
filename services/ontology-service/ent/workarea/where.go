@@ -808,6 +808,29 @@ func HasPersonWith(preds ...predicate.Person) predicate.WorkArea {
 	})
 }
 
+// HasLenses applies the HasEdge predicate on the "lenses" edge.
+func HasLenses() predicate.WorkArea {
+	return predicate.WorkArea(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LensesTable, LensesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLensesWith applies the HasEdge predicate on the "lenses" edge with a given conditions (other predicates).
+func HasLensesWith(preds ...predicate.WorkLens) predicate.WorkArea {
+	return predicate.WorkArea(func(s *sql.Selector) {
+		step := newLensesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.WorkArea) predicate.WorkArea {
 	return predicate.WorkArea(sql.AndPredicates(predicates...))

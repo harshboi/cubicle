@@ -22,6 +22,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workarea"
+	"cubicle/services/ontology-service/ent/worklens"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 
@@ -58,6 +59,8 @@ type Client struct {
 	TicketPullRequest *TicketPullRequestClient
 	// WorkArea is the client for interacting with the WorkArea builders.
 	WorkArea *WorkAreaClient
+	// WorkLens is the client for interacting with the WorkLens builders.
+	WorkLens *WorkLensClient
 	// Workstream is the client for interacting with the Workstream builders.
 	Workstream *WorkstreamClient
 	// WorkstreamTicket is the client for interacting with the WorkstreamTicket builders.
@@ -84,6 +87,7 @@ func (c *Client) init() {
 	c.TicketMessage = NewTicketMessageClient(c.config)
 	c.TicketPullRequest = NewTicketPullRequestClient(c.config)
 	c.WorkArea = NewWorkAreaClient(c.config)
+	c.WorkLens = NewWorkLensClient(c.config)
 	c.Workstream = NewWorkstreamClient(c.config)
 	c.WorkstreamTicket = NewWorkstreamTicketClient(c.config)
 }
@@ -189,6 +193,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		TicketMessage:          NewTicketMessageClient(cfg),
 		TicketPullRequest:      NewTicketPullRequestClient(cfg),
 		WorkArea:               NewWorkAreaClient(cfg),
+		WorkLens:               NewWorkLensClient(cfg),
 		Workstream:             NewWorkstreamClient(cfg),
 		WorkstreamTicket:       NewWorkstreamTicketClient(cfg),
 	}, nil
@@ -221,6 +226,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		TicketMessage:          NewTicketMessageClient(cfg),
 		TicketPullRequest:      NewTicketPullRequestClient(cfg),
 		WorkArea:               NewWorkAreaClient(cfg),
+		WorkLens:               NewWorkLensClient(cfg),
 		Workstream:             NewWorkstreamClient(cfg),
 		WorkstreamTicket:       NewWorkstreamTicketClient(cfg),
 	}, nil
@@ -254,7 +260,7 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Document, c.DocumentFragment, c.Evidence, c.Message, c.Person, c.PullRequest,
 		c.Ticket, c.TicketDocumentFragment, c.TicketMessage, c.TicketPullRequest,
-		c.WorkArea, c.Workstream, c.WorkstreamTicket,
+		c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Use(hooks...)
 	}
@@ -266,7 +272,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Document, c.DocumentFragment, c.Evidence, c.Message, c.Person, c.PullRequest,
 		c.Ticket, c.TicketDocumentFragment, c.TicketMessage, c.TicketPullRequest,
-		c.WorkArea, c.Workstream, c.WorkstreamTicket,
+		c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -297,6 +303,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.TicketPullRequest.mutate(ctx, m)
 	case *WorkAreaMutation:
 		return c.WorkArea.mutate(ctx, m)
+	case *WorkLensMutation:
+		return c.WorkLens.mutate(ctx, m)
 	case *WorkstreamMutation:
 		return c.Workstream.mutate(ctx, m)
 	case *WorkstreamTicketMutation:
@@ -1938,6 +1946,22 @@ func (c *WorkAreaClient) QueryPerson(_m *WorkArea) *PersonQuery {
 	return query
 }
 
+// QueryLenses queries the lenses edge of a WorkArea.
+func (c *WorkAreaClient) QueryLenses(_m *WorkArea) *WorkLensQuery {
+	query := (&WorkLensClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workarea.Table, workarea.FieldID, id),
+			sqlgraph.To(worklens.Table, worklens.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workarea.LensesTable, workarea.LensesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *WorkAreaClient) Hooks() []Hook {
 	return c.hooks.WorkArea
@@ -1960,6 +1984,156 @@ func (c *WorkAreaClient) mutate(ctx context.Context, m *WorkAreaMutation) (Value
 		return (&WorkAreaDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown WorkArea mutation op: %q", m.Op())
+	}
+}
+
+// WorkLensClient is a client for the WorkLens schema.
+type WorkLensClient struct {
+	config
+}
+
+// NewWorkLensClient returns a client for the WorkLens from the given config.
+func NewWorkLensClient(c config) *WorkLensClient {
+	return &WorkLensClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `worklens.Hooks(f(g(h())))`.
+func (c *WorkLensClient) Use(hooks ...Hook) {
+	c.hooks.WorkLens = append(c.hooks.WorkLens, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `worklens.Intercept(f(g(h())))`.
+func (c *WorkLensClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkLens = append(c.inters.WorkLens, interceptors...)
+}
+
+// Create returns a builder for creating a WorkLens entity.
+func (c *WorkLensClient) Create() *WorkLensCreate {
+	mutation := newWorkLensMutation(c.config, OpCreate)
+	return &WorkLensCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkLens entities.
+func (c *WorkLensClient) CreateBulk(builders ...*WorkLensCreate) *WorkLensCreateBulk {
+	return &WorkLensCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkLensClient) MapCreateBulk(slice any, setFunc func(*WorkLensCreate, int)) *WorkLensCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkLensCreateBulk{err: fmt.Errorf("calling to WorkLensClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkLensCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkLensCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkLens.
+func (c *WorkLensClient) Update() *WorkLensUpdate {
+	mutation := newWorkLensMutation(c.config, OpUpdate)
+	return &WorkLensUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkLensClient) UpdateOne(_m *WorkLens) *WorkLensUpdateOne {
+	mutation := newWorkLensMutation(c.config, OpUpdateOne, withWorkLens(_m))
+	return &WorkLensUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkLensClient) UpdateOneID(id int) *WorkLensUpdateOne {
+	mutation := newWorkLensMutation(c.config, OpUpdateOne, withWorkLensID(id))
+	return &WorkLensUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkLens.
+func (c *WorkLensClient) Delete() *WorkLensDelete {
+	mutation := newWorkLensMutation(c.config, OpDelete)
+	return &WorkLensDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkLensClient) DeleteOne(_m *WorkLens) *WorkLensDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkLensClient) DeleteOneID(id int) *WorkLensDeleteOne {
+	builder := c.Delete().Where(worklens.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkLensDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkLens.
+func (c *WorkLensClient) Query() *WorkLensQuery {
+	return &WorkLensQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkLens},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkLens entity by its id.
+func (c *WorkLensClient) Get(ctx context.Context, id int) (*WorkLens, error) {
+	return c.Query().Where(worklens.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkLensClient) GetX(ctx context.Context, id int) *WorkLens {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryArea queries the area edge of a WorkLens.
+func (c *WorkLensClient) QueryArea(_m *WorkLens) *WorkAreaQuery {
+	query := (&WorkAreaClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklens.Table, worklens.FieldID, id),
+			sqlgraph.To(workarea.Table, workarea.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, worklens.AreaTable, worklens.AreaColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkLensClient) Hooks() []Hook {
+	hooks := c.hooks.WorkLens
+	return append(hooks[:len(hooks):len(hooks)], worklens.Hooks[:]...)
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkLensClient) Interceptors() []Interceptor {
+	return c.inters.WorkLens
+}
+
+func (c *WorkLensClient) mutate(ctx context.Context, m *WorkLensMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkLensCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkLensUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkLensUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkLensDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkLens mutation op: %q", m.Op())
 	}
 }
 
@@ -2255,12 +2429,12 @@ func (c *WorkstreamTicketClient) mutate(ctx context.Context, m *WorkstreamTicket
 type (
 	hooks struct {
 		Document, DocumentFragment, Evidence, Message, Person, PullRequest, Ticket,
-		TicketDocumentFragment, TicketMessage, TicketPullRequest, WorkArea, Workstream,
-		WorkstreamTicket []ent.Hook
+		TicketDocumentFragment, TicketMessage, TicketPullRequest, WorkArea, WorkLens,
+		Workstream, WorkstreamTicket []ent.Hook
 	}
 	inters struct {
 		Document, DocumentFragment, Evidence, Message, Person, PullRequest, Ticket,
-		TicketDocumentFragment, TicketMessage, TicketPullRequest, WorkArea, Workstream,
-		WorkstreamTicket []ent.Interceptor
+		TicketDocumentFragment, TicketMessage, TicketPullRequest, WorkArea, WorkLens,
+		Workstream, WorkstreamTicket []ent.Interceptor
 	}
 )

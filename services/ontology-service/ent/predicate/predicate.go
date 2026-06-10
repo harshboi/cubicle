@@ -39,6 +39,9 @@ type TicketPullRequest func(*sql.Selector)
 // WorkArea is the predicate function for workarea builders.
 type WorkArea func(*sql.Selector)
 
+// WorkLens is the predicate function for worklens builders.
+type WorkLens func(*sql.Selector)
+
 // Workstream is the predicate function for workstream builders.
 type Workstream func(*sql.Selector)
 

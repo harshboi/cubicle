@@ -6,6 +6,7 @@ import (
 	"context"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/workarea"
+	"cubicle/services/ontology-service/ent/worklens"
 	"errors"
 	"fmt"
 	"time"
@@ -218,6 +219,21 @@ func (_c *WorkAreaCreate) SetNillableUpdatedAt(v *time.Time) *WorkAreaCreate {
 // SetPerson sets the "person" edge to the Person entity.
 func (_c *WorkAreaCreate) SetPerson(v *Person) *WorkAreaCreate {
 	return _c.SetPersonID(v.ID)
+}
+
+// AddLenseIDs adds the "lenses" edge to the WorkLens entity by IDs.
+func (_c *WorkAreaCreate) AddLenseIDs(ids ...int) *WorkAreaCreate {
+	_c.mutation.AddLenseIDs(ids...)
+	return _c
+}
+
+// AddLenses adds the "lenses" edges to the WorkLens entity.
+func (_c *WorkAreaCreate) AddLenses(v ...*WorkLens) *WorkAreaCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddLenseIDs(ids...)
 }
 
 // Mutation returns the WorkAreaMutation object of the builder.
@@ -464,6 +480,22 @@ func (_c *WorkAreaCreate) createSpec() (*WorkArea, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.PersonID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.LensesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workarea.LensesTable,
+			Columns: []string{workarea.LensesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

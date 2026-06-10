@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -540,6 +541,55 @@ var (
 			},
 		},
 	}
+	// WorkLensesColumns holds the columns for the "work_lenses" table.
+	WorkLensesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "work_lens_kind", Type: field.TypeEnum, Enums: []string{"documents_created", "documents_edited", "documents_commented_on", "pull_requests_authored", "pull_requests_reviewed", "pull_requests_commented_on", "tickets_owned", "tickets_reviewed", "tickets_mentioned_in", "messages_authored", "messages_mentioning_person", "messages_replied_to"}},
+		{Name: "lens_target_kind", Type: field.TypeEnum, Enums: []string{"document", "pull_request", "ticket", "message"}},
+		{Name: "display_name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "result_count", Type: field.TypeInt, Default: 0},
+		{Name: "source_count", Type: field.TypeInt, Default: 0},
+		{Name: "is_complete", Type: field.TypeBool, Default: false},
+		{Name: "last_indexed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_area_id", Type: field.TypeInt},
+	}
+	// WorkLensesTable holds the schema information for the "work_lenses" table.
+	WorkLensesTable = &schema.Table{
+		Name:       "work_lenses",
+		Columns:    WorkLensesColumns,
+		PrimaryKey: []*schema.Column{WorkLensesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_lenses_work_areas_lenses",
+				Columns:    []*schema.Column{WorkLensesColumns[19]},
+				RefColumns: []*schema.Column{WorkAreasColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "worklens_work_area_id_work_lens_kind",
+				Unique:  true,
+				Columns: []*schema.Column{WorkLensesColumns[19], WorkLensesColumns[2]},
+			},
+			{
+				Name:    "worklens_work_area_id_lens_target_kind_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkLensesColumns[19], WorkLensesColumns[3], WorkLensesColumns[13], WorkLensesColumns[12]},
+			},
+		},
+	}
 	// WorkstreamsColumns holds the columns for the "workstreams" table.
 	WorkstreamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -647,6 +697,7 @@ var (
 		TicketMessagesTable,
 		TicketPullRequestsTable,
 		WorkAreasTable,
+		WorkLensesTable,
 		WorkstreamsTable,
 		WorkstreamTicketsTable,
 	}
@@ -664,6 +715,10 @@ func init() {
 	TicketPullRequestsTable.ForeignKeys[1].RefTable = PullRequestsTable
 	TicketPullRequestsTable.ForeignKeys[2].RefTable = EvidencesTable
 	WorkAreasTable.ForeignKeys[0].RefTable = PersonsTable
+	WorkLensesTable.ForeignKeys[0].RefTable = WorkAreasTable
+	WorkLensesTable.Annotation = &entsql.Annotation{
+		Table: "work_lenses",
+	}
 	WorkstreamTicketsTable.ForeignKeys[0].RefTable = WorkstreamsTable
 	WorkstreamTicketsTable.ForeignKeys[1].RefTable = TicketsTable
 	WorkstreamTicketsTable.ForeignKeys[2].RefTable = EvidencesTable

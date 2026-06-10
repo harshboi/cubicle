@@ -6,6 +6,7 @@ import (
 	"context"
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/workarea"
+	"cubicle/services/ontology-service/ent/worklens"
 	"errors"
 	"fmt"
 	"time"
@@ -255,9 +256,45 @@ func (_u *WorkAreaUpdate) SetUpdatedAt(v time.Time) *WorkAreaUpdate {
 	return _u
 }
 
+// AddLenseIDs adds the "lenses" edge to the WorkLens entity by IDs.
+func (_u *WorkAreaUpdate) AddLenseIDs(ids ...int) *WorkAreaUpdate {
+	_u.mutation.AddLenseIDs(ids...)
+	return _u
+}
+
+// AddLenses adds the "lenses" edges to the WorkLens entity.
+func (_u *WorkAreaUpdate) AddLenses(v ...*WorkLens) *WorkAreaUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLenseIDs(ids...)
+}
+
 // Mutation returns the WorkAreaMutation object of the builder.
 func (_u *WorkAreaUpdate) Mutation() *WorkAreaMutation {
 	return _u.mutation
+}
+
+// ClearLenses clears all "lenses" edges to the WorkLens entity.
+func (_u *WorkAreaUpdate) ClearLenses() *WorkAreaUpdate {
+	_u.mutation.ClearLenses()
+	return _u
+}
+
+// RemoveLenseIDs removes the "lenses" edge to WorkLens entities by IDs.
+func (_u *WorkAreaUpdate) RemoveLenseIDs(ids ...int) *WorkAreaUpdate {
+	_u.mutation.RemoveLenseIDs(ids...)
+	return _u
+}
+
+// RemoveLenses removes "lenses" edges to WorkLens entities.
+func (_u *WorkAreaUpdate) RemoveLenses(v ...*WorkLens) *WorkAreaUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLenseIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -398,6 +435,51 @@ func (_u *WorkAreaUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workarea.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.LensesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workarea.LensesTable,
+			Columns: []string{workarea.LensesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLensesIDs(); len(nodes) > 0 && !_u.mutation.LensesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workarea.LensesTable,
+			Columns: []string{workarea.LensesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LensesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workarea.LensesTable,
+			Columns: []string{workarea.LensesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -646,9 +728,45 @@ func (_u *WorkAreaUpdateOne) SetUpdatedAt(v time.Time) *WorkAreaUpdateOne {
 	return _u
 }
 
+// AddLenseIDs adds the "lenses" edge to the WorkLens entity by IDs.
+func (_u *WorkAreaUpdateOne) AddLenseIDs(ids ...int) *WorkAreaUpdateOne {
+	_u.mutation.AddLenseIDs(ids...)
+	return _u
+}
+
+// AddLenses adds the "lenses" edges to the WorkLens entity.
+func (_u *WorkAreaUpdateOne) AddLenses(v ...*WorkLens) *WorkAreaUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLenseIDs(ids...)
+}
+
 // Mutation returns the WorkAreaMutation object of the builder.
 func (_u *WorkAreaUpdateOne) Mutation() *WorkAreaMutation {
 	return _u.mutation
+}
+
+// ClearLenses clears all "lenses" edges to the WorkLens entity.
+func (_u *WorkAreaUpdateOne) ClearLenses() *WorkAreaUpdateOne {
+	_u.mutation.ClearLenses()
+	return _u
+}
+
+// RemoveLenseIDs removes the "lenses" edge to WorkLens entities by IDs.
+func (_u *WorkAreaUpdateOne) RemoveLenseIDs(ids ...int) *WorkAreaUpdateOne {
+	_u.mutation.RemoveLenseIDs(ids...)
+	return _u
+}
+
+// RemoveLenses removes "lenses" edges to WorkLens entities.
+func (_u *WorkAreaUpdateOne) RemoveLenses(v ...*WorkLens) *WorkAreaUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLenseIDs(ids...)
 }
 
 // Where appends a list predicates to the WorkAreaUpdate builder.
@@ -819,6 +937,51 @@ func (_u *WorkAreaUpdateOne) sqlSave(ctx context.Context) (_node *WorkArea, err 
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(workarea.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.LensesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workarea.LensesTable,
+			Columns: []string{workarea.LensesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLensesIDs(); len(nodes) > 0 && !_u.mutation.LensesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workarea.LensesTable,
+			Columns: []string{workarea.LensesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LensesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   workarea.LensesTable,
+			Columns: []string{workarea.LensesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &WorkArea{config: _u.config}
 	_spec.Assign = _node.assignValues

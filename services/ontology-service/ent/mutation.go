@@ -16,6 +16,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workarea"
+	"cubicle/services/ontology-service/ent/worklens"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 	"errors"
@@ -47,6 +48,7 @@ const (
 	TypeTicketMessage          = "TicketMessage"
 	TypeTicketPullRequest      = "TicketPullRequest"
 	TypeWorkArea               = "WorkArea"
+	TypeWorkLens               = "WorkLens"
 	TypeWorkstream             = "Workstream"
 	TypeWorkstreamTicket       = "WorkstreamTicket"
 )
@@ -15724,6 +15726,9 @@ type WorkAreaMutation struct {
 	clearedFields    map[string]struct{}
 	person           *int
 	clearedperson    bool
+	lenses           map[int]struct{}
+	removedlenses    map[int]struct{}
+	clearedlenses    bool
 	done             bool
 	oldValue         func(context.Context) (*WorkArea, error)
 	predicates       []predicate.WorkArea
@@ -16569,6 +16574,60 @@ func (m *WorkAreaMutation) ResetPerson() {
 	m.clearedperson = false
 }
 
+// AddLenseIDs adds the "lenses" edge to the WorkLens entity by ids.
+func (m *WorkAreaMutation) AddLenseIDs(ids ...int) {
+	if m.lenses == nil {
+		m.lenses = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.lenses[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLenses clears the "lenses" edge to the WorkLens entity.
+func (m *WorkAreaMutation) ClearLenses() {
+	m.clearedlenses = true
+}
+
+// LensesCleared reports if the "lenses" edge to the WorkLens entity was cleared.
+func (m *WorkAreaMutation) LensesCleared() bool {
+	return m.clearedlenses
+}
+
+// RemoveLenseIDs removes the "lenses" edge to the WorkLens entity by IDs.
+func (m *WorkAreaMutation) RemoveLenseIDs(ids ...int) {
+	if m.removedlenses == nil {
+		m.removedlenses = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.lenses, ids[i])
+		m.removedlenses[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLenses returns the removed IDs of the "lenses" edge to the WorkLens entity.
+func (m *WorkAreaMutation) RemovedLensesIDs() (ids []int) {
+	for id := range m.removedlenses {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LensesIDs returns the "lenses" edge IDs in the mutation.
+func (m *WorkAreaMutation) LensesIDs() (ids []int) {
+	for id := range m.lenses {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLenses resets all changes to the "lenses" edge.
+func (m *WorkAreaMutation) ResetLenses() {
+	m.lenses = nil
+	m.clearedlenses = false
+	m.removedlenses = nil
+}
+
 // Where appends a list predicates to the WorkAreaMutation builder.
 func (m *WorkAreaMutation) Where(ps ...predicate.WorkArea) {
 	m.predicates = append(m.predicates, ps...)
@@ -17041,9 +17100,12 @@ func (m *WorkAreaMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkAreaMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.person != nil {
 		edges = append(edges, workarea.EdgePerson)
+	}
+	if m.lenses != nil {
+		edges = append(edges, workarea.EdgeLenses)
 	}
 	return edges
 }
@@ -17056,27 +17118,47 @@ func (m *WorkAreaMutation) AddedIDs(name string) []ent.Value {
 		if id := m.person; id != nil {
 			return []ent.Value{*id}
 		}
+	case workarea.EdgeLenses:
+		ids := make([]ent.Value, 0, len(m.lenses))
+		for id := range m.lenses {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkAreaMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
+	if m.removedlenses != nil {
+		edges = append(edges, workarea.EdgeLenses)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *WorkAreaMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case workarea.EdgeLenses:
+		ids := make([]ent.Value, 0, len(m.removedlenses))
+		for id := range m.removedlenses {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkAreaMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedperson {
 		edges = append(edges, workarea.EdgePerson)
+	}
+	if m.clearedlenses {
+		edges = append(edges, workarea.EdgeLenses)
 	}
 	return edges
 }
@@ -17087,6 +17169,8 @@ func (m *WorkAreaMutation) EdgeCleared(name string) bool {
 	switch name {
 	case workarea.EdgePerson:
 		return m.clearedperson
+	case workarea.EdgeLenses:
+		return m.clearedlenses
 	}
 	return false
 }
@@ -17109,8 +17193,1623 @@ func (m *WorkAreaMutation) ResetEdge(name string) error {
 	case workarea.EdgePerson:
 		m.ResetPerson()
 		return nil
+	case workarea.EdgeLenses:
+		m.ResetLenses()
+		return nil
 	}
 	return fmt.Errorf("unknown WorkArea edge %s", name)
+}
+
+// WorkLensMutation represents an operation that mutates the WorkLens nodes in the graph.
+type WorkLensMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	key              *string
+	work_lens_kind   *worklens.WorkLensKind
+	lens_target_kind *worklens.LensTargetKind
+	display_name     *string
+	description      *string
+	result_count     *int
+	addresult_count  *int
+	source_count     *int
+	addsource_count  *int
+	is_complete      *bool
+	last_indexed_at  *time.Time
+	event_count      *int
+	addevent_count   *int
+	first_seen_at    *time.Time
+	last_activity_at *time.Time
+	rank_score       *float64
+	addrank_score    *float64
+	freshness_state  *worklens.FreshnessState
+	visibility       *worklens.Visibility
+	confidence       *float64
+	addconfidence    *float64
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	area             *int
+	clearedarea      bool
+	done             bool
+	oldValue         func(context.Context) (*WorkLens, error)
+	predicates       []predicate.WorkLens
+}
+
+var _ ent.Mutation = (*WorkLensMutation)(nil)
+
+// worklensOption allows management of the mutation configuration using functional options.
+type worklensOption func(*WorkLensMutation)
+
+// newWorkLensMutation creates new mutation for the WorkLens entity.
+func newWorkLensMutation(c config, op Op, opts ...worklensOption) *WorkLensMutation {
+	m := &WorkLensMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWorkLens,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withWorkLensID sets the ID field of the mutation.
+func withWorkLensID(id int) worklensOption {
+	return func(m *WorkLensMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *WorkLens
+		)
+		m.oldValue = func(ctx context.Context) (*WorkLens, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().WorkLens.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withWorkLens sets the old WorkLens of the mutation.
+func withWorkLens(node *WorkLens) worklensOption {
+	return func(m *WorkLensMutation) {
+		m.oldValue = func(context.Context) (*WorkLens, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WorkLensMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WorkLensMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *WorkLensMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WorkLensMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().WorkLens.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetKey sets the "key" field.
+func (m *WorkLensMutation) SetKey(s string) {
+	m.key = &s
+}
+
+// Key returns the value of the "key" field in the mutation.
+func (m *WorkLensMutation) Key() (r string, exists bool) {
+	v := m.key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKey returns the old "key" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKey: %w", err)
+	}
+	return oldValue.Key, nil
+}
+
+// ResetKey resets all changes to the "key" field.
+func (m *WorkLensMutation) ResetKey() {
+	m.key = nil
+}
+
+// SetWorkAreaID sets the "work_area_id" field.
+func (m *WorkLensMutation) SetWorkAreaID(i int) {
+	m.area = &i
+}
+
+// WorkAreaID returns the value of the "work_area_id" field in the mutation.
+func (m *WorkLensMutation) WorkAreaID() (r int, exists bool) {
+	v := m.area
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkAreaID returns the old "work_area_id" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldWorkAreaID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkAreaID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkAreaID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkAreaID: %w", err)
+	}
+	return oldValue.WorkAreaID, nil
+}
+
+// ResetWorkAreaID resets all changes to the "work_area_id" field.
+func (m *WorkLensMutation) ResetWorkAreaID() {
+	m.area = nil
+}
+
+// SetWorkLensKind sets the "work_lens_kind" field.
+func (m *WorkLensMutation) SetWorkLensKind(wlk worklens.WorkLensKind) {
+	m.work_lens_kind = &wlk
+}
+
+// WorkLensKind returns the value of the "work_lens_kind" field in the mutation.
+func (m *WorkLensMutation) WorkLensKind() (r worklens.WorkLensKind, exists bool) {
+	v := m.work_lens_kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkLensKind returns the old "work_lens_kind" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldWorkLensKind(ctx context.Context) (v worklens.WorkLensKind, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkLensKind is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkLensKind requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkLensKind: %w", err)
+	}
+	return oldValue.WorkLensKind, nil
+}
+
+// ResetWorkLensKind resets all changes to the "work_lens_kind" field.
+func (m *WorkLensMutation) ResetWorkLensKind() {
+	m.work_lens_kind = nil
+}
+
+// SetLensTargetKind sets the "lens_target_kind" field.
+func (m *WorkLensMutation) SetLensTargetKind(wtk worklens.LensTargetKind) {
+	m.lens_target_kind = &wtk
+}
+
+// LensTargetKind returns the value of the "lens_target_kind" field in the mutation.
+func (m *WorkLensMutation) LensTargetKind() (r worklens.LensTargetKind, exists bool) {
+	v := m.lens_target_kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLensTargetKind returns the old "lens_target_kind" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldLensTargetKind(ctx context.Context) (v worklens.LensTargetKind, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLensTargetKind is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLensTargetKind requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLensTargetKind: %w", err)
+	}
+	return oldValue.LensTargetKind, nil
+}
+
+// ResetLensTargetKind resets all changes to the "lens_target_kind" field.
+func (m *WorkLensMutation) ResetLensTargetKind() {
+	m.lens_target_kind = nil
+}
+
+// SetDisplayName sets the "display_name" field.
+func (m *WorkLensMutation) SetDisplayName(s string) {
+	m.display_name = &s
+}
+
+// DisplayName returns the value of the "display_name" field in the mutation.
+func (m *WorkLensMutation) DisplayName() (r string, exists bool) {
+	v := m.display_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDisplayName returns the old "display_name" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldDisplayName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDisplayName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDisplayName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDisplayName: %w", err)
+	}
+	return oldValue.DisplayName, nil
+}
+
+// ResetDisplayName resets all changes to the "display_name" field.
+func (m *WorkLensMutation) ResetDisplayName() {
+	m.display_name = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *WorkLensMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *WorkLensMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *WorkLensMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[worklens.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *WorkLensMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[worklens.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *WorkLensMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, worklens.FieldDescription)
+}
+
+// SetResultCount sets the "result_count" field.
+func (m *WorkLensMutation) SetResultCount(i int) {
+	m.result_count = &i
+	m.addresult_count = nil
+}
+
+// ResultCount returns the value of the "result_count" field in the mutation.
+func (m *WorkLensMutation) ResultCount() (r int, exists bool) {
+	v := m.result_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResultCount returns the old "result_count" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldResultCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResultCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResultCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResultCount: %w", err)
+	}
+	return oldValue.ResultCount, nil
+}
+
+// AddResultCount adds i to the "result_count" field.
+func (m *WorkLensMutation) AddResultCount(i int) {
+	if m.addresult_count != nil {
+		*m.addresult_count += i
+	} else {
+		m.addresult_count = &i
+	}
+}
+
+// AddedResultCount returns the value that was added to the "result_count" field in this mutation.
+func (m *WorkLensMutation) AddedResultCount() (r int, exists bool) {
+	v := m.addresult_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetResultCount resets all changes to the "result_count" field.
+func (m *WorkLensMutation) ResetResultCount() {
+	m.result_count = nil
+	m.addresult_count = nil
+}
+
+// SetSourceCount sets the "source_count" field.
+func (m *WorkLensMutation) SetSourceCount(i int) {
+	m.source_count = &i
+	m.addsource_count = nil
+}
+
+// SourceCount returns the value of the "source_count" field in the mutation.
+func (m *WorkLensMutation) SourceCount() (r int, exists bool) {
+	v := m.source_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceCount returns the old "source_count" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldSourceCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceCount: %w", err)
+	}
+	return oldValue.SourceCount, nil
+}
+
+// AddSourceCount adds i to the "source_count" field.
+func (m *WorkLensMutation) AddSourceCount(i int) {
+	if m.addsource_count != nil {
+		*m.addsource_count += i
+	} else {
+		m.addsource_count = &i
+	}
+}
+
+// AddedSourceCount returns the value that was added to the "source_count" field in this mutation.
+func (m *WorkLensMutation) AddedSourceCount() (r int, exists bool) {
+	v := m.addsource_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSourceCount resets all changes to the "source_count" field.
+func (m *WorkLensMutation) ResetSourceCount() {
+	m.source_count = nil
+	m.addsource_count = nil
+}
+
+// SetIsComplete sets the "is_complete" field.
+func (m *WorkLensMutation) SetIsComplete(b bool) {
+	m.is_complete = &b
+}
+
+// IsComplete returns the value of the "is_complete" field in the mutation.
+func (m *WorkLensMutation) IsComplete() (r bool, exists bool) {
+	v := m.is_complete
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsComplete returns the old "is_complete" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldIsComplete(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsComplete is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsComplete requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsComplete: %w", err)
+	}
+	return oldValue.IsComplete, nil
+}
+
+// ResetIsComplete resets all changes to the "is_complete" field.
+func (m *WorkLensMutation) ResetIsComplete() {
+	m.is_complete = nil
+}
+
+// SetLastIndexedAt sets the "last_indexed_at" field.
+func (m *WorkLensMutation) SetLastIndexedAt(t time.Time) {
+	m.last_indexed_at = &t
+}
+
+// LastIndexedAt returns the value of the "last_indexed_at" field in the mutation.
+func (m *WorkLensMutation) LastIndexedAt() (r time.Time, exists bool) {
+	v := m.last_indexed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastIndexedAt returns the old "last_indexed_at" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldLastIndexedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastIndexedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastIndexedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastIndexedAt: %w", err)
+	}
+	return oldValue.LastIndexedAt, nil
+}
+
+// ClearLastIndexedAt clears the value of the "last_indexed_at" field.
+func (m *WorkLensMutation) ClearLastIndexedAt() {
+	m.last_indexed_at = nil
+	m.clearedFields[worklens.FieldLastIndexedAt] = struct{}{}
+}
+
+// LastIndexedAtCleared returns if the "last_indexed_at" field was cleared in this mutation.
+func (m *WorkLensMutation) LastIndexedAtCleared() bool {
+	_, ok := m.clearedFields[worklens.FieldLastIndexedAt]
+	return ok
+}
+
+// ResetLastIndexedAt resets all changes to the "last_indexed_at" field.
+func (m *WorkLensMutation) ResetLastIndexedAt() {
+	m.last_indexed_at = nil
+	delete(m.clearedFields, worklens.FieldLastIndexedAt)
+}
+
+// SetEventCount sets the "event_count" field.
+func (m *WorkLensMutation) SetEventCount(i int) {
+	m.event_count = &i
+	m.addevent_count = nil
+}
+
+// EventCount returns the value of the "event_count" field in the mutation.
+func (m *WorkLensMutation) EventCount() (r int, exists bool) {
+	v := m.event_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEventCount returns the old "event_count" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldEventCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEventCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEventCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEventCount: %w", err)
+	}
+	return oldValue.EventCount, nil
+}
+
+// AddEventCount adds i to the "event_count" field.
+func (m *WorkLensMutation) AddEventCount(i int) {
+	if m.addevent_count != nil {
+		*m.addevent_count += i
+	} else {
+		m.addevent_count = &i
+	}
+}
+
+// AddedEventCount returns the value that was added to the "event_count" field in this mutation.
+func (m *WorkLensMutation) AddedEventCount() (r int, exists bool) {
+	v := m.addevent_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEventCount resets all changes to the "event_count" field.
+func (m *WorkLensMutation) ResetEventCount() {
+	m.event_count = nil
+	m.addevent_count = nil
+}
+
+// SetFirstSeenAt sets the "first_seen_at" field.
+func (m *WorkLensMutation) SetFirstSeenAt(t time.Time) {
+	m.first_seen_at = &t
+}
+
+// FirstSeenAt returns the value of the "first_seen_at" field in the mutation.
+func (m *WorkLensMutation) FirstSeenAt() (r time.Time, exists bool) {
+	v := m.first_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstSeenAt returns the old "first_seen_at" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldFirstSeenAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstSeenAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstSeenAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstSeenAt: %w", err)
+	}
+	return oldValue.FirstSeenAt, nil
+}
+
+// ClearFirstSeenAt clears the value of the "first_seen_at" field.
+func (m *WorkLensMutation) ClearFirstSeenAt() {
+	m.first_seen_at = nil
+	m.clearedFields[worklens.FieldFirstSeenAt] = struct{}{}
+}
+
+// FirstSeenAtCleared returns if the "first_seen_at" field was cleared in this mutation.
+func (m *WorkLensMutation) FirstSeenAtCleared() bool {
+	_, ok := m.clearedFields[worklens.FieldFirstSeenAt]
+	return ok
+}
+
+// ResetFirstSeenAt resets all changes to the "first_seen_at" field.
+func (m *WorkLensMutation) ResetFirstSeenAt() {
+	m.first_seen_at = nil
+	delete(m.clearedFields, worklens.FieldFirstSeenAt)
+}
+
+// SetLastActivityAt sets the "last_activity_at" field.
+func (m *WorkLensMutation) SetLastActivityAt(t time.Time) {
+	m.last_activity_at = &t
+}
+
+// LastActivityAt returns the value of the "last_activity_at" field in the mutation.
+func (m *WorkLensMutation) LastActivityAt() (r time.Time, exists bool) {
+	v := m.last_activity_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastActivityAt returns the old "last_activity_at" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldLastActivityAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastActivityAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastActivityAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastActivityAt: %w", err)
+	}
+	return oldValue.LastActivityAt, nil
+}
+
+// ClearLastActivityAt clears the value of the "last_activity_at" field.
+func (m *WorkLensMutation) ClearLastActivityAt() {
+	m.last_activity_at = nil
+	m.clearedFields[worklens.FieldLastActivityAt] = struct{}{}
+}
+
+// LastActivityAtCleared returns if the "last_activity_at" field was cleared in this mutation.
+func (m *WorkLensMutation) LastActivityAtCleared() bool {
+	_, ok := m.clearedFields[worklens.FieldLastActivityAt]
+	return ok
+}
+
+// ResetLastActivityAt resets all changes to the "last_activity_at" field.
+func (m *WorkLensMutation) ResetLastActivityAt() {
+	m.last_activity_at = nil
+	delete(m.clearedFields, worklens.FieldLastActivityAt)
+}
+
+// SetRankScore sets the "rank_score" field.
+func (m *WorkLensMutation) SetRankScore(f float64) {
+	m.rank_score = &f
+	m.addrank_score = nil
+}
+
+// RankScore returns the value of the "rank_score" field in the mutation.
+func (m *WorkLensMutation) RankScore() (r float64, exists bool) {
+	v := m.rank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRankScore returns the old "rank_score" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldRankScore(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRankScore is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRankScore requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRankScore: %w", err)
+	}
+	return oldValue.RankScore, nil
+}
+
+// AddRankScore adds f to the "rank_score" field.
+func (m *WorkLensMutation) AddRankScore(f float64) {
+	if m.addrank_score != nil {
+		*m.addrank_score += f
+	} else {
+		m.addrank_score = &f
+	}
+}
+
+// AddedRankScore returns the value that was added to the "rank_score" field in this mutation.
+func (m *WorkLensMutation) AddedRankScore() (r float64, exists bool) {
+	v := m.addrank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRankScore resets all changes to the "rank_score" field.
+func (m *WorkLensMutation) ResetRankScore() {
+	m.rank_score = nil
+	m.addrank_score = nil
+}
+
+// SetFreshnessState sets the "freshness_state" field.
+func (m *WorkLensMutation) SetFreshnessState(ws worklens.FreshnessState) {
+	m.freshness_state = &ws
+}
+
+// FreshnessState returns the value of the "freshness_state" field in the mutation.
+func (m *WorkLensMutation) FreshnessState() (r worklens.FreshnessState, exists bool) {
+	v := m.freshness_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFreshnessState returns the old "freshness_state" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldFreshnessState(ctx context.Context) (v worklens.FreshnessState, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFreshnessState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFreshnessState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFreshnessState: %w", err)
+	}
+	return oldValue.FreshnessState, nil
+}
+
+// ResetFreshnessState resets all changes to the "freshness_state" field.
+func (m *WorkLensMutation) ResetFreshnessState() {
+	m.freshness_state = nil
+}
+
+// SetVisibility sets the "visibility" field.
+func (m *WorkLensMutation) SetVisibility(w worklens.Visibility) {
+	m.visibility = &w
+}
+
+// Visibility returns the value of the "visibility" field in the mutation.
+func (m *WorkLensMutation) Visibility() (r worklens.Visibility, exists bool) {
+	v := m.visibility
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVisibility returns the old "visibility" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldVisibility(ctx context.Context) (v worklens.Visibility, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVisibility is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVisibility requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVisibility: %w", err)
+	}
+	return oldValue.Visibility, nil
+}
+
+// ResetVisibility resets all changes to the "visibility" field.
+func (m *WorkLensMutation) ResetVisibility() {
+	m.visibility = nil
+}
+
+// SetConfidence sets the "confidence" field.
+func (m *WorkLensMutation) SetConfidence(f float64) {
+	m.confidence = &f
+	m.addconfidence = nil
+}
+
+// Confidence returns the value of the "confidence" field in the mutation.
+func (m *WorkLensMutation) Confidence() (r float64, exists bool) {
+	v := m.confidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfidence returns the old "confidence" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldConfidence(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfidence is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfidence requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfidence: %w", err)
+	}
+	return oldValue.Confidence, nil
+}
+
+// AddConfidence adds f to the "confidence" field.
+func (m *WorkLensMutation) AddConfidence(f float64) {
+	if m.addconfidence != nil {
+		*m.addconfidence += f
+	} else {
+		m.addconfidence = &f
+	}
+}
+
+// AddedConfidence returns the value that was added to the "confidence" field in this mutation.
+func (m *WorkLensMutation) AddedConfidence() (r float64, exists bool) {
+	v := m.addconfidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConfidence resets all changes to the "confidence" field.
+func (m *WorkLensMutation) ResetConfidence() {
+	m.confidence = nil
+	m.addconfidence = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WorkLensMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WorkLensMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WorkLensMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *WorkLensMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *WorkLensMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the WorkLens entity.
+// If the WorkLens object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkLensMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *WorkLensMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetAreaID sets the "area" edge to the WorkArea entity by id.
+func (m *WorkLensMutation) SetAreaID(id int) {
+	m.area = &id
+}
+
+// ClearArea clears the "area" edge to the WorkArea entity.
+func (m *WorkLensMutation) ClearArea() {
+	m.clearedarea = true
+	m.clearedFields[worklens.FieldWorkAreaID] = struct{}{}
+}
+
+// AreaCleared reports if the "area" edge to the WorkArea entity was cleared.
+func (m *WorkLensMutation) AreaCleared() bool {
+	return m.clearedarea
+}
+
+// AreaID returns the "area" edge ID in the mutation.
+func (m *WorkLensMutation) AreaID() (id int, exists bool) {
+	if m.area != nil {
+		return *m.area, true
+	}
+	return
+}
+
+// AreaIDs returns the "area" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// AreaID instead. It exists only for internal usage by the builders.
+func (m *WorkLensMutation) AreaIDs() (ids []int) {
+	if id := m.area; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetArea resets all changes to the "area" edge.
+func (m *WorkLensMutation) ResetArea() {
+	m.area = nil
+	m.clearedarea = false
+}
+
+// Where appends a list predicates to the WorkLensMutation builder.
+func (m *WorkLensMutation) Where(ps ...predicate.WorkLens) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WorkLensMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WorkLensMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.WorkLens, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WorkLensMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WorkLensMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (WorkLens).
+func (m *WorkLensMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WorkLensMutation) Fields() []string {
+	fields := make([]string, 0, 19)
+	if m.key != nil {
+		fields = append(fields, worklens.FieldKey)
+	}
+	if m.area != nil {
+		fields = append(fields, worklens.FieldWorkAreaID)
+	}
+	if m.work_lens_kind != nil {
+		fields = append(fields, worklens.FieldWorkLensKind)
+	}
+	if m.lens_target_kind != nil {
+		fields = append(fields, worklens.FieldLensTargetKind)
+	}
+	if m.display_name != nil {
+		fields = append(fields, worklens.FieldDisplayName)
+	}
+	if m.description != nil {
+		fields = append(fields, worklens.FieldDescription)
+	}
+	if m.result_count != nil {
+		fields = append(fields, worklens.FieldResultCount)
+	}
+	if m.source_count != nil {
+		fields = append(fields, worklens.FieldSourceCount)
+	}
+	if m.is_complete != nil {
+		fields = append(fields, worklens.FieldIsComplete)
+	}
+	if m.last_indexed_at != nil {
+		fields = append(fields, worklens.FieldLastIndexedAt)
+	}
+	if m.event_count != nil {
+		fields = append(fields, worklens.FieldEventCount)
+	}
+	if m.first_seen_at != nil {
+		fields = append(fields, worklens.FieldFirstSeenAt)
+	}
+	if m.last_activity_at != nil {
+		fields = append(fields, worklens.FieldLastActivityAt)
+	}
+	if m.rank_score != nil {
+		fields = append(fields, worklens.FieldRankScore)
+	}
+	if m.freshness_state != nil {
+		fields = append(fields, worklens.FieldFreshnessState)
+	}
+	if m.visibility != nil {
+		fields = append(fields, worklens.FieldVisibility)
+	}
+	if m.confidence != nil {
+		fields = append(fields, worklens.FieldConfidence)
+	}
+	if m.created_at != nil {
+		fields = append(fields, worklens.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, worklens.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WorkLensMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case worklens.FieldKey:
+		return m.Key()
+	case worklens.FieldWorkAreaID:
+		return m.WorkAreaID()
+	case worklens.FieldWorkLensKind:
+		return m.WorkLensKind()
+	case worklens.FieldLensTargetKind:
+		return m.LensTargetKind()
+	case worklens.FieldDisplayName:
+		return m.DisplayName()
+	case worklens.FieldDescription:
+		return m.Description()
+	case worklens.FieldResultCount:
+		return m.ResultCount()
+	case worklens.FieldSourceCount:
+		return m.SourceCount()
+	case worklens.FieldIsComplete:
+		return m.IsComplete()
+	case worklens.FieldLastIndexedAt:
+		return m.LastIndexedAt()
+	case worklens.FieldEventCount:
+		return m.EventCount()
+	case worklens.FieldFirstSeenAt:
+		return m.FirstSeenAt()
+	case worklens.FieldLastActivityAt:
+		return m.LastActivityAt()
+	case worklens.FieldRankScore:
+		return m.RankScore()
+	case worklens.FieldFreshnessState:
+		return m.FreshnessState()
+	case worklens.FieldVisibility:
+		return m.Visibility()
+	case worklens.FieldConfidence:
+		return m.Confidence()
+	case worklens.FieldCreatedAt:
+		return m.CreatedAt()
+	case worklens.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WorkLensMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case worklens.FieldKey:
+		return m.OldKey(ctx)
+	case worklens.FieldWorkAreaID:
+		return m.OldWorkAreaID(ctx)
+	case worklens.FieldWorkLensKind:
+		return m.OldWorkLensKind(ctx)
+	case worklens.FieldLensTargetKind:
+		return m.OldLensTargetKind(ctx)
+	case worklens.FieldDisplayName:
+		return m.OldDisplayName(ctx)
+	case worklens.FieldDescription:
+		return m.OldDescription(ctx)
+	case worklens.FieldResultCount:
+		return m.OldResultCount(ctx)
+	case worklens.FieldSourceCount:
+		return m.OldSourceCount(ctx)
+	case worklens.FieldIsComplete:
+		return m.OldIsComplete(ctx)
+	case worklens.FieldLastIndexedAt:
+		return m.OldLastIndexedAt(ctx)
+	case worklens.FieldEventCount:
+		return m.OldEventCount(ctx)
+	case worklens.FieldFirstSeenAt:
+		return m.OldFirstSeenAt(ctx)
+	case worklens.FieldLastActivityAt:
+		return m.OldLastActivityAt(ctx)
+	case worklens.FieldRankScore:
+		return m.OldRankScore(ctx)
+	case worklens.FieldFreshnessState:
+		return m.OldFreshnessState(ctx)
+	case worklens.FieldVisibility:
+		return m.OldVisibility(ctx)
+	case worklens.FieldConfidence:
+		return m.OldConfidence(ctx)
+	case worklens.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case worklens.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown WorkLens field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkLensMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case worklens.FieldKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKey(v)
+		return nil
+	case worklens.FieldWorkAreaID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkAreaID(v)
+		return nil
+	case worklens.FieldWorkLensKind:
+		v, ok := value.(worklens.WorkLensKind)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkLensKind(v)
+		return nil
+	case worklens.FieldLensTargetKind:
+		v, ok := value.(worklens.LensTargetKind)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLensTargetKind(v)
+		return nil
+	case worklens.FieldDisplayName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDisplayName(v)
+		return nil
+	case worklens.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case worklens.FieldResultCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResultCount(v)
+		return nil
+	case worklens.FieldSourceCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceCount(v)
+		return nil
+	case worklens.FieldIsComplete:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsComplete(v)
+		return nil
+	case worklens.FieldLastIndexedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastIndexedAt(v)
+		return nil
+	case worklens.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventCount(v)
+		return nil
+	case worklens.FieldFirstSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstSeenAt(v)
+		return nil
+	case worklens.FieldLastActivityAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastActivityAt(v)
+		return nil
+	case worklens.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRankScore(v)
+		return nil
+	case worklens.FieldFreshnessState:
+		v, ok := value.(worklens.FreshnessState)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFreshnessState(v)
+		return nil
+	case worklens.FieldVisibility:
+		v, ok := value.(worklens.Visibility)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisibility(v)
+		return nil
+	case worklens.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfidence(v)
+		return nil
+	case worklens.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case worklens.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WorkLens field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WorkLensMutation) AddedFields() []string {
+	var fields []string
+	if m.addresult_count != nil {
+		fields = append(fields, worklens.FieldResultCount)
+	}
+	if m.addsource_count != nil {
+		fields = append(fields, worklens.FieldSourceCount)
+	}
+	if m.addevent_count != nil {
+		fields = append(fields, worklens.FieldEventCount)
+	}
+	if m.addrank_score != nil {
+		fields = append(fields, worklens.FieldRankScore)
+	}
+	if m.addconfidence != nil {
+		fields = append(fields, worklens.FieldConfidence)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WorkLensMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case worklens.FieldResultCount:
+		return m.AddedResultCount()
+	case worklens.FieldSourceCount:
+		return m.AddedSourceCount()
+	case worklens.FieldEventCount:
+		return m.AddedEventCount()
+	case worklens.FieldRankScore:
+		return m.AddedRankScore()
+	case worklens.FieldConfidence:
+		return m.AddedConfidence()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkLensMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case worklens.FieldResultCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddResultCount(v)
+		return nil
+	case worklens.FieldSourceCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSourceCount(v)
+		return nil
+	case worklens.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEventCount(v)
+		return nil
+	case worklens.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRankScore(v)
+		return nil
+	case worklens.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfidence(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WorkLens numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WorkLensMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(worklens.FieldDescription) {
+		fields = append(fields, worklens.FieldDescription)
+	}
+	if m.FieldCleared(worklens.FieldLastIndexedAt) {
+		fields = append(fields, worklens.FieldLastIndexedAt)
+	}
+	if m.FieldCleared(worklens.FieldFirstSeenAt) {
+		fields = append(fields, worklens.FieldFirstSeenAt)
+	}
+	if m.FieldCleared(worklens.FieldLastActivityAt) {
+		fields = append(fields, worklens.FieldLastActivityAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WorkLensMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WorkLensMutation) ClearField(name string) error {
+	switch name {
+	case worklens.FieldDescription:
+		m.ClearDescription()
+		return nil
+	case worklens.FieldLastIndexedAt:
+		m.ClearLastIndexedAt()
+		return nil
+	case worklens.FieldFirstSeenAt:
+		m.ClearFirstSeenAt()
+		return nil
+	case worklens.FieldLastActivityAt:
+		m.ClearLastActivityAt()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkLens nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WorkLensMutation) ResetField(name string) error {
+	switch name {
+	case worklens.FieldKey:
+		m.ResetKey()
+		return nil
+	case worklens.FieldWorkAreaID:
+		m.ResetWorkAreaID()
+		return nil
+	case worklens.FieldWorkLensKind:
+		m.ResetWorkLensKind()
+		return nil
+	case worklens.FieldLensTargetKind:
+		m.ResetLensTargetKind()
+		return nil
+	case worklens.FieldDisplayName:
+		m.ResetDisplayName()
+		return nil
+	case worklens.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case worklens.FieldResultCount:
+		m.ResetResultCount()
+		return nil
+	case worklens.FieldSourceCount:
+		m.ResetSourceCount()
+		return nil
+	case worklens.FieldIsComplete:
+		m.ResetIsComplete()
+		return nil
+	case worklens.FieldLastIndexedAt:
+		m.ResetLastIndexedAt()
+		return nil
+	case worklens.FieldEventCount:
+		m.ResetEventCount()
+		return nil
+	case worklens.FieldFirstSeenAt:
+		m.ResetFirstSeenAt()
+		return nil
+	case worklens.FieldLastActivityAt:
+		m.ResetLastActivityAt()
+		return nil
+	case worklens.FieldRankScore:
+		m.ResetRankScore()
+		return nil
+	case worklens.FieldFreshnessState:
+		m.ResetFreshnessState()
+		return nil
+	case worklens.FieldVisibility:
+		m.ResetVisibility()
+		return nil
+	case worklens.FieldConfidence:
+		m.ResetConfidence()
+		return nil
+	case worklens.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case worklens.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkLens field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WorkLensMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.area != nil {
+		edges = append(edges, worklens.EdgeArea)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WorkLensMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case worklens.EdgeArea:
+		if id := m.area; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WorkLensMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WorkLensMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WorkLensMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedarea {
+		edges = append(edges, worklens.EdgeArea)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WorkLensMutation) EdgeCleared(name string) bool {
+	switch name {
+	case worklens.EdgeArea:
+		return m.clearedarea
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WorkLensMutation) ClearEdge(name string) error {
+	switch name {
+	case worklens.EdgeArea:
+		m.ClearArea()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkLens unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WorkLensMutation) ResetEdge(name string) error {
+	switch name {
+	case worklens.EdgeArea:
+		m.ResetArea()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkLens edge %s", name)
 }
 
 // WorkstreamMutation represents an operation that mutates the Workstream nodes in the graph.

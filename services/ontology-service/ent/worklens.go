@@ -3,8 +3,8 @@
 package ent
 
 import (
-	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/workarea"
+	"cubicle/services/ontology-service/ent/worklens"
 	"fmt"
 	"strings"
 	"time"
@@ -13,25 +13,31 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// WorkArea is the model entity for the WorkArea schema.
-type WorkArea struct {
+// WorkLens is the model entity for the WorkLens schema.
+type WorkLens struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Stable source-neutral key used outside SQLite and Ent internals.
 	Key string `json:"key,omitempty"`
-	// Person row that owns this work area.
-	PersonID int `json:"person_id,omitempty"`
-	// Major work domain represented by this work area.
-	WorkAreaKind workarea.WorkAreaKind `json:"work_area_kind,omitempty"`
-	// Human-readable work area label, such as Documents or Code.
+	// Parent WorkArea row that owns this lens.
+	WorkAreaID int `json:"work_area_id,omitempty"`
+	// Specific bounded view represented by this lens.
+	WorkLensKind worklens.WorkLensKind `json:"work_lens_kind,omitempty"`
+	// Only target kind this lens is allowed to expose.
+	LensTargetKind worklens.LensTargetKind `json:"lens_target_kind,omitempty"`
+	// Human-readable lens label, such as Documents Commented On.
 	DisplayName string `json:"display_name,omitempty"`
-	// Short explanation of what this work area contains.
+	// Short explanation of the lens's semantic relationship.
 	Description string `json:"description,omitempty"`
-	// Cached number of lenses below this work area.
-	LensCount int `json:"lens_count,omitempty"`
-	// Cached total target count across lenses below this work area.
+	// Cached number of result rows behind this lens.
 	ResultCount int `json:"result_count,omitempty"`
+	// Number of source systems that contributed to this lens.
+	SourceCount int `json:"source_count,omitempty"`
+	// Whether all configured sources for this lens have been crawled.
+	IsComplete bool `json:"is_complete,omitempty"`
+	// Time this lens's rollups were last rebuilt or updated.
+	LastIndexedAt time.Time `json:"last_indexed_at,omitempty"`
 	// Number of source events collapsed into this graph object or link.
 	EventCount int `json:"event_count,omitempty"`
 	// Earliest time Cubicle observed this object or relationship.
@@ -41,9 +47,9 @@ type WorkArea struct {
 	// Deterministic ranking score used before ML ranking exists.
 	RankScore float64 `json:"rank_score,omitempty"`
 	// Freshness state for filtering stale or partial graph facts.
-	FreshnessState workarea.FreshnessState `json:"freshness_state,omitempty"`
+	FreshnessState worklens.FreshnessState `json:"freshness_state,omitempty"`
 	// Visibility class used by future permission-aware query filtering.
-	Visibility workarea.Visibility `json:"visibility,omitempty"`
+	Visibility worklens.Visibility `json:"visibility,omitempty"`
 	// Confidence score for source-backed or inferred facts.
 	Confidence float64 `json:"confidence,omitempty"`
 	// Time this row was first created in Cubicle storage.
@@ -51,54 +57,45 @@ type WorkArea struct {
 	// Time this row was last updated in Cubicle storage.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the WorkAreaQuery when eager-loading is set.
-	Edges        WorkAreaEdges `json:"edges"`
+	// The values are being populated by the WorkLensQuery when eager-loading is set.
+	Edges        WorkLensEdges `json:"edges"`
 	selectValues sql.SelectValues
 }
 
-// WorkAreaEdges holds the relations/edges for other nodes in the graph.
-type WorkAreaEdges struct {
-	// Person who owns this bounded work area.
-	Person *Person `json:"person,omitempty"`
-	// Bounded work lenses available under this work area.
-	Lenses []*WorkLens `json:"lenses,omitempty"`
+// WorkLensEdges holds the relations/edges for other nodes in the graph.
+type WorkLensEdges struct {
+	// Parent work area that owns this lens.
+	Area *WorkArea `json:"area,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [1]bool
 }
 
-// PersonOrErr returns the Person value or an error if the edge
+// AreaOrErr returns the Area value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e WorkAreaEdges) PersonOrErr() (*Person, error) {
-	if e.Person != nil {
-		return e.Person, nil
+func (e WorkLensEdges) AreaOrErr() (*WorkArea, error) {
+	if e.Area != nil {
+		return e.Area, nil
 	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: person.Label}
+		return nil, &NotFoundError{label: workarea.Label}
 	}
-	return nil, &NotLoadedError{edge: "person"}
-}
-
-// LensesOrErr returns the Lenses value or an error if the edge
-// was not loaded in eager-loading.
-func (e WorkAreaEdges) LensesOrErr() ([]*WorkLens, error) {
-	if e.loadedTypes[1] {
-		return e.Lenses, nil
-	}
-	return nil, &NotLoadedError{edge: "lenses"}
+	return nil, &NotLoadedError{edge: "area"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*WorkArea) scanValues(columns []string) ([]any, error) {
+func (*WorkLens) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case workarea.FieldRankScore, workarea.FieldConfidence:
+		case worklens.FieldIsComplete:
+			values[i] = new(sql.NullBool)
+		case worklens.FieldRankScore, worklens.FieldConfidence:
 			values[i] = new(sql.NullFloat64)
-		case workarea.FieldID, workarea.FieldPersonID, workarea.FieldLensCount, workarea.FieldResultCount, workarea.FieldEventCount:
+		case worklens.FieldID, worklens.FieldWorkAreaID, worklens.FieldResultCount, worklens.FieldSourceCount, worklens.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workarea.FieldKey, workarea.FieldWorkAreaKind, workarea.FieldDisplayName, workarea.FieldDescription, workarea.FieldFreshnessState, workarea.FieldVisibility:
+		case worklens.FieldKey, worklens.FieldWorkLensKind, worklens.FieldLensTargetKind, worklens.FieldDisplayName, worklens.FieldDescription, worklens.FieldFreshnessState, worklens.FieldVisibility:
 			values[i] = new(sql.NullString)
-		case workarea.FieldFirstSeenAt, workarea.FieldLastActivityAt, workarea.FieldCreatedAt, workarea.FieldUpdatedAt:
+		case worklens.FieldLastIndexedAt, worklens.FieldFirstSeenAt, worklens.FieldLastActivityAt, worklens.FieldCreatedAt, worklens.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -108,110 +105,128 @@ func (*WorkArea) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the WorkArea fields.
-func (_m *WorkArea) assignValues(columns []string, values []any) error {
+// to the WorkLens fields.
+func (_m *WorkLens) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case workarea.FieldID:
+		case worklens.FieldID:
 			value, ok := values[i].(*sql.NullInt64)
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case workarea.FieldKey:
+		case worklens.FieldKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field key", values[i])
 			} else if value.Valid {
 				_m.Key = value.String
 			}
-		case workarea.FieldPersonID:
+		case worklens.FieldWorkAreaID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field person_id", values[i])
+				return fmt.Errorf("unexpected type %T for field work_area_id", values[i])
 			} else if value.Valid {
-				_m.PersonID = int(value.Int64)
+				_m.WorkAreaID = int(value.Int64)
 			}
-		case workarea.FieldWorkAreaKind:
+		case worklens.FieldWorkLensKind:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field work_area_kind", values[i])
+				return fmt.Errorf("unexpected type %T for field work_lens_kind", values[i])
 			} else if value.Valid {
-				_m.WorkAreaKind = workarea.WorkAreaKind(value.String)
+				_m.WorkLensKind = worklens.WorkLensKind(value.String)
 			}
-		case workarea.FieldDisplayName:
+		case worklens.FieldLensTargetKind:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field lens_target_kind", values[i])
+			} else if value.Valid {
+				_m.LensTargetKind = worklens.LensTargetKind(value.String)
+			}
+		case worklens.FieldDisplayName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field display_name", values[i])
 			} else if value.Valid {
 				_m.DisplayName = value.String
 			}
-		case workarea.FieldDescription:
+		case worklens.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
 				_m.Description = value.String
 			}
-		case workarea.FieldLensCount:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field lens_count", values[i])
-			} else if value.Valid {
-				_m.LensCount = int(value.Int64)
-			}
-		case workarea.FieldResultCount:
+		case worklens.FieldResultCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field result_count", values[i])
 			} else if value.Valid {
 				_m.ResultCount = int(value.Int64)
 			}
-		case workarea.FieldEventCount:
+		case worklens.FieldSourceCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field source_count", values[i])
+			} else if value.Valid {
+				_m.SourceCount = int(value.Int64)
+			}
+		case worklens.FieldIsComplete:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_complete", values[i])
+			} else if value.Valid {
+				_m.IsComplete = value.Bool
+			}
+		case worklens.FieldLastIndexedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_indexed_at", values[i])
+			} else if value.Valid {
+				_m.LastIndexedAt = value.Time
+			}
+		case worklens.FieldEventCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_count", values[i])
 			} else if value.Valid {
 				_m.EventCount = int(value.Int64)
 			}
-		case workarea.FieldFirstSeenAt:
+		case worklens.FieldFirstSeenAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field first_seen_at", values[i])
 			} else if value.Valid {
 				_m.FirstSeenAt = value.Time
 			}
-		case workarea.FieldLastActivityAt:
+		case worklens.FieldLastActivityAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field last_activity_at", values[i])
 			} else if value.Valid {
 				_m.LastActivityAt = value.Time
 			}
-		case workarea.FieldRankScore:
+		case worklens.FieldRankScore:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field rank_score", values[i])
 			} else if value.Valid {
 				_m.RankScore = value.Float64
 			}
-		case workarea.FieldFreshnessState:
+		case worklens.FieldFreshnessState:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field freshness_state", values[i])
 			} else if value.Valid {
-				_m.FreshnessState = workarea.FreshnessState(value.String)
+				_m.FreshnessState = worklens.FreshnessState(value.String)
 			}
-		case workarea.FieldVisibility:
+		case worklens.FieldVisibility:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field visibility", values[i])
 			} else if value.Valid {
-				_m.Visibility = workarea.Visibility(value.String)
+				_m.Visibility = worklens.Visibility(value.String)
 			}
-		case workarea.FieldConfidence:
+		case worklens.FieldConfidence:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field confidence", values[i])
 			} else if value.Valid {
 				_m.Confidence = value.Float64
 			}
-		case workarea.FieldCreatedAt:
+		case worklens.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case workarea.FieldUpdatedAt:
+		case worklens.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
@@ -224,53 +239,51 @@ func (_m *WorkArea) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the WorkArea.
+// Value returns the ent.Value that was dynamically selected and assigned to the WorkLens.
 // This includes values selected through modifiers, order, etc.
-func (_m *WorkArea) Value(name string) (ent.Value, error) {
+func (_m *WorkLens) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryPerson queries the "person" edge of the WorkArea entity.
-func (_m *WorkArea) QueryPerson() *PersonQuery {
-	return NewWorkAreaClient(_m.config).QueryPerson(_m)
+// QueryArea queries the "area" edge of the WorkLens entity.
+func (_m *WorkLens) QueryArea() *WorkAreaQuery {
+	return NewWorkLensClient(_m.config).QueryArea(_m)
 }
 
-// QueryLenses queries the "lenses" edge of the WorkArea entity.
-func (_m *WorkArea) QueryLenses() *WorkLensQuery {
-	return NewWorkAreaClient(_m.config).QueryLenses(_m)
-}
-
-// Update returns a builder for updating this WorkArea.
-// Note that you need to call WorkArea.Unwrap() before calling this method if this WorkArea
+// Update returns a builder for updating this WorkLens.
+// Note that you need to call WorkLens.Unwrap() before calling this method if this WorkLens
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *WorkArea) Update() *WorkAreaUpdateOne {
-	return NewWorkAreaClient(_m.config).UpdateOne(_m)
+func (_m *WorkLens) Update() *WorkLensUpdateOne {
+	return NewWorkLensClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the WorkArea entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the WorkLens entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *WorkArea) Unwrap() *WorkArea {
+func (_m *WorkLens) Unwrap() *WorkLens {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: WorkArea is not a transactional entity")
+		panic("ent: WorkLens is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *WorkArea) String() string {
+func (_m *WorkLens) String() string {
 	var builder strings.Builder
-	builder.WriteString("WorkArea(")
+	builder.WriteString("WorkLens(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("key=")
 	builder.WriteString(_m.Key)
 	builder.WriteString(", ")
-	builder.WriteString("person_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.PersonID))
+	builder.WriteString("work_area_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkAreaID))
 	builder.WriteString(", ")
-	builder.WriteString("work_area_kind=")
-	builder.WriteString(fmt.Sprintf("%v", _m.WorkAreaKind))
+	builder.WriteString("work_lens_kind=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkLensKind))
+	builder.WriteString(", ")
+	builder.WriteString("lens_target_kind=")
+	builder.WriteString(fmt.Sprintf("%v", _m.LensTargetKind))
 	builder.WriteString(", ")
 	builder.WriteString("display_name=")
 	builder.WriteString(_m.DisplayName)
@@ -278,11 +291,17 @@ func (_m *WorkArea) String() string {
 	builder.WriteString("description=")
 	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
-	builder.WriteString("lens_count=")
-	builder.WriteString(fmt.Sprintf("%v", _m.LensCount))
-	builder.WriteString(", ")
 	builder.WriteString("result_count=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ResultCount))
+	builder.WriteString(", ")
+	builder.WriteString("source_count=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SourceCount))
+	builder.WriteString(", ")
+	builder.WriteString("is_complete=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsComplete))
+	builder.WriteString(", ")
+	builder.WriteString("last_indexed_at=")
+	builder.WriteString(_m.LastIndexedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("event_count=")
 	builder.WriteString(fmt.Sprintf("%v", _m.EventCount))
@@ -314,5 +333,5 @@ func (_m *WorkArea) String() string {
 	return builder.String()
 }
 
-// WorkAreas is a parsable slice of WorkArea.
-type WorkAreas []*WorkArea
+// WorkLensSlice is a parsable slice of WorkLens.
+type WorkLensSlice []*WorkLens
