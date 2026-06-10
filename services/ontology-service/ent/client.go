@@ -11,6 +11,7 @@ import (
 
 	"cubicle/services/ontology-service/ent/migrate"
 
+	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
 
 	"entgo.io/ent"
@@ -23,6 +24,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Evidence is the client for interacting with the Evidence builders.
+	Evidence *EvidenceClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
 }
@@ -36,6 +39,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Evidence = NewEvidenceClient(c.config)
 	c.Person = NewPersonClient(c.config)
 }
 
@@ -127,9 +131,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Person: NewPersonClient(cfg),
+		ctx:      ctx,
+		config:   cfg,
+		Evidence: NewEvidenceClient(cfg),
+		Person:   NewPersonClient(cfg),
 	}, nil
 }
 
@@ -147,16 +152,17 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Person: NewPersonClient(cfg),
+		ctx:      ctx,
+		config:   cfg,
+		Evidence: NewEvidenceClient(cfg),
+		Person:   NewPersonClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Person.
+//		Evidence.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -178,22 +184,159 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Evidence.Use(hooks...)
 	c.Person.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Evidence.Intercept(interceptors...)
 	c.Person.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *EvidenceMutation:
+		return c.Evidence.mutate(ctx, m)
 	case *PersonMutation:
 		return c.Person.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// EvidenceClient is a client for the Evidence schema.
+type EvidenceClient struct {
+	config
+}
+
+// NewEvidenceClient returns a client for the Evidence from the given config.
+func NewEvidenceClient(c config) *EvidenceClient {
+	return &EvidenceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `evidence.Hooks(f(g(h())))`.
+func (c *EvidenceClient) Use(hooks ...Hook) {
+	c.hooks.Evidence = append(c.hooks.Evidence, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `evidence.Intercept(f(g(h())))`.
+func (c *EvidenceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Evidence = append(c.inters.Evidence, interceptors...)
+}
+
+// Create returns a builder for creating a Evidence entity.
+func (c *EvidenceClient) Create() *EvidenceCreate {
+	mutation := newEvidenceMutation(c.config, OpCreate)
+	return &EvidenceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Evidence entities.
+func (c *EvidenceClient) CreateBulk(builders ...*EvidenceCreate) *EvidenceCreateBulk {
+	return &EvidenceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EvidenceClient) MapCreateBulk(slice any, setFunc func(*EvidenceCreate, int)) *EvidenceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EvidenceCreateBulk{err: fmt.Errorf("calling to EvidenceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EvidenceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EvidenceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Evidence.
+func (c *EvidenceClient) Update() *EvidenceUpdate {
+	mutation := newEvidenceMutation(c.config, OpUpdate)
+	return &EvidenceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EvidenceClient) UpdateOne(_m *Evidence) *EvidenceUpdateOne {
+	mutation := newEvidenceMutation(c.config, OpUpdateOne, withEvidence(_m))
+	return &EvidenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EvidenceClient) UpdateOneID(id int) *EvidenceUpdateOne {
+	mutation := newEvidenceMutation(c.config, OpUpdateOne, withEvidenceID(id))
+	return &EvidenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Evidence.
+func (c *EvidenceClient) Delete() *EvidenceDelete {
+	mutation := newEvidenceMutation(c.config, OpDelete)
+	return &EvidenceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EvidenceClient) DeleteOne(_m *Evidence) *EvidenceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EvidenceClient) DeleteOneID(id int) *EvidenceDeleteOne {
+	builder := c.Delete().Where(evidence.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EvidenceDeleteOne{builder}
+}
+
+// Query returns a query builder for Evidence.
+func (c *EvidenceClient) Query() *EvidenceQuery {
+	return &EvidenceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEvidence},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Evidence entity by its id.
+func (c *EvidenceClient) Get(ctx context.Context, id int) (*Evidence, error) {
+	return c.Query().Where(evidence.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EvidenceClient) GetX(ctx context.Context, id int) *Evidence {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *EvidenceClient) Hooks() []Hook {
+	return c.hooks.Evidence
+}
+
+// Interceptors returns the client interceptors.
+func (c *EvidenceClient) Interceptors() []Interceptor {
+	return c.inters.Evidence
+}
+
+func (c *EvidenceClient) mutate(ctx context.Context, m *EvidenceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EvidenceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EvidenceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EvidenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EvidenceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Evidence mutation op: %q", m.Op())
 	}
 }
 
@@ -333,9 +476,9 @@ func (c *PersonClient) mutate(ctx context.Context, m *PersonMutation) (Value, er
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Person []ent.Hook
+		Evidence, Person []ent.Hook
 	}
 	inters struct {
-		Person []ent.Interceptor
+		Evidence, Person []ent.Interceptor
 	}
 )

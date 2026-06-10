@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/schema"
 	"time"
@@ -12,6 +13,26 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	evidenceFields := schema.Evidence{}.Fields()
+	_ = evidenceFields
+	// evidenceDescKey is the schema descriptor for key field.
+	evidenceDescKey := evidenceFields[0].Descriptor()
+	// evidence.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	evidence.KeyValidator = evidenceDescKey.Validators[0].(func(string) error)
+	// evidenceDescConfidence is the schema descriptor for confidence field.
+	evidenceDescConfidence := evidenceFields[11].Descriptor()
+	// evidence.DefaultConfidence holds the default value on creation for the confidence field.
+	evidence.DefaultConfidence = evidenceDescConfidence.Default.(float64)
+	// evidenceDescCreatedAt is the schema descriptor for created_at field.
+	evidenceDescCreatedAt := evidenceFields[12].Descriptor()
+	// evidence.DefaultCreatedAt holds the default value on creation for the created_at field.
+	evidence.DefaultCreatedAt = evidenceDescCreatedAt.Default.(func() time.Time)
+	// evidenceDescUpdatedAt is the schema descriptor for updated_at field.
+	evidenceDescUpdatedAt := evidenceFields[13].Descriptor()
+	// evidence.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	evidence.DefaultUpdatedAt = evidenceDescUpdatedAt.Default.(func() time.Time)
+	// evidence.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	evidence.UpdateDefaultUpdatedAt = evidenceDescUpdatedAt.UpdateDefault.(func() time.Time)
 	personFields := schema.Person{}.Fields()
 	_ = personFields
 	// personDescKey is the schema descriptor for key field.

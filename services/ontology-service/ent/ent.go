@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
 	"errors"
 	"fmt"
@@ -73,7 +74,8 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			person.Table: person.ValidColumn,
+			evidence.Table: evidence.ValidColumn,
+			person.Table:   person.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)
