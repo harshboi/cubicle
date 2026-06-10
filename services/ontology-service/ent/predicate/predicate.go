@@ -15,6 +15,9 @@ type DocumentFragment func(*sql.Selector)
 // Evidence is the predicate function for evidence builders.
 type Evidence func(*sql.Selector)
 
+// Message is the predicate function for message builders.
+type Message func(*sql.Selector)
+
 // Person is the predicate function for person builders.
 type Person func(*sql.Selector)
 
@@ -26,6 +29,9 @@ type Ticket func(*sql.Selector)
 
 // TicketDocumentFragment is the predicate function for ticketdocumentfragment builders.
 type TicketDocumentFragment func(*sql.Selector)
+
+// TicketMessage is the predicate function for ticketmessage builders.
+type TicketMessage func(*sql.Selector)
 
 // TicketPullRequest is the predicate function for ticketpullrequest builders.
 type TicketPullRequest func(*sql.Selector)

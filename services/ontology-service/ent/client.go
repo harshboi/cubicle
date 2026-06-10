@@ -14,10 +14,12 @@ import (
 	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
+	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
@@ -39,6 +41,8 @@ type Client struct {
 	DocumentFragment *DocumentFragmentClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
+	// Message is the client for interacting with the Message builders.
+	Message *MessageClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
 	// PullRequest is the client for interacting with the PullRequest builders.
@@ -47,6 +51,8 @@ type Client struct {
 	Ticket *TicketClient
 	// TicketDocumentFragment is the client for interacting with the TicketDocumentFragment builders.
 	TicketDocumentFragment *TicketDocumentFragmentClient
+	// TicketMessage is the client for interacting with the TicketMessage builders.
+	TicketMessage *TicketMessageClient
 	// TicketPullRequest is the client for interacting with the TicketPullRequest builders.
 	TicketPullRequest *TicketPullRequestClient
 	// Workstream is the client for interacting with the Workstream builders.
@@ -67,10 +73,12 @@ func (c *Client) init() {
 	c.Document = NewDocumentClient(c.config)
 	c.DocumentFragment = NewDocumentFragmentClient(c.config)
 	c.Evidence = NewEvidenceClient(c.config)
+	c.Message = NewMessageClient(c.config)
 	c.Person = NewPersonClient(c.config)
 	c.PullRequest = NewPullRequestClient(c.config)
 	c.Ticket = NewTicketClient(c.config)
 	c.TicketDocumentFragment = NewTicketDocumentFragmentClient(c.config)
+	c.TicketMessage = NewTicketMessageClient(c.config)
 	c.TicketPullRequest = NewTicketPullRequestClient(c.config)
 	c.Workstream = NewWorkstreamClient(c.config)
 	c.WorkstreamTicket = NewWorkstreamTicketClient(c.config)
@@ -169,10 +177,12 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Document:               NewDocumentClient(cfg),
 		DocumentFragment:       NewDocumentFragmentClient(cfg),
 		Evidence:               NewEvidenceClient(cfg),
+		Message:                NewMessageClient(cfg),
 		Person:                 NewPersonClient(cfg),
 		PullRequest:            NewPullRequestClient(cfg),
 		Ticket:                 NewTicketClient(cfg),
 		TicketDocumentFragment: NewTicketDocumentFragmentClient(cfg),
+		TicketMessage:          NewTicketMessageClient(cfg),
 		TicketPullRequest:      NewTicketPullRequestClient(cfg),
 		Workstream:             NewWorkstreamClient(cfg),
 		WorkstreamTicket:       NewWorkstreamTicketClient(cfg),
@@ -198,10 +208,12 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Document:               NewDocumentClient(cfg),
 		DocumentFragment:       NewDocumentFragmentClient(cfg),
 		Evidence:               NewEvidenceClient(cfg),
+		Message:                NewMessageClient(cfg),
 		Person:                 NewPersonClient(cfg),
 		PullRequest:            NewPullRequestClient(cfg),
 		Ticket:                 NewTicketClient(cfg),
 		TicketDocumentFragment: NewTicketDocumentFragmentClient(cfg),
+		TicketMessage:          NewTicketMessageClient(cfg),
 		TicketPullRequest:      NewTicketPullRequestClient(cfg),
 		Workstream:             NewWorkstreamClient(cfg),
 		WorkstreamTicket:       NewWorkstreamTicketClient(cfg),
@@ -234,9 +246,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Document, c.DocumentFragment, c.Evidence, c.Person, c.PullRequest, c.Ticket,
-		c.TicketDocumentFragment, c.TicketPullRequest, c.Workstream,
-		c.WorkstreamTicket,
+		c.Document, c.DocumentFragment, c.Evidence, c.Message, c.Person, c.PullRequest,
+		c.Ticket, c.TicketDocumentFragment, c.TicketMessage, c.TicketPullRequest,
+		c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Use(hooks...)
 	}
@@ -246,9 +258,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Document, c.DocumentFragment, c.Evidence, c.Person, c.PullRequest, c.Ticket,
-		c.TicketDocumentFragment, c.TicketPullRequest, c.Workstream,
-		c.WorkstreamTicket,
+		c.Document, c.DocumentFragment, c.Evidence, c.Message, c.Person, c.PullRequest,
+		c.Ticket, c.TicketDocumentFragment, c.TicketMessage, c.TicketPullRequest,
+		c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -263,6 +275,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.DocumentFragment.mutate(ctx, m)
 	case *EvidenceMutation:
 		return c.Evidence.mutate(ctx, m)
+	case *MessageMutation:
+		return c.Message.mutate(ctx, m)
 	case *PersonMutation:
 		return c.Person.mutate(ctx, m)
 	case *PullRequestMutation:
@@ -271,6 +285,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Ticket.mutate(ctx, m)
 	case *TicketDocumentFragmentMutation:
 		return c.TicketDocumentFragment.mutate(ctx, m)
+	case *TicketMessageMutation:
+		return c.TicketMessage.mutate(ctx, m)
 	case *TicketPullRequestMutation:
 		return c.TicketPullRequest.mutate(ctx, m)
 	case *WorkstreamMutation:
@@ -729,6 +745,155 @@ func (c *EvidenceClient) mutate(ctx context.Context, m *EvidenceMutation) (Value
 	}
 }
 
+// MessageClient is a client for the Message schema.
+type MessageClient struct {
+	config
+}
+
+// NewMessageClient returns a client for the Message from the given config.
+func NewMessageClient(c config) *MessageClient {
+	return &MessageClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `message.Hooks(f(g(h())))`.
+func (c *MessageClient) Use(hooks ...Hook) {
+	c.hooks.Message = append(c.hooks.Message, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `message.Intercept(f(g(h())))`.
+func (c *MessageClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Message = append(c.inters.Message, interceptors...)
+}
+
+// Create returns a builder for creating a Message entity.
+func (c *MessageClient) Create() *MessageCreate {
+	mutation := newMessageMutation(c.config, OpCreate)
+	return &MessageCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Message entities.
+func (c *MessageClient) CreateBulk(builders ...*MessageCreate) *MessageCreateBulk {
+	return &MessageCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MessageClient) MapCreateBulk(slice any, setFunc func(*MessageCreate, int)) *MessageCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MessageCreateBulk{err: fmt.Errorf("calling to MessageClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MessageCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MessageCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Message.
+func (c *MessageClient) Update() *MessageUpdate {
+	mutation := newMessageMutation(c.config, OpUpdate)
+	return &MessageUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MessageClient) UpdateOne(_m *Message) *MessageUpdateOne {
+	mutation := newMessageMutation(c.config, OpUpdateOne, withMessage(_m))
+	return &MessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MessageClient) UpdateOneID(id int) *MessageUpdateOne {
+	mutation := newMessageMutation(c.config, OpUpdateOne, withMessageID(id))
+	return &MessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Message.
+func (c *MessageClient) Delete() *MessageDelete {
+	mutation := newMessageMutation(c.config, OpDelete)
+	return &MessageDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MessageClient) DeleteOne(_m *Message) *MessageDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MessageClient) DeleteOneID(id int) *MessageDeleteOne {
+	builder := c.Delete().Where(message.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MessageDeleteOne{builder}
+}
+
+// Query returns a query builder for Message.
+func (c *MessageClient) Query() *MessageQuery {
+	return &MessageQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMessage},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Message entity by its id.
+func (c *MessageClient) Get(ctx context.Context, id int) (*Message, error) {
+	return c.Query().Where(message.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MessageClient) GetX(ctx context.Context, id int) *Message {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTickets queries the tickets edge of a Message.
+func (c *MessageClient) QueryTickets(_m *Message) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, message.TicketsTable, message.TicketsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *MessageClient) Hooks() []Hook {
+	return c.hooks.Message
+}
+
+// Interceptors returns the client interceptors.
+func (c *MessageClient) Interceptors() []Interceptor {
+	return c.inters.Message
+}
+
+func (c *MessageClient) mutate(ctx context.Context, m *MessageMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MessageCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MessageUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MessageDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Message mutation op: %q", m.Op())
+	}
+}
+
 // PersonClient is a client for the Person schema.
 type PersonClient struct {
 	config
@@ -1167,6 +1332,22 @@ func (c *TicketClient) QueryDocumentFragments(_m *Ticket) *DocumentFragmentQuery
 	return query
 }
 
+// QueryMessages queries the messages edge of a Ticket.
+func (c *TicketClient) QueryMessages(_m *Ticket) *MessageQuery {
+	query := (&MessageClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(message.Table, message.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, ticket.MessagesTable, ticket.MessagesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryTicketPullRequests queries the ticket_pull_requests edge of a Ticket.
 func (c *TicketClient) QueryTicketPullRequests(_m *Ticket) *TicketPullRequestQuery {
 	query := (&TicketPullRequestClient{config: c.config}).Query()
@@ -1192,6 +1373,22 @@ func (c *TicketClient) QueryTicketDocumentFragments(_m *Ticket) *TicketDocumentF
 			sqlgraph.From(ticket.Table, ticket.FieldID, id),
 			sqlgraph.To(ticketdocumentfragment.Table, ticketdocumentfragment.TicketColumn),
 			sqlgraph.Edge(sqlgraph.O2M, true, ticket.TicketDocumentFragmentsTable, ticket.TicketDocumentFragmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicketMessages queries the ticket_messages edge of a Ticket.
+func (c *TicketClient) QueryTicketMessages(_m *Ticket) *TicketMessageQuery {
+	query := (&TicketMessageClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(ticketmessage.Table, ticketmessage.TicketColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.TicketMessagesTable, ticket.TicketMessagesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1344,6 +1541,129 @@ func (c *TicketDocumentFragmentClient) mutate(ctx context.Context, m *TicketDocu
 		return (&TicketDocumentFragmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown TicketDocumentFragment mutation op: %q", m.Op())
+	}
+}
+
+// TicketMessageClient is a client for the TicketMessage schema.
+type TicketMessageClient struct {
+	config
+}
+
+// NewTicketMessageClient returns a client for the TicketMessage from the given config.
+func NewTicketMessageClient(c config) *TicketMessageClient {
+	return &TicketMessageClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ticketmessage.Hooks(f(g(h())))`.
+func (c *TicketMessageClient) Use(hooks ...Hook) {
+	c.hooks.TicketMessage = append(c.hooks.TicketMessage, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ticketmessage.Intercept(f(g(h())))`.
+func (c *TicketMessageClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TicketMessage = append(c.inters.TicketMessage, interceptors...)
+}
+
+// Create returns a builder for creating a TicketMessage entity.
+func (c *TicketMessageClient) Create() *TicketMessageCreate {
+	mutation := newTicketMessageMutation(c.config, OpCreate)
+	return &TicketMessageCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TicketMessage entities.
+func (c *TicketMessageClient) CreateBulk(builders ...*TicketMessageCreate) *TicketMessageCreateBulk {
+	return &TicketMessageCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TicketMessageClient) MapCreateBulk(slice any, setFunc func(*TicketMessageCreate, int)) *TicketMessageCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TicketMessageCreateBulk{err: fmt.Errorf("calling to TicketMessageClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TicketMessageCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TicketMessageCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TicketMessage.
+func (c *TicketMessageClient) Update() *TicketMessageUpdate {
+	mutation := newTicketMessageMutation(c.config, OpUpdate)
+	return &TicketMessageUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TicketMessageClient) UpdateOne(_m *TicketMessage) *TicketMessageUpdateOne {
+	mutation := newTicketMessageMutation(c.config, OpUpdateOne)
+	mutation.ticket = &_m.TicketID
+	mutation.message = &_m.MessageID
+	return &TicketMessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TicketMessage.
+func (c *TicketMessageClient) Delete() *TicketMessageDelete {
+	mutation := newTicketMessageMutation(c.config, OpDelete)
+	return &TicketMessageDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Query returns a query builder for TicketMessage.
+func (c *TicketMessageClient) Query() *TicketMessageQuery {
+	return &TicketMessageQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTicketMessage},
+		inters: c.Interceptors(),
+	}
+}
+
+// QueryTicket queries the ticket edge of a TicketMessage.
+func (c *TicketMessageClient) QueryTicket(_m *TicketMessage) *TicketQuery {
+	return c.Query().
+		Where(ticketmessage.TicketID(_m.TicketID), ticketmessage.MessageID(_m.MessageID)).
+		QueryTicket()
+}
+
+// QueryMessage queries the message edge of a TicketMessage.
+func (c *TicketMessageClient) QueryMessage(_m *TicketMessage) *MessageQuery {
+	return c.Query().
+		Where(ticketmessage.TicketID(_m.TicketID), ticketmessage.MessageID(_m.MessageID)).
+		QueryMessage()
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a TicketMessage.
+func (c *TicketMessageClient) QueryLatestEvidence(_m *TicketMessage) *EvidenceQuery {
+	return c.Query().
+		Where(ticketmessage.TicketID(_m.TicketID), ticketmessage.MessageID(_m.MessageID)).
+		QueryLatestEvidence()
+}
+
+// Hooks returns the client hooks.
+func (c *TicketMessageClient) Hooks() []Hook {
+	return c.hooks.TicketMessage
+}
+
+// Interceptors returns the client interceptors.
+func (c *TicketMessageClient) Interceptors() []Interceptor {
+	return c.inters.TicketMessage
+}
+
+func (c *TicketMessageClient) mutate(ctx context.Context, m *TicketMessageMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TicketMessageCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TicketMessageUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TicketMessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TicketMessageDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TicketMessage mutation op: %q", m.Op())
 	}
 }
 
@@ -1761,13 +2081,13 @@ func (c *WorkstreamTicketClient) mutate(ctx context.Context, m *WorkstreamTicket
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Document, DocumentFragment, Evidence, Person, PullRequest, Ticket,
-		TicketDocumentFragment, TicketPullRequest, Workstream,
+		Document, DocumentFragment, Evidence, Message, Person, PullRequest, Ticket,
+		TicketDocumentFragment, TicketMessage, TicketPullRequest, Workstream,
 		WorkstreamTicket []ent.Hook
 	}
 	inters struct {
-		Document, DocumentFragment, Evidence, Person, PullRequest, Ticket,
-		TicketDocumentFragment, TicketPullRequest, Workstream,
+		Document, DocumentFragment, Evidence, Message, Person, PullRequest, Ticket,
+		TicketDocumentFragment, TicketMessage, TicketPullRequest, Workstream,
 		WorkstreamTicket []ent.Interceptor
 	}
 )

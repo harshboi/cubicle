@@ -57,6 +57,9 @@ func (Ticket) Edges() []ent.Edge {
 		edge.To("document_fragments", DocumentFragment.Type).
 			Through("ticket_document_fragments", TicketDocumentFragment.Type).
 			Comment("Document fragments that explain or support this ticket."),
+		edge.To("messages", Message.Type).
+			Through("ticket_messages", TicketMessage.Type).
+			Comment("Messages that discuss this ticket."),
 	}
 }
 

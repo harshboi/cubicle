@@ -61,10 +61,14 @@ const (
 	EdgePullRequests = "pull_requests"
 	// EdgeDocumentFragments holds the string denoting the document_fragments edge name in mutations.
 	EdgeDocumentFragments = "document_fragments"
+	// EdgeMessages holds the string denoting the messages edge name in mutations.
+	EdgeMessages = "messages"
 	// EdgeTicketPullRequests holds the string denoting the ticket_pull_requests edge name in mutations.
 	EdgeTicketPullRequests = "ticket_pull_requests"
 	// EdgeTicketDocumentFragments holds the string denoting the ticket_document_fragments edge name in mutations.
 	EdgeTicketDocumentFragments = "ticket_document_fragments"
+	// EdgeTicketMessages holds the string denoting the ticket_messages edge name in mutations.
+	EdgeTicketMessages = "ticket_messages"
 	// Table holds the table name of the ticket in the database.
 	Table = "tickets"
 	// WorkstreamsTable is the table that holds the workstreams relation/edge. The primary key declared below.
@@ -82,6 +86,11 @@ const (
 	// DocumentFragmentsInverseTable is the table name for the DocumentFragment entity.
 	// It exists in this package in order to avoid circular dependency with the "documentfragment" package.
 	DocumentFragmentsInverseTable = "document_fragments"
+	// MessagesTable is the table that holds the messages relation/edge. The primary key declared below.
+	MessagesTable = "ticket_messages"
+	// MessagesInverseTable is the table name for the Message entity.
+	// It exists in this package in order to avoid circular dependency with the "message" package.
+	MessagesInverseTable = "messages"
 	// TicketPullRequestsTable is the table that holds the ticket_pull_requests relation/edge.
 	TicketPullRequestsTable = "ticket_pull_requests"
 	// TicketPullRequestsInverseTable is the table name for the TicketPullRequest entity.
@@ -96,6 +105,13 @@ const (
 	TicketDocumentFragmentsInverseTable = "ticket_document_fragments"
 	// TicketDocumentFragmentsColumn is the table column denoting the ticket_document_fragments relation/edge.
 	TicketDocumentFragmentsColumn = "ticket_id"
+	// TicketMessagesTable is the table that holds the ticket_messages relation/edge.
+	TicketMessagesTable = "ticket_messages"
+	// TicketMessagesInverseTable is the table name for the TicketMessage entity.
+	// It exists in this package in order to avoid circular dependency with the "ticketmessage" package.
+	TicketMessagesInverseTable = "ticket_messages"
+	// TicketMessagesColumn is the table column denoting the ticket_messages relation/edge.
+	TicketMessagesColumn = "ticket_id"
 )
 
 // Columns holds all SQL columns for ticket fields.
@@ -133,6 +149,9 @@ var (
 	// DocumentFragmentsPrimaryKey and DocumentFragmentsColumn2 are the table columns denoting the
 	// primary key for the document_fragments relation (M2M).
 	DocumentFragmentsPrimaryKey = []string{"ticket_id", "document_fragment_id"}
+	// MessagesPrimaryKey and MessagesColumn2 are the table columns denoting the
+	// primary key for the messages relation (M2M).
+	MessagesPrimaryKey = []string{"ticket_id", "message_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -398,6 +417,20 @@ func ByDocumentFragments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption
 	}
 }
 
+// ByMessagesCount orders the results by messages count.
+func ByMessagesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newMessagesStep(), opts...)
+	}
+}
+
+// ByMessages orders the results by messages terms.
+func ByMessages(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMessagesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByTicketPullRequestsCount orders the results by ticket_pull_requests count.
 func ByTicketPullRequestsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -425,6 +458,20 @@ func ByTicketDocumentFragments(term sql.OrderTerm, terms ...sql.OrderTerm) Order
 		sqlgraph.OrderByNeighborTerms(s, newTicketDocumentFragmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByTicketMessagesCount orders the results by ticket_messages count.
+func ByTicketMessagesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTicketMessagesStep(), opts...)
+	}
+}
+
+// ByTicketMessages orders the results by ticket_messages terms.
+func ByTicketMessages(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTicketMessagesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newWorkstreamsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -446,6 +493,13 @@ func newDocumentFragmentsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2M, false, DocumentFragmentsTable, DocumentFragmentsPrimaryKey...),
 	)
 }
+func newMessagesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MessagesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, MessagesTable, MessagesPrimaryKey...),
+	)
+}
 func newTicketPullRequestsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -458,5 +512,12 @@ func newTicketDocumentFragmentsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TicketDocumentFragmentsInverseTable, TicketDocumentFragmentsColumn),
 		sqlgraph.Edge(sqlgraph.O2M, true, TicketDocumentFragmentsTable, TicketDocumentFragmentsColumn),
+	)
+}
+func newTicketMessagesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TicketMessagesInverseTable, TicketMessagesColumn),
+		sqlgraph.Edge(sqlgraph.O2M, true, TicketMessagesTable, TicketMessagesColumn),
 	)
 }

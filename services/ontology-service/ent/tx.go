@@ -18,6 +18,8 @@ type Tx struct {
 	DocumentFragment *DocumentFragmentClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
+	// Message is the client for interacting with the Message builders.
+	Message *MessageClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
 	// PullRequest is the client for interacting with the PullRequest builders.
@@ -26,6 +28,8 @@ type Tx struct {
 	Ticket *TicketClient
 	// TicketDocumentFragment is the client for interacting with the TicketDocumentFragment builders.
 	TicketDocumentFragment *TicketDocumentFragmentClient
+	// TicketMessage is the client for interacting with the TicketMessage builders.
+	TicketMessage *TicketMessageClient
 	// TicketPullRequest is the client for interacting with the TicketPullRequest builders.
 	TicketPullRequest *TicketPullRequestClient
 	// Workstream is the client for interacting with the Workstream builders.
@@ -166,10 +170,12 @@ func (tx *Tx) init() {
 	tx.Document = NewDocumentClient(tx.config)
 	tx.DocumentFragment = NewDocumentFragmentClient(tx.config)
 	tx.Evidence = NewEvidenceClient(tx.config)
+	tx.Message = NewMessageClient(tx.config)
 	tx.Person = NewPersonClient(tx.config)
 	tx.PullRequest = NewPullRequestClient(tx.config)
 	tx.Ticket = NewTicketClient(tx.config)
 	tx.TicketDocumentFragment = NewTicketDocumentFragmentClient(tx.config)
+	tx.TicketMessage = NewTicketMessageClient(tx.config)
 	tx.TicketPullRequest = NewTicketPullRequestClient(tx.config)
 	tx.Workstream = NewWorkstreamClient(tx.config)
 	tx.WorkstreamTicket = NewWorkstreamTicketClient(tx.config)

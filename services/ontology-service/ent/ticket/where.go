@@ -1299,6 +1299,29 @@ func HasDocumentFragmentsWith(preds ...predicate.DocumentFragment) predicate.Tic
 	})
 }
 
+// HasMessages applies the HasEdge predicate on the "messages" edge.
+func HasMessages() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, MessagesTable, MessagesPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMessagesWith applies the HasEdge predicate on the "messages" edge with a given conditions (other predicates).
+func HasMessagesWith(preds ...predicate.Message) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newMessagesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasTicketPullRequests applies the HasEdge predicate on the "ticket_pull_requests" edge.
 func HasTicketPullRequests() predicate.Ticket {
 	return predicate.Ticket(func(s *sql.Selector) {
@@ -1337,6 +1360,29 @@ func HasTicketDocumentFragments() predicate.Ticket {
 func HasTicketDocumentFragmentsWith(preds ...predicate.TicketDocumentFragment) predicate.Ticket {
 	return predicate.Ticket(func(s *sql.Selector) {
 		step := newTicketDocumentFragmentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTicketMessages applies the HasEdge predicate on the "ticket_messages" edge.
+func HasTicketMessages() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, TicketMessagesTable, TicketMessagesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTicketMessagesWith applies the HasEdge predicate on the "ticket_messages" edge with a given conditions (other predicates).
+func HasTicketMessagesWith(preds ...predicate.TicketMessage) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newTicketMessagesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

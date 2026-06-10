@@ -7,10 +7,12 @@ import (
 	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
+	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
@@ -85,10 +87,12 @@ func checkColumn(t, c string) error {
 			document.Table:               document.ValidColumn,
 			documentfragment.Table:       documentfragment.ValidColumn,
 			evidence.Table:               evidence.ValidColumn,
+			message.Table:                message.ValidColumn,
 			person.Table:                 person.ValidColumn,
 			pullrequest.Table:            pullrequest.ValidColumn,
 			ticket.Table:                 ticket.ValidColumn,
 			ticketdocumentfragment.Table: ticketdocumentfragment.ValidColumn,
+			ticketmessage.Table:          ticketmessage.ValidColumn,
 			ticketpullrequest.Table:      ticketpullrequest.ValidColumn,
 			workstream.Table:             workstream.ValidColumn,
 			workstreamticket.Table:       workstreamticket.ValidColumn,

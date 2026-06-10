@@ -128,6 +128,54 @@ var (
 			},
 		},
 	}
+	// MessagesColumns holds the columns for the "messages" table.
+	MessagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "body", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "channel_key", Type: field.TypeString, Nullable: true},
+		{Name: "thread_key", Type: field.TypeString, Nullable: true},
+		{Name: "author_person_key", Type: field.TypeString, Nullable: true},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "summary", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "search_text", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// MessagesTable holds the schema information for the "messages" table.
+	MessagesTable = &schema.Table{
+		Name:       "messages",
+		Columns:    MessagesColumns,
+		PrimaryKey: []*schema.Column{MessagesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "message_channel_key_thread_key",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[3], MessagesColumns[4]},
+			},
+			{
+				Name:    "message_author_person_key",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[5]},
+			},
+			{
+				Name:    "message_sent_at",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[6]},
+			},
+		},
+	}
 	// PersonsColumns holds the columns for the "persons" table.
 	PersonsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -328,6 +376,65 @@ var (
 			},
 		},
 	}
+	// TicketMessagesColumns holds the columns for the "ticket_messages" table.
+	TicketMessagesColumns = []*schema.Column{
+		{Name: "relation_kind", Type: field.TypeEnum, Enums: []string{"discussed_in"}},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "source", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "ticket_id", Type: field.TypeInt},
+		{Name: "message_id", Type: field.TypeInt},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// TicketMessagesTable holds the schema information for the "ticket_messages" table.
+	TicketMessagesTable = &schema.Table{
+		Name:       "ticket_messages",
+		Columns:    TicketMessagesColumns,
+		PrimaryKey: []*schema.Column{TicketMessagesColumns[15], TicketMessagesColumns[16]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "ticket_messages_tickets_ticket",
+				Columns:    []*schema.Column{TicketMessagesColumns[15]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "ticket_messages_messages_message",
+				Columns:    []*schema.Column{TicketMessagesColumns[16]},
+				RefColumns: []*schema.Column{MessagesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "ticket_messages_evidences_latest_evidence",
+				Columns:    []*schema.Column{TicketMessagesColumns[17]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ticketmessage_ticket_id_freshness_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{TicketMessagesColumns[15], TicketMessagesColumns[10], TicketMessagesColumns[5], TicketMessagesColumns[4]},
+			},
+			{
+				Name:    "ticketmessage_message_id",
+				Unique:  false,
+				Columns: []*schema.Column{TicketMessagesColumns[16]},
+			},
+		},
+	}
 	// TicketPullRequestsColumns holds the columns for the "ticket_pull_requests" table.
 	TicketPullRequestsColumns = []*schema.Column{
 		{Name: "relation_kind", Type: field.TypeEnum, Enums: []string{"implemented_by"}},
@@ -486,10 +593,12 @@ var (
 		DocumentsTable,
 		DocumentFragmentsTable,
 		EvidencesTable,
+		MessagesTable,
 		PersonsTable,
 		PullRequestsTable,
 		TicketsTable,
 		TicketDocumentFragmentsTable,
+		TicketMessagesTable,
 		TicketPullRequestsTable,
 		WorkstreamsTable,
 		WorkstreamTicketsTable,
@@ -501,6 +610,9 @@ func init() {
 	TicketDocumentFragmentsTable.ForeignKeys[0].RefTable = TicketsTable
 	TicketDocumentFragmentsTable.ForeignKeys[1].RefTable = DocumentFragmentsTable
 	TicketDocumentFragmentsTable.ForeignKeys[2].RefTable = EvidencesTable
+	TicketMessagesTable.ForeignKeys[0].RefTable = TicketsTable
+	TicketMessagesTable.ForeignKeys[1].RefTable = MessagesTable
+	TicketMessagesTable.ForeignKeys[2].RefTable = EvidencesTable
 	TicketPullRequestsTable.ForeignKeys[0].RefTable = TicketsTable
 	TicketPullRequestsTable.ForeignKeys[1].RefTable = PullRequestsTable
 	TicketPullRequestsTable.ForeignKeys[2].RefTable = EvidencesTable

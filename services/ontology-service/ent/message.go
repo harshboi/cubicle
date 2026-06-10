@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/message"
 	"fmt"
 	"strings"
 	"time"
@@ -12,21 +12,23 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// Ticket is the model entity for the Ticket schema.
-type Ticket struct {
+// Message is the model entity for the Message schema.
+type Message struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Stable source-neutral key used outside SQLite and Ent internals.
 	Key string `json:"key,omitempty"`
-	// Human-readable ticket title.
-	Title string `json:"title,omitempty"`
-	// Ticket description or source body text.
+	// Message body text.
 	Body string `json:"body,omitempty"`
-	// Normalized ticket lifecycle status.
-	Status ticket.Status `json:"status,omitempty"`
-	// Source priority label when available.
-	Priority string `json:"priority,omitempty"`
+	// Source channel, room, or conversation key.
+	ChannelKey string `json:"channel_key,omitempty"`
+	// Source thread key when the message belongs to a thread.
+	ThreadKey string `json:"thread_key,omitempty"`
+	// Best-known Cubicle person key for the source author.
+	AuthorPersonKey string `json:"author_person_key,omitempty"`
+	// Source timestamp for when the message was sent.
+	SentAt time.Time `json:"sent_at,omitempty"`
 	// Short object summary for UI, search snippets, and future LLM context.
 	Summary string `json:"summary,omitempty"`
 	// Normalized text used by V0 Ent-filter search before FTS/vector indexes exist.
@@ -40,9 +42,9 @@ type Ticket struct {
 	// Human-readable source URL when the source provides one.
 	SourceURL string `json:"source_url,omitempty"`
 	// Freshness state for filtering stale or partial graph facts.
-	FreshnessState ticket.FreshnessState `json:"freshness_state,omitempty"`
+	FreshnessState message.FreshnessState `json:"freshness_state,omitempty"`
 	// Visibility class used by future permission-aware query filtering.
-	Visibility ticket.Visibility `json:"visibility,omitempty"`
+	Visibility message.Visibility `json:"visibility,omitempty"`
 	// Confidence score for source-backed or inferred facts.
 	Confidence float64 `json:"confidence,omitempty"`
 	// Number of source events collapsed into this graph object or link.
@@ -58,107 +60,41 @@ type Ticket struct {
 	// Time this row was last updated in Cubicle storage.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the TicketQuery when eager-loading is set.
-	Edges        TicketEdges `json:"edges"`
+	// The values are being populated by the MessageQuery when eager-loading is set.
+	Edges        MessageEdges `json:"edges"`
 	selectValues sql.SelectValues
 }
 
-// TicketEdges holds the relations/edges for other nodes in the graph.
-type TicketEdges struct {
-	// Workstreams that include this ticket.
-	Workstreams []*Workstream `json:"workstreams,omitempty"`
-	// Pull requests that implement this ticket.
-	PullRequests []*PullRequest `json:"pull_requests,omitempty"`
-	// Document fragments that explain or support this ticket.
-	DocumentFragments []*DocumentFragment `json:"document_fragments,omitempty"`
-	// Messages that discuss this ticket.
-	Messages []*Message `json:"messages,omitempty"`
-	// TicketPullRequests holds the value of the ticket_pull_requests edge.
-	TicketPullRequests []*TicketPullRequest `json:"ticket_pull_requests,omitempty"`
-	// TicketDocumentFragments holds the value of the ticket_document_fragments edge.
-	TicketDocumentFragments []*TicketDocumentFragment `json:"ticket_document_fragments,omitempty"`
-	// TicketMessages holds the value of the ticket_messages edge.
-	TicketMessages []*TicketMessage `json:"ticket_messages,omitempty"`
+// MessageEdges holds the relations/edges for other nodes in the graph.
+type MessageEdges struct {
+	// Tickets discussed by this message.
+	Tickets []*Ticket `json:"tickets,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [7]bool
+	loadedTypes [1]bool
 }
 
-// WorkstreamsOrErr returns the Workstreams value or an error if the edge
+// TicketsOrErr returns the Tickets value or an error if the edge
 // was not loaded in eager-loading.
-func (e TicketEdges) WorkstreamsOrErr() ([]*Workstream, error) {
+func (e MessageEdges) TicketsOrErr() ([]*Ticket, error) {
 	if e.loadedTypes[0] {
-		return e.Workstreams, nil
+		return e.Tickets, nil
 	}
-	return nil, &NotLoadedError{edge: "workstreams"}
-}
-
-// PullRequestsOrErr returns the PullRequests value or an error if the edge
-// was not loaded in eager-loading.
-func (e TicketEdges) PullRequestsOrErr() ([]*PullRequest, error) {
-	if e.loadedTypes[1] {
-		return e.PullRequests, nil
-	}
-	return nil, &NotLoadedError{edge: "pull_requests"}
-}
-
-// DocumentFragmentsOrErr returns the DocumentFragments value or an error if the edge
-// was not loaded in eager-loading.
-func (e TicketEdges) DocumentFragmentsOrErr() ([]*DocumentFragment, error) {
-	if e.loadedTypes[2] {
-		return e.DocumentFragments, nil
-	}
-	return nil, &NotLoadedError{edge: "document_fragments"}
-}
-
-// MessagesOrErr returns the Messages value or an error if the edge
-// was not loaded in eager-loading.
-func (e TicketEdges) MessagesOrErr() ([]*Message, error) {
-	if e.loadedTypes[3] {
-		return e.Messages, nil
-	}
-	return nil, &NotLoadedError{edge: "messages"}
-}
-
-// TicketPullRequestsOrErr returns the TicketPullRequests value or an error if the edge
-// was not loaded in eager-loading.
-func (e TicketEdges) TicketPullRequestsOrErr() ([]*TicketPullRequest, error) {
-	if e.loadedTypes[4] {
-		return e.TicketPullRequests, nil
-	}
-	return nil, &NotLoadedError{edge: "ticket_pull_requests"}
-}
-
-// TicketDocumentFragmentsOrErr returns the TicketDocumentFragments value or an error if the edge
-// was not loaded in eager-loading.
-func (e TicketEdges) TicketDocumentFragmentsOrErr() ([]*TicketDocumentFragment, error) {
-	if e.loadedTypes[5] {
-		return e.TicketDocumentFragments, nil
-	}
-	return nil, &NotLoadedError{edge: "ticket_document_fragments"}
-}
-
-// TicketMessagesOrErr returns the TicketMessages value or an error if the edge
-// was not loaded in eager-loading.
-func (e TicketEdges) TicketMessagesOrErr() ([]*TicketMessage, error) {
-	if e.loadedTypes[6] {
-		return e.TicketMessages, nil
-	}
-	return nil, &NotLoadedError{edge: "ticket_messages"}
+	return nil, &NotLoadedError{edge: "tickets"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Ticket) scanValues(columns []string) ([]any, error) {
+func (*Message) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case ticket.FieldConfidence, ticket.FieldRankScore:
+		case message.FieldConfidence, message.FieldRankScore:
 			values[i] = new(sql.NullFloat64)
-		case ticket.FieldID, ticket.FieldEventCount:
+		case message.FieldID, message.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case ticket.FieldKey, ticket.FieldTitle, ticket.FieldBody, ticket.FieldStatus, ticket.FieldPriority, ticket.FieldSummary, ticket.FieldSearchText, ticket.FieldSource, ticket.FieldSourceInstance, ticket.FieldExternalID, ticket.FieldSourceURL, ticket.FieldFreshnessState, ticket.FieldVisibility:
+		case message.FieldKey, message.FieldBody, message.FieldChannelKey, message.FieldThreadKey, message.FieldAuthorPersonKey, message.FieldSummary, message.FieldSearchText, message.FieldSource, message.FieldSourceInstance, message.FieldExternalID, message.FieldSourceURL, message.FieldFreshnessState, message.FieldVisibility:
 			values[i] = new(sql.NullString)
-		case ticket.FieldFirstSeenAt, ticket.FieldLastActivityAt, ticket.FieldCreatedAt, ticket.FieldUpdatedAt:
+		case message.FieldSentAt, message.FieldFirstSeenAt, message.FieldLastActivityAt, message.FieldCreatedAt, message.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -168,134 +104,140 @@ func (*Ticket) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the Ticket fields.
-func (_m *Ticket) assignValues(columns []string, values []any) error {
+// to the Message fields.
+func (_m *Message) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case ticket.FieldID:
+		case message.FieldID:
 			value, ok := values[i].(*sql.NullInt64)
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case ticket.FieldKey:
+		case message.FieldKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field key", values[i])
 			} else if value.Valid {
 				_m.Key = value.String
 			}
-		case ticket.FieldTitle:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field title", values[i])
-			} else if value.Valid {
-				_m.Title = value.String
-			}
-		case ticket.FieldBody:
+		case message.FieldBody:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field body", values[i])
 			} else if value.Valid {
 				_m.Body = value.String
 			}
-		case ticket.FieldStatus:
+		case message.FieldChannelKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field status", values[i])
+				return fmt.Errorf("unexpected type %T for field channel_key", values[i])
 			} else if value.Valid {
-				_m.Status = ticket.Status(value.String)
+				_m.ChannelKey = value.String
 			}
-		case ticket.FieldPriority:
+		case message.FieldThreadKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field priority", values[i])
+				return fmt.Errorf("unexpected type %T for field thread_key", values[i])
 			} else if value.Valid {
-				_m.Priority = value.String
+				_m.ThreadKey = value.String
 			}
-		case ticket.FieldSummary:
+		case message.FieldAuthorPersonKey:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field author_person_key", values[i])
+			} else if value.Valid {
+				_m.AuthorPersonKey = value.String
+			}
+		case message.FieldSentAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field sent_at", values[i])
+			} else if value.Valid {
+				_m.SentAt = value.Time
+			}
+		case message.FieldSummary:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field summary", values[i])
 			} else if value.Valid {
 				_m.Summary = value.String
 			}
-		case ticket.FieldSearchText:
+		case message.FieldSearchText:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field search_text", values[i])
 			} else if value.Valid {
 				_m.SearchText = value.String
 			}
-		case ticket.FieldSource:
+		case message.FieldSource:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field source", values[i])
 			} else if value.Valid {
 				_m.Source = value.String
 			}
-		case ticket.FieldSourceInstance:
+		case message.FieldSourceInstance:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field source_instance", values[i])
 			} else if value.Valid {
 				_m.SourceInstance = value.String
 			}
-		case ticket.FieldExternalID:
+		case message.FieldExternalID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field external_id", values[i])
 			} else if value.Valid {
 				_m.ExternalID = value.String
 			}
-		case ticket.FieldSourceURL:
+		case message.FieldSourceURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field source_url", values[i])
 			} else if value.Valid {
 				_m.SourceURL = value.String
 			}
-		case ticket.FieldFreshnessState:
+		case message.FieldFreshnessState:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field freshness_state", values[i])
 			} else if value.Valid {
-				_m.FreshnessState = ticket.FreshnessState(value.String)
+				_m.FreshnessState = message.FreshnessState(value.String)
 			}
-		case ticket.FieldVisibility:
+		case message.FieldVisibility:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field visibility", values[i])
 			} else if value.Valid {
-				_m.Visibility = ticket.Visibility(value.String)
+				_m.Visibility = message.Visibility(value.String)
 			}
-		case ticket.FieldConfidence:
+		case message.FieldConfidence:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field confidence", values[i])
 			} else if value.Valid {
 				_m.Confidence = value.Float64
 			}
-		case ticket.FieldEventCount:
+		case message.FieldEventCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_count", values[i])
 			} else if value.Valid {
 				_m.EventCount = int(value.Int64)
 			}
-		case ticket.FieldFirstSeenAt:
+		case message.FieldFirstSeenAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field first_seen_at", values[i])
 			} else if value.Valid {
 				_m.FirstSeenAt = value.Time
 			}
-		case ticket.FieldLastActivityAt:
+		case message.FieldLastActivityAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field last_activity_at", values[i])
 			} else if value.Valid {
 				_m.LastActivityAt = value.Time
 			}
-		case ticket.FieldRankScore:
+		case message.FieldRankScore:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field rank_score", values[i])
 			} else if value.Valid {
 				_m.RankScore = value.Float64
 			}
-		case ticket.FieldCreatedAt:
+		case message.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case ticket.FieldUpdatedAt:
+		case message.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
@@ -308,84 +250,57 @@ func (_m *Ticket) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the Ticket.
+// Value returns the ent.Value that was dynamically selected and assigned to the Message.
 // This includes values selected through modifiers, order, etc.
-func (_m *Ticket) Value(name string) (ent.Value, error) {
+func (_m *Message) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryWorkstreams queries the "workstreams" edge of the Ticket entity.
-func (_m *Ticket) QueryWorkstreams() *WorkstreamQuery {
-	return NewTicketClient(_m.config).QueryWorkstreams(_m)
+// QueryTickets queries the "tickets" edge of the Message entity.
+func (_m *Message) QueryTickets() *TicketQuery {
+	return NewMessageClient(_m.config).QueryTickets(_m)
 }
 
-// QueryPullRequests queries the "pull_requests" edge of the Ticket entity.
-func (_m *Ticket) QueryPullRequests() *PullRequestQuery {
-	return NewTicketClient(_m.config).QueryPullRequests(_m)
-}
-
-// QueryDocumentFragments queries the "document_fragments" edge of the Ticket entity.
-func (_m *Ticket) QueryDocumentFragments() *DocumentFragmentQuery {
-	return NewTicketClient(_m.config).QueryDocumentFragments(_m)
-}
-
-// QueryMessages queries the "messages" edge of the Ticket entity.
-func (_m *Ticket) QueryMessages() *MessageQuery {
-	return NewTicketClient(_m.config).QueryMessages(_m)
-}
-
-// QueryTicketPullRequests queries the "ticket_pull_requests" edge of the Ticket entity.
-func (_m *Ticket) QueryTicketPullRequests() *TicketPullRequestQuery {
-	return NewTicketClient(_m.config).QueryTicketPullRequests(_m)
-}
-
-// QueryTicketDocumentFragments queries the "ticket_document_fragments" edge of the Ticket entity.
-func (_m *Ticket) QueryTicketDocumentFragments() *TicketDocumentFragmentQuery {
-	return NewTicketClient(_m.config).QueryTicketDocumentFragments(_m)
-}
-
-// QueryTicketMessages queries the "ticket_messages" edge of the Ticket entity.
-func (_m *Ticket) QueryTicketMessages() *TicketMessageQuery {
-	return NewTicketClient(_m.config).QueryTicketMessages(_m)
-}
-
-// Update returns a builder for updating this Ticket.
-// Note that you need to call Ticket.Unwrap() before calling this method if this Ticket
+// Update returns a builder for updating this Message.
+// Note that you need to call Message.Unwrap() before calling this method if this Message
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *Ticket) Update() *TicketUpdateOne {
-	return NewTicketClient(_m.config).UpdateOne(_m)
+func (_m *Message) Update() *MessageUpdateOne {
+	return NewMessageClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the Ticket entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the Message entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *Ticket) Unwrap() *Ticket {
+func (_m *Message) Unwrap() *Message {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: Ticket is not a transactional entity")
+		panic("ent: Message is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *Ticket) String() string {
+func (_m *Message) String() string {
 	var builder strings.Builder
-	builder.WriteString("Ticket(")
+	builder.WriteString("Message(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("key=")
 	builder.WriteString(_m.Key)
 	builder.WriteString(", ")
-	builder.WriteString("title=")
-	builder.WriteString(_m.Title)
-	builder.WriteString(", ")
 	builder.WriteString("body=")
 	builder.WriteString(_m.Body)
 	builder.WriteString(", ")
-	builder.WriteString("status=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Status))
+	builder.WriteString("channel_key=")
+	builder.WriteString(_m.ChannelKey)
 	builder.WriteString(", ")
-	builder.WriteString("priority=")
-	builder.WriteString(_m.Priority)
+	builder.WriteString("thread_key=")
+	builder.WriteString(_m.ThreadKey)
+	builder.WriteString(", ")
+	builder.WriteString("author_person_key=")
+	builder.WriteString(_m.AuthorPersonKey)
+	builder.WriteString(", ")
+	builder.WriteString("sent_at=")
+	builder.WriteString(_m.SentAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("summary=")
 	builder.WriteString(_m.Summary)
@@ -435,5 +350,5 @@ func (_m *Ticket) String() string {
 	return builder.String()
 }
 
-// Tickets is a parsable slice of Ticket.
-type Tickets []*Ticket
+// Messages is a parsable slice of Message.
+type Messages []*Message

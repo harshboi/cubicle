@@ -6,11 +6,13 @@ import (
 	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/schema"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
+	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
@@ -97,6 +99,34 @@ func init() {
 	evidence.DefaultUpdatedAt = evidenceDescUpdatedAt.Default.(func() time.Time)
 	// evidence.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	evidence.UpdateDefaultUpdatedAt = evidenceDescUpdatedAt.UpdateDefault.(func() time.Time)
+	messageFields := schema.Message{}.Fields()
+	_ = messageFields
+	// messageDescKey is the schema descriptor for key field.
+	messageDescKey := messageFields[0].Descriptor()
+	// message.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	message.KeyValidator = messageDescKey.Validators[0].(func(string) error)
+	// messageDescConfidence is the schema descriptor for confidence field.
+	messageDescConfidence := messageFields[14].Descriptor()
+	// message.DefaultConfidence holds the default value on creation for the confidence field.
+	message.DefaultConfidence = messageDescConfidence.Default.(float64)
+	// messageDescEventCount is the schema descriptor for event_count field.
+	messageDescEventCount := messageFields[15].Descriptor()
+	// message.DefaultEventCount holds the default value on creation for the event_count field.
+	message.DefaultEventCount = messageDescEventCount.Default.(int)
+	// messageDescRankScore is the schema descriptor for rank_score field.
+	messageDescRankScore := messageFields[18].Descriptor()
+	// message.DefaultRankScore holds the default value on creation for the rank_score field.
+	message.DefaultRankScore = messageDescRankScore.Default.(float64)
+	// messageDescCreatedAt is the schema descriptor for created_at field.
+	messageDescCreatedAt := messageFields[19].Descriptor()
+	// message.DefaultCreatedAt holds the default value on creation for the created_at field.
+	message.DefaultCreatedAt = messageDescCreatedAt.Default.(func() time.Time)
+	// messageDescUpdatedAt is the schema descriptor for updated_at field.
+	messageDescUpdatedAt := messageFields[20].Descriptor()
+	// message.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	message.DefaultUpdatedAt = messageDescUpdatedAt.Default.(func() time.Time)
+	// message.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	message.UpdateDefaultUpdatedAt = messageDescUpdatedAt.UpdateDefault.(func() time.Time)
 	personFields := schema.Person{}.Fields()
 	_ = personFields
 	// personDescKey is the schema descriptor for key field.
@@ -213,6 +243,34 @@ func init() {
 	ticketdocumentfragment.DefaultUpdatedAt = ticketdocumentfragmentDescUpdatedAt.Default.(func() time.Time)
 	// ticketdocumentfragment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	ticketdocumentfragment.UpdateDefaultUpdatedAt = ticketdocumentfragmentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	ticketmessageFields := schema.TicketMessage{}.Fields()
+	_ = ticketmessageFields
+	// ticketmessageDescEvidenceCount is the schema descriptor for evidence_count field.
+	ticketmessageDescEvidenceCount := ticketmessageFields[4].Descriptor()
+	// ticketmessage.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
+	ticketmessage.DefaultEvidenceCount = ticketmessageDescEvidenceCount.Default.(int)
+	// ticketmessageDescEventCount is the schema descriptor for event_count field.
+	ticketmessageDescEventCount := ticketmessageFields[5].Descriptor()
+	// ticketmessage.DefaultEventCount holds the default value on creation for the event_count field.
+	ticketmessage.DefaultEventCount = ticketmessageDescEventCount.Default.(int)
+	// ticketmessageDescRankScore is the schema descriptor for rank_score field.
+	ticketmessageDescRankScore := ticketmessageFields[8].Descriptor()
+	// ticketmessage.DefaultRankScore holds the default value on creation for the rank_score field.
+	ticketmessage.DefaultRankScore = ticketmessageDescRankScore.Default.(float64)
+	// ticketmessageDescConfidence is the schema descriptor for confidence field.
+	ticketmessageDescConfidence := ticketmessageFields[15].Descriptor()
+	// ticketmessage.DefaultConfidence holds the default value on creation for the confidence field.
+	ticketmessage.DefaultConfidence = ticketmessageDescConfidence.Default.(float64)
+	// ticketmessageDescCreatedAt is the schema descriptor for created_at field.
+	ticketmessageDescCreatedAt := ticketmessageFields[16].Descriptor()
+	// ticketmessage.DefaultCreatedAt holds the default value on creation for the created_at field.
+	ticketmessage.DefaultCreatedAt = ticketmessageDescCreatedAt.Default.(func() time.Time)
+	// ticketmessageDescUpdatedAt is the schema descriptor for updated_at field.
+	ticketmessageDescUpdatedAt := ticketmessageFields[17].Descriptor()
+	// ticketmessage.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	ticketmessage.DefaultUpdatedAt = ticketmessageDescUpdatedAt.Default.(func() time.Time)
+	// ticketmessage.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	ticketmessage.UpdateDefaultUpdatedAt = ticketmessageDescUpdatedAt.UpdateDefault.(func() time.Time)
 	ticketpullrequestFields := schema.TicketPullRequest{}.Fields()
 	_ = ticketpullrequestFields
 	// ticketpullrequestDescEvidenceCount is the schema descriptor for evidence_count field.
