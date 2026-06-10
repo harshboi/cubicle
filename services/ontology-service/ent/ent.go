@@ -9,6 +9,7 @@ import (
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/message"
+	"cubicle/services/ontology-service/ent/messagelensresult"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
@@ -94,6 +95,7 @@ func checkColumn(t, c string) error {
 			documentlensresult.Table:     documentlensresult.ValidColumn,
 			evidence.Table:               evidence.ValidColumn,
 			message.Table:                message.ValidColumn,
+			messagelensresult.Table:      messagelensresult.ValidColumn,
 			person.Table:                 person.ValidColumn,
 			pullrequest.Table:            pullrequest.ValidColumn,
 			pullrequestlensresult.Table:  pullrequestlensresult.ValidColumn,

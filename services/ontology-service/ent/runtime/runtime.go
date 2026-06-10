@@ -8,6 +8,7 @@ import (
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/message"
+	"cubicle/services/ontology-service/ent/messagelensresult"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
@@ -160,6 +161,34 @@ func init() {
 	message.DefaultUpdatedAt = messageDescUpdatedAt.Default.(func() time.Time)
 	// message.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	message.UpdateDefaultUpdatedAt = messageDescUpdatedAt.UpdateDefault.(func() time.Time)
+	messagelensresultFields := schema.MessageLensResult{}.Fields()
+	_ = messagelensresultFields
+	// messagelensresultDescEvidenceCount is the schema descriptor for evidence_count field.
+	messagelensresultDescEvidenceCount := messagelensresultFields[4].Descriptor()
+	// messagelensresult.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
+	messagelensresult.DefaultEvidenceCount = messagelensresultDescEvidenceCount.Default.(int)
+	// messagelensresultDescEventCount is the schema descriptor for event_count field.
+	messagelensresultDescEventCount := messagelensresultFields[5].Descriptor()
+	// messagelensresult.DefaultEventCount holds the default value on creation for the event_count field.
+	messagelensresult.DefaultEventCount = messagelensresultDescEventCount.Default.(int)
+	// messagelensresultDescRankScore is the schema descriptor for rank_score field.
+	messagelensresultDescRankScore := messagelensresultFields[8].Descriptor()
+	// messagelensresult.DefaultRankScore holds the default value on creation for the rank_score field.
+	messagelensresult.DefaultRankScore = messagelensresultDescRankScore.Default.(float64)
+	// messagelensresultDescConfidence is the schema descriptor for confidence field.
+	messagelensresultDescConfidence := messagelensresultFields[15].Descriptor()
+	// messagelensresult.DefaultConfidence holds the default value on creation for the confidence field.
+	messagelensresult.DefaultConfidence = messagelensresultDescConfidence.Default.(float64)
+	// messagelensresultDescCreatedAt is the schema descriptor for created_at field.
+	messagelensresultDescCreatedAt := messagelensresultFields[16].Descriptor()
+	// messagelensresult.DefaultCreatedAt holds the default value on creation for the created_at field.
+	messagelensresult.DefaultCreatedAt = messagelensresultDescCreatedAt.Default.(func() time.Time)
+	// messagelensresultDescUpdatedAt is the schema descriptor for updated_at field.
+	messagelensresultDescUpdatedAt := messagelensresultFields[17].Descriptor()
+	// messagelensresult.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	messagelensresult.DefaultUpdatedAt = messagelensresultDescUpdatedAt.Default.(func() time.Time)
+	// messagelensresult.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	messagelensresult.UpdateDefaultUpdatedAt = messagelensresultDescUpdatedAt.UpdateDefault.(func() time.Time)
 	personFields := schema.Person{}.Fields()
 	_ = personFields
 	// personDescKey is the schema descriptor for key field.

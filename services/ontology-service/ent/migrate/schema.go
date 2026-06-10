@@ -241,6 +241,70 @@ var (
 			},
 		},
 	}
+	// MessageLensResultsColumns holds the columns for the "message_lens_results" table.
+	MessageLensResultsColumns = []*schema.Column{
+		{Name: "relation_kind", Type: field.TypeEnum, Enums: []string{"authored", "mentions_person", "replied_to"}},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "source", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_lens_id", Type: field.TypeInt},
+		{Name: "message_id", Type: field.TypeInt},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// MessageLensResultsTable holds the schema information for the "message_lens_results" table.
+	MessageLensResultsTable = &schema.Table{
+		Name:       "message_lens_results",
+		Columns:    MessageLensResultsColumns,
+		PrimaryKey: []*schema.Column{MessageLensResultsColumns[15], MessageLensResultsColumns[16]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "message_lens_results_work_lenses_lens",
+				Columns:    []*schema.Column{MessageLensResultsColumns[15]},
+				RefColumns: []*schema.Column{WorkLensesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "message_lens_results_messages_message",
+				Columns:    []*schema.Column{MessageLensResultsColumns[16]},
+				RefColumns: []*schema.Column{MessagesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "message_lens_results_evidences_latest_evidence",
+				Columns:    []*schema.Column{MessageLensResultsColumns[17]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "messagelensresult_work_lens_id_freshness_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{MessageLensResultsColumns[15], MessageLensResultsColumns[10], MessageLensResultsColumns[5], MessageLensResultsColumns[4]},
+			},
+			{
+				Name:    "messagelensresult_work_lens_id_relation_kind_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{MessageLensResultsColumns[15], MessageLensResultsColumns[0], MessageLensResultsColumns[4]},
+			},
+			{
+				Name:    "messagelensresult_message_id",
+				Unique:  false,
+				Columns: []*schema.Column{MessageLensResultsColumns[16]},
+			},
+		},
+	}
 	// PersonsColumns holds the columns for the "persons" table.
 	PersonsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -883,6 +947,7 @@ var (
 		DocumentLensResultsTable,
 		EvidencesTable,
 		MessagesTable,
+		MessageLensResultsTable,
 		PersonsTable,
 		PullRequestsTable,
 		PullRequestLensResultsTable,
@@ -903,6 +968,9 @@ func init() {
 	DocumentLensResultsTable.ForeignKeys[0].RefTable = WorkLensesTable
 	DocumentLensResultsTable.ForeignKeys[1].RefTable = DocumentsTable
 	DocumentLensResultsTable.ForeignKeys[2].RefTable = EvidencesTable
+	MessageLensResultsTable.ForeignKeys[0].RefTable = WorkLensesTable
+	MessageLensResultsTable.ForeignKeys[1].RefTable = MessagesTable
+	MessageLensResultsTable.ForeignKeys[2].RefTable = EvidencesTable
 	PullRequestLensResultsTable.ForeignKeys[0].RefTable = WorkLensesTable
 	PullRequestLensResultsTable.ForeignKeys[1].RefTable = PullRequestsTable
 	PullRequestLensResultsTable.ForeignKeys[2].RefTable = EvidencesTable

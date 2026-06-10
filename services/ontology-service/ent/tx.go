@@ -22,6 +22,8 @@ type Tx struct {
 	Evidence *EvidenceClient
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
+	// MessageLensResult is the client for interacting with the MessageLensResult builders.
+	MessageLensResult *MessageLensResultClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
 	// PullRequest is the client for interacting with the PullRequest builders.
@@ -182,6 +184,7 @@ func (tx *Tx) init() {
 	tx.DocumentLensResult = NewDocumentLensResultClient(tx.config)
 	tx.Evidence = NewEvidenceClient(tx.config)
 	tx.Message = NewMessageClient(tx.config)
+	tx.MessageLensResult = NewMessageLensResultClient(tx.config)
 	tx.Person = NewPersonClient(tx.config)
 	tx.PullRequest = NewPullRequestClient(tx.config)
 	tx.PullRequestLensResult = NewPullRequestLensResultClient(tx.config)

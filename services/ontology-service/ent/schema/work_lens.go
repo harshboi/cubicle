@@ -118,6 +118,9 @@ func (WorkLens) Edges() []ent.Edge {
 		edge.To("tickets", Ticket.Type).
 			Through("ticket_results", TicketLensResult.Type).
 			Comment("Tickets ranked under this lens."),
+		edge.To("messages", Message.Type).
+			Through("message_results", MessageLensResult.Type).
+			Comment("Messages ranked under this lens."),
 	}
 }
 

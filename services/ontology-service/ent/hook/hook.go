@@ -68,6 +68,18 @@ func (f MessageFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MessageMutation", m)
 }
 
+// The MessageLensResultFunc type is an adapter to allow the use of ordinary
+// function as MessageLensResult mutator.
+type MessageLensResultFunc func(context.Context, *ent.MessageLensResultMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MessageLensResultFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.MessageLensResultMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MessageLensResultMutation", m)
+}
+
 // The PersonFunc type is an adapter to allow the use of ordinary
 // function as Person mutator.
 type PersonFunc func(context.Context, *ent.PersonMutation) (ent.Value, error)

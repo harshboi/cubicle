@@ -47,12 +47,15 @@ func (Message) Fields() []ent.Field {
 	)
 }
 
-// Edges exposes ticket discussion links.
+// Edges exposes ticket discussion links and lenses ranking this message.
 func (Message) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("tickets", Ticket.Type).
 			Ref("messages").
 			Comment("Tickets discussed by this message."),
+		edge.From("work_lenses", WorkLens.Type).
+			Ref("messages").
+			Comment("Work lenses that ranked this message as a result."),
 	}
 }
 

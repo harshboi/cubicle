@@ -7,6 +7,7 @@ import (
 	genent "cubicle/services/ontology-service/ent"
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/enttest"
+	"cubicle/services/ontology-service/ent/messagelensresult"
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
 	"cubicle/services/ontology-service/ent/ticketlensresult"
 	"cubicle/services/ontology-service/ent/workarea"
@@ -30,6 +31,52 @@ func TestRegisterRejectsLensOnWrongArea(t *testing.T) {
 		SetDisplayName("Bad Area").
 		Save(ctx); err == nil {
 		t.Fatal("expected pull request lens under documents area to fail")
+	}
+}
+
+// TestRegisterRejectsMessageResultWithWrongRelation proves relation validation.
+func TestRegisterRejectsMessageResultWithWrongRelation(t *testing.T) {
+	ctx := context.Background()
+	client := openHookedClient(t, "ontology-hooks-message-result-relation")
+	defer client.Close()
+
+	communicationsArea := createHookTestArea(t, ctx, client, "area:person:hooks:messages-relation", workarea.WorkAreaKindCommunications)
+	authoredLens := createHookTestLens(t, ctx, client, communicationsArea.ID, worklens.WorkLensKindMessagesAuthored, worklens.LensTargetKindMessage)
+	message := createHookTestMessage(t, ctx, client, "message:hooks:relation")
+
+	if _, err := client.MessageLensResult.Create().
+		SetWorkLensID(authoredLens.ID).
+		SetMessageID(message.ID).
+		SetRelationKind(messagelensresult.RelationKindRepliedTo).
+		Save(ctx); err == nil {
+		t.Fatal("expected messages_authored lens to reject replied_to relation")
+	}
+
+	if _, err := client.MessageLensResult.Create().
+		SetWorkLensID(authoredLens.ID).
+		SetMessageID(message.ID).
+		SetRelationKind(messagelensresult.RelationKindAuthored).
+		Save(ctx); err != nil {
+		t.Fatalf("expected messages_authored lens to accept authored relation: %v", err)
+	}
+}
+
+// TestRegisterRejectsMessageResultForDocumentLens proves target validation.
+func TestRegisterRejectsMessageResultForDocumentLens(t *testing.T) {
+	ctx := context.Background()
+	client := openHookedClient(t, "ontology-hooks-message-result-target")
+	defer client.Close()
+
+	documentsArea := createHookTestArea(t, ctx, client, "area:person:hooks:docs-message-target", workarea.WorkAreaKindDocuments)
+	documentLens := createHookTestLens(t, ctx, client, documentsArea.ID, worklens.WorkLensKindDocumentsCreated, worklens.LensTargetKindDocument)
+	message := createHookTestMessage(t, ctx, client, "message:hooks:target")
+
+	if _, err := client.MessageLensResult.Create().
+		SetWorkLensID(documentLens.ID).
+		SetMessageID(message.ID).
+		SetRelationKind(messagelensresult.RelationKindAuthored).
+		Save(ctx); err == nil {
+		t.Fatal("expected message result table to reject document-target lens")
 	}
 }
 
@@ -230,5 +277,14 @@ func createHookTestTicket(t *testing.T, ctx context.Context, client *genent.Clie
 	return client.Ticket.Create().
 		SetKey(key).
 		SetTitle("Hook Test Ticket").
+		SaveX(ctx)
+}
+
+// createHookTestMessage creates a Message target for result-hook tests.
+func createHookTestMessage(t *testing.T, ctx context.Context, client *genent.Client, key string) *genent.Message {
+	t.Helper()
+	return client.Message.Create().
+		SetKey(key).
+		SetBody("Hook test message").
 		SaveX(ctx)
 }

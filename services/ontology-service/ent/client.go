@@ -16,6 +16,7 @@ import (
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/message"
+	"cubicle/services/ontology-service/ent/messagelensresult"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
@@ -50,6 +51,8 @@ type Client struct {
 	Evidence *EvidenceClient
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
+	// MessageLensResult is the client for interacting with the MessageLensResult builders.
+	MessageLensResult *MessageLensResultClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
 	// PullRequest is the client for interacting with the PullRequest builders.
@@ -90,6 +93,7 @@ func (c *Client) init() {
 	c.DocumentLensResult = NewDocumentLensResultClient(c.config)
 	c.Evidence = NewEvidenceClient(c.config)
 	c.Message = NewMessageClient(c.config)
+	c.MessageLensResult = NewMessageLensResultClient(c.config)
 	c.Person = NewPersonClient(c.config)
 	c.PullRequest = NewPullRequestClient(c.config)
 	c.PullRequestLensResult = NewPullRequestLensResultClient(c.config)
@@ -199,6 +203,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		DocumentLensResult:     NewDocumentLensResultClient(cfg),
 		Evidence:               NewEvidenceClient(cfg),
 		Message:                NewMessageClient(cfg),
+		MessageLensResult:      NewMessageLensResultClient(cfg),
 		Person:                 NewPersonClient(cfg),
 		PullRequest:            NewPullRequestClient(cfg),
 		PullRequestLensResult:  NewPullRequestLensResultClient(cfg),
@@ -235,6 +240,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		DocumentLensResult:     NewDocumentLensResultClient(cfg),
 		Evidence:               NewEvidenceClient(cfg),
 		Message:                NewMessageClient(cfg),
+		MessageLensResult:      NewMessageLensResultClient(cfg),
 		Person:                 NewPersonClient(cfg),
 		PullRequest:            NewPullRequestClient(cfg),
 		PullRequestLensResult:  NewPullRequestLensResultClient(cfg),
@@ -277,8 +283,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence, c.Message,
-		c.Person, c.PullRequest, c.PullRequestLensResult, c.Ticket,
-		c.TicketDocumentFragment, c.TicketLensResult, c.TicketMessage,
+		c.MessageLensResult, c.Person, c.PullRequest, c.PullRequestLensResult,
+		c.Ticket, c.TicketDocumentFragment, c.TicketLensResult, c.TicketMessage,
 		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Use(hooks...)
@@ -290,8 +296,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence, c.Message,
-		c.Person, c.PullRequest, c.PullRequestLensResult, c.Ticket,
-		c.TicketDocumentFragment, c.TicketLensResult, c.TicketMessage,
+		c.MessageLensResult, c.Person, c.PullRequest, c.PullRequestLensResult,
+		c.Ticket, c.TicketDocumentFragment, c.TicketLensResult, c.TicketMessage,
 		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Intercept(interceptors...)
@@ -311,6 +317,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Evidence.mutate(ctx, m)
 	case *MessageMutation:
 		return c.Message.mutate(ctx, m)
+	case *MessageLensResultMutation:
+		return c.MessageLensResult.mutate(ctx, m)
 	case *PersonMutation:
 		return c.Person.mutate(ctx, m)
 	case *PullRequestMutation:
@@ -1050,6 +1058,22 @@ func (c *MessageClient) QueryTickets(_m *Message) *TicketQuery {
 	return query
 }
 
+// QueryWorkLenses queries the work_lenses edge of a Message.
+func (c *MessageClient) QueryWorkLenses(_m *Message) *WorkLensQuery {
+	query := (&WorkLensClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, id),
+			sqlgraph.To(worklens.Table, worklens.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, message.WorkLensesTable, message.WorkLensesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *MessageClient) Hooks() []Hook {
 	return c.hooks.Message
@@ -1072,6 +1096,129 @@ func (c *MessageClient) mutate(ctx context.Context, m *MessageMutation) (Value, 
 		return (&MessageDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Message mutation op: %q", m.Op())
+	}
+}
+
+// MessageLensResultClient is a client for the MessageLensResult schema.
+type MessageLensResultClient struct {
+	config
+}
+
+// NewMessageLensResultClient returns a client for the MessageLensResult from the given config.
+func NewMessageLensResultClient(c config) *MessageLensResultClient {
+	return &MessageLensResultClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `messagelensresult.Hooks(f(g(h())))`.
+func (c *MessageLensResultClient) Use(hooks ...Hook) {
+	c.hooks.MessageLensResult = append(c.hooks.MessageLensResult, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `messagelensresult.Intercept(f(g(h())))`.
+func (c *MessageLensResultClient) Intercept(interceptors ...Interceptor) {
+	c.inters.MessageLensResult = append(c.inters.MessageLensResult, interceptors...)
+}
+
+// Create returns a builder for creating a MessageLensResult entity.
+func (c *MessageLensResultClient) Create() *MessageLensResultCreate {
+	mutation := newMessageLensResultMutation(c.config, OpCreate)
+	return &MessageLensResultCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of MessageLensResult entities.
+func (c *MessageLensResultClient) CreateBulk(builders ...*MessageLensResultCreate) *MessageLensResultCreateBulk {
+	return &MessageLensResultCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MessageLensResultClient) MapCreateBulk(slice any, setFunc func(*MessageLensResultCreate, int)) *MessageLensResultCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MessageLensResultCreateBulk{err: fmt.Errorf("calling to MessageLensResultClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MessageLensResultCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MessageLensResultCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for MessageLensResult.
+func (c *MessageLensResultClient) Update() *MessageLensResultUpdate {
+	mutation := newMessageLensResultMutation(c.config, OpUpdate)
+	return &MessageLensResultUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MessageLensResultClient) UpdateOne(_m *MessageLensResult) *MessageLensResultUpdateOne {
+	mutation := newMessageLensResultMutation(c.config, OpUpdateOne)
+	mutation.lens = &_m.WorkLensID
+	mutation.message = &_m.MessageID
+	return &MessageLensResultUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for MessageLensResult.
+func (c *MessageLensResultClient) Delete() *MessageLensResultDelete {
+	mutation := newMessageLensResultMutation(c.config, OpDelete)
+	return &MessageLensResultDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Query returns a query builder for MessageLensResult.
+func (c *MessageLensResultClient) Query() *MessageLensResultQuery {
+	return &MessageLensResultQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMessageLensResult},
+		inters: c.Interceptors(),
+	}
+}
+
+// QueryLens queries the lens edge of a MessageLensResult.
+func (c *MessageLensResultClient) QueryLens(_m *MessageLensResult) *WorkLensQuery {
+	return c.Query().
+		Where(messagelensresult.WorkLensID(_m.WorkLensID), messagelensresult.MessageID(_m.MessageID)).
+		QueryLens()
+}
+
+// QueryMessage queries the message edge of a MessageLensResult.
+func (c *MessageLensResultClient) QueryMessage(_m *MessageLensResult) *MessageQuery {
+	return c.Query().
+		Where(messagelensresult.WorkLensID(_m.WorkLensID), messagelensresult.MessageID(_m.MessageID)).
+		QueryMessage()
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a MessageLensResult.
+func (c *MessageLensResultClient) QueryLatestEvidence(_m *MessageLensResult) *EvidenceQuery {
+	return c.Query().
+		Where(messagelensresult.WorkLensID(_m.WorkLensID), messagelensresult.MessageID(_m.MessageID)).
+		QueryLatestEvidence()
+}
+
+// Hooks returns the client hooks.
+func (c *MessageLensResultClient) Hooks() []Hook {
+	return c.hooks.MessageLensResult
+}
+
+// Interceptors returns the client interceptors.
+func (c *MessageLensResultClient) Interceptors() []Interceptor {
+	return c.inters.MessageLensResult
+}
+
+func (c *MessageLensResultClient) mutate(ctx context.Context, m *MessageLensResultMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MessageLensResultCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MessageLensResultUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MessageLensResultUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MessageLensResultDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown MessageLensResult mutation op: %q", m.Op())
 	}
 }
 
@@ -2602,6 +2749,22 @@ func (c *WorkLensClient) QueryTickets(_m *WorkLens) *TicketQuery {
 	return query
 }
 
+// QueryMessages queries the messages edge of a WorkLens.
+func (c *WorkLensClient) QueryMessages(_m *WorkLens) *MessageQuery {
+	query := (&MessageClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklens.Table, worklens.FieldID, id),
+			sqlgraph.To(message.Table, message.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, worklens.MessagesTable, worklens.MessagesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryDocumentResults queries the document_results edge of a WorkLens.
 func (c *WorkLensClient) QueryDocumentResults(_m *WorkLens) *DocumentLensResultQuery {
 	query := (&DocumentLensResultClient{config: c.config}).Query()
@@ -2643,6 +2806,22 @@ func (c *WorkLensClient) QueryTicketResults(_m *WorkLens) *TicketLensResultQuery
 			sqlgraph.From(worklens.Table, worklens.FieldID, id),
 			sqlgraph.To(ticketlensresult.Table, ticketlensresult.LensColumn),
 			sqlgraph.Edge(sqlgraph.O2M, true, worklens.TicketResultsTable, worklens.TicketResultsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMessageResults queries the message_results edge of a WorkLens.
+func (c *WorkLensClient) QueryMessageResults(_m *WorkLens) *MessageLensResultQuery {
+	query := (&MessageLensResultClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklens.Table, worklens.FieldID, id),
+			sqlgraph.To(messagelensresult.Table, messagelensresult.LensColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, worklens.MessageResultsTable, worklens.MessageResultsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2967,15 +3146,15 @@ func (c *WorkstreamTicketClient) mutate(ctx context.Context, m *WorkstreamTicket
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Document, DocumentFragment, DocumentLensResult, Evidence, Message, Person,
-		PullRequest, PullRequestLensResult, Ticket, TicketDocumentFragment,
-		TicketLensResult, TicketMessage, TicketPullRequest, WorkArea, WorkLens,
-		Workstream, WorkstreamTicket []ent.Hook
+		Document, DocumentFragment, DocumentLensResult, Evidence, Message,
+		MessageLensResult, Person, PullRequest, PullRequestLensResult, Ticket,
+		TicketDocumentFragment, TicketLensResult, TicketMessage, TicketPullRequest,
+		WorkArea, WorkLens, Workstream, WorkstreamTicket []ent.Hook
 	}
 	inters struct {
-		Document, DocumentFragment, DocumentLensResult, Evidence, Message, Person,
-		PullRequest, PullRequestLensResult, Ticket, TicketDocumentFragment,
-		TicketLensResult, TicketMessage, TicketPullRequest, WorkArea, WorkLens,
-		Workstream, WorkstreamTicket []ent.Interceptor
+		Document, DocumentFragment, DocumentLensResult, Evidence, Message,
+		MessageLensResult, Person, PullRequest, PullRequestLensResult, Ticket,
+		TicketDocumentFragment, TicketLensResult, TicketMessage, TicketPullRequest,
+		WorkArea, WorkLens, Workstream, WorkstreamTicket []ent.Interceptor
 	}
 )

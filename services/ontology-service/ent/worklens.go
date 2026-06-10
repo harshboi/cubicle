@@ -72,15 +72,19 @@ type WorkLensEdges struct {
 	PullRequests []*PullRequest `json:"pull_requests,omitempty"`
 	// Tickets ranked under this lens.
 	Tickets []*Ticket `json:"tickets,omitempty"`
+	// Messages ranked under this lens.
+	Messages []*Message `json:"messages,omitempty"`
 	// DocumentResults holds the value of the document_results edge.
 	DocumentResults []*DocumentLensResult `json:"document_results,omitempty"`
 	// PullRequestResults holds the value of the pull_request_results edge.
 	PullRequestResults []*PullRequestLensResult `json:"pull_request_results,omitempty"`
 	// TicketResults holds the value of the ticket_results edge.
 	TicketResults []*TicketLensResult `json:"ticket_results,omitempty"`
+	// MessageResults holds the value of the message_results edge.
+	MessageResults []*MessageLensResult `json:"message_results,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [7]bool
+	loadedTypes [9]bool
 }
 
 // AreaOrErr returns the Area value or an error if the edge
@@ -121,10 +125,19 @@ func (e WorkLensEdges) TicketsOrErr() ([]*Ticket, error) {
 	return nil, &NotLoadedError{edge: "tickets"}
 }
 
+// MessagesOrErr returns the Messages value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkLensEdges) MessagesOrErr() ([]*Message, error) {
+	if e.loadedTypes[4] {
+		return e.Messages, nil
+	}
+	return nil, &NotLoadedError{edge: "messages"}
+}
+
 // DocumentResultsOrErr returns the DocumentResults value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) DocumentResultsOrErr() ([]*DocumentLensResult, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[5] {
 		return e.DocumentResults, nil
 	}
 	return nil, &NotLoadedError{edge: "document_results"}
@@ -133,7 +146,7 @@ func (e WorkLensEdges) DocumentResultsOrErr() ([]*DocumentLensResult, error) {
 // PullRequestResultsOrErr returns the PullRequestResults value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) PullRequestResultsOrErr() ([]*PullRequestLensResult, error) {
-	if e.loadedTypes[5] {
+	if e.loadedTypes[6] {
 		return e.PullRequestResults, nil
 	}
 	return nil, &NotLoadedError{edge: "pull_request_results"}
@@ -142,10 +155,19 @@ func (e WorkLensEdges) PullRequestResultsOrErr() ([]*PullRequestLensResult, erro
 // TicketResultsOrErr returns the TicketResults value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) TicketResultsOrErr() ([]*TicketLensResult, error) {
-	if e.loadedTypes[6] {
+	if e.loadedTypes[7] {
 		return e.TicketResults, nil
 	}
 	return nil, &NotLoadedError{edge: "ticket_results"}
+}
+
+// MessageResultsOrErr returns the MessageResults value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkLensEdges) MessageResultsOrErr() ([]*MessageLensResult, error) {
+	if e.loadedTypes[8] {
+		return e.MessageResults, nil
+	}
+	return nil, &NotLoadedError{edge: "message_results"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -331,6 +353,11 @@ func (_m *WorkLens) QueryTickets() *TicketQuery {
 	return NewWorkLensClient(_m.config).QueryTickets(_m)
 }
 
+// QueryMessages queries the "messages" edge of the WorkLens entity.
+func (_m *WorkLens) QueryMessages() *MessageQuery {
+	return NewWorkLensClient(_m.config).QueryMessages(_m)
+}
+
 // QueryDocumentResults queries the "document_results" edge of the WorkLens entity.
 func (_m *WorkLens) QueryDocumentResults() *DocumentLensResultQuery {
 	return NewWorkLensClient(_m.config).QueryDocumentResults(_m)
@@ -344,6 +371,11 @@ func (_m *WorkLens) QueryPullRequestResults() *PullRequestLensResultQuery {
 // QueryTicketResults queries the "ticket_results" edge of the WorkLens entity.
 func (_m *WorkLens) QueryTicketResults() *TicketLensResultQuery {
 	return NewWorkLensClient(_m.config).QueryTicketResults(_m)
+}
+
+// QueryMessageResults queries the "message_results" edge of the WorkLens entity.
+func (_m *WorkLens) QueryMessageResults() *MessageLensResultQuery {
+	return NewWorkLensClient(_m.config).QueryMessageResults(_m)
 }
 
 // Update returns a builder for updating this WorkLens.

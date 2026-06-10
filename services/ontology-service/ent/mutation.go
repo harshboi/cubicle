@@ -9,6 +9,7 @@ import (
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/message"
+	"cubicle/services/ontology-service/ent/messagelensresult"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/pullrequest"
@@ -45,6 +46,7 @@ const (
 	TypeDocumentLensResult     = "DocumentLensResult"
 	TypeEvidence               = "Evidence"
 	TypeMessage                = "Message"
+	TypeMessageLensResult      = "MessageLensResult"
 	TypePerson                 = "Person"
 	TypePullRequest            = "PullRequest"
 	TypePullRequestLensResult  = "PullRequestLensResult"
@@ -5945,40 +5947,43 @@ func (m *EvidenceMutation) ResetEdge(name string) error {
 // MessageMutation represents an operation that mutates the Message nodes in the graph.
 type MessageMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *int
-	key               *string
-	body              *string
-	channel_key       *string
-	thread_key        *string
-	author_person_key *string
-	sent_at           *time.Time
-	summary           *string
-	search_text       *string
-	source            *string
-	source_instance   *string
-	external_id       *string
-	source_url        *string
-	freshness_state   *message.FreshnessState
-	visibility        *message.Visibility
-	confidence        *float64
-	addconfidence     *float64
-	event_count       *int
-	addevent_count    *int
-	first_seen_at     *time.Time
-	last_activity_at  *time.Time
-	rank_score        *float64
-	addrank_score     *float64
-	created_at        *time.Time
-	updated_at        *time.Time
-	clearedFields     map[string]struct{}
-	tickets           map[int]struct{}
-	removedtickets    map[int]struct{}
-	clearedtickets    bool
-	done              bool
-	oldValue          func(context.Context) (*Message, error)
-	predicates        []predicate.Message
+	op                 Op
+	typ                string
+	id                 *int
+	key                *string
+	body               *string
+	channel_key        *string
+	thread_key         *string
+	author_person_key  *string
+	sent_at            *time.Time
+	summary            *string
+	search_text        *string
+	source             *string
+	source_instance    *string
+	external_id        *string
+	source_url         *string
+	freshness_state    *message.FreshnessState
+	visibility         *message.Visibility
+	confidence         *float64
+	addconfidence      *float64
+	event_count        *int
+	addevent_count     *int
+	first_seen_at      *time.Time
+	last_activity_at   *time.Time
+	rank_score         *float64
+	addrank_score      *float64
+	created_at         *time.Time
+	updated_at         *time.Time
+	clearedFields      map[string]struct{}
+	tickets            map[int]struct{}
+	removedtickets     map[int]struct{}
+	clearedtickets     bool
+	work_lenses        map[int]struct{}
+	removedwork_lenses map[int]struct{}
+	clearedwork_lenses bool
+	done               bool
+	oldValue           func(context.Context) (*Message, error)
+	predicates         []predicate.Message
 }
 
 var _ ent.Mutation = (*MessageMutation)(nil)
@@ -7118,6 +7123,60 @@ func (m *MessageMutation) ResetTickets() {
 	m.removedtickets = nil
 }
 
+// AddWorkLenseIDs adds the "work_lenses" edge to the WorkLens entity by ids.
+func (m *MessageMutation) AddWorkLenseIDs(ids ...int) {
+	if m.work_lenses == nil {
+		m.work_lenses = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.work_lenses[ids[i]] = struct{}{}
+	}
+}
+
+// ClearWorkLenses clears the "work_lenses" edge to the WorkLens entity.
+func (m *MessageMutation) ClearWorkLenses() {
+	m.clearedwork_lenses = true
+}
+
+// WorkLensesCleared reports if the "work_lenses" edge to the WorkLens entity was cleared.
+func (m *MessageMutation) WorkLensesCleared() bool {
+	return m.clearedwork_lenses
+}
+
+// RemoveWorkLenseIDs removes the "work_lenses" edge to the WorkLens entity by IDs.
+func (m *MessageMutation) RemoveWorkLenseIDs(ids ...int) {
+	if m.removedwork_lenses == nil {
+		m.removedwork_lenses = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.work_lenses, ids[i])
+		m.removedwork_lenses[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedWorkLenses returns the removed IDs of the "work_lenses" edge to the WorkLens entity.
+func (m *MessageMutation) RemovedWorkLensesIDs() (ids []int) {
+	for id := range m.removedwork_lenses {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// WorkLensesIDs returns the "work_lenses" edge IDs in the mutation.
+func (m *MessageMutation) WorkLensesIDs() (ids []int) {
+	for id := range m.work_lenses {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetWorkLenses resets all changes to the "work_lenses" edge.
+func (m *MessageMutation) ResetWorkLenses() {
+	m.work_lenses = nil
+	m.clearedwork_lenses = false
+	m.removedwork_lenses = nil
+}
+
 // Where appends a list predicates to the MessageMutation builder.
 func (m *MessageMutation) Where(ps ...predicate.Message) {
 	m.predicates = append(m.predicates, ps...)
@@ -7711,9 +7770,12 @@ func (m *MessageMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *MessageMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.tickets != nil {
 		edges = append(edges, message.EdgeTickets)
+	}
+	if m.work_lenses != nil {
+		edges = append(edges, message.EdgeWorkLenses)
 	}
 	return edges
 }
@@ -7728,15 +7790,24 @@ func (m *MessageMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case message.EdgeWorkLenses:
+		ids := make([]ent.Value, 0, len(m.work_lenses))
+		for id := range m.work_lenses {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *MessageMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedtickets != nil {
 		edges = append(edges, message.EdgeTickets)
+	}
+	if m.removedwork_lenses != nil {
+		edges = append(edges, message.EdgeWorkLenses)
 	}
 	return edges
 }
@@ -7751,15 +7822,24 @@ func (m *MessageMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case message.EdgeWorkLenses:
+		ids := make([]ent.Value, 0, len(m.removedwork_lenses))
+		for id := range m.removedwork_lenses {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *MessageMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedtickets {
 		edges = append(edges, message.EdgeTickets)
+	}
+	if m.clearedwork_lenses {
+		edges = append(edges, message.EdgeWorkLenses)
 	}
 	return edges
 }
@@ -7770,6 +7850,8 @@ func (m *MessageMutation) EdgeCleared(name string) bool {
 	switch name {
 	case message.EdgeTickets:
 		return m.clearedtickets
+	case message.EdgeWorkLenses:
+		return m.clearedwork_lenses
 	}
 	return false
 }
@@ -7789,8 +7871,1280 @@ func (m *MessageMutation) ResetEdge(name string) error {
 	case message.EdgeTickets:
 		m.ResetTickets()
 		return nil
+	case message.EdgeWorkLenses:
+		m.ResetWorkLenses()
+		return nil
 	}
 	return fmt.Errorf("unknown Message edge %s", name)
+}
+
+// MessageLensResultMutation represents an operation that mutates the MessageLensResult nodes in the graph.
+type MessageLensResultMutation struct {
+	config
+	op                     Op
+	typ                    string
+	relation_kind          *messagelensresult.RelationKind
+	evidence_count         *int
+	addevidence_count      *int
+	event_count            *int
+	addevent_count         *int
+	first_seen_at          *time.Time
+	last_activity_at       *time.Time
+	rank_score             *float64
+	addrank_score          *float64
+	source                 *string
+	source_instance        *string
+	external_id            *string
+	source_url             *string
+	freshness_state        *messagelensresult.FreshnessState
+	visibility             *messagelensresult.Visibility
+	confidence             *float64
+	addconfidence          *float64
+	created_at             *time.Time
+	updated_at             *time.Time
+	clearedFields          map[string]struct{}
+	lens                   *int
+	clearedlens            bool
+	message                *int
+	clearedmessage         bool
+	latest_evidence        *int
+	clearedlatest_evidence bool
+	done                   bool
+	oldValue               func(context.Context) (*MessageLensResult, error)
+	predicates             []predicate.MessageLensResult
+}
+
+var _ ent.Mutation = (*MessageLensResultMutation)(nil)
+
+// messagelensresultOption allows management of the mutation configuration using functional options.
+type messagelensresultOption func(*MessageLensResultMutation)
+
+// newMessageLensResultMutation creates new mutation for the MessageLensResult entity.
+func newMessageLensResultMutation(c config, op Op, opts ...messagelensresultOption) *MessageLensResultMutation {
+	m := &MessageLensResultMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMessageLensResult,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MessageLensResultMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MessageLensResultMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetWorkLensID sets the "work_lens_id" field.
+func (m *MessageLensResultMutation) SetWorkLensID(i int) {
+	m.lens = &i
+}
+
+// WorkLensID returns the value of the "work_lens_id" field in the mutation.
+func (m *MessageLensResultMutation) WorkLensID() (r int, exists bool) {
+	v := m.lens
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetWorkLensID resets all changes to the "work_lens_id" field.
+func (m *MessageLensResultMutation) ResetWorkLensID() {
+	m.lens = nil
+}
+
+// SetMessageID sets the "message_id" field.
+func (m *MessageLensResultMutation) SetMessageID(i int) {
+	m.message = &i
+}
+
+// MessageID returns the value of the "message_id" field in the mutation.
+func (m *MessageLensResultMutation) MessageID() (r int, exists bool) {
+	v := m.message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMessageID resets all changes to the "message_id" field.
+func (m *MessageLensResultMutation) ResetMessageID() {
+	m.message = nil
+}
+
+// SetRelationKind sets the "relation_kind" field.
+func (m *MessageLensResultMutation) SetRelationKind(mk messagelensresult.RelationKind) {
+	m.relation_kind = &mk
+}
+
+// RelationKind returns the value of the "relation_kind" field in the mutation.
+func (m *MessageLensResultMutation) RelationKind() (r messagelensresult.RelationKind, exists bool) {
+	v := m.relation_kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRelationKind resets all changes to the "relation_kind" field.
+func (m *MessageLensResultMutation) ResetRelationKind() {
+	m.relation_kind = nil
+}
+
+// SetLatestEvidenceID sets the "latest_evidence_id" field.
+func (m *MessageLensResultMutation) SetLatestEvidenceID(i int) {
+	m.latest_evidence = &i
+}
+
+// LatestEvidenceID returns the value of the "latest_evidence_id" field in the mutation.
+func (m *MessageLensResultMutation) LatestEvidenceID() (r int, exists bool) {
+	v := m.latest_evidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLatestEvidenceID clears the value of the "latest_evidence_id" field.
+func (m *MessageLensResultMutation) ClearLatestEvidenceID() {
+	m.latest_evidence = nil
+	m.clearedFields[messagelensresult.FieldLatestEvidenceID] = struct{}{}
+}
+
+// LatestEvidenceIDCleared returns if the "latest_evidence_id" field was cleared in this mutation.
+func (m *MessageLensResultMutation) LatestEvidenceIDCleared() bool {
+	_, ok := m.clearedFields[messagelensresult.FieldLatestEvidenceID]
+	return ok
+}
+
+// ResetLatestEvidenceID resets all changes to the "latest_evidence_id" field.
+func (m *MessageLensResultMutation) ResetLatestEvidenceID() {
+	m.latest_evidence = nil
+	delete(m.clearedFields, messagelensresult.FieldLatestEvidenceID)
+}
+
+// SetEvidenceCount sets the "evidence_count" field.
+func (m *MessageLensResultMutation) SetEvidenceCount(i int) {
+	m.evidence_count = &i
+	m.addevidence_count = nil
+}
+
+// EvidenceCount returns the value of the "evidence_count" field in the mutation.
+func (m *MessageLensResultMutation) EvidenceCount() (r int, exists bool) {
+	v := m.evidence_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddEvidenceCount adds i to the "evidence_count" field.
+func (m *MessageLensResultMutation) AddEvidenceCount(i int) {
+	if m.addevidence_count != nil {
+		*m.addevidence_count += i
+	} else {
+		m.addevidence_count = &i
+	}
+}
+
+// AddedEvidenceCount returns the value that was added to the "evidence_count" field in this mutation.
+func (m *MessageLensResultMutation) AddedEvidenceCount() (r int, exists bool) {
+	v := m.addevidence_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEvidenceCount resets all changes to the "evidence_count" field.
+func (m *MessageLensResultMutation) ResetEvidenceCount() {
+	m.evidence_count = nil
+	m.addevidence_count = nil
+}
+
+// SetEventCount sets the "event_count" field.
+func (m *MessageLensResultMutation) SetEventCount(i int) {
+	m.event_count = &i
+	m.addevent_count = nil
+}
+
+// EventCount returns the value of the "event_count" field in the mutation.
+func (m *MessageLensResultMutation) EventCount() (r int, exists bool) {
+	v := m.event_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddEventCount adds i to the "event_count" field.
+func (m *MessageLensResultMutation) AddEventCount(i int) {
+	if m.addevent_count != nil {
+		*m.addevent_count += i
+	} else {
+		m.addevent_count = &i
+	}
+}
+
+// AddedEventCount returns the value that was added to the "event_count" field in this mutation.
+func (m *MessageLensResultMutation) AddedEventCount() (r int, exists bool) {
+	v := m.addevent_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEventCount resets all changes to the "event_count" field.
+func (m *MessageLensResultMutation) ResetEventCount() {
+	m.event_count = nil
+	m.addevent_count = nil
+}
+
+// SetFirstSeenAt sets the "first_seen_at" field.
+func (m *MessageLensResultMutation) SetFirstSeenAt(t time.Time) {
+	m.first_seen_at = &t
+}
+
+// FirstSeenAt returns the value of the "first_seen_at" field in the mutation.
+func (m *MessageLensResultMutation) FirstSeenAt() (r time.Time, exists bool) {
+	v := m.first_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearFirstSeenAt clears the value of the "first_seen_at" field.
+func (m *MessageLensResultMutation) ClearFirstSeenAt() {
+	m.first_seen_at = nil
+	m.clearedFields[messagelensresult.FieldFirstSeenAt] = struct{}{}
+}
+
+// FirstSeenAtCleared returns if the "first_seen_at" field was cleared in this mutation.
+func (m *MessageLensResultMutation) FirstSeenAtCleared() bool {
+	_, ok := m.clearedFields[messagelensresult.FieldFirstSeenAt]
+	return ok
+}
+
+// ResetFirstSeenAt resets all changes to the "first_seen_at" field.
+func (m *MessageLensResultMutation) ResetFirstSeenAt() {
+	m.first_seen_at = nil
+	delete(m.clearedFields, messagelensresult.FieldFirstSeenAt)
+}
+
+// SetLastActivityAt sets the "last_activity_at" field.
+func (m *MessageLensResultMutation) SetLastActivityAt(t time.Time) {
+	m.last_activity_at = &t
+}
+
+// LastActivityAt returns the value of the "last_activity_at" field in the mutation.
+func (m *MessageLensResultMutation) LastActivityAt() (r time.Time, exists bool) {
+	v := m.last_activity_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLastActivityAt clears the value of the "last_activity_at" field.
+func (m *MessageLensResultMutation) ClearLastActivityAt() {
+	m.last_activity_at = nil
+	m.clearedFields[messagelensresult.FieldLastActivityAt] = struct{}{}
+}
+
+// LastActivityAtCleared returns if the "last_activity_at" field was cleared in this mutation.
+func (m *MessageLensResultMutation) LastActivityAtCleared() bool {
+	_, ok := m.clearedFields[messagelensresult.FieldLastActivityAt]
+	return ok
+}
+
+// ResetLastActivityAt resets all changes to the "last_activity_at" field.
+func (m *MessageLensResultMutation) ResetLastActivityAt() {
+	m.last_activity_at = nil
+	delete(m.clearedFields, messagelensresult.FieldLastActivityAt)
+}
+
+// SetRankScore sets the "rank_score" field.
+func (m *MessageLensResultMutation) SetRankScore(f float64) {
+	m.rank_score = &f
+	m.addrank_score = nil
+}
+
+// RankScore returns the value of the "rank_score" field in the mutation.
+func (m *MessageLensResultMutation) RankScore() (r float64, exists bool) {
+	v := m.rank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddRankScore adds f to the "rank_score" field.
+func (m *MessageLensResultMutation) AddRankScore(f float64) {
+	if m.addrank_score != nil {
+		*m.addrank_score += f
+	} else {
+		m.addrank_score = &f
+	}
+}
+
+// AddedRankScore returns the value that was added to the "rank_score" field in this mutation.
+func (m *MessageLensResultMutation) AddedRankScore() (r float64, exists bool) {
+	v := m.addrank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRankScore resets all changes to the "rank_score" field.
+func (m *MessageLensResultMutation) ResetRankScore() {
+	m.rank_score = nil
+	m.addrank_score = nil
+}
+
+// SetSource sets the "source" field.
+func (m *MessageLensResultMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *MessageLensResultMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSource clears the value of the "source" field.
+func (m *MessageLensResultMutation) ClearSource() {
+	m.source = nil
+	m.clearedFields[messagelensresult.FieldSource] = struct{}{}
+}
+
+// SourceCleared returns if the "source" field was cleared in this mutation.
+func (m *MessageLensResultMutation) SourceCleared() bool {
+	_, ok := m.clearedFields[messagelensresult.FieldSource]
+	return ok
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *MessageLensResultMutation) ResetSource() {
+	m.source = nil
+	delete(m.clearedFields, messagelensresult.FieldSource)
+}
+
+// SetSourceInstance sets the "source_instance" field.
+func (m *MessageLensResultMutation) SetSourceInstance(s string) {
+	m.source_instance = &s
+}
+
+// SourceInstance returns the value of the "source_instance" field in the mutation.
+func (m *MessageLensResultMutation) SourceInstance() (r string, exists bool) {
+	v := m.source_instance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSourceInstance clears the value of the "source_instance" field.
+func (m *MessageLensResultMutation) ClearSourceInstance() {
+	m.source_instance = nil
+	m.clearedFields[messagelensresult.FieldSourceInstance] = struct{}{}
+}
+
+// SourceInstanceCleared returns if the "source_instance" field was cleared in this mutation.
+func (m *MessageLensResultMutation) SourceInstanceCleared() bool {
+	_, ok := m.clearedFields[messagelensresult.FieldSourceInstance]
+	return ok
+}
+
+// ResetSourceInstance resets all changes to the "source_instance" field.
+func (m *MessageLensResultMutation) ResetSourceInstance() {
+	m.source_instance = nil
+	delete(m.clearedFields, messagelensresult.FieldSourceInstance)
+}
+
+// SetExternalID sets the "external_id" field.
+func (m *MessageLensResultMutation) SetExternalID(s string) {
+	m.external_id = &s
+}
+
+// ExternalID returns the value of the "external_id" field in the mutation.
+func (m *MessageLensResultMutation) ExternalID() (r string, exists bool) {
+	v := m.external_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearExternalID clears the value of the "external_id" field.
+func (m *MessageLensResultMutation) ClearExternalID() {
+	m.external_id = nil
+	m.clearedFields[messagelensresult.FieldExternalID] = struct{}{}
+}
+
+// ExternalIDCleared returns if the "external_id" field was cleared in this mutation.
+func (m *MessageLensResultMutation) ExternalIDCleared() bool {
+	_, ok := m.clearedFields[messagelensresult.FieldExternalID]
+	return ok
+}
+
+// ResetExternalID resets all changes to the "external_id" field.
+func (m *MessageLensResultMutation) ResetExternalID() {
+	m.external_id = nil
+	delete(m.clearedFields, messagelensresult.FieldExternalID)
+}
+
+// SetSourceURL sets the "source_url" field.
+func (m *MessageLensResultMutation) SetSourceURL(s string) {
+	m.source_url = &s
+}
+
+// SourceURL returns the value of the "source_url" field in the mutation.
+func (m *MessageLensResultMutation) SourceURL() (r string, exists bool) {
+	v := m.source_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSourceURL clears the value of the "source_url" field.
+func (m *MessageLensResultMutation) ClearSourceURL() {
+	m.source_url = nil
+	m.clearedFields[messagelensresult.FieldSourceURL] = struct{}{}
+}
+
+// SourceURLCleared returns if the "source_url" field was cleared in this mutation.
+func (m *MessageLensResultMutation) SourceURLCleared() bool {
+	_, ok := m.clearedFields[messagelensresult.FieldSourceURL]
+	return ok
+}
+
+// ResetSourceURL resets all changes to the "source_url" field.
+func (m *MessageLensResultMutation) ResetSourceURL() {
+	m.source_url = nil
+	delete(m.clearedFields, messagelensresult.FieldSourceURL)
+}
+
+// SetFreshnessState sets the "freshness_state" field.
+func (m *MessageLensResultMutation) SetFreshnessState(ms messagelensresult.FreshnessState) {
+	m.freshness_state = &ms
+}
+
+// FreshnessState returns the value of the "freshness_state" field in the mutation.
+func (m *MessageLensResultMutation) FreshnessState() (r messagelensresult.FreshnessState, exists bool) {
+	v := m.freshness_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFreshnessState resets all changes to the "freshness_state" field.
+func (m *MessageLensResultMutation) ResetFreshnessState() {
+	m.freshness_state = nil
+}
+
+// SetVisibility sets the "visibility" field.
+func (m *MessageLensResultMutation) SetVisibility(value messagelensresult.Visibility) {
+	m.visibility = &value
+}
+
+// Visibility returns the value of the "visibility" field in the mutation.
+func (m *MessageLensResultMutation) Visibility() (r messagelensresult.Visibility, exists bool) {
+	v := m.visibility
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVisibility resets all changes to the "visibility" field.
+func (m *MessageLensResultMutation) ResetVisibility() {
+	m.visibility = nil
+}
+
+// SetConfidence sets the "confidence" field.
+func (m *MessageLensResultMutation) SetConfidence(f float64) {
+	m.confidence = &f
+	m.addconfidence = nil
+}
+
+// Confidence returns the value of the "confidence" field in the mutation.
+func (m *MessageLensResultMutation) Confidence() (r float64, exists bool) {
+	v := m.confidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddConfidence adds f to the "confidence" field.
+func (m *MessageLensResultMutation) AddConfidence(f float64) {
+	if m.addconfidence != nil {
+		*m.addconfidence += f
+	} else {
+		m.addconfidence = &f
+	}
+}
+
+// AddedConfidence returns the value that was added to the "confidence" field in this mutation.
+func (m *MessageLensResultMutation) AddedConfidence() (r float64, exists bool) {
+	v := m.addconfidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConfidence resets all changes to the "confidence" field.
+func (m *MessageLensResultMutation) ResetConfidence() {
+	m.confidence = nil
+	m.addconfidence = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *MessageLensResultMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *MessageLensResultMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *MessageLensResultMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *MessageLensResultMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *MessageLensResultMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *MessageLensResultMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetLensID sets the "lens" edge to the WorkLens entity by id.
+func (m *MessageLensResultMutation) SetLensID(id int) {
+	m.lens = &id
+}
+
+// ClearLens clears the "lens" edge to the WorkLens entity.
+func (m *MessageLensResultMutation) ClearLens() {
+	m.clearedlens = true
+	m.clearedFields[messagelensresult.FieldWorkLensID] = struct{}{}
+}
+
+// LensCleared reports if the "lens" edge to the WorkLens entity was cleared.
+func (m *MessageLensResultMutation) LensCleared() bool {
+	return m.clearedlens
+}
+
+// LensID returns the "lens" edge ID in the mutation.
+func (m *MessageLensResultMutation) LensID() (id int, exists bool) {
+	if m.lens != nil {
+		return *m.lens, true
+	}
+	return
+}
+
+// LensIDs returns the "lens" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LensID instead. It exists only for internal usage by the builders.
+func (m *MessageLensResultMutation) LensIDs() (ids []int) {
+	if id := m.lens; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLens resets all changes to the "lens" edge.
+func (m *MessageLensResultMutation) ResetLens() {
+	m.lens = nil
+	m.clearedlens = false
+}
+
+// ClearMessage clears the "message" edge to the Message entity.
+func (m *MessageLensResultMutation) ClearMessage() {
+	m.clearedmessage = true
+	m.clearedFields[messagelensresult.FieldMessageID] = struct{}{}
+}
+
+// MessageCleared reports if the "message" edge to the Message entity was cleared.
+func (m *MessageLensResultMutation) MessageCleared() bool {
+	return m.clearedmessage
+}
+
+// MessageIDs returns the "message" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// MessageID instead. It exists only for internal usage by the builders.
+func (m *MessageLensResultMutation) MessageIDs() (ids []int) {
+	if id := m.message; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetMessage resets all changes to the "message" edge.
+func (m *MessageLensResultMutation) ResetMessage() {
+	m.message = nil
+	m.clearedmessage = false
+}
+
+// ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
+func (m *MessageLensResultMutation) ClearLatestEvidence() {
+	m.clearedlatest_evidence = true
+	m.clearedFields[messagelensresult.FieldLatestEvidenceID] = struct{}{}
+}
+
+// LatestEvidenceCleared reports if the "latest_evidence" edge to the Evidence entity was cleared.
+func (m *MessageLensResultMutation) LatestEvidenceCleared() bool {
+	return m.LatestEvidenceIDCleared() || m.clearedlatest_evidence
+}
+
+// LatestEvidenceIDs returns the "latest_evidence" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LatestEvidenceID instead. It exists only for internal usage by the builders.
+func (m *MessageLensResultMutation) LatestEvidenceIDs() (ids []int) {
+	if id := m.latest_evidence; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLatestEvidence resets all changes to the "latest_evidence" edge.
+func (m *MessageLensResultMutation) ResetLatestEvidence() {
+	m.latest_evidence = nil
+	m.clearedlatest_evidence = false
+}
+
+// Where appends a list predicates to the MessageLensResultMutation builder.
+func (m *MessageLensResultMutation) Where(ps ...predicate.MessageLensResult) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MessageLensResultMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MessageLensResultMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.MessageLensResult, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MessageLensResultMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MessageLensResultMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (MessageLensResult).
+func (m *MessageLensResultMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MessageLensResultMutation) Fields() []string {
+	fields := make([]string, 0, 18)
+	if m.lens != nil {
+		fields = append(fields, messagelensresult.FieldWorkLensID)
+	}
+	if m.message != nil {
+		fields = append(fields, messagelensresult.FieldMessageID)
+	}
+	if m.relation_kind != nil {
+		fields = append(fields, messagelensresult.FieldRelationKind)
+	}
+	if m.latest_evidence != nil {
+		fields = append(fields, messagelensresult.FieldLatestEvidenceID)
+	}
+	if m.evidence_count != nil {
+		fields = append(fields, messagelensresult.FieldEvidenceCount)
+	}
+	if m.event_count != nil {
+		fields = append(fields, messagelensresult.FieldEventCount)
+	}
+	if m.first_seen_at != nil {
+		fields = append(fields, messagelensresult.FieldFirstSeenAt)
+	}
+	if m.last_activity_at != nil {
+		fields = append(fields, messagelensresult.FieldLastActivityAt)
+	}
+	if m.rank_score != nil {
+		fields = append(fields, messagelensresult.FieldRankScore)
+	}
+	if m.source != nil {
+		fields = append(fields, messagelensresult.FieldSource)
+	}
+	if m.source_instance != nil {
+		fields = append(fields, messagelensresult.FieldSourceInstance)
+	}
+	if m.external_id != nil {
+		fields = append(fields, messagelensresult.FieldExternalID)
+	}
+	if m.source_url != nil {
+		fields = append(fields, messagelensresult.FieldSourceURL)
+	}
+	if m.freshness_state != nil {
+		fields = append(fields, messagelensresult.FieldFreshnessState)
+	}
+	if m.visibility != nil {
+		fields = append(fields, messagelensresult.FieldVisibility)
+	}
+	if m.confidence != nil {
+		fields = append(fields, messagelensresult.FieldConfidence)
+	}
+	if m.created_at != nil {
+		fields = append(fields, messagelensresult.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, messagelensresult.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MessageLensResultMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case messagelensresult.FieldWorkLensID:
+		return m.WorkLensID()
+	case messagelensresult.FieldMessageID:
+		return m.MessageID()
+	case messagelensresult.FieldRelationKind:
+		return m.RelationKind()
+	case messagelensresult.FieldLatestEvidenceID:
+		return m.LatestEvidenceID()
+	case messagelensresult.FieldEvidenceCount:
+		return m.EvidenceCount()
+	case messagelensresult.FieldEventCount:
+		return m.EventCount()
+	case messagelensresult.FieldFirstSeenAt:
+		return m.FirstSeenAt()
+	case messagelensresult.FieldLastActivityAt:
+		return m.LastActivityAt()
+	case messagelensresult.FieldRankScore:
+		return m.RankScore()
+	case messagelensresult.FieldSource:
+		return m.Source()
+	case messagelensresult.FieldSourceInstance:
+		return m.SourceInstance()
+	case messagelensresult.FieldExternalID:
+		return m.ExternalID()
+	case messagelensresult.FieldSourceURL:
+		return m.SourceURL()
+	case messagelensresult.FieldFreshnessState:
+		return m.FreshnessState()
+	case messagelensresult.FieldVisibility:
+		return m.Visibility()
+	case messagelensresult.FieldConfidence:
+		return m.Confidence()
+	case messagelensresult.FieldCreatedAt:
+		return m.CreatedAt()
+	case messagelensresult.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MessageLensResultMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	return nil, errors.New("edge schema MessageLensResult does not support getting old values")
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MessageLensResultMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case messagelensresult.FieldWorkLensID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkLensID(v)
+		return nil
+	case messagelensresult.FieldMessageID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMessageID(v)
+		return nil
+	case messagelensresult.FieldRelationKind:
+		v, ok := value.(messagelensresult.RelationKind)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRelationKind(v)
+		return nil
+	case messagelensresult.FieldLatestEvidenceID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLatestEvidenceID(v)
+		return nil
+	case messagelensresult.FieldEvidenceCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEvidenceCount(v)
+		return nil
+	case messagelensresult.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventCount(v)
+		return nil
+	case messagelensresult.FieldFirstSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstSeenAt(v)
+		return nil
+	case messagelensresult.FieldLastActivityAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastActivityAt(v)
+		return nil
+	case messagelensresult.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRankScore(v)
+		return nil
+	case messagelensresult.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case messagelensresult.FieldSourceInstance:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceInstance(v)
+		return nil
+	case messagelensresult.FieldExternalID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExternalID(v)
+		return nil
+	case messagelensresult.FieldSourceURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceURL(v)
+		return nil
+	case messagelensresult.FieldFreshnessState:
+		v, ok := value.(messagelensresult.FreshnessState)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFreshnessState(v)
+		return nil
+	case messagelensresult.FieldVisibility:
+		v, ok := value.(messagelensresult.Visibility)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisibility(v)
+		return nil
+	case messagelensresult.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfidence(v)
+		return nil
+	case messagelensresult.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case messagelensresult.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MessageLensResult field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MessageLensResultMutation) AddedFields() []string {
+	var fields []string
+	if m.addevidence_count != nil {
+		fields = append(fields, messagelensresult.FieldEvidenceCount)
+	}
+	if m.addevent_count != nil {
+		fields = append(fields, messagelensresult.FieldEventCount)
+	}
+	if m.addrank_score != nil {
+		fields = append(fields, messagelensresult.FieldRankScore)
+	}
+	if m.addconfidence != nil {
+		fields = append(fields, messagelensresult.FieldConfidence)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MessageLensResultMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case messagelensresult.FieldEvidenceCount:
+		return m.AddedEvidenceCount()
+	case messagelensresult.FieldEventCount:
+		return m.AddedEventCount()
+	case messagelensresult.FieldRankScore:
+		return m.AddedRankScore()
+	case messagelensresult.FieldConfidence:
+		return m.AddedConfidence()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MessageLensResultMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case messagelensresult.FieldEvidenceCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEvidenceCount(v)
+		return nil
+	case messagelensresult.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEventCount(v)
+		return nil
+	case messagelensresult.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRankScore(v)
+		return nil
+	case messagelensresult.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfidence(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MessageLensResult numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MessageLensResultMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(messagelensresult.FieldLatestEvidenceID) {
+		fields = append(fields, messagelensresult.FieldLatestEvidenceID)
+	}
+	if m.FieldCleared(messagelensresult.FieldFirstSeenAt) {
+		fields = append(fields, messagelensresult.FieldFirstSeenAt)
+	}
+	if m.FieldCleared(messagelensresult.FieldLastActivityAt) {
+		fields = append(fields, messagelensresult.FieldLastActivityAt)
+	}
+	if m.FieldCleared(messagelensresult.FieldSource) {
+		fields = append(fields, messagelensresult.FieldSource)
+	}
+	if m.FieldCleared(messagelensresult.FieldSourceInstance) {
+		fields = append(fields, messagelensresult.FieldSourceInstance)
+	}
+	if m.FieldCleared(messagelensresult.FieldExternalID) {
+		fields = append(fields, messagelensresult.FieldExternalID)
+	}
+	if m.FieldCleared(messagelensresult.FieldSourceURL) {
+		fields = append(fields, messagelensresult.FieldSourceURL)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MessageLensResultMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MessageLensResultMutation) ClearField(name string) error {
+	switch name {
+	case messagelensresult.FieldLatestEvidenceID:
+		m.ClearLatestEvidenceID()
+		return nil
+	case messagelensresult.FieldFirstSeenAt:
+		m.ClearFirstSeenAt()
+		return nil
+	case messagelensresult.FieldLastActivityAt:
+		m.ClearLastActivityAt()
+		return nil
+	case messagelensresult.FieldSource:
+		m.ClearSource()
+		return nil
+	case messagelensresult.FieldSourceInstance:
+		m.ClearSourceInstance()
+		return nil
+	case messagelensresult.FieldExternalID:
+		m.ClearExternalID()
+		return nil
+	case messagelensresult.FieldSourceURL:
+		m.ClearSourceURL()
+		return nil
+	}
+	return fmt.Errorf("unknown MessageLensResult nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MessageLensResultMutation) ResetField(name string) error {
+	switch name {
+	case messagelensresult.FieldWorkLensID:
+		m.ResetWorkLensID()
+		return nil
+	case messagelensresult.FieldMessageID:
+		m.ResetMessageID()
+		return nil
+	case messagelensresult.FieldRelationKind:
+		m.ResetRelationKind()
+		return nil
+	case messagelensresult.FieldLatestEvidenceID:
+		m.ResetLatestEvidenceID()
+		return nil
+	case messagelensresult.FieldEvidenceCount:
+		m.ResetEvidenceCount()
+		return nil
+	case messagelensresult.FieldEventCount:
+		m.ResetEventCount()
+		return nil
+	case messagelensresult.FieldFirstSeenAt:
+		m.ResetFirstSeenAt()
+		return nil
+	case messagelensresult.FieldLastActivityAt:
+		m.ResetLastActivityAt()
+		return nil
+	case messagelensresult.FieldRankScore:
+		m.ResetRankScore()
+		return nil
+	case messagelensresult.FieldSource:
+		m.ResetSource()
+		return nil
+	case messagelensresult.FieldSourceInstance:
+		m.ResetSourceInstance()
+		return nil
+	case messagelensresult.FieldExternalID:
+		m.ResetExternalID()
+		return nil
+	case messagelensresult.FieldSourceURL:
+		m.ResetSourceURL()
+		return nil
+	case messagelensresult.FieldFreshnessState:
+		m.ResetFreshnessState()
+		return nil
+	case messagelensresult.FieldVisibility:
+		m.ResetVisibility()
+		return nil
+	case messagelensresult.FieldConfidence:
+		m.ResetConfidence()
+		return nil
+	case messagelensresult.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case messagelensresult.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown MessageLensResult field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MessageLensResultMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.lens != nil {
+		edges = append(edges, messagelensresult.EdgeLens)
+	}
+	if m.message != nil {
+		edges = append(edges, messagelensresult.EdgeMessage)
+	}
+	if m.latest_evidence != nil {
+		edges = append(edges, messagelensresult.EdgeLatestEvidence)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MessageLensResultMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case messagelensresult.EdgeLens:
+		if id := m.lens; id != nil {
+			return []ent.Value{*id}
+		}
+	case messagelensresult.EdgeMessage:
+		if id := m.message; id != nil {
+			return []ent.Value{*id}
+		}
+	case messagelensresult.EdgeLatestEvidence:
+		if id := m.latest_evidence; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MessageLensResultMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MessageLensResultMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MessageLensResultMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedlens {
+		edges = append(edges, messagelensresult.EdgeLens)
+	}
+	if m.clearedmessage {
+		edges = append(edges, messagelensresult.EdgeMessage)
+	}
+	if m.clearedlatest_evidence {
+		edges = append(edges, messagelensresult.EdgeLatestEvidence)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MessageLensResultMutation) EdgeCleared(name string) bool {
+	switch name {
+	case messagelensresult.EdgeLens:
+		return m.clearedlens
+	case messagelensresult.EdgeMessage:
+		return m.clearedmessage
+	case messagelensresult.EdgeLatestEvidence:
+		return m.clearedlatest_evidence
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MessageLensResultMutation) ClearEdge(name string) error {
+	switch name {
+	case messagelensresult.EdgeLens:
+		m.ClearLens()
+		return nil
+	case messagelensresult.EdgeMessage:
+		m.ClearMessage()
+		return nil
+	case messagelensresult.EdgeLatestEvidence:
+		m.ClearLatestEvidence()
+		return nil
+	}
+	return fmt.Errorf("unknown MessageLensResult unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MessageLensResultMutation) ResetEdge(name string) error {
+	switch name {
+	case messagelensresult.EdgeLens:
+		m.ResetLens()
+		return nil
+	case messagelensresult.EdgeMessage:
+		m.ResetMessage()
+		return nil
+	case messagelensresult.EdgeLatestEvidence:
+		m.ResetLatestEvidence()
+		return nil
+	}
+	return fmt.Errorf("unknown MessageLensResult edge %s", name)
 }
 
 // PersonMutation represents an operation that mutates the Person nodes in the graph.
@@ -21303,6 +22657,9 @@ type WorkLensMutation struct {
 	tickets              map[int]struct{}
 	removedtickets       map[int]struct{}
 	clearedtickets       bool
+	messages             map[int]struct{}
+	removedmessages      map[int]struct{}
+	clearedmessages      bool
 	done                 bool
 	oldValue             func(context.Context) (*WorkLens, error)
 	predicates           []predicate.WorkLens
@@ -22444,6 +23801,60 @@ func (m *WorkLensMutation) ResetTickets() {
 	m.removedtickets = nil
 }
 
+// AddMessageIDs adds the "messages" edge to the Message entity by ids.
+func (m *WorkLensMutation) AddMessageIDs(ids ...int) {
+	if m.messages == nil {
+		m.messages = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.messages[ids[i]] = struct{}{}
+	}
+}
+
+// ClearMessages clears the "messages" edge to the Message entity.
+func (m *WorkLensMutation) ClearMessages() {
+	m.clearedmessages = true
+}
+
+// MessagesCleared reports if the "messages" edge to the Message entity was cleared.
+func (m *WorkLensMutation) MessagesCleared() bool {
+	return m.clearedmessages
+}
+
+// RemoveMessageIDs removes the "messages" edge to the Message entity by IDs.
+func (m *WorkLensMutation) RemoveMessageIDs(ids ...int) {
+	if m.removedmessages == nil {
+		m.removedmessages = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.messages, ids[i])
+		m.removedmessages[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedMessages returns the removed IDs of the "messages" edge to the Message entity.
+func (m *WorkLensMutation) RemovedMessagesIDs() (ids []int) {
+	for id := range m.removedmessages {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// MessagesIDs returns the "messages" edge IDs in the mutation.
+func (m *WorkLensMutation) MessagesIDs() (ids []int) {
+	for id := range m.messages {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetMessages resets all changes to the "messages" edge.
+func (m *WorkLensMutation) ResetMessages() {
+	m.messages = nil
+	m.clearedmessages = false
+	m.removedmessages = nil
+}
+
 // Where appends a list predicates to the WorkLensMutation builder.
 func (m *WorkLensMutation) Where(ps ...predicate.WorkLens) {
 	m.predicates = append(m.predicates, ps...)
@@ -22973,7 +24384,7 @@ func (m *WorkLensMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkLensMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.area != nil {
 		edges = append(edges, worklens.EdgeArea)
 	}
@@ -22985,6 +24396,9 @@ func (m *WorkLensMutation) AddedEdges() []string {
 	}
 	if m.tickets != nil {
 		edges = append(edges, worklens.EdgeTickets)
+	}
+	if m.messages != nil {
+		edges = append(edges, worklens.EdgeMessages)
 	}
 	return edges
 }
@@ -23015,13 +24429,19 @@ func (m *WorkLensMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case worklens.EdgeMessages:
+		ids := make([]ent.Value, 0, len(m.messages))
+		for id := range m.messages {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkLensMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removeddocuments != nil {
 		edges = append(edges, worklens.EdgeDocuments)
 	}
@@ -23030,6 +24450,9 @@ func (m *WorkLensMutation) RemovedEdges() []string {
 	}
 	if m.removedtickets != nil {
 		edges = append(edges, worklens.EdgeTickets)
+	}
+	if m.removedmessages != nil {
+		edges = append(edges, worklens.EdgeMessages)
 	}
 	return edges
 }
@@ -23056,13 +24479,19 @@ func (m *WorkLensMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case worklens.EdgeMessages:
+		ids := make([]ent.Value, 0, len(m.removedmessages))
+		for id := range m.removedmessages {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkLensMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedarea {
 		edges = append(edges, worklens.EdgeArea)
 	}
@@ -23074,6 +24503,9 @@ func (m *WorkLensMutation) ClearedEdges() []string {
 	}
 	if m.clearedtickets {
 		edges = append(edges, worklens.EdgeTickets)
+	}
+	if m.clearedmessages {
+		edges = append(edges, worklens.EdgeMessages)
 	}
 	return edges
 }
@@ -23090,6 +24522,8 @@ func (m *WorkLensMutation) EdgeCleared(name string) bool {
 		return m.clearedpull_requests
 	case worklens.EdgeTickets:
 		return m.clearedtickets
+	case worklens.EdgeMessages:
+		return m.clearedmessages
 	}
 	return false
 }
@@ -23120,6 +24554,9 @@ func (m *WorkLensMutation) ResetEdge(name string) error {
 		return nil
 	case worklens.EdgeTickets:
 		m.ResetTickets()
+		return nil
+	case worklens.EdgeMessages:
+		m.ResetMessages()
 		return nil
 	}
 	return fmt.Errorf("unknown WorkLens edge %s", name)

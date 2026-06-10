@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"cubicle/services/ontology-service/ent/document"
+	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
@@ -337,6 +338,21 @@ func (_u *WorkLensUpdate) AddTickets(v ...*Ticket) *WorkLensUpdate {
 	return _u.AddTicketIDs(ids...)
 }
 
+// AddMessageIDs adds the "messages" edge to the Message entity by IDs.
+func (_u *WorkLensUpdate) AddMessageIDs(ids ...int) *WorkLensUpdate {
+	_u.mutation.AddMessageIDs(ids...)
+	return _u
+}
+
+// AddMessages adds the "messages" edges to the Message entity.
+func (_u *WorkLensUpdate) AddMessages(v ...*Message) *WorkLensUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddMessageIDs(ids...)
+}
+
 // Mutation returns the WorkLensMutation object of the builder.
 func (_u *WorkLensUpdate) Mutation() *WorkLensMutation {
 	return _u.mutation
@@ -403,6 +419,27 @@ func (_u *WorkLensUpdate) RemoveTickets(v ...*Ticket) *WorkLensUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveTicketIDs(ids...)
+}
+
+// ClearMessages clears all "messages" edges to the Message entity.
+func (_u *WorkLensUpdate) ClearMessages() *WorkLensUpdate {
+	_u.mutation.ClearMessages()
+	return _u
+}
+
+// RemoveMessageIDs removes the "messages" edge to Message entities by IDs.
+func (_u *WorkLensUpdate) RemoveMessageIDs(ids ...int) *WorkLensUpdate {
+	_u.mutation.RemoveMessageIDs(ids...)
+	return _u
+}
+
+// RemoveMessages removes "messages" edges to Message entities.
+func (_u *WorkLensUpdate) RemoveMessages(v ...*Message) *WorkLensUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveMessageIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -725,6 +762,63 @@ func (_u *WorkLensUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &TicketLensResultCreate{config: _u.config, mutation: newTicketLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.MessagesTable,
+			Columns: worklens.MessagesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		createE := &MessageLensResultCreate{config: _u.config, mutation: newMessageLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedMessagesIDs(); len(nodes) > 0 && !_u.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.MessagesTable,
+			Columns: worklens.MessagesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &MessageLensResultCreate{config: _u.config, mutation: newMessageLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.MessagesTable,
+			Columns: worklens.MessagesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &MessageLensResultCreate{config: _u.config, mutation: newMessageLensResultMutation(_u.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields
@@ -1056,6 +1150,21 @@ func (_u *WorkLensUpdateOne) AddTickets(v ...*Ticket) *WorkLensUpdateOne {
 	return _u.AddTicketIDs(ids...)
 }
 
+// AddMessageIDs adds the "messages" edge to the Message entity by IDs.
+func (_u *WorkLensUpdateOne) AddMessageIDs(ids ...int) *WorkLensUpdateOne {
+	_u.mutation.AddMessageIDs(ids...)
+	return _u
+}
+
+// AddMessages adds the "messages" edges to the Message entity.
+func (_u *WorkLensUpdateOne) AddMessages(v ...*Message) *WorkLensUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddMessageIDs(ids...)
+}
+
 // Mutation returns the WorkLensMutation object of the builder.
 func (_u *WorkLensUpdateOne) Mutation() *WorkLensMutation {
 	return _u.mutation
@@ -1122,6 +1231,27 @@ func (_u *WorkLensUpdateOne) RemoveTickets(v ...*Ticket) *WorkLensUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveTicketIDs(ids...)
+}
+
+// ClearMessages clears all "messages" edges to the Message entity.
+func (_u *WorkLensUpdateOne) ClearMessages() *WorkLensUpdateOne {
+	_u.mutation.ClearMessages()
+	return _u
+}
+
+// RemoveMessageIDs removes the "messages" edge to Message entities by IDs.
+func (_u *WorkLensUpdateOne) RemoveMessageIDs(ids ...int) *WorkLensUpdateOne {
+	_u.mutation.RemoveMessageIDs(ids...)
+	return _u
+}
+
+// RemoveMessages removes "messages" edges to Message entities.
+func (_u *WorkLensUpdateOne) RemoveMessages(v ...*Message) *WorkLensUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveMessageIDs(ids...)
 }
 
 // Where appends a list predicates to the WorkLensUpdate builder.
@@ -1474,6 +1604,63 @@ func (_u *WorkLensUpdateOne) sqlSave(ctx context.Context) (_node *WorkLens, err 
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &TicketLensResultCreate{config: _u.config, mutation: newTicketLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.MessagesTable,
+			Columns: worklens.MessagesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		createE := &MessageLensResultCreate{config: _u.config, mutation: newMessageLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedMessagesIDs(); len(nodes) > 0 && !_u.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.MessagesTable,
+			Columns: worklens.MessagesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &MessageLensResultCreate{config: _u.config, mutation: newMessageLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.MessagesTable,
+			Columns: worklens.MessagesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &MessageLensResultCreate{config: _u.config, mutation: newMessageLensResultMutation(_u.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields

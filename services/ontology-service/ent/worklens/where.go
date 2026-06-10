@@ -967,6 +967,29 @@ func HasTicketsWith(preds ...predicate.Ticket) predicate.WorkLens {
 	})
 }
 
+// HasMessages applies the HasEdge predicate on the "messages" edge.
+func HasMessages() predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, MessagesTable, MessagesPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMessagesWith applies the HasEdge predicate on the "messages" edge with a given conditions (other predicates).
+func HasMessagesWith(preds ...predicate.Message) predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := newMessagesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasDocumentResults applies the HasEdge predicate on the "document_results" edge.
 func HasDocumentResults() predicate.WorkLens {
 	return predicate.WorkLens(func(s *sql.Selector) {
@@ -1028,6 +1051,29 @@ func HasTicketResults() predicate.WorkLens {
 func HasTicketResultsWith(preds ...predicate.TicketLensResult) predicate.WorkLens {
 	return predicate.WorkLens(func(s *sql.Selector) {
 		step := newTicketResultsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasMessageResults applies the HasEdge predicate on the "message_results" edge.
+func HasMessageResults() predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, MessageResultsTable, MessageResultsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMessageResultsWith applies the HasEdge predicate on the "message_results" edge with a given conditions (other predicates).
+func HasMessageResultsWith(preds ...predicate.MessageLensResult) predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := newMessageResultsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"cubicle/services/ontology-service/ent/document"
+	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workarea"
@@ -306,6 +307,21 @@ func (_c *WorkLensCreate) AddTickets(v ...*Ticket) *WorkLensCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddTicketIDs(ids...)
+}
+
+// AddMessageIDs adds the "messages" edge to the Message entity by IDs.
+func (_c *WorkLensCreate) AddMessageIDs(ids ...int) *WorkLensCreate {
+	_c.mutation.AddMessageIDs(ids...)
+	return _c
+}
+
+// AddMessages adds the "messages" edges to the Message entity.
+func (_c *WorkLensCreate) AddMessages(v ...*Message) *WorkLensCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddMessageIDs(ids...)
 }
 
 // Mutation returns the WorkLensMutation object of the builder.
@@ -645,6 +661,26 @@ func (_c *WorkLensCreate) createSpec() (*WorkLens, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &TicketLensResultCreate{config: _c.config, mutation: newTicketLensResultMutation(_c.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.MessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.MessagesTable,
+			Columns: worklens.MessagesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &MessageLensResultCreate{config: _c.config, mutation: newMessageLensResultMutation(_c.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields

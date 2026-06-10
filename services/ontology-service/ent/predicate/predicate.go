@@ -21,6 +21,9 @@ type Evidence func(*sql.Selector)
 // Message is the predicate function for message builders.
 type Message func(*sql.Selector)
 
+// MessageLensResult is the predicate function for messagelensresult builders.
+type MessageLensResult func(*sql.Selector)
+
 // Person is the predicate function for person builders.
 type Person func(*sql.Selector)
 
