@@ -115,6 +115,9 @@ func (WorkLens) Edges() []ent.Edge {
 		edge.To("pull_requests", PullRequest.Type).
 			Through("pull_request_results", PullRequestLensResult.Type).
 			Comment("Pull requests ranked under this lens."),
+		edge.To("tickets", Ticket.Type).
+			Through("ticket_results", TicketLensResult.Type).
+			Comment("Tickets ranked under this lens."),
 	}
 }
 

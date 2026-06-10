@@ -51,6 +51,9 @@ func (Ticket) Edges() []ent.Edge {
 		edge.From("workstreams", Workstream.Type).
 			Ref("tickets").
 			Comment("Workstreams that include this ticket."),
+		edge.From("work_lenses", WorkLens.Type).
+			Ref("tickets").
+			Comment("Work lenses that ranked this ticket as a result."),
 		edge.To("pull_requests", PullRequest.Type).
 			Through("ticket_pull_requests", TicketPullRequest.Type).
 			Comment("Pull requests that implement this ticket."),

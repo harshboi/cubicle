@@ -7,6 +7,7 @@ import (
 	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/pullrequest"
+	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/worklens"
 	"errors"
 	"fmt"
@@ -321,6 +322,21 @@ func (_u *WorkLensUpdate) AddPullRequests(v ...*PullRequest) *WorkLensUpdate {
 	return _u.AddPullRequestIDs(ids...)
 }
 
+// AddTicketIDs adds the "tickets" edge to the Ticket entity by IDs.
+func (_u *WorkLensUpdate) AddTicketIDs(ids ...int) *WorkLensUpdate {
+	_u.mutation.AddTicketIDs(ids...)
+	return _u
+}
+
+// AddTickets adds the "tickets" edges to the Ticket entity.
+func (_u *WorkLensUpdate) AddTickets(v ...*Ticket) *WorkLensUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTicketIDs(ids...)
+}
+
 // Mutation returns the WorkLensMutation object of the builder.
 func (_u *WorkLensUpdate) Mutation() *WorkLensMutation {
 	return _u.mutation
@@ -366,6 +382,27 @@ func (_u *WorkLensUpdate) RemovePullRequests(v ...*PullRequest) *WorkLensUpdate 
 		ids[i] = v[i].ID
 	}
 	return _u.RemovePullRequestIDs(ids...)
+}
+
+// ClearTickets clears all "tickets" edges to the Ticket entity.
+func (_u *WorkLensUpdate) ClearTickets() *WorkLensUpdate {
+	_u.mutation.ClearTickets()
+	return _u
+}
+
+// RemoveTicketIDs removes the "tickets" edge to Ticket entities by IDs.
+func (_u *WorkLensUpdate) RemoveTicketIDs(ids ...int) *WorkLensUpdate {
+	_u.mutation.RemoveTicketIDs(ids...)
+	return _u
+}
+
+// RemoveTickets removes "tickets" edges to Ticket entities.
+func (_u *WorkLensUpdate) RemoveTickets(v ...*Ticket) *WorkLensUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTicketIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -631,6 +668,63 @@ func (_u *WorkLensUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &PullRequestLensResultCreate{config: _u.config, mutation: newPullRequestLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.TicketsTable,
+			Columns: worklens.TicketsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
+			},
+		}
+		createE := &TicketLensResultCreate{config: _u.config, mutation: newTicketLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTicketsIDs(); len(nodes) > 0 && !_u.mutation.TicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.TicketsTable,
+			Columns: worklens.TicketsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketLensResultCreate{config: _u.config, mutation: newTicketLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TicketsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.TicketsTable,
+			Columns: worklens.TicketsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketLensResultCreate{config: _u.config, mutation: newTicketLensResultMutation(_u.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields
@@ -947,6 +1041,21 @@ func (_u *WorkLensUpdateOne) AddPullRequests(v ...*PullRequest) *WorkLensUpdateO
 	return _u.AddPullRequestIDs(ids...)
 }
 
+// AddTicketIDs adds the "tickets" edge to the Ticket entity by IDs.
+func (_u *WorkLensUpdateOne) AddTicketIDs(ids ...int) *WorkLensUpdateOne {
+	_u.mutation.AddTicketIDs(ids...)
+	return _u
+}
+
+// AddTickets adds the "tickets" edges to the Ticket entity.
+func (_u *WorkLensUpdateOne) AddTickets(v ...*Ticket) *WorkLensUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTicketIDs(ids...)
+}
+
 // Mutation returns the WorkLensMutation object of the builder.
 func (_u *WorkLensUpdateOne) Mutation() *WorkLensMutation {
 	return _u.mutation
@@ -992,6 +1101,27 @@ func (_u *WorkLensUpdateOne) RemovePullRequests(v ...*PullRequest) *WorkLensUpda
 		ids[i] = v[i].ID
 	}
 	return _u.RemovePullRequestIDs(ids...)
+}
+
+// ClearTickets clears all "tickets" edges to the Ticket entity.
+func (_u *WorkLensUpdateOne) ClearTickets() *WorkLensUpdateOne {
+	_u.mutation.ClearTickets()
+	return _u
+}
+
+// RemoveTicketIDs removes the "tickets" edge to Ticket entities by IDs.
+func (_u *WorkLensUpdateOne) RemoveTicketIDs(ids ...int) *WorkLensUpdateOne {
+	_u.mutation.RemoveTicketIDs(ids...)
+	return _u
+}
+
+// RemoveTickets removes "tickets" edges to Ticket entities.
+func (_u *WorkLensUpdateOne) RemoveTickets(v ...*Ticket) *WorkLensUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTicketIDs(ids...)
 }
 
 // Where appends a list predicates to the WorkLensUpdate builder.
@@ -1287,6 +1417,63 @@ func (_u *WorkLensUpdateOne) sqlSave(ctx context.Context) (_node *WorkLens, err 
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &PullRequestLensResultCreate{config: _u.config, mutation: newPullRequestLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.TicketsTable,
+			Columns: worklens.TicketsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
+			},
+		}
+		createE := &TicketLensResultCreate{config: _u.config, mutation: newTicketLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTicketsIDs(); len(nodes) > 0 && !_u.mutation.TicketsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.TicketsTable,
+			Columns: worklens.TicketsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketLensResultCreate{config: _u.config, mutation: newTicketLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TicketsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.TicketsTable,
+			Columns: worklens.TicketsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketLensResultCreate{config: _u.config, mutation: newTicketLensResultMutation(_u.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields

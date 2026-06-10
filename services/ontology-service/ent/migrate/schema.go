@@ -505,6 +505,70 @@ var (
 			},
 		},
 	}
+	// TicketLensResultsColumns holds the columns for the "ticket_lens_results" table.
+	TicketLensResultsColumns = []*schema.Column{
+		{Name: "relation_kind", Type: field.TypeEnum, Enums: []string{"owned", "reviewed", "mentioned_in"}},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "source", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_lens_id", Type: field.TypeInt},
+		{Name: "ticket_id", Type: field.TypeInt},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// TicketLensResultsTable holds the schema information for the "ticket_lens_results" table.
+	TicketLensResultsTable = &schema.Table{
+		Name:       "ticket_lens_results",
+		Columns:    TicketLensResultsColumns,
+		PrimaryKey: []*schema.Column{TicketLensResultsColumns[15], TicketLensResultsColumns[16]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "ticket_lens_results_work_lenses_lens",
+				Columns:    []*schema.Column{TicketLensResultsColumns[15]},
+				RefColumns: []*schema.Column{WorkLensesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "ticket_lens_results_tickets_ticket",
+				Columns:    []*schema.Column{TicketLensResultsColumns[16]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "ticket_lens_results_evidences_latest_evidence",
+				Columns:    []*schema.Column{TicketLensResultsColumns[17]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ticketlensresult_work_lens_id_freshness_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{TicketLensResultsColumns[15], TicketLensResultsColumns[10], TicketLensResultsColumns[5], TicketLensResultsColumns[4]},
+			},
+			{
+				Name:    "ticketlensresult_work_lens_id_relation_kind_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{TicketLensResultsColumns[15], TicketLensResultsColumns[0], TicketLensResultsColumns[4]},
+			},
+			{
+				Name:    "ticketlensresult_ticket_id",
+				Unique:  false,
+				Columns: []*schema.Column{TicketLensResultsColumns[16]},
+			},
+		},
+	}
 	// TicketMessagesColumns holds the columns for the "ticket_messages" table.
 	TicketMessagesColumns = []*schema.Column{
 		{Name: "relation_kind", Type: field.TypeEnum, Enums: []string{"discussed_in"}},
@@ -824,6 +888,7 @@ var (
 		PullRequestLensResultsTable,
 		TicketsTable,
 		TicketDocumentFragmentsTable,
+		TicketLensResultsTable,
 		TicketMessagesTable,
 		TicketPullRequestsTable,
 		WorkAreasTable,
@@ -844,6 +909,9 @@ func init() {
 	TicketDocumentFragmentsTable.ForeignKeys[0].RefTable = TicketsTable
 	TicketDocumentFragmentsTable.ForeignKeys[1].RefTable = DocumentFragmentsTable
 	TicketDocumentFragmentsTable.ForeignKeys[2].RefTable = EvidencesTable
+	TicketLensResultsTable.ForeignKeys[0].RefTable = WorkLensesTable
+	TicketLensResultsTable.ForeignKeys[1].RefTable = TicketsTable
+	TicketLensResultsTable.ForeignKeys[2].RefTable = EvidencesTable
 	TicketMessagesTable.ForeignKeys[0].RefTable = TicketsTable
 	TicketMessagesTable.ForeignKeys[1].RefTable = MessagesTable
 	TicketMessagesTable.ForeignKeys[2].RefTable = EvidencesTable

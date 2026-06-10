@@ -14,6 +14,7 @@ import (
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
+	"cubicle/services/ontology-service/ent/ticketlensresult"
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workarea"
@@ -98,6 +99,7 @@ func checkColumn(t, c string) error {
 			pullrequestlensresult.Table:  pullrequestlensresult.ValidColumn,
 			ticket.Table:                 ticket.ValidColumn,
 			ticketdocumentfragment.Table: ticketdocumentfragment.ValidColumn,
+			ticketlensresult.Table:       ticketlensresult.ValidColumn,
 			ticketmessage.Table:          ticketmessage.ValidColumn,
 			ticketpullrequest.Table:      ticketpullrequest.ValidColumn,
 			workarea.Table:               workarea.ValidColumn,

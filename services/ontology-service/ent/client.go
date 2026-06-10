@@ -21,6 +21,7 @@ import (
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
+	"cubicle/services/ontology-service/ent/ticketlensresult"
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workarea"
@@ -59,6 +60,8 @@ type Client struct {
 	Ticket *TicketClient
 	// TicketDocumentFragment is the client for interacting with the TicketDocumentFragment builders.
 	TicketDocumentFragment *TicketDocumentFragmentClient
+	// TicketLensResult is the client for interacting with the TicketLensResult builders.
+	TicketLensResult *TicketLensResultClient
 	// TicketMessage is the client for interacting with the TicketMessage builders.
 	TicketMessage *TicketMessageClient
 	// TicketPullRequest is the client for interacting with the TicketPullRequest builders.
@@ -92,6 +95,7 @@ func (c *Client) init() {
 	c.PullRequestLensResult = NewPullRequestLensResultClient(c.config)
 	c.Ticket = NewTicketClient(c.config)
 	c.TicketDocumentFragment = NewTicketDocumentFragmentClient(c.config)
+	c.TicketLensResult = NewTicketLensResultClient(c.config)
 	c.TicketMessage = NewTicketMessageClient(c.config)
 	c.TicketPullRequest = NewTicketPullRequestClient(c.config)
 	c.WorkArea = NewWorkAreaClient(c.config)
@@ -200,6 +204,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		PullRequestLensResult:  NewPullRequestLensResultClient(cfg),
 		Ticket:                 NewTicketClient(cfg),
 		TicketDocumentFragment: NewTicketDocumentFragmentClient(cfg),
+		TicketLensResult:       NewTicketLensResultClient(cfg),
 		TicketMessage:          NewTicketMessageClient(cfg),
 		TicketPullRequest:      NewTicketPullRequestClient(cfg),
 		WorkArea:               NewWorkAreaClient(cfg),
@@ -235,6 +240,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		PullRequestLensResult:  NewPullRequestLensResultClient(cfg),
 		Ticket:                 NewTicketClient(cfg),
 		TicketDocumentFragment: NewTicketDocumentFragmentClient(cfg),
+		TicketLensResult:       NewTicketLensResultClient(cfg),
 		TicketMessage:          NewTicketMessageClient(cfg),
 		TicketPullRequest:      NewTicketPullRequestClient(cfg),
 		WorkArea:               NewWorkAreaClient(cfg),
@@ -272,8 +278,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence, c.Message,
 		c.Person, c.PullRequest, c.PullRequestLensResult, c.Ticket,
-		c.TicketDocumentFragment, c.TicketMessage, c.TicketPullRequest, c.WorkArea,
-		c.WorkLens, c.Workstream, c.WorkstreamTicket,
+		c.TicketDocumentFragment, c.TicketLensResult, c.TicketMessage,
+		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Use(hooks...)
 	}
@@ -285,8 +291,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence, c.Message,
 		c.Person, c.PullRequest, c.PullRequestLensResult, c.Ticket,
-		c.TicketDocumentFragment, c.TicketMessage, c.TicketPullRequest, c.WorkArea,
-		c.WorkLens, c.Workstream, c.WorkstreamTicket,
+		c.TicketDocumentFragment, c.TicketLensResult, c.TicketMessage,
+		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -315,6 +321,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Ticket.mutate(ctx, m)
 	case *TicketDocumentFragmentMutation:
 		return c.TicketDocumentFragment.mutate(ctx, m)
+	case *TicketLensResultMutation:
+		return c.TicketLensResult.mutate(ctx, m)
 	case *TicketMessageMutation:
 		return c.TicketMessage.mutate(ctx, m)
 	case *TicketPullRequestMutation:
@@ -1628,6 +1636,22 @@ func (c *TicketClient) QueryWorkstreams(_m *Ticket) *WorkstreamQuery {
 	return query
 }
 
+// QueryWorkLenses queries the work_lenses edge of a Ticket.
+func (c *TicketClient) QueryWorkLenses(_m *Ticket) *WorkLensQuery {
+	query := (&WorkLensClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(worklens.Table, worklens.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, ticket.WorkLensesTable, ticket.WorkLensesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryPullRequests queries the pull_requests edge of a Ticket.
 func (c *TicketClient) QueryPullRequests(_m *Ticket) *PullRequestQuery {
 	query := (&PullRequestClient{config: c.config}).Query()
@@ -1869,6 +1893,129 @@ func (c *TicketDocumentFragmentClient) mutate(ctx context.Context, m *TicketDocu
 		return (&TicketDocumentFragmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown TicketDocumentFragment mutation op: %q", m.Op())
+	}
+}
+
+// TicketLensResultClient is a client for the TicketLensResult schema.
+type TicketLensResultClient struct {
+	config
+}
+
+// NewTicketLensResultClient returns a client for the TicketLensResult from the given config.
+func NewTicketLensResultClient(c config) *TicketLensResultClient {
+	return &TicketLensResultClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ticketlensresult.Hooks(f(g(h())))`.
+func (c *TicketLensResultClient) Use(hooks ...Hook) {
+	c.hooks.TicketLensResult = append(c.hooks.TicketLensResult, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ticketlensresult.Intercept(f(g(h())))`.
+func (c *TicketLensResultClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TicketLensResult = append(c.inters.TicketLensResult, interceptors...)
+}
+
+// Create returns a builder for creating a TicketLensResult entity.
+func (c *TicketLensResultClient) Create() *TicketLensResultCreate {
+	mutation := newTicketLensResultMutation(c.config, OpCreate)
+	return &TicketLensResultCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TicketLensResult entities.
+func (c *TicketLensResultClient) CreateBulk(builders ...*TicketLensResultCreate) *TicketLensResultCreateBulk {
+	return &TicketLensResultCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TicketLensResultClient) MapCreateBulk(slice any, setFunc func(*TicketLensResultCreate, int)) *TicketLensResultCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TicketLensResultCreateBulk{err: fmt.Errorf("calling to TicketLensResultClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TicketLensResultCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TicketLensResultCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TicketLensResult.
+func (c *TicketLensResultClient) Update() *TicketLensResultUpdate {
+	mutation := newTicketLensResultMutation(c.config, OpUpdate)
+	return &TicketLensResultUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TicketLensResultClient) UpdateOne(_m *TicketLensResult) *TicketLensResultUpdateOne {
+	mutation := newTicketLensResultMutation(c.config, OpUpdateOne)
+	mutation.lens = &_m.WorkLensID
+	mutation.ticket = &_m.TicketID
+	return &TicketLensResultUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TicketLensResult.
+func (c *TicketLensResultClient) Delete() *TicketLensResultDelete {
+	mutation := newTicketLensResultMutation(c.config, OpDelete)
+	return &TicketLensResultDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Query returns a query builder for TicketLensResult.
+func (c *TicketLensResultClient) Query() *TicketLensResultQuery {
+	return &TicketLensResultQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTicketLensResult},
+		inters: c.Interceptors(),
+	}
+}
+
+// QueryLens queries the lens edge of a TicketLensResult.
+func (c *TicketLensResultClient) QueryLens(_m *TicketLensResult) *WorkLensQuery {
+	return c.Query().
+		Where(ticketlensresult.WorkLensID(_m.WorkLensID), ticketlensresult.TicketID(_m.TicketID)).
+		QueryLens()
+}
+
+// QueryTicket queries the ticket edge of a TicketLensResult.
+func (c *TicketLensResultClient) QueryTicket(_m *TicketLensResult) *TicketQuery {
+	return c.Query().
+		Where(ticketlensresult.WorkLensID(_m.WorkLensID), ticketlensresult.TicketID(_m.TicketID)).
+		QueryTicket()
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a TicketLensResult.
+func (c *TicketLensResultClient) QueryLatestEvidence(_m *TicketLensResult) *EvidenceQuery {
+	return c.Query().
+		Where(ticketlensresult.WorkLensID(_m.WorkLensID), ticketlensresult.TicketID(_m.TicketID)).
+		QueryLatestEvidence()
+}
+
+// Hooks returns the client hooks.
+func (c *TicketLensResultClient) Hooks() []Hook {
+	return c.hooks.TicketLensResult
+}
+
+// Interceptors returns the client interceptors.
+func (c *TicketLensResultClient) Interceptors() []Interceptor {
+	return c.inters.TicketLensResult
+}
+
+func (c *TicketLensResultClient) mutate(ctx context.Context, m *TicketLensResultMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TicketLensResultCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TicketLensResultUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TicketLensResultUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TicketLensResultDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TicketLensResult mutation op: %q", m.Op())
 	}
 }
 
@@ -2439,6 +2586,22 @@ func (c *WorkLensClient) QueryPullRequests(_m *WorkLens) *PullRequestQuery {
 	return query
 }
 
+// QueryTickets queries the tickets edge of a WorkLens.
+func (c *WorkLensClient) QueryTickets(_m *WorkLens) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklens.Table, worklens.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, worklens.TicketsTable, worklens.TicketsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryDocumentResults queries the document_results edge of a WorkLens.
 func (c *WorkLensClient) QueryDocumentResults(_m *WorkLens) *DocumentLensResultQuery {
 	query := (&DocumentLensResultClient{config: c.config}).Query()
@@ -2464,6 +2627,22 @@ func (c *WorkLensClient) QueryPullRequestResults(_m *WorkLens) *PullRequestLensR
 			sqlgraph.From(worklens.Table, worklens.FieldID, id),
 			sqlgraph.To(pullrequestlensresult.Table, pullrequestlensresult.LensColumn),
 			sqlgraph.Edge(sqlgraph.O2M, true, worklens.PullRequestResultsTable, worklens.PullRequestResultsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicketResults queries the ticket_results edge of a WorkLens.
+func (c *WorkLensClient) QueryTicketResults(_m *WorkLens) *TicketLensResultQuery {
+	query := (&TicketLensResultClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklens.Table, worklens.FieldID, id),
+			sqlgraph.To(ticketlensresult.Table, ticketlensresult.LensColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, worklens.TicketResultsTable, worklens.TicketResultsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2790,13 +2969,13 @@ type (
 	hooks struct {
 		Document, DocumentFragment, DocumentLensResult, Evidence, Message, Person,
 		PullRequest, PullRequestLensResult, Ticket, TicketDocumentFragment,
-		TicketMessage, TicketPullRequest, WorkArea, WorkLens, Workstream,
-		WorkstreamTicket []ent.Hook
+		TicketLensResult, TicketMessage, TicketPullRequest, WorkArea, WorkLens,
+		Workstream, WorkstreamTicket []ent.Hook
 	}
 	inters struct {
 		Document, DocumentFragment, DocumentLensResult, Evidence, Message, Person,
 		PullRequest, PullRequestLensResult, Ticket, TicketDocumentFragment,
-		TicketMessage, TicketPullRequest, WorkArea, WorkLens, Workstream,
-		WorkstreamTicket []ent.Interceptor
+		TicketLensResult, TicketMessage, TicketPullRequest, WorkArea, WorkLens,
+		Workstream, WorkstreamTicket []ent.Interceptor
 	}
 )

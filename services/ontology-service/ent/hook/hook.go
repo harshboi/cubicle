@@ -128,6 +128,18 @@ func (f TicketDocumentFragmentFunc) Mutate(ctx context.Context, m ent.Mutation) 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketDocumentFragmentMutation", m)
 }
 
+// The TicketLensResultFunc type is an adapter to allow the use of ordinary
+// function as TicketLensResult mutator.
+type TicketLensResultFunc func(context.Context, *ent.TicketLensResultMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketLensResultFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketLensResultMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketLensResultMutation", m)
+}
+
 // The TicketMessageFunc type is an adapter to allow the use of ordinary
 // function as TicketMessage mutator.
 type TicketMessageFunc func(context.Context, *ent.TicketMessageMutation) (ent.Value, error)

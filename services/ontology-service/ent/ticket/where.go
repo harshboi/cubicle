@@ -1253,6 +1253,29 @@ func HasWorkstreamsWith(preds ...predicate.Workstream) predicate.Ticket {
 	})
 }
 
+// HasWorkLenses applies the HasEdge predicate on the "work_lenses" edge.
+func HasWorkLenses() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, WorkLensesTable, WorkLensesPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWorkLensesWith applies the HasEdge predicate on the "work_lenses" edge with a given conditions (other predicates).
+func HasWorkLensesWith(preds ...predicate.WorkLens) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newWorkLensesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasPullRequests applies the HasEdge predicate on the "pull_requests" edge.
 func HasPullRequests() predicate.Ticket {
 	return predicate.Ticket(func(s *sql.Selector) {

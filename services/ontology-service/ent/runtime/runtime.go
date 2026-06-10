@@ -14,6 +14,7 @@ import (
 	"cubicle/services/ontology-service/ent/schema"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
+	"cubicle/services/ontology-service/ent/ticketlensresult"
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workarea"
@@ -303,6 +304,34 @@ func init() {
 	ticketdocumentfragment.DefaultUpdatedAt = ticketdocumentfragmentDescUpdatedAt.Default.(func() time.Time)
 	// ticketdocumentfragment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	ticketdocumentfragment.UpdateDefaultUpdatedAt = ticketdocumentfragmentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	ticketlensresultFields := schema.TicketLensResult{}.Fields()
+	_ = ticketlensresultFields
+	// ticketlensresultDescEvidenceCount is the schema descriptor for evidence_count field.
+	ticketlensresultDescEvidenceCount := ticketlensresultFields[4].Descriptor()
+	// ticketlensresult.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
+	ticketlensresult.DefaultEvidenceCount = ticketlensresultDescEvidenceCount.Default.(int)
+	// ticketlensresultDescEventCount is the schema descriptor for event_count field.
+	ticketlensresultDescEventCount := ticketlensresultFields[5].Descriptor()
+	// ticketlensresult.DefaultEventCount holds the default value on creation for the event_count field.
+	ticketlensresult.DefaultEventCount = ticketlensresultDescEventCount.Default.(int)
+	// ticketlensresultDescRankScore is the schema descriptor for rank_score field.
+	ticketlensresultDescRankScore := ticketlensresultFields[8].Descriptor()
+	// ticketlensresult.DefaultRankScore holds the default value on creation for the rank_score field.
+	ticketlensresult.DefaultRankScore = ticketlensresultDescRankScore.Default.(float64)
+	// ticketlensresultDescConfidence is the schema descriptor for confidence field.
+	ticketlensresultDescConfidence := ticketlensresultFields[15].Descriptor()
+	// ticketlensresult.DefaultConfidence holds the default value on creation for the confidence field.
+	ticketlensresult.DefaultConfidence = ticketlensresultDescConfidence.Default.(float64)
+	// ticketlensresultDescCreatedAt is the schema descriptor for created_at field.
+	ticketlensresultDescCreatedAt := ticketlensresultFields[16].Descriptor()
+	// ticketlensresult.DefaultCreatedAt holds the default value on creation for the created_at field.
+	ticketlensresult.DefaultCreatedAt = ticketlensresultDescCreatedAt.Default.(func() time.Time)
+	// ticketlensresultDescUpdatedAt is the schema descriptor for updated_at field.
+	ticketlensresultDescUpdatedAt := ticketlensresultFields[17].Descriptor()
+	// ticketlensresult.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	ticketlensresult.DefaultUpdatedAt = ticketlensresultDescUpdatedAt.Default.(func() time.Time)
+	// ticketlensresult.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	ticketlensresult.UpdateDefaultUpdatedAt = ticketlensresultDescUpdatedAt.UpdateDefault.(func() time.Time)
 	ticketmessageFields := schema.TicketMessage{}.Fields()
 	_ = ticketmessageFields
 	// ticketmessageDescEvidenceCount is the schema descriptor for evidence_count field.

@@ -32,6 +32,8 @@ type Tx struct {
 	Ticket *TicketClient
 	// TicketDocumentFragment is the client for interacting with the TicketDocumentFragment builders.
 	TicketDocumentFragment *TicketDocumentFragmentClient
+	// TicketLensResult is the client for interacting with the TicketLensResult builders.
+	TicketLensResult *TicketLensResultClient
 	// TicketMessage is the client for interacting with the TicketMessage builders.
 	TicketMessage *TicketMessageClient
 	// TicketPullRequest is the client for interacting with the TicketPullRequest builders.
@@ -185,6 +187,7 @@ func (tx *Tx) init() {
 	tx.PullRequestLensResult = NewPullRequestLensResultClient(tx.config)
 	tx.Ticket = NewTicketClient(tx.config)
 	tx.TicketDocumentFragment = NewTicketDocumentFragmentClient(tx.config)
+	tx.TicketLensResult = NewTicketLensResultClient(tx.config)
 	tx.TicketMessage = NewTicketMessageClient(tx.config)
 	tx.TicketPullRequest = NewTicketPullRequestClient(tx.config)
 	tx.WorkArea = NewWorkAreaClient(tx.config)

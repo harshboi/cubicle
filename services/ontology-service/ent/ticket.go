@@ -67,6 +67,8 @@ type Ticket struct {
 type TicketEdges struct {
 	// Workstreams that include this ticket.
 	Workstreams []*Workstream `json:"workstreams,omitempty"`
+	// Work lenses that ranked this ticket as a result.
+	WorkLenses []*WorkLens `json:"work_lenses,omitempty"`
 	// Pull requests that implement this ticket.
 	PullRequests []*PullRequest `json:"pull_requests,omitempty"`
 	// Document fragments that explain or support this ticket.
@@ -81,7 +83,7 @@ type TicketEdges struct {
 	TicketMessages []*TicketMessage `json:"ticket_messages,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [7]bool
+	loadedTypes [8]bool
 }
 
 // WorkstreamsOrErr returns the Workstreams value or an error if the edge
@@ -93,10 +95,19 @@ func (e TicketEdges) WorkstreamsOrErr() ([]*Workstream, error) {
 	return nil, &NotLoadedError{edge: "workstreams"}
 }
 
+// WorkLensesOrErr returns the WorkLenses value or an error if the edge
+// was not loaded in eager-loading.
+func (e TicketEdges) WorkLensesOrErr() ([]*WorkLens, error) {
+	if e.loadedTypes[1] {
+		return e.WorkLenses, nil
+	}
+	return nil, &NotLoadedError{edge: "work_lenses"}
+}
+
 // PullRequestsOrErr returns the PullRequests value or an error if the edge
 // was not loaded in eager-loading.
 func (e TicketEdges) PullRequestsOrErr() ([]*PullRequest, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.PullRequests, nil
 	}
 	return nil, &NotLoadedError{edge: "pull_requests"}
@@ -105,7 +116,7 @@ func (e TicketEdges) PullRequestsOrErr() ([]*PullRequest, error) {
 // DocumentFragmentsOrErr returns the DocumentFragments value or an error if the edge
 // was not loaded in eager-loading.
 func (e TicketEdges) DocumentFragmentsOrErr() ([]*DocumentFragment, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.DocumentFragments, nil
 	}
 	return nil, &NotLoadedError{edge: "document_fragments"}
@@ -114,7 +125,7 @@ func (e TicketEdges) DocumentFragmentsOrErr() ([]*DocumentFragment, error) {
 // MessagesOrErr returns the Messages value or an error if the edge
 // was not loaded in eager-loading.
 func (e TicketEdges) MessagesOrErr() ([]*Message, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.Messages, nil
 	}
 	return nil, &NotLoadedError{edge: "messages"}
@@ -123,7 +134,7 @@ func (e TicketEdges) MessagesOrErr() ([]*Message, error) {
 // TicketPullRequestsOrErr returns the TicketPullRequests value or an error if the edge
 // was not loaded in eager-loading.
 func (e TicketEdges) TicketPullRequestsOrErr() ([]*TicketPullRequest, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[5] {
 		return e.TicketPullRequests, nil
 	}
 	return nil, &NotLoadedError{edge: "ticket_pull_requests"}
@@ -132,7 +143,7 @@ func (e TicketEdges) TicketPullRequestsOrErr() ([]*TicketPullRequest, error) {
 // TicketDocumentFragmentsOrErr returns the TicketDocumentFragments value or an error if the edge
 // was not loaded in eager-loading.
 func (e TicketEdges) TicketDocumentFragmentsOrErr() ([]*TicketDocumentFragment, error) {
-	if e.loadedTypes[5] {
+	if e.loadedTypes[6] {
 		return e.TicketDocumentFragments, nil
 	}
 	return nil, &NotLoadedError{edge: "ticket_document_fragments"}
@@ -141,7 +152,7 @@ func (e TicketEdges) TicketDocumentFragmentsOrErr() ([]*TicketDocumentFragment, 
 // TicketMessagesOrErr returns the TicketMessages value or an error if the edge
 // was not loaded in eager-loading.
 func (e TicketEdges) TicketMessagesOrErr() ([]*TicketMessage, error) {
-	if e.loadedTypes[6] {
+	if e.loadedTypes[7] {
 		return e.TicketMessages, nil
 	}
 	return nil, &NotLoadedError{edge: "ticket_messages"}
@@ -317,6 +328,11 @@ func (_m *Ticket) Value(name string) (ent.Value, error) {
 // QueryWorkstreams queries the "workstreams" edge of the Ticket entity.
 func (_m *Ticket) QueryWorkstreams() *WorkstreamQuery {
 	return NewTicketClient(_m.config).QueryWorkstreams(_m)
+}
+
+// QueryWorkLenses queries the "work_lenses" edge of the Ticket entity.
+func (_m *Ticket) QueryWorkLenses() *WorkLensQuery {
+	return NewTicketClient(_m.config).QueryWorkLenses(_m)
 }
 
 // QueryPullRequests queries the "pull_requests" edge of the Ticket entity.

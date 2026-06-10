@@ -9,6 +9,8 @@ import (
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
+	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/ticketlensresult"
 	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/worklens"
 	"database/sql/driver"
@@ -31,8 +33,10 @@ type WorkLensQuery struct {
 	withArea               *WorkAreaQuery
 	withDocuments          *DocumentQuery
 	withPullRequests       *PullRequestQuery
+	withTickets            *TicketQuery
 	withDocumentResults    *DocumentLensResultQuery
 	withPullRequestResults *PullRequestLensResultQuery
+	withTicketResults      *TicketLensResultQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -135,6 +139,28 @@ func (_q *WorkLensQuery) QueryPullRequests() *PullRequestQuery {
 	return query
 }
 
+// QueryTickets chains the current query on the "tickets" edge.
+func (_q *WorkLensQuery) QueryTickets() *TicketQuery {
+	query := (&TicketClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklens.Table, worklens.FieldID, selector),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, worklens.TicketsTable, worklens.TicketsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryDocumentResults chains the current query on the "document_results" edge.
 func (_q *WorkLensQuery) QueryDocumentResults() *DocumentLensResultQuery {
 	query := (&DocumentLensResultClient{config: _q.config}).Query()
@@ -172,6 +198,28 @@ func (_q *WorkLensQuery) QueryPullRequestResults() *PullRequestLensResultQuery {
 			sqlgraph.From(worklens.Table, worklens.FieldID, selector),
 			sqlgraph.To(pullrequestlensresult.Table, pullrequestlensresult.LensColumn),
 			sqlgraph.Edge(sqlgraph.O2M, true, worklens.PullRequestResultsTable, worklens.PullRequestResultsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTicketResults chains the current query on the "ticket_results" edge.
+func (_q *WorkLensQuery) QueryTicketResults() *TicketLensResultQuery {
+	query := (&TicketLensResultClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklens.Table, worklens.FieldID, selector),
+			sqlgraph.To(ticketlensresult.Table, ticketlensresult.LensColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, worklens.TicketResultsTable, worklens.TicketResultsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -374,8 +422,10 @@ func (_q *WorkLensQuery) Clone() *WorkLensQuery {
 		withArea:               _q.withArea.Clone(),
 		withDocuments:          _q.withDocuments.Clone(),
 		withPullRequests:       _q.withPullRequests.Clone(),
+		withTickets:            _q.withTickets.Clone(),
 		withDocumentResults:    _q.withDocumentResults.Clone(),
 		withPullRequestResults: _q.withPullRequestResults.Clone(),
+		withTicketResults:      _q.withTicketResults.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -415,6 +465,17 @@ func (_q *WorkLensQuery) WithPullRequests(opts ...func(*PullRequestQuery)) *Work
 	return _q
 }
 
+// WithTickets tells the query-builder to eager-load the nodes that are connected to
+// the "tickets" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkLensQuery) WithTickets(opts ...func(*TicketQuery)) *WorkLensQuery {
+	query := (&TicketClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTickets = query
+	return _q
+}
+
 // WithDocumentResults tells the query-builder to eager-load the nodes that are connected to
 // the "document_results" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *WorkLensQuery) WithDocumentResults(opts ...func(*DocumentLensResultQuery)) *WorkLensQuery {
@@ -434,6 +495,17 @@ func (_q *WorkLensQuery) WithPullRequestResults(opts ...func(*PullRequestLensRes
 		opt(query)
 	}
 	_q.withPullRequestResults = query
+	return _q
+}
+
+// WithTicketResults tells the query-builder to eager-load the nodes that are connected to
+// the "ticket_results" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkLensQuery) WithTicketResults(opts ...func(*TicketLensResultQuery)) *WorkLensQuery {
+	query := (&TicketLensResultClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTicketResults = query
 	return _q
 }
 
@@ -515,12 +587,14 @@ func (_q *WorkLensQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wor
 	var (
 		nodes       = []*WorkLens{}
 		_spec       = _q.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [7]bool{
 			_q.withArea != nil,
 			_q.withDocuments != nil,
 			_q.withPullRequests != nil,
+			_q.withTickets != nil,
 			_q.withDocumentResults != nil,
 			_q.withPullRequestResults != nil,
+			_q.withTicketResults != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -561,6 +635,13 @@ func (_q *WorkLensQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wor
 			return nil, err
 		}
 	}
+	if query := _q.withTickets; query != nil {
+		if err := _q.loadTickets(ctx, query, nodes,
+			func(n *WorkLens) { n.Edges.Tickets = []*Ticket{} },
+			func(n *WorkLens, e *Ticket) { n.Edges.Tickets = append(n.Edges.Tickets, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := _q.withDocumentResults; query != nil {
 		if err := _q.loadDocumentResults(ctx, query, nodes,
 			func(n *WorkLens) { n.Edges.DocumentResults = []*DocumentLensResult{} },
@@ -574,6 +655,13 @@ func (_q *WorkLensQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wor
 			func(n *WorkLens, e *PullRequestLensResult) {
 				n.Edges.PullRequestResults = append(n.Edges.PullRequestResults, e)
 			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTicketResults; query != nil {
+		if err := _q.loadTicketResults(ctx, query, nodes,
+			func(n *WorkLens) { n.Edges.TicketResults = []*TicketLensResult{} },
+			func(n *WorkLens, e *TicketLensResult) { n.Edges.TicketResults = append(n.Edges.TicketResults, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -731,6 +819,67 @@ func (_q *WorkLensQuery) loadPullRequests(ctx context.Context, query *PullReques
 	}
 	return nil
 }
+func (_q *WorkLensQuery) loadTickets(ctx context.Context, query *TicketQuery, nodes []*WorkLens, init func(*WorkLens), assign func(*WorkLens, *Ticket)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*WorkLens)
+	nids := make(map[int]map[*WorkLens]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(worklens.TicketsTable)
+		s.Join(joinT).On(s.C(ticket.FieldID), joinT.C(worklens.TicketsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(worklens.TicketsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(worklens.TicketsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*WorkLens]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Ticket](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "tickets" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
 func (_q *WorkLensQuery) loadDocumentResults(ctx context.Context, query *DocumentLensResultQuery, nodes []*WorkLens, init func(*WorkLens), assign func(*WorkLens, *DocumentLensResult)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*WorkLens)
@@ -776,6 +925,36 @@ func (_q *WorkLensQuery) loadPullRequestResults(ctx context.Context, query *Pull
 	}
 	query.Where(predicate.PullRequestLensResult(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(worklens.PullRequestResultsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkLensID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "work_lens_id" returned %v for node %v`, fk, n)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *WorkLensQuery) loadTicketResults(ctx context.Context, query *TicketLensResultQuery, nodes []*WorkLens, init func(*WorkLens), assign func(*WorkLens, *TicketLensResult)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*WorkLens)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(ticketlensresult.FieldWorkLensID)
+	}
+	query.Where(predicate.TicketLensResult(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(worklens.TicketResultsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

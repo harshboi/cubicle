@@ -20,6 +20,7 @@ func Register(client *genent.Client) {
 	client.WorkLens.Use(enthook.On(validateWorkLensPlacement(), genent.OpCreate))
 	client.DocumentLensResult.Use(enthook.On(validateDocumentLensResult(), genent.OpCreate))
 	client.PullRequestLensResult.Use(enthook.On(validatePullRequestLensResult(), genent.OpCreate))
+	client.TicketLensResult.Use(enthook.On(validateTicketLensResult(), genent.OpCreate))
 }
 
 // validateWorkLensPlacement returns the create hook that checks parent area fit.
@@ -92,6 +93,26 @@ func validatePullRequestLensResult() genent.Hook {
 				return nil, missingFieldError("pull_request_lens_results", "relation_kind")
 			}
 			if err := validateLensResult(ctx, mutation.Client(), workLensID, ontology.LensTargetPullRequest, ontology.WorkRelationKind(relationKind)); err != nil {
+				return nil, err
+			}
+			return next.Mutate(ctx, mutation)
+		})
+	}
+}
+
+// validateTicketLensResult returns the create hook for ticket result writes.
+func validateTicketLensResult() genent.Hook {
+	return func(next genent.Mutator) genent.Mutator {
+		return enthook.TicketLensResultFunc(func(ctx context.Context, mutation *genent.TicketLensResultMutation) (genent.Value, error) {
+			workLensID, ok := mutation.WorkLensID()
+			if !ok {
+				return nil, missingFieldError("ticket_lens_results", "work_lens_id")
+			}
+			relationKind, ok := mutation.RelationKind()
+			if !ok {
+				return nil, missingFieldError("ticket_lens_results", "relation_kind")
+			}
+			if err := validateLensResult(ctx, mutation.Client(), workLensID, ontology.LensTargetTicket, ontology.WorkRelationKind(relationKind)); err != nil {
 				return nil, err
 			}
 			return next.Mutate(ctx, mutation)

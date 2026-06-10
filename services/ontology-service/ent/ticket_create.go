@@ -8,6 +8,7 @@ import (
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/worklens"
 	"cubicle/services/ontology-service/ent/workstream"
 	"errors"
 	"fmt"
@@ -305,6 +306,21 @@ func (_c *TicketCreate) AddWorkstreams(v ...*Workstream) *TicketCreate {
 	return _c.AddWorkstreamIDs(ids...)
 }
 
+// AddWorkLenseIDs adds the "work_lenses" edge to the WorkLens entity by IDs.
+func (_c *TicketCreate) AddWorkLenseIDs(ids ...int) *TicketCreate {
+	_c.mutation.AddWorkLenseIDs(ids...)
+	return _c
+}
+
+// AddWorkLenses adds the "work_lenses" edges to the WorkLens entity.
+func (_c *TicketCreate) AddWorkLenses(v ...*WorkLens) *TicketCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddWorkLenseIDs(ids...)
+}
+
 // AddPullRequestIDs adds the "pull_requests" edge to the PullRequest entity by IDs.
 func (_c *TicketCreate) AddPullRequestIDs(ids ...int) *TicketCreate {
 	_c.mutation.AddPullRequestIDs(ids...)
@@ -592,6 +608,22 @@ func (_c *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workstream.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.WorkLensesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   ticket.WorkLensesTable,
+			Columns: ticket.WorkLensesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -8,6 +8,7 @@ import (
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/enttest"
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
+	"cubicle/services/ontology-service/ent/ticketlensresult"
 	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/worklens"
 
@@ -29,6 +30,52 @@ func TestRegisterRejectsLensOnWrongArea(t *testing.T) {
 		SetDisplayName("Bad Area").
 		Save(ctx); err == nil {
 		t.Fatal("expected pull request lens under documents area to fail")
+	}
+}
+
+// TestRegisterRejectsTicketResultWithWrongRelation proves relation validation.
+func TestRegisterRejectsTicketResultWithWrongRelation(t *testing.T) {
+	ctx := context.Background()
+	client := openHookedClient(t, "ontology-hooks-ticket-result-relation")
+	defer client.Close()
+
+	ticketsArea := createHookTestArea(t, ctx, client, "area:person:hooks:tickets-relation", workarea.WorkAreaKindTickets)
+	ownedLens := createHookTestLens(t, ctx, client, ticketsArea.ID, worklens.WorkLensKindTicketsOwned, worklens.LensTargetKindTicket)
+	ticket := createHookTestTicket(t, ctx, client, "ticket:hooks:relation")
+
+	if _, err := client.TicketLensResult.Create().
+		SetWorkLensID(ownedLens.ID).
+		SetTicketID(ticket.ID).
+		SetRelationKind(ticketlensresult.RelationKindReviewed).
+		Save(ctx); err == nil {
+		t.Fatal("expected tickets_owned lens to reject reviewed relation")
+	}
+
+	if _, err := client.TicketLensResult.Create().
+		SetWorkLensID(ownedLens.ID).
+		SetTicketID(ticket.ID).
+		SetRelationKind(ticketlensresult.RelationKindOwned).
+		Save(ctx); err != nil {
+		t.Fatalf("expected tickets_owned lens to accept owned relation: %v", err)
+	}
+}
+
+// TestRegisterRejectsTicketResultForDocumentLens proves target validation.
+func TestRegisterRejectsTicketResultForDocumentLens(t *testing.T) {
+	ctx := context.Background()
+	client := openHookedClient(t, "ontology-hooks-ticket-result-target")
+	defer client.Close()
+
+	documentsArea := createHookTestArea(t, ctx, client, "area:person:hooks:docs-ticket-target", workarea.WorkAreaKindDocuments)
+	documentLens := createHookTestLens(t, ctx, client, documentsArea.ID, worklens.WorkLensKindDocumentsCreated, worklens.LensTargetKindDocument)
+	ticket := createHookTestTicket(t, ctx, client, "ticket:hooks:target")
+
+	if _, err := client.TicketLensResult.Create().
+		SetWorkLensID(documentLens.ID).
+		SetTicketID(ticket.ID).
+		SetRelationKind(ticketlensresult.RelationKindOwned).
+		Save(ctx); err == nil {
+		t.Fatal("expected ticket result table to reject document-target lens")
 	}
 }
 
@@ -174,5 +221,14 @@ func createHookTestPullRequest(t *testing.T, ctx context.Context, client *genent
 	return client.PullRequest.Create().
 		SetKey(key).
 		SetTitle("Hook Test Pull Request").
+		SaveX(ctx)
+}
+
+// createHookTestTicket creates a Ticket target for result-hook tests.
+func createHookTestTicket(t *testing.T, ctx context.Context, client *genent.Client, key string) *genent.Ticket {
+	t.Helper()
+	return client.Ticket.Create().
+		SetKey(key).
+		SetTitle("Hook Test Ticket").
 		SaveX(ctx)
 }

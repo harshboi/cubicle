@@ -36,6 +36,9 @@ type Ticket func(*sql.Selector)
 // TicketDocumentFragment is the predicate function for ticketdocumentfragment builders.
 type TicketDocumentFragment func(*sql.Selector)
 
+// TicketLensResult is the predicate function for ticketlensresult builders.
+type TicketLensResult func(*sql.Selector)
+
 // TicketMessage is the predicate function for ticketmessage builders.
 type TicketMessage func(*sql.Selector)
 

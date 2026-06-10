@@ -60,10 +60,14 @@ const (
 	EdgeDocuments = "documents"
 	// EdgePullRequests holds the string denoting the pull_requests edge name in mutations.
 	EdgePullRequests = "pull_requests"
+	// EdgeTickets holds the string denoting the tickets edge name in mutations.
+	EdgeTickets = "tickets"
 	// EdgeDocumentResults holds the string denoting the document_results edge name in mutations.
 	EdgeDocumentResults = "document_results"
 	// EdgePullRequestResults holds the string denoting the pull_request_results edge name in mutations.
 	EdgePullRequestResults = "pull_request_results"
+	// EdgeTicketResults holds the string denoting the ticket_results edge name in mutations.
+	EdgeTicketResults = "ticket_results"
 	// Table holds the table name of the worklens in the database.
 	Table = "work_lenses"
 	// AreaTable is the table that holds the area relation/edge.
@@ -83,6 +87,11 @@ const (
 	// PullRequestsInverseTable is the table name for the PullRequest entity.
 	// It exists in this package in order to avoid circular dependency with the "pullrequest" package.
 	PullRequestsInverseTable = "pull_requests"
+	// TicketsTable is the table that holds the tickets relation/edge. The primary key declared below.
+	TicketsTable = "ticket_lens_results"
+	// TicketsInverseTable is the table name for the Ticket entity.
+	// It exists in this package in order to avoid circular dependency with the "ticket" package.
+	TicketsInverseTable = "tickets"
 	// DocumentResultsTable is the table that holds the document_results relation/edge.
 	DocumentResultsTable = "document_lens_results"
 	// DocumentResultsInverseTable is the table name for the DocumentLensResult entity.
@@ -97,6 +106,13 @@ const (
 	PullRequestResultsInverseTable = "pull_request_lens_results"
 	// PullRequestResultsColumn is the table column denoting the pull_request_results relation/edge.
 	PullRequestResultsColumn = "work_lens_id"
+	// TicketResultsTable is the table that holds the ticket_results relation/edge.
+	TicketResultsTable = "ticket_lens_results"
+	// TicketResultsInverseTable is the table name for the TicketLensResult entity.
+	// It exists in this package in order to avoid circular dependency with the "ticketlensresult" package.
+	TicketResultsInverseTable = "ticket_lens_results"
+	// TicketResultsColumn is the table column denoting the ticket_results relation/edge.
+	TicketResultsColumn = "work_lens_id"
 )
 
 // Columns holds all SQL columns for worklens fields.
@@ -130,6 +146,9 @@ var (
 	// PullRequestsPrimaryKey and PullRequestsColumn2 are the table columns denoting the
 	// primary key for the pull_requests relation (M2M).
 	PullRequestsPrimaryKey = []string{"work_lens_id", "pull_request_id"}
+	// TicketsPrimaryKey and TicketsColumn2 are the table columns denoting the
+	// primary key for the tickets relation (M2M).
+	TicketsPrimaryKey = []string{"work_lens_id", "ticket_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -426,6 +445,20 @@ func ByPullRequests(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByTicketsCount orders the results by tickets count.
+func ByTicketsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTicketsStep(), opts...)
+	}
+}
+
+// ByTickets orders the results by tickets terms.
+func ByTickets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTicketsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByDocumentResultsCount orders the results by document_results count.
 func ByDocumentResultsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -453,6 +486,20 @@ func ByPullRequestResults(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOptio
 		sqlgraph.OrderByNeighborTerms(s, newPullRequestResultsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByTicketResultsCount orders the results by ticket_results count.
+func ByTicketResultsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTicketResultsStep(), opts...)
+	}
+}
+
+// ByTicketResults orders the results by ticket_results terms.
+func ByTicketResults(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTicketResultsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newAreaStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -474,6 +521,13 @@ func newPullRequestsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2M, false, PullRequestsTable, PullRequestsPrimaryKey...),
 	)
 }
+func newTicketsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TicketsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, TicketsTable, TicketsPrimaryKey...),
+	)
+}
 func newDocumentResultsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -486,5 +540,12 @@ func newPullRequestResultsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PullRequestResultsInverseTable, PullRequestResultsColumn),
 		sqlgraph.Edge(sqlgraph.O2M, true, PullRequestResultsTable, PullRequestResultsColumn),
+	)
+}
+func newTicketResultsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TicketResultsInverseTable, TicketResultsColumn),
+		sqlgraph.Edge(sqlgraph.O2M, true, TicketResultsTable, TicketResultsColumn),
 	)
 }

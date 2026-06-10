@@ -70,13 +70,17 @@ type WorkLensEdges struct {
 	Documents []*Document `json:"documents,omitempty"`
 	// Pull requests ranked under this lens.
 	PullRequests []*PullRequest `json:"pull_requests,omitempty"`
+	// Tickets ranked under this lens.
+	Tickets []*Ticket `json:"tickets,omitempty"`
 	// DocumentResults holds the value of the document_results edge.
 	DocumentResults []*DocumentLensResult `json:"document_results,omitempty"`
 	// PullRequestResults holds the value of the pull_request_results edge.
 	PullRequestResults []*PullRequestLensResult `json:"pull_request_results,omitempty"`
+	// TicketResults holds the value of the ticket_results edge.
+	TicketResults []*TicketLensResult `json:"ticket_results,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [7]bool
 }
 
 // AreaOrErr returns the Area value or an error if the edge
@@ -108,10 +112,19 @@ func (e WorkLensEdges) PullRequestsOrErr() ([]*PullRequest, error) {
 	return nil, &NotLoadedError{edge: "pull_requests"}
 }
 
+// TicketsOrErr returns the Tickets value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkLensEdges) TicketsOrErr() ([]*Ticket, error) {
+	if e.loadedTypes[3] {
+		return e.Tickets, nil
+	}
+	return nil, &NotLoadedError{edge: "tickets"}
+}
+
 // DocumentResultsOrErr returns the DocumentResults value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) DocumentResultsOrErr() ([]*DocumentLensResult, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.DocumentResults, nil
 	}
 	return nil, &NotLoadedError{edge: "document_results"}
@@ -120,10 +133,19 @@ func (e WorkLensEdges) DocumentResultsOrErr() ([]*DocumentLensResult, error) {
 // PullRequestResultsOrErr returns the PullRequestResults value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) PullRequestResultsOrErr() ([]*PullRequestLensResult, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[5] {
 		return e.PullRequestResults, nil
 	}
 	return nil, &NotLoadedError{edge: "pull_request_results"}
+}
+
+// TicketResultsOrErr returns the TicketResults value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkLensEdges) TicketResultsOrErr() ([]*TicketLensResult, error) {
+	if e.loadedTypes[6] {
+		return e.TicketResults, nil
+	}
+	return nil, &NotLoadedError{edge: "ticket_results"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -304,6 +326,11 @@ func (_m *WorkLens) QueryPullRequests() *PullRequestQuery {
 	return NewWorkLensClient(_m.config).QueryPullRequests(_m)
 }
 
+// QueryTickets queries the "tickets" edge of the WorkLens entity.
+func (_m *WorkLens) QueryTickets() *TicketQuery {
+	return NewWorkLensClient(_m.config).QueryTickets(_m)
+}
+
 // QueryDocumentResults queries the "document_results" edge of the WorkLens entity.
 func (_m *WorkLens) QueryDocumentResults() *DocumentLensResultQuery {
 	return NewWorkLensClient(_m.config).QueryDocumentResults(_m)
@@ -312,6 +339,11 @@ func (_m *WorkLens) QueryDocumentResults() *DocumentLensResultQuery {
 // QueryPullRequestResults queries the "pull_request_results" edge of the WorkLens entity.
 func (_m *WorkLens) QueryPullRequestResults() *PullRequestLensResultQuery {
 	return NewWorkLensClient(_m.config).QueryPullRequestResults(_m)
+}
+
+// QueryTicketResults queries the "ticket_results" edge of the WorkLens entity.
+func (_m *WorkLens) QueryTicketResults() *TicketLensResultQuery {
+	return NewWorkLensClient(_m.config).QueryTicketResults(_m)
 }
 
 // Update returns a builder for updating this WorkLens.

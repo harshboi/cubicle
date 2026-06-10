@@ -57,6 +57,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeWorkstreams holds the string denoting the workstreams edge name in mutations.
 	EdgeWorkstreams = "workstreams"
+	// EdgeWorkLenses holds the string denoting the work_lenses edge name in mutations.
+	EdgeWorkLenses = "work_lenses"
 	// EdgePullRequests holds the string denoting the pull_requests edge name in mutations.
 	EdgePullRequests = "pull_requests"
 	// EdgeDocumentFragments holds the string denoting the document_fragments edge name in mutations.
@@ -76,6 +78,11 @@ const (
 	// WorkstreamsInverseTable is the table name for the Workstream entity.
 	// It exists in this package in order to avoid circular dependency with the "workstream" package.
 	WorkstreamsInverseTable = "workstreams"
+	// WorkLensesTable is the table that holds the work_lenses relation/edge. The primary key declared below.
+	WorkLensesTable = "ticket_lens_results"
+	// WorkLensesInverseTable is the table name for the WorkLens entity.
+	// It exists in this package in order to avoid circular dependency with the "worklens" package.
+	WorkLensesInverseTable = "work_lenses"
 	// PullRequestsTable is the table that holds the pull_requests relation/edge. The primary key declared below.
 	PullRequestsTable = "ticket_pull_requests"
 	// PullRequestsInverseTable is the table name for the PullRequest entity.
@@ -143,6 +150,9 @@ var (
 	// WorkstreamsPrimaryKey and WorkstreamsColumn2 are the table columns denoting the
 	// primary key for the workstreams relation (M2M).
 	WorkstreamsPrimaryKey = []string{"workstream_id", "ticket_id"}
+	// WorkLensesPrimaryKey and WorkLensesColumn2 are the table columns denoting the
+	// primary key for the work_lenses relation (M2M).
+	WorkLensesPrimaryKey = []string{"work_lens_id", "ticket_id"}
 	// PullRequestsPrimaryKey and PullRequestsColumn2 are the table columns denoting the
 	// primary key for the pull_requests relation (M2M).
 	PullRequestsPrimaryKey = []string{"ticket_id", "pull_request_id"}
@@ -389,6 +399,20 @@ func ByWorkstreams(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByWorkLensesCount orders the results by work_lenses count.
+func ByWorkLensesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWorkLensesStep(), opts...)
+	}
+}
+
+// ByWorkLenses orders the results by work_lenses terms.
+func ByWorkLenses(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWorkLensesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByPullRequestsCount orders the results by pull_requests count.
 func ByPullRequestsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -477,6 +501,13 @@ func newWorkstreamsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(WorkstreamsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, true, WorkstreamsTable, WorkstreamsPrimaryKey...),
+	)
+}
+func newWorkLensesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkLensesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, WorkLensesTable, WorkLensesPrimaryKey...),
 	)
 }
 func newPullRequestsStep() *sqlgraph.Step {
