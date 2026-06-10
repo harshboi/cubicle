@@ -24,6 +24,16 @@ func TestWorkLensDeclaresCardinalityBoundary(t *testing.T) {
 	assertColumn(t, table, "last_indexed_at")
 }
 
+// TestDocumentLensResultCarriesPagingIndex proves the result layer can be
+// ranked and paged before loading high-cardinality document targets.
+func TestDocumentLensResultCarriesPagingIndex(t *testing.T) {
+	table := findTable(t, "document_lens_results")
+	assertIndexColumns(t, table, []string{"work_lens_id", "freshness_state", "rank_score", "last_activity_at"})
+	assertColumn(t, table, "relation_kind")
+	assertColumn(t, table, "latest_evidence_id")
+	assertColumn(t, table, "evidence_count")
+}
+
 // TestWorkLensRejectsMismatchedTargetKind proves lens kind is semantic truth.
 func TestWorkLensRejectsMismatchedTargetKind(t *testing.T) {
 	ctx := context.Background()
@@ -88,4 +98,25 @@ func assertColumn(t *testing.T, table *entsqlschema.Table, name string) {
 		}
 	}
 	t.Fatalf("table %q missing column %q", table.Name, name)
+}
+
+// assertIndexColumns fails the test if table does not contain a matching index.
+func assertIndexColumns(t *testing.T, table *entsqlschema.Table, names []string) {
+	t.Helper()
+	for _, idx := range table.Indexes {
+		if len(idx.Columns) != len(names) {
+			continue
+		}
+		matches := true
+		for i, column := range idx.Columns {
+			if column.Name != names[i] {
+				matches = false
+				break
+			}
+		}
+		if matches {
+			return
+		}
+	}
+	t.Fatalf("table %q missing index over columns %#v", table.Name, names)
 }

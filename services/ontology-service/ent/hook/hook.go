@@ -32,6 +32,18 @@ func (f DocumentFragmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.V
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DocumentFragmentMutation", m)
 }
 
+// The DocumentLensResultFunc type is an adapter to allow the use of ordinary
+// function as DocumentLensResult mutator.
+type DocumentLensResultFunc func(context.Context, *ent.DocumentLensResultMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DocumentLensResultFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DocumentLensResultMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DocumentLensResultMutation", m)
+}
+
 // The EvidenceFunc type is an adapter to allow the use of ordinary
 // function as Evidence mutator.
 type EvidenceFunc func(context.Context, *ent.EvidenceMutation) (ent.Value, error)

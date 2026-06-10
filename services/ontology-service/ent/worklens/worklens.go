@@ -56,6 +56,10 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeArea holds the string denoting the area edge name in mutations.
 	EdgeArea = "area"
+	// EdgeDocuments holds the string denoting the documents edge name in mutations.
+	EdgeDocuments = "documents"
+	// EdgeDocumentResults holds the string denoting the document_results edge name in mutations.
+	EdgeDocumentResults = "document_results"
 	// Table holds the table name of the worklens in the database.
 	Table = "work_lenses"
 	// AreaTable is the table that holds the area relation/edge.
@@ -65,6 +69,18 @@ const (
 	AreaInverseTable = "work_areas"
 	// AreaColumn is the table column denoting the area relation/edge.
 	AreaColumn = "work_area_id"
+	// DocumentsTable is the table that holds the documents relation/edge. The primary key declared below.
+	DocumentsTable = "document_lens_results"
+	// DocumentsInverseTable is the table name for the Document entity.
+	// It exists in this package in order to avoid circular dependency with the "document" package.
+	DocumentsInverseTable = "documents"
+	// DocumentResultsTable is the table that holds the document_results relation/edge.
+	DocumentResultsTable = "document_lens_results"
+	// DocumentResultsInverseTable is the table name for the DocumentLensResult entity.
+	// It exists in this package in order to avoid circular dependency with the "documentlensresult" package.
+	DocumentResultsInverseTable = "document_lens_results"
+	// DocumentResultsColumn is the table column denoting the document_results relation/edge.
+	DocumentResultsColumn = "work_lens_id"
 )
 
 // Columns holds all SQL columns for worklens fields.
@@ -90,6 +106,12 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
+
+var (
+	// DocumentsPrimaryKey and DocumentsColumn2 are the table columns denoting the
+	// primary key for the documents relation (M2M).
+	DocumentsPrimaryKey = []string{"work_lens_id", "document_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -356,10 +378,52 @@ func ByAreaField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newAreaStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByDocumentsCount orders the results by documents count.
+func ByDocumentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newDocumentsStep(), opts...)
+	}
+}
+
+// ByDocuments orders the results by documents terms.
+func ByDocuments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newDocumentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByDocumentResultsCount orders the results by document_results count.
+func ByDocumentResultsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newDocumentResultsStep(), opts...)
+	}
+}
+
+// ByDocumentResults orders the results by document_results terms.
+func ByDocumentResults(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newDocumentResultsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newAreaStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AreaInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, AreaTable, AreaColumn),
+	)
+}
+func newDocumentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(DocumentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, DocumentsTable, DocumentsPrimaryKey...),
+	)
+}
+func newDocumentResultsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(DocumentResultsInverseTable, DocumentResultsColumn),
+		sqlgraph.Edge(sqlgraph.O2M, true, DocumentResultsTable, DocumentResultsColumn),
 	)
 }

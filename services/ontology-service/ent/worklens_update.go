@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/worklens"
 	"errors"
@@ -289,9 +290,45 @@ func (_u *WorkLensUpdate) SetUpdatedAt(v time.Time) *WorkLensUpdate {
 	return _u
 }
 
+// AddDocumentIDs adds the "documents" edge to the Document entity by IDs.
+func (_u *WorkLensUpdate) AddDocumentIDs(ids ...int) *WorkLensUpdate {
+	_u.mutation.AddDocumentIDs(ids...)
+	return _u
+}
+
+// AddDocuments adds the "documents" edges to the Document entity.
+func (_u *WorkLensUpdate) AddDocuments(v ...*Document) *WorkLensUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddDocumentIDs(ids...)
+}
+
 // Mutation returns the WorkLensMutation object of the builder.
 func (_u *WorkLensUpdate) Mutation() *WorkLensMutation {
 	return _u.mutation
+}
+
+// ClearDocuments clears all "documents" edges to the Document entity.
+func (_u *WorkLensUpdate) ClearDocuments() *WorkLensUpdate {
+	_u.mutation.ClearDocuments()
+	return _u
+}
+
+// RemoveDocumentIDs removes the "documents" edge to Document entities by IDs.
+func (_u *WorkLensUpdate) RemoveDocumentIDs(ids ...int) *WorkLensUpdate {
+	_u.mutation.RemoveDocumentIDs(ids...)
+	return _u
+}
+
+// RemoveDocuments removes "documents" edges to Document entities.
+func (_u *WorkLensUpdate) RemoveDocuments(v ...*Document) *WorkLensUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveDocumentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -447,6 +484,63 @@ func (_u *WorkLensUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(worklens.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DocumentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.DocumentsTable,
+			Columns: worklens.DocumentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
+			},
+		}
+		createE := &DocumentLensResultCreate{config: _u.config, mutation: newDocumentLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedDocumentsIDs(); len(nodes) > 0 && !_u.mutation.DocumentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.DocumentsTable,
+			Columns: worklens.DocumentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &DocumentLensResultCreate{config: _u.config, mutation: newDocumentLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DocumentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.DocumentsTable,
+			Columns: worklens.DocumentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &DocumentLensResultCreate{config: _u.config, mutation: newDocumentLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -729,9 +823,45 @@ func (_u *WorkLensUpdateOne) SetUpdatedAt(v time.Time) *WorkLensUpdateOne {
 	return _u
 }
 
+// AddDocumentIDs adds the "documents" edge to the Document entity by IDs.
+func (_u *WorkLensUpdateOne) AddDocumentIDs(ids ...int) *WorkLensUpdateOne {
+	_u.mutation.AddDocumentIDs(ids...)
+	return _u
+}
+
+// AddDocuments adds the "documents" edges to the Document entity.
+func (_u *WorkLensUpdateOne) AddDocuments(v ...*Document) *WorkLensUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddDocumentIDs(ids...)
+}
+
 // Mutation returns the WorkLensMutation object of the builder.
 func (_u *WorkLensUpdateOne) Mutation() *WorkLensMutation {
 	return _u.mutation
+}
+
+// ClearDocuments clears all "documents" edges to the Document entity.
+func (_u *WorkLensUpdateOne) ClearDocuments() *WorkLensUpdateOne {
+	_u.mutation.ClearDocuments()
+	return _u
+}
+
+// RemoveDocumentIDs removes the "documents" edge to Document entities by IDs.
+func (_u *WorkLensUpdateOne) RemoveDocumentIDs(ids ...int) *WorkLensUpdateOne {
+	_u.mutation.RemoveDocumentIDs(ids...)
+	return _u
+}
+
+// RemoveDocuments removes "documents" edges to Document entities.
+func (_u *WorkLensUpdateOne) RemoveDocuments(v ...*Document) *WorkLensUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveDocumentIDs(ids...)
 }
 
 // Where appends a list predicates to the WorkLensUpdate builder.
@@ -917,6 +1047,63 @@ func (_u *WorkLensUpdateOne) sqlSave(ctx context.Context) (_node *WorkLens, err 
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(worklens.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DocumentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.DocumentsTable,
+			Columns: worklens.DocumentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
+			},
+		}
+		createE := &DocumentLensResultCreate{config: _u.config, mutation: newDocumentLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedDocumentsIDs(); len(nodes) > 0 && !_u.mutation.DocumentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.DocumentsTable,
+			Columns: worklens.DocumentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &DocumentLensResultCreate{config: _u.config, mutation: newDocumentLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DocumentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.DocumentsTable,
+			Columns: worklens.DocumentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(document.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &DocumentLensResultCreate{config: _u.config, mutation: newDocumentLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &WorkLens{config: _u.config}
 	_spec.Assign = _node.assignValues

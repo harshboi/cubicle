@@ -42,11 +42,14 @@ func (Document) Fields() []ent.Field {
 	)
 }
 
-// Edges connects a document to searchable fragments.
+// Edges connects a document to searchable fragments and the lenses that rank it.
 func (Document) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("fragments", DocumentFragment.Type).
 			Comment("Searchable fragments extracted from this document."),
+		edge.From("work_lenses", WorkLens.Type).
+			Ref("documents").
+			Comment("Work lenses that ranked this document as a result."),
 	}
 }
 

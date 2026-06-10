@@ -16,6 +16,8 @@ type Tx struct {
 	Document *DocumentClient
 	// DocumentFragment is the client for interacting with the DocumentFragment builders.
 	DocumentFragment *DocumentFragmentClient
+	// DocumentLensResult is the client for interacting with the DocumentLensResult builders.
+	DocumentLensResult *DocumentLensResultClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
 	// Message is the client for interacting with the Message builders.
@@ -173,6 +175,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Document = NewDocumentClient(tx.config)
 	tx.DocumentFragment = NewDocumentFragmentClient(tx.config)
+	tx.DocumentLensResult = NewDocumentLensResultClient(tx.config)
 	tx.Evidence = NewEvidenceClient(tx.config)
 	tx.Message = NewMessageClient(tx.config)
 	tx.Person = NewPersonClient(tx.config)

@@ -6,6 +6,7 @@ import (
 	"context"
 	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/documentfragment"
+	"cubicle/services/ontology-service/ent/worklens"
 	"errors"
 	"fmt"
 	"time"
@@ -288,6 +289,21 @@ func (_c *DocumentCreate) AddFragments(v ...*DocumentFragment) *DocumentCreate {
 	return _c.AddFragmentIDs(ids...)
 }
 
+// AddWorkLenseIDs adds the "work_lenses" edge to the WorkLens entity by IDs.
+func (_c *DocumentCreate) AddWorkLenseIDs(ids ...int) *DocumentCreate {
+	_c.mutation.AddWorkLenseIDs(ids...)
+	return _c
+}
+
+// AddWorkLenses adds the "work_lenses" edges to the WorkLens entity.
+func (_c *DocumentCreate) AddWorkLenses(v ...*WorkLens) *DocumentCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddWorkLenseIDs(ids...)
+}
+
 // Mutation returns the DocumentMutation object of the builder.
 func (_c *DocumentCreate) Mutation() *DocumentMutation {
 	return _c.mutation
@@ -526,6 +542,22 @@ func (_c *DocumentCreate) createSpec() (*Document, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.WorkLensesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   document.WorkLensesTable,
+			Columns: document.WorkLensesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

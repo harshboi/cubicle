@@ -55,6 +55,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeFragments holds the string denoting the fragments edge name in mutations.
 	EdgeFragments = "fragments"
+	// EdgeWorkLenses holds the string denoting the work_lenses edge name in mutations.
+	EdgeWorkLenses = "work_lenses"
 	// Table holds the table name of the document in the database.
 	Table = "documents"
 	// FragmentsTable is the table that holds the fragments relation/edge.
@@ -64,6 +66,11 @@ const (
 	FragmentsInverseTable = "document_fragments"
 	// FragmentsColumn is the table column denoting the fragments relation/edge.
 	FragmentsColumn = "document_id"
+	// WorkLensesTable is the table that holds the work_lenses relation/edge. The primary key declared below.
+	WorkLensesTable = "document_lens_results"
+	// WorkLensesInverseTable is the table name for the WorkLens entity.
+	// It exists in this package in order to avoid circular dependency with the "worklens" package.
+	WorkLensesInverseTable = "work_lenses"
 )
 
 // Columns holds all SQL columns for document fields.
@@ -89,6 +96,12 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
+
+var (
+	// WorkLensesPrimaryKey and WorkLensesColumn2 are the table columns denoting the
+	// primary key for the work_lenses relation (M2M).
+	WorkLensesPrimaryKey = []string{"work_lens_id", "document_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -320,10 +333,31 @@ func ByFragments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newFragmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByWorkLensesCount orders the results by work_lenses count.
+func ByWorkLensesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWorkLensesStep(), opts...)
+	}
+}
+
+// ByWorkLenses orders the results by work_lenses terms.
+func ByWorkLenses(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWorkLensesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newFragmentsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(FragmentsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, FragmentsTable, FragmentsColumn),
+	)
+}
+func newWorkLensesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkLensesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, WorkLensesTable, WorkLensesPrimaryKey...),
 	)
 }

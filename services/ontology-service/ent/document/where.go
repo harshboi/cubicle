@@ -1173,6 +1173,29 @@ func HasFragmentsWith(preds ...predicate.DocumentFragment) predicate.Document {
 	})
 }
 
+// HasWorkLenses applies the HasEdge predicate on the "work_lenses" edge.
+func HasWorkLenses() predicate.Document {
+	return predicate.Document(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, WorkLensesTable, WorkLensesPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWorkLensesWith applies the HasEdge predicate on the "work_lenses" edge with a given conditions (other predicates).
+func HasWorkLensesWith(preds ...predicate.WorkLens) predicate.Document {
+	return predicate.Document(func(s *sql.Selector) {
+		step := newWorkLensesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Document) predicate.Document {
 	return predicate.Document(sql.AndPredicates(predicates...))

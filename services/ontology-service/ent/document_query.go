@@ -7,6 +7,7 @@ import (
 	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/predicate"
+	"cubicle/services/ontology-service/ent/worklens"
 	"database/sql/driver"
 	"fmt"
 	"math"
@@ -20,11 +21,12 @@ import (
 // DocumentQuery is the builder for querying Document entities.
 type DocumentQuery struct {
 	config
-	ctx           *QueryContext
-	order         []document.OrderOption
-	inters        []Interceptor
-	predicates    []predicate.Document
-	withFragments *DocumentFragmentQuery
+	ctx            *QueryContext
+	order          []document.OrderOption
+	inters         []Interceptor
+	predicates     []predicate.Document
+	withFragments  *DocumentFragmentQuery
+	withWorkLenses *WorkLensQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,6 +78,28 @@ func (_q *DocumentQuery) QueryFragments() *DocumentFragmentQuery {
 			sqlgraph.From(document.Table, document.FieldID, selector),
 			sqlgraph.To(documentfragment.Table, documentfragment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, document.FragmentsTable, document.FragmentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryWorkLenses chains the current query on the "work_lenses" edge.
+func (_q *DocumentQuery) QueryWorkLenses() *WorkLensQuery {
+	query := (&WorkLensClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(document.Table, document.FieldID, selector),
+			sqlgraph.To(worklens.Table, worklens.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, document.WorkLensesTable, document.WorkLensesPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -270,12 +294,13 @@ func (_q *DocumentQuery) Clone() *DocumentQuery {
 		return nil
 	}
 	return &DocumentQuery{
-		config:        _q.config,
-		ctx:           _q.ctx.Clone(),
-		order:         append([]document.OrderOption{}, _q.order...),
-		inters:        append([]Interceptor{}, _q.inters...),
-		predicates:    append([]predicate.Document{}, _q.predicates...),
-		withFragments: _q.withFragments.Clone(),
+		config:         _q.config,
+		ctx:            _q.ctx.Clone(),
+		order:          append([]document.OrderOption{}, _q.order...),
+		inters:         append([]Interceptor{}, _q.inters...),
+		predicates:     append([]predicate.Document{}, _q.predicates...),
+		withFragments:  _q.withFragments.Clone(),
+		withWorkLenses: _q.withWorkLenses.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -290,6 +315,17 @@ func (_q *DocumentQuery) WithFragments(opts ...func(*DocumentFragmentQuery)) *Do
 		opt(query)
 	}
 	_q.withFragments = query
+	return _q
+}
+
+// WithWorkLenses tells the query-builder to eager-load the nodes that are connected to
+// the "work_lenses" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *DocumentQuery) WithWorkLenses(opts ...func(*WorkLensQuery)) *DocumentQuery {
+	query := (&WorkLensClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withWorkLenses = query
 	return _q
 }
 
@@ -371,8 +407,9 @@ func (_q *DocumentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Doc
 	var (
 		nodes       = []*Document{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withFragments != nil,
+			_q.withWorkLenses != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -397,6 +434,13 @@ func (_q *DocumentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Doc
 		if err := _q.loadFragments(ctx, query, nodes,
 			func(n *Document) { n.Edges.Fragments = []*DocumentFragment{} },
 			func(n *Document, e *DocumentFragment) { n.Edges.Fragments = append(n.Edges.Fragments, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withWorkLenses; query != nil {
+		if err := _q.loadWorkLenses(ctx, query, nodes,
+			func(n *Document) { n.Edges.WorkLenses = []*WorkLens{} },
+			func(n *Document, e *WorkLens) { n.Edges.WorkLenses = append(n.Edges.WorkLenses, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -430,6 +474,67 @@ func (_q *DocumentQuery) loadFragments(ctx context.Context, query *DocumentFragm
 			return fmt.Errorf(`unexpected referenced foreign-key "document_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (_q *DocumentQuery) loadWorkLenses(ctx context.Context, query *WorkLensQuery, nodes []*Document, init func(*Document), assign func(*Document, *WorkLens)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Document)
+	nids := make(map[int]map[*Document]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(document.WorkLensesTable)
+		s.Join(joinT).On(s.C(worklens.FieldID), joinT.C(document.WorkLensesPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(document.WorkLensesPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(document.WorkLensesPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Document]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*WorkLens](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "work_lenses" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
 	}
 	return nil
 }

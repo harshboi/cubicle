@@ -66,9 +66,13 @@ type WorkLens struct {
 type WorkLensEdges struct {
 	// Parent work area that owns this lens.
 	Area *WorkArea `json:"area,omitempty"`
+	// Documents ranked under this lens.
+	Documents []*Document `json:"documents,omitempty"`
+	// DocumentResults holds the value of the document_results edge.
+	DocumentResults []*DocumentLensResult `json:"document_results,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [3]bool
 }
 
 // AreaOrErr returns the Area value or an error if the edge
@@ -80,6 +84,24 @@ func (e WorkLensEdges) AreaOrErr() (*WorkArea, error) {
 		return nil, &NotFoundError{label: workarea.Label}
 	}
 	return nil, &NotLoadedError{edge: "area"}
+}
+
+// DocumentsOrErr returns the Documents value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkLensEdges) DocumentsOrErr() ([]*Document, error) {
+	if e.loadedTypes[1] {
+		return e.Documents, nil
+	}
+	return nil, &NotLoadedError{edge: "documents"}
+}
+
+// DocumentResultsOrErr returns the DocumentResults value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkLensEdges) DocumentResultsOrErr() ([]*DocumentLensResult, error) {
+	if e.loadedTypes[2] {
+		return e.DocumentResults, nil
+	}
+	return nil, &NotLoadedError{edge: "document_results"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -248,6 +270,16 @@ func (_m *WorkLens) Value(name string) (ent.Value, error) {
 // QueryArea queries the "area" edge of the WorkLens entity.
 func (_m *WorkLens) QueryArea() *WorkAreaQuery {
 	return NewWorkLensClient(_m.config).QueryArea(_m)
+}
+
+// QueryDocuments queries the "documents" edge of the WorkLens entity.
+func (_m *WorkLens) QueryDocuments() *DocumentQuery {
+	return NewWorkLensClient(_m.config).QueryDocuments(_m)
+}
+
+// QueryDocumentResults queries the "document_results" edge of the WorkLens entity.
+func (_m *WorkLens) QueryDocumentResults() *DocumentLensResultQuery {
+	return NewWorkLensClient(_m.config).QueryDocumentResults(_m)
 }
 
 // Update returns a builder for updating this WorkLens.

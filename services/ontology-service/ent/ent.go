@@ -6,6 +6,7 @@ import (
 	"context"
 	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/documentfragment"
+	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/person"
@@ -88,6 +89,7 @@ func checkColumn(t, c string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			document.Table:               document.ValidColumn,
 			documentfragment.Table:       documentfragment.ValidColumn,
+			documentlensresult.Table:     documentlensresult.ValidColumn,
 			evidence.Table:               evidence.ValidColumn,
 			message.Table:                message.ValidColumn,
 			person.Table:                 person.ValidColumn,

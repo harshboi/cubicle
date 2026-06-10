@@ -12,6 +12,9 @@ type Document func(*sql.Selector)
 // DocumentFragment is the predicate function for documentfragment builders.
 type DocumentFragment func(*sql.Selector)
 
+// DocumentLensResult is the predicate function for documentlensresult builders.
+type DocumentLensResult func(*sql.Selector)
+
 // Evidence is the predicate function for evidence builders.
 type Evidence func(*sql.Selector)
 

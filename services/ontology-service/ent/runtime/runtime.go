@@ -5,6 +5,7 @@ package runtime
 import (
 	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/documentfragment"
+	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/person"
@@ -81,6 +82,34 @@ func init() {
 	documentfragment.DefaultUpdatedAt = documentfragmentDescUpdatedAt.Default.(func() time.Time)
 	// documentfragment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	documentfragment.UpdateDefaultUpdatedAt = documentfragmentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	documentlensresultFields := schema.DocumentLensResult{}.Fields()
+	_ = documentlensresultFields
+	// documentlensresultDescEvidenceCount is the schema descriptor for evidence_count field.
+	documentlensresultDescEvidenceCount := documentlensresultFields[4].Descriptor()
+	// documentlensresult.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
+	documentlensresult.DefaultEvidenceCount = documentlensresultDescEvidenceCount.Default.(int)
+	// documentlensresultDescEventCount is the schema descriptor for event_count field.
+	documentlensresultDescEventCount := documentlensresultFields[5].Descriptor()
+	// documentlensresult.DefaultEventCount holds the default value on creation for the event_count field.
+	documentlensresult.DefaultEventCount = documentlensresultDescEventCount.Default.(int)
+	// documentlensresultDescRankScore is the schema descriptor for rank_score field.
+	documentlensresultDescRankScore := documentlensresultFields[8].Descriptor()
+	// documentlensresult.DefaultRankScore holds the default value on creation for the rank_score field.
+	documentlensresult.DefaultRankScore = documentlensresultDescRankScore.Default.(float64)
+	// documentlensresultDescConfidence is the schema descriptor for confidence field.
+	documentlensresultDescConfidence := documentlensresultFields[15].Descriptor()
+	// documentlensresult.DefaultConfidence holds the default value on creation for the confidence field.
+	documentlensresult.DefaultConfidence = documentlensresultDescConfidence.Default.(float64)
+	// documentlensresultDescCreatedAt is the schema descriptor for created_at field.
+	documentlensresultDescCreatedAt := documentlensresultFields[16].Descriptor()
+	// documentlensresult.DefaultCreatedAt holds the default value on creation for the created_at field.
+	documentlensresult.DefaultCreatedAt = documentlensresultDescCreatedAt.Default.(func() time.Time)
+	// documentlensresultDescUpdatedAt is the schema descriptor for updated_at field.
+	documentlensresultDescUpdatedAt := documentlensresultFields[17].Descriptor()
+	// documentlensresult.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	documentlensresult.DefaultUpdatedAt = documentlensresultDescUpdatedAt.Default.(func() time.Time)
+	// documentlensresult.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	documentlensresult.UpdateDefaultUpdatedAt = documentlensresultDescUpdatedAt.UpdateDefault.(func() time.Time)
 	evidenceFields := schema.Evidence{}.Fields()
 	_ = evidenceFields
 	// evidenceDescKey is the schema descriptor for key field.

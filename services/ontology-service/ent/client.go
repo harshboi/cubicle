@@ -13,6 +13,7 @@ import (
 
 	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/documentfragment"
+	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/person"
@@ -41,6 +42,8 @@ type Client struct {
 	Document *DocumentClient
 	// DocumentFragment is the client for interacting with the DocumentFragment builders.
 	DocumentFragment *DocumentFragmentClient
+	// DocumentLensResult is the client for interacting with the DocumentLensResult builders.
+	DocumentLensResult *DocumentLensResultClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
 	// Message is the client for interacting with the Message builders.
@@ -78,6 +81,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Document = NewDocumentClient(c.config)
 	c.DocumentFragment = NewDocumentFragmentClient(c.config)
+	c.DocumentLensResult = NewDocumentLensResultClient(c.config)
 	c.Evidence = NewEvidenceClient(c.config)
 	c.Message = NewMessageClient(c.config)
 	c.Person = NewPersonClient(c.config)
@@ -184,6 +188,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:                 cfg,
 		Document:               NewDocumentClient(cfg),
 		DocumentFragment:       NewDocumentFragmentClient(cfg),
+		DocumentLensResult:     NewDocumentLensResultClient(cfg),
 		Evidence:               NewEvidenceClient(cfg),
 		Message:                NewMessageClient(cfg),
 		Person:                 NewPersonClient(cfg),
@@ -217,6 +222,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:                 cfg,
 		Document:               NewDocumentClient(cfg),
 		DocumentFragment:       NewDocumentFragmentClient(cfg),
+		DocumentLensResult:     NewDocumentLensResultClient(cfg),
 		Evidence:               NewEvidenceClient(cfg),
 		Message:                NewMessageClient(cfg),
 		Person:                 NewPersonClient(cfg),
@@ -258,9 +264,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Document, c.DocumentFragment, c.Evidence, c.Message, c.Person, c.PullRequest,
-		c.Ticket, c.TicketDocumentFragment, c.TicketMessage, c.TicketPullRequest,
-		c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
+		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence, c.Message,
+		c.Person, c.PullRequest, c.Ticket, c.TicketDocumentFragment, c.TicketMessage,
+		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Use(hooks...)
 	}
@@ -270,9 +276,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Document, c.DocumentFragment, c.Evidence, c.Message, c.Person, c.PullRequest,
-		c.Ticket, c.TicketDocumentFragment, c.TicketMessage, c.TicketPullRequest,
-		c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
+		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence, c.Message,
+		c.Person, c.PullRequest, c.Ticket, c.TicketDocumentFragment, c.TicketMessage,
+		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -285,6 +291,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Document.mutate(ctx, m)
 	case *DocumentFragmentMutation:
 		return c.DocumentFragment.mutate(ctx, m)
+	case *DocumentLensResultMutation:
+		return c.DocumentLensResult.mutate(ctx, m)
 	case *EvidenceMutation:
 		return c.Evidence.mutate(ctx, m)
 	case *MessageMutation:
@@ -431,6 +439,22 @@ func (c *DocumentClient) QueryFragments(_m *Document) *DocumentFragmentQuery {
 			sqlgraph.From(document.Table, document.FieldID, id),
 			sqlgraph.To(documentfragment.Table, documentfragment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, document.FragmentsTable, document.FragmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkLenses queries the work_lenses edge of a Document.
+func (c *DocumentClient) QueryWorkLenses(_m *Document) *WorkLensQuery {
+	query := (&WorkLensClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(document.Table, document.FieldID, id),
+			sqlgraph.To(worklens.Table, worklens.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, document.WorkLensesTable, document.WorkLensesPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -625,6 +649,129 @@ func (c *DocumentFragmentClient) mutate(ctx context.Context, m *DocumentFragment
 		return (&DocumentFragmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown DocumentFragment mutation op: %q", m.Op())
+	}
+}
+
+// DocumentLensResultClient is a client for the DocumentLensResult schema.
+type DocumentLensResultClient struct {
+	config
+}
+
+// NewDocumentLensResultClient returns a client for the DocumentLensResult from the given config.
+func NewDocumentLensResultClient(c config) *DocumentLensResultClient {
+	return &DocumentLensResultClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `documentlensresult.Hooks(f(g(h())))`.
+func (c *DocumentLensResultClient) Use(hooks ...Hook) {
+	c.hooks.DocumentLensResult = append(c.hooks.DocumentLensResult, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `documentlensresult.Intercept(f(g(h())))`.
+func (c *DocumentLensResultClient) Intercept(interceptors ...Interceptor) {
+	c.inters.DocumentLensResult = append(c.inters.DocumentLensResult, interceptors...)
+}
+
+// Create returns a builder for creating a DocumentLensResult entity.
+func (c *DocumentLensResultClient) Create() *DocumentLensResultCreate {
+	mutation := newDocumentLensResultMutation(c.config, OpCreate)
+	return &DocumentLensResultCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DocumentLensResult entities.
+func (c *DocumentLensResultClient) CreateBulk(builders ...*DocumentLensResultCreate) *DocumentLensResultCreateBulk {
+	return &DocumentLensResultCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DocumentLensResultClient) MapCreateBulk(slice any, setFunc func(*DocumentLensResultCreate, int)) *DocumentLensResultCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DocumentLensResultCreateBulk{err: fmt.Errorf("calling to DocumentLensResultClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DocumentLensResultCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DocumentLensResultCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DocumentLensResult.
+func (c *DocumentLensResultClient) Update() *DocumentLensResultUpdate {
+	mutation := newDocumentLensResultMutation(c.config, OpUpdate)
+	return &DocumentLensResultUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DocumentLensResultClient) UpdateOne(_m *DocumentLensResult) *DocumentLensResultUpdateOne {
+	mutation := newDocumentLensResultMutation(c.config, OpUpdateOne)
+	mutation.lens = &_m.WorkLensID
+	mutation.document = &_m.DocumentID
+	return &DocumentLensResultUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DocumentLensResult.
+func (c *DocumentLensResultClient) Delete() *DocumentLensResultDelete {
+	mutation := newDocumentLensResultMutation(c.config, OpDelete)
+	return &DocumentLensResultDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Query returns a query builder for DocumentLensResult.
+func (c *DocumentLensResultClient) Query() *DocumentLensResultQuery {
+	return &DocumentLensResultQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDocumentLensResult},
+		inters: c.Interceptors(),
+	}
+}
+
+// QueryLens queries the lens edge of a DocumentLensResult.
+func (c *DocumentLensResultClient) QueryLens(_m *DocumentLensResult) *WorkLensQuery {
+	return c.Query().
+		Where(documentlensresult.WorkLensID(_m.WorkLensID), documentlensresult.DocumentID(_m.DocumentID)).
+		QueryLens()
+}
+
+// QueryDocument queries the document edge of a DocumentLensResult.
+func (c *DocumentLensResultClient) QueryDocument(_m *DocumentLensResult) *DocumentQuery {
+	return c.Query().
+		Where(documentlensresult.WorkLensID(_m.WorkLensID), documentlensresult.DocumentID(_m.DocumentID)).
+		QueryDocument()
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a DocumentLensResult.
+func (c *DocumentLensResultClient) QueryLatestEvidence(_m *DocumentLensResult) *EvidenceQuery {
+	return c.Query().
+		Where(documentlensresult.WorkLensID(_m.WorkLensID), documentlensresult.DocumentID(_m.DocumentID)).
+		QueryLatestEvidence()
+}
+
+// Hooks returns the client hooks.
+func (c *DocumentLensResultClient) Hooks() []Hook {
+	return c.hooks.DocumentLensResult
+}
+
+// Interceptors returns the client interceptors.
+func (c *DocumentLensResultClient) Interceptors() []Interceptor {
+	return c.inters.DocumentLensResult
+}
+
+func (c *DocumentLensResultClient) mutate(ctx context.Context, m *DocumentLensResultMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DocumentLensResultCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DocumentLensResultUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DocumentLensResultUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DocumentLensResultDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown DocumentLensResult mutation op: %q", m.Op())
 	}
 }
 
@@ -2111,6 +2258,38 @@ func (c *WorkLensClient) QueryArea(_m *WorkLens) *WorkAreaQuery {
 	return query
 }
 
+// QueryDocuments queries the documents edge of a WorkLens.
+func (c *WorkLensClient) QueryDocuments(_m *WorkLens) *DocumentQuery {
+	query := (&DocumentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklens.Table, worklens.FieldID, id),
+			sqlgraph.To(document.Table, document.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, worklens.DocumentsTable, worklens.DocumentsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryDocumentResults queries the document_results edge of a WorkLens.
+func (c *WorkLensClient) QueryDocumentResults(_m *WorkLens) *DocumentLensResultQuery {
+	query := (&DocumentLensResultClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklens.Table, worklens.FieldID, id),
+			sqlgraph.To(documentlensresult.Table, documentlensresult.LensColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, worklens.DocumentResultsTable, worklens.DocumentResultsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *WorkLensClient) Hooks() []Hook {
 	hooks := c.hooks.WorkLens
@@ -2428,13 +2607,13 @@ func (c *WorkstreamTicketClient) mutate(ctx context.Context, m *WorkstreamTicket
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Document, DocumentFragment, Evidence, Message, Person, PullRequest, Ticket,
-		TicketDocumentFragment, TicketMessage, TicketPullRequest, WorkArea, WorkLens,
-		Workstream, WorkstreamTicket []ent.Hook
+		Document, DocumentFragment, DocumentLensResult, Evidence, Message, Person,
+		PullRequest, Ticket, TicketDocumentFragment, TicketMessage, TicketPullRequest,
+		WorkArea, WorkLens, Workstream, WorkstreamTicket []ent.Hook
 	}
 	inters struct {
-		Document, DocumentFragment, Evidence, Message, Person, PullRequest, Ticket,
-		TicketDocumentFragment, TicketMessage, TicketPullRequest, WorkArea, WorkLens,
-		Workstream, WorkstreamTicket []ent.Interceptor
+		Document, DocumentFragment, DocumentLensResult, Evidence, Message, Person,
+		PullRequest, Ticket, TicketDocumentFragment, TicketMessage, TicketPullRequest,
+		WorkArea, WorkLens, Workstream, WorkstreamTicket []ent.Interceptor
 	}
 )

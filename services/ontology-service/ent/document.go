@@ -65,9 +65,11 @@ type Document struct {
 type DocumentEdges struct {
 	// Searchable fragments extracted from this document.
 	Fragments []*DocumentFragment `json:"fragments,omitempty"`
+	// Work lenses that ranked this document as a result.
+	WorkLenses []*WorkLens `json:"work_lenses,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // FragmentsOrErr returns the Fragments value or an error if the edge
@@ -77,6 +79,15 @@ func (e DocumentEdges) FragmentsOrErr() ([]*DocumentFragment, error) {
 		return e.Fragments, nil
 	}
 	return nil, &NotLoadedError{edge: "fragments"}
+}
+
+// WorkLensesOrErr returns the WorkLenses value or an error if the edge
+// was not loaded in eager-loading.
+func (e DocumentEdges) WorkLensesOrErr() ([]*WorkLens, error) {
+	if e.loadedTypes[1] {
+		return e.WorkLenses, nil
+	}
+	return nil, &NotLoadedError{edge: "work_lenses"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -243,6 +254,11 @@ func (_m *Document) Value(name string) (ent.Value, error) {
 // QueryFragments queries the "fragments" edge of the Document entity.
 func (_m *Document) QueryFragments() *DocumentFragmentQuery {
 	return NewDocumentClient(_m.config).QueryFragments(_m)
+}
+
+// QueryWorkLenses queries the "work_lenses" edge of the Document entity.
+func (_m *Document) QueryWorkLenses() *WorkLensQuery {
+	return NewDocumentClient(_m.config).QueryWorkLenses(_m)
 }
 
 // Update returns a builder for updating this Document.

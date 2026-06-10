@@ -898,6 +898,52 @@ func HasAreaWith(preds ...predicate.WorkArea) predicate.WorkLens {
 	})
 }
 
+// HasDocuments applies the HasEdge predicate on the "documents" edge.
+func HasDocuments() predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, DocumentsTable, DocumentsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDocumentsWith applies the HasEdge predicate on the "documents" edge with a given conditions (other predicates).
+func HasDocumentsWith(preds ...predicate.Document) predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := newDocumentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasDocumentResults applies the HasEdge predicate on the "document_results" edge.
+func HasDocumentResults() predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, DocumentResultsTable, DocumentResultsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDocumentResultsWith applies the HasEdge predicate on the "document_results" edge with a given conditions (other predicates).
+func HasDocumentResultsWith(preds ...predicate.DocumentLensResult) predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := newDocumentResultsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.WorkLens) predicate.WorkLens {
 	return predicate.WorkLens(sql.AndPredicates(predicates...))

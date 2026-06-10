@@ -7,6 +7,7 @@ import (
 	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/predicate"
+	"cubicle/services/ontology-service/ent/worklens"
 	"errors"
 	"fmt"
 	"time"
@@ -363,6 +364,21 @@ func (_u *DocumentUpdate) AddFragments(v ...*DocumentFragment) *DocumentUpdate {
 	return _u.AddFragmentIDs(ids...)
 }
 
+// AddWorkLenseIDs adds the "work_lenses" edge to the WorkLens entity by IDs.
+func (_u *DocumentUpdate) AddWorkLenseIDs(ids ...int) *DocumentUpdate {
+	_u.mutation.AddWorkLenseIDs(ids...)
+	return _u
+}
+
+// AddWorkLenses adds the "work_lenses" edges to the WorkLens entity.
+func (_u *DocumentUpdate) AddWorkLenses(v ...*WorkLens) *DocumentUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWorkLenseIDs(ids...)
+}
+
 // Mutation returns the DocumentMutation object of the builder.
 func (_u *DocumentUpdate) Mutation() *DocumentMutation {
 	return _u.mutation
@@ -387,6 +403,27 @@ func (_u *DocumentUpdate) RemoveFragments(v ...*DocumentFragment) *DocumentUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveFragmentIDs(ids...)
+}
+
+// ClearWorkLenses clears all "work_lenses" edges to the WorkLens entity.
+func (_u *DocumentUpdate) ClearWorkLenses() *DocumentUpdate {
+	_u.mutation.ClearWorkLenses()
+	return _u
+}
+
+// RemoveWorkLenseIDs removes the "work_lenses" edge to WorkLens entities by IDs.
+func (_u *DocumentUpdate) RemoveWorkLenseIDs(ids ...int) *DocumentUpdate {
+	_u.mutation.RemoveWorkLenseIDs(ids...)
+	return _u
+}
+
+// RemoveWorkLenses removes "work_lenses" edges to WorkLens entities.
+func (_u *DocumentUpdate) RemoveWorkLenses(v ...*WorkLens) *DocumentUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWorkLenseIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -595,6 +632,51 @@ func (_u *DocumentUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.WorkLensesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   document.WorkLensesTable,
+			Columns: document.WorkLensesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWorkLensesIDs(); len(nodes) > 0 && !_u.mutation.WorkLensesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   document.WorkLensesTable,
+			Columns: document.WorkLensesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WorkLensesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   document.WorkLensesTable,
+			Columns: document.WorkLensesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -956,6 +1038,21 @@ func (_u *DocumentUpdateOne) AddFragments(v ...*DocumentFragment) *DocumentUpdat
 	return _u.AddFragmentIDs(ids...)
 }
 
+// AddWorkLenseIDs adds the "work_lenses" edge to the WorkLens entity by IDs.
+func (_u *DocumentUpdateOne) AddWorkLenseIDs(ids ...int) *DocumentUpdateOne {
+	_u.mutation.AddWorkLenseIDs(ids...)
+	return _u
+}
+
+// AddWorkLenses adds the "work_lenses" edges to the WorkLens entity.
+func (_u *DocumentUpdateOne) AddWorkLenses(v ...*WorkLens) *DocumentUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWorkLenseIDs(ids...)
+}
+
 // Mutation returns the DocumentMutation object of the builder.
 func (_u *DocumentUpdateOne) Mutation() *DocumentMutation {
 	return _u.mutation
@@ -980,6 +1077,27 @@ func (_u *DocumentUpdateOne) RemoveFragments(v ...*DocumentFragment) *DocumentUp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveFragmentIDs(ids...)
+}
+
+// ClearWorkLenses clears all "work_lenses" edges to the WorkLens entity.
+func (_u *DocumentUpdateOne) ClearWorkLenses() *DocumentUpdateOne {
+	_u.mutation.ClearWorkLenses()
+	return _u
+}
+
+// RemoveWorkLenseIDs removes the "work_lenses" edge to WorkLens entities by IDs.
+func (_u *DocumentUpdateOne) RemoveWorkLenseIDs(ids ...int) *DocumentUpdateOne {
+	_u.mutation.RemoveWorkLenseIDs(ids...)
+	return _u
+}
+
+// RemoveWorkLenses removes "work_lenses" edges to WorkLens entities.
+func (_u *DocumentUpdateOne) RemoveWorkLenses(v ...*WorkLens) *DocumentUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWorkLenseIDs(ids...)
 }
 
 // Where appends a list predicates to the DocumentUpdate builder.
@@ -1218,6 +1336,51 @@ func (_u *DocumentUpdateOne) sqlSave(ctx context.Context) (_node *Document, err 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.WorkLensesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   document.WorkLensesTable,
+			Columns: document.WorkLensesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWorkLensesIDs(); len(nodes) > 0 && !_u.mutation.WorkLensesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   document.WorkLensesTable,
+			Columns: document.WorkLensesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WorkLensesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   document.WorkLensesTable,
+			Columns: document.WorkLensesPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklens.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -99,7 +99,7 @@ func validateWorkLensTargetKind() ent.Hook {
 	}
 }
 
-// Edges connects a lens to its parent work area.
+// Edges connects a lens to its parent work area and document results.
 func (WorkLens) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("area", WorkArea.Type).
@@ -109,6 +109,9 @@ func (WorkLens) Edges() []ent.Edge {
 			Immutable().
 			Field("work_area_id").
 			Comment("Parent work area that owns this lens."),
+		edge.To("documents", Document.Type).
+			Through("document_results", DocumentLensResult.Type).
+			Comment("Documents ranked under this lens."),
 	}
 }
 
