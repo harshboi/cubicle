@@ -14,6 +14,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
+	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 	"time"
@@ -299,6 +300,46 @@ func init() {
 	ticketpullrequest.DefaultUpdatedAt = ticketpullrequestDescUpdatedAt.Default.(func() time.Time)
 	// ticketpullrequest.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	ticketpullrequest.UpdateDefaultUpdatedAt = ticketpullrequestDescUpdatedAt.UpdateDefault.(func() time.Time)
+	workareaFields := schema.WorkArea{}.Fields()
+	_ = workareaFields
+	// workareaDescKey is the schema descriptor for key field.
+	workareaDescKey := workareaFields[0].Descriptor()
+	// workarea.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	workarea.KeyValidator = workareaDescKey.Validators[0].(func(string) error)
+	// workareaDescDisplayName is the schema descriptor for display_name field.
+	workareaDescDisplayName := workareaFields[3].Descriptor()
+	// workarea.DisplayNameValidator is a validator for the "display_name" field. It is called by the builders before save.
+	workarea.DisplayNameValidator = workareaDescDisplayName.Validators[0].(func(string) error)
+	// workareaDescLensCount is the schema descriptor for lens_count field.
+	workareaDescLensCount := workareaFields[5].Descriptor()
+	// workarea.DefaultLensCount holds the default value on creation for the lens_count field.
+	workarea.DefaultLensCount = workareaDescLensCount.Default.(int)
+	// workareaDescResultCount is the schema descriptor for result_count field.
+	workareaDescResultCount := workareaFields[6].Descriptor()
+	// workarea.DefaultResultCount holds the default value on creation for the result_count field.
+	workarea.DefaultResultCount = workareaDescResultCount.Default.(int)
+	// workareaDescEventCount is the schema descriptor for event_count field.
+	workareaDescEventCount := workareaFields[7].Descriptor()
+	// workarea.DefaultEventCount holds the default value on creation for the event_count field.
+	workarea.DefaultEventCount = workareaDescEventCount.Default.(int)
+	// workareaDescRankScore is the schema descriptor for rank_score field.
+	workareaDescRankScore := workareaFields[10].Descriptor()
+	// workarea.DefaultRankScore holds the default value on creation for the rank_score field.
+	workarea.DefaultRankScore = workareaDescRankScore.Default.(float64)
+	// workareaDescConfidence is the schema descriptor for confidence field.
+	workareaDescConfidence := workareaFields[13].Descriptor()
+	// workarea.DefaultConfidence holds the default value on creation for the confidence field.
+	workarea.DefaultConfidence = workareaDescConfidence.Default.(float64)
+	// workareaDescCreatedAt is the schema descriptor for created_at field.
+	workareaDescCreatedAt := workareaFields[14].Descriptor()
+	// workarea.DefaultCreatedAt holds the default value on creation for the created_at field.
+	workarea.DefaultCreatedAt = workareaDescCreatedAt.Default.(func() time.Time)
+	// workareaDescUpdatedAt is the schema descriptor for updated_at field.
+	workareaDescUpdatedAt := workareaFields[15].Descriptor()
+	// workarea.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	workarea.DefaultUpdatedAt = workareaDescUpdatedAt.Default.(func() time.Time)
+	// workarea.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	workarea.UpdateDefaultUpdatedAt = workareaDescUpdatedAt.UpdateDefault.(func() time.Time)
 	workstreamFields := schema.Workstream{}.Fields()
 	_ = workstreamFields
 	// workstreamDescKey is the schema descriptor for key field.

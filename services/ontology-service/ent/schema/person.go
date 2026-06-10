@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	entschema "entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -49,6 +50,15 @@ func (Person) Fields() []ent.Field {
 		qualityFields(),
 		timestampFields(),
 	)
+}
+
+// Edges connects Person only to bounded work areas, not directly to every
+// document, ticket, message, or pull request the person has touched.
+func (Person) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.To("work_areas", WorkArea.Type).
+			Comment("Bounded Cubicle work areas owned by this person."),
+	}
 }
 
 // Indexes supports common source-identity lookups without making those handles

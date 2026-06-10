@@ -15,6 +15,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
+	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 	"errors"
@@ -45,6 +46,7 @@ const (
 	TypeTicketDocumentFragment = "TicketDocumentFragment"
 	TypeTicketMessage          = "TicketMessage"
 	TypeTicketPullRequest      = "TicketPullRequest"
+	TypeWorkArea               = "WorkArea"
 	TypeWorkstream             = "Workstream"
 	TypeWorkstreamTicket       = "WorkstreamTicket"
 )
@@ -6458,6 +6460,9 @@ type PersonMutation struct {
 	created_at        *time.Time
 	updated_at        *time.Time
 	clearedFields     map[string]struct{}
+	work_areas        map[int]struct{}
+	removedwork_areas map[int]struct{}
+	clearedwork_areas bool
 	done              bool
 	oldValue          func(context.Context) (*Person, error)
 	predicates        []predicate.Person
@@ -7421,6 +7426,60 @@ func (m *PersonMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// AddWorkAreaIDs adds the "work_areas" edge to the WorkArea entity by ids.
+func (m *PersonMutation) AddWorkAreaIDs(ids ...int) {
+	if m.work_areas == nil {
+		m.work_areas = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.work_areas[ids[i]] = struct{}{}
+	}
+}
+
+// ClearWorkAreas clears the "work_areas" edge to the WorkArea entity.
+func (m *PersonMutation) ClearWorkAreas() {
+	m.clearedwork_areas = true
+}
+
+// WorkAreasCleared reports if the "work_areas" edge to the WorkArea entity was cleared.
+func (m *PersonMutation) WorkAreasCleared() bool {
+	return m.clearedwork_areas
+}
+
+// RemoveWorkAreaIDs removes the "work_areas" edge to the WorkArea entity by IDs.
+func (m *PersonMutation) RemoveWorkAreaIDs(ids ...int) {
+	if m.removedwork_areas == nil {
+		m.removedwork_areas = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.work_areas, ids[i])
+		m.removedwork_areas[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedWorkAreas returns the removed IDs of the "work_areas" edge to the WorkArea entity.
+func (m *PersonMutation) RemovedWorkAreasIDs() (ids []int) {
+	for id := range m.removedwork_areas {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// WorkAreasIDs returns the "work_areas" edge IDs in the mutation.
+func (m *PersonMutation) WorkAreasIDs() (ids []int) {
+	for id := range m.work_areas {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetWorkAreas resets all changes to the "work_areas" edge.
+func (m *PersonMutation) ResetWorkAreas() {
+	m.work_areas = nil
+	m.clearedwork_areas = false
+	m.removedwork_areas = nil
+}
+
 // Where appends a list predicates to the PersonMutation builder.
 func (m *PersonMutation) Where(ps ...predicate.Person) {
 	m.predicates = append(m.predicates, ps...)
@@ -7950,49 +8009,85 @@ func (m *PersonMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *PersonMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.work_areas != nil {
+		edges = append(edges, person.EdgeWorkAreas)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *PersonMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case person.EdgeWorkAreas:
+		ids := make([]ent.Value, 0, len(m.work_areas))
+		for id := range m.work_areas {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *PersonMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedwork_areas != nil {
+		edges = append(edges, person.EdgeWorkAreas)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *PersonMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case person.EdgeWorkAreas:
+		ids := make([]ent.Value, 0, len(m.removedwork_areas))
+		for id := range m.removedwork_areas {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *PersonMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedwork_areas {
+		edges = append(edges, person.EdgeWorkAreas)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *PersonMutation) EdgeCleared(name string) bool {
+	switch name {
+	case person.EdgeWorkAreas:
+		return m.clearedwork_areas
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *PersonMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Person unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *PersonMutation) ResetEdge(name string) error {
+	switch name {
+	case person.EdgeWorkAreas:
+		m.ResetWorkAreas()
+		return nil
+	}
 	return fmt.Errorf("unknown Person edge %s", name)
 }
 
@@ -15598,6 +15693,1424 @@ func (m *TicketPullRequestMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown TicketPullRequest edge %s", name)
+}
+
+// WorkAreaMutation represents an operation that mutates the WorkArea nodes in the graph.
+type WorkAreaMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	key              *string
+	work_area_kind   *workarea.WorkAreaKind
+	display_name     *string
+	description      *string
+	lens_count       *int
+	addlens_count    *int
+	result_count     *int
+	addresult_count  *int
+	event_count      *int
+	addevent_count   *int
+	first_seen_at    *time.Time
+	last_activity_at *time.Time
+	rank_score       *float64
+	addrank_score    *float64
+	freshness_state  *workarea.FreshnessState
+	visibility       *workarea.Visibility
+	confidence       *float64
+	addconfidence    *float64
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	person           *int
+	clearedperson    bool
+	done             bool
+	oldValue         func(context.Context) (*WorkArea, error)
+	predicates       []predicate.WorkArea
+}
+
+var _ ent.Mutation = (*WorkAreaMutation)(nil)
+
+// workareaOption allows management of the mutation configuration using functional options.
+type workareaOption func(*WorkAreaMutation)
+
+// newWorkAreaMutation creates new mutation for the WorkArea entity.
+func newWorkAreaMutation(c config, op Op, opts ...workareaOption) *WorkAreaMutation {
+	m := &WorkAreaMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWorkArea,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withWorkAreaID sets the ID field of the mutation.
+func withWorkAreaID(id int) workareaOption {
+	return func(m *WorkAreaMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *WorkArea
+		)
+		m.oldValue = func(ctx context.Context) (*WorkArea, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().WorkArea.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withWorkArea sets the old WorkArea of the mutation.
+func withWorkArea(node *WorkArea) workareaOption {
+	return func(m *WorkAreaMutation) {
+		m.oldValue = func(context.Context) (*WorkArea, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WorkAreaMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WorkAreaMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *WorkAreaMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *WorkAreaMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().WorkArea.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetKey sets the "key" field.
+func (m *WorkAreaMutation) SetKey(s string) {
+	m.key = &s
+}
+
+// Key returns the value of the "key" field in the mutation.
+func (m *WorkAreaMutation) Key() (r string, exists bool) {
+	v := m.key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKey returns the old "key" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKey: %w", err)
+	}
+	return oldValue.Key, nil
+}
+
+// ResetKey resets all changes to the "key" field.
+func (m *WorkAreaMutation) ResetKey() {
+	m.key = nil
+}
+
+// SetPersonID sets the "person_id" field.
+func (m *WorkAreaMutation) SetPersonID(i int) {
+	m.person = &i
+}
+
+// PersonID returns the value of the "person_id" field in the mutation.
+func (m *WorkAreaMutation) PersonID() (r int, exists bool) {
+	v := m.person
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPersonID returns the old "person_id" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldPersonID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPersonID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPersonID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPersonID: %w", err)
+	}
+	return oldValue.PersonID, nil
+}
+
+// ResetPersonID resets all changes to the "person_id" field.
+func (m *WorkAreaMutation) ResetPersonID() {
+	m.person = nil
+}
+
+// SetWorkAreaKind sets the "work_area_kind" field.
+func (m *WorkAreaMutation) SetWorkAreaKind(wak workarea.WorkAreaKind) {
+	m.work_area_kind = &wak
+}
+
+// WorkAreaKind returns the value of the "work_area_kind" field in the mutation.
+func (m *WorkAreaMutation) WorkAreaKind() (r workarea.WorkAreaKind, exists bool) {
+	v := m.work_area_kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWorkAreaKind returns the old "work_area_kind" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldWorkAreaKind(ctx context.Context) (v workarea.WorkAreaKind, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWorkAreaKind is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWorkAreaKind requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWorkAreaKind: %w", err)
+	}
+	return oldValue.WorkAreaKind, nil
+}
+
+// ResetWorkAreaKind resets all changes to the "work_area_kind" field.
+func (m *WorkAreaMutation) ResetWorkAreaKind() {
+	m.work_area_kind = nil
+}
+
+// SetDisplayName sets the "display_name" field.
+func (m *WorkAreaMutation) SetDisplayName(s string) {
+	m.display_name = &s
+}
+
+// DisplayName returns the value of the "display_name" field in the mutation.
+func (m *WorkAreaMutation) DisplayName() (r string, exists bool) {
+	v := m.display_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDisplayName returns the old "display_name" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldDisplayName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDisplayName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDisplayName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDisplayName: %w", err)
+	}
+	return oldValue.DisplayName, nil
+}
+
+// ResetDisplayName resets all changes to the "display_name" field.
+func (m *WorkAreaMutation) ResetDisplayName() {
+	m.display_name = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *WorkAreaMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *WorkAreaMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *WorkAreaMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[workarea.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *WorkAreaMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[workarea.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *WorkAreaMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, workarea.FieldDescription)
+}
+
+// SetLensCount sets the "lens_count" field.
+func (m *WorkAreaMutation) SetLensCount(i int) {
+	m.lens_count = &i
+	m.addlens_count = nil
+}
+
+// LensCount returns the value of the "lens_count" field in the mutation.
+func (m *WorkAreaMutation) LensCount() (r int, exists bool) {
+	v := m.lens_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLensCount returns the old "lens_count" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldLensCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLensCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLensCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLensCount: %w", err)
+	}
+	return oldValue.LensCount, nil
+}
+
+// AddLensCount adds i to the "lens_count" field.
+func (m *WorkAreaMutation) AddLensCount(i int) {
+	if m.addlens_count != nil {
+		*m.addlens_count += i
+	} else {
+		m.addlens_count = &i
+	}
+}
+
+// AddedLensCount returns the value that was added to the "lens_count" field in this mutation.
+func (m *WorkAreaMutation) AddedLensCount() (r int, exists bool) {
+	v := m.addlens_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetLensCount resets all changes to the "lens_count" field.
+func (m *WorkAreaMutation) ResetLensCount() {
+	m.lens_count = nil
+	m.addlens_count = nil
+}
+
+// SetResultCount sets the "result_count" field.
+func (m *WorkAreaMutation) SetResultCount(i int) {
+	m.result_count = &i
+	m.addresult_count = nil
+}
+
+// ResultCount returns the value of the "result_count" field in the mutation.
+func (m *WorkAreaMutation) ResultCount() (r int, exists bool) {
+	v := m.result_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldResultCount returns the old "result_count" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldResultCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldResultCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldResultCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldResultCount: %w", err)
+	}
+	return oldValue.ResultCount, nil
+}
+
+// AddResultCount adds i to the "result_count" field.
+func (m *WorkAreaMutation) AddResultCount(i int) {
+	if m.addresult_count != nil {
+		*m.addresult_count += i
+	} else {
+		m.addresult_count = &i
+	}
+}
+
+// AddedResultCount returns the value that was added to the "result_count" field in this mutation.
+func (m *WorkAreaMutation) AddedResultCount() (r int, exists bool) {
+	v := m.addresult_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetResultCount resets all changes to the "result_count" field.
+func (m *WorkAreaMutation) ResetResultCount() {
+	m.result_count = nil
+	m.addresult_count = nil
+}
+
+// SetEventCount sets the "event_count" field.
+func (m *WorkAreaMutation) SetEventCount(i int) {
+	m.event_count = &i
+	m.addevent_count = nil
+}
+
+// EventCount returns the value of the "event_count" field in the mutation.
+func (m *WorkAreaMutation) EventCount() (r int, exists bool) {
+	v := m.event_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEventCount returns the old "event_count" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldEventCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEventCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEventCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEventCount: %w", err)
+	}
+	return oldValue.EventCount, nil
+}
+
+// AddEventCount adds i to the "event_count" field.
+func (m *WorkAreaMutation) AddEventCount(i int) {
+	if m.addevent_count != nil {
+		*m.addevent_count += i
+	} else {
+		m.addevent_count = &i
+	}
+}
+
+// AddedEventCount returns the value that was added to the "event_count" field in this mutation.
+func (m *WorkAreaMutation) AddedEventCount() (r int, exists bool) {
+	v := m.addevent_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEventCount resets all changes to the "event_count" field.
+func (m *WorkAreaMutation) ResetEventCount() {
+	m.event_count = nil
+	m.addevent_count = nil
+}
+
+// SetFirstSeenAt sets the "first_seen_at" field.
+func (m *WorkAreaMutation) SetFirstSeenAt(t time.Time) {
+	m.first_seen_at = &t
+}
+
+// FirstSeenAt returns the value of the "first_seen_at" field in the mutation.
+func (m *WorkAreaMutation) FirstSeenAt() (r time.Time, exists bool) {
+	v := m.first_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstSeenAt returns the old "first_seen_at" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldFirstSeenAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstSeenAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstSeenAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstSeenAt: %w", err)
+	}
+	return oldValue.FirstSeenAt, nil
+}
+
+// ClearFirstSeenAt clears the value of the "first_seen_at" field.
+func (m *WorkAreaMutation) ClearFirstSeenAt() {
+	m.first_seen_at = nil
+	m.clearedFields[workarea.FieldFirstSeenAt] = struct{}{}
+}
+
+// FirstSeenAtCleared returns if the "first_seen_at" field was cleared in this mutation.
+func (m *WorkAreaMutation) FirstSeenAtCleared() bool {
+	_, ok := m.clearedFields[workarea.FieldFirstSeenAt]
+	return ok
+}
+
+// ResetFirstSeenAt resets all changes to the "first_seen_at" field.
+func (m *WorkAreaMutation) ResetFirstSeenAt() {
+	m.first_seen_at = nil
+	delete(m.clearedFields, workarea.FieldFirstSeenAt)
+}
+
+// SetLastActivityAt sets the "last_activity_at" field.
+func (m *WorkAreaMutation) SetLastActivityAt(t time.Time) {
+	m.last_activity_at = &t
+}
+
+// LastActivityAt returns the value of the "last_activity_at" field in the mutation.
+func (m *WorkAreaMutation) LastActivityAt() (r time.Time, exists bool) {
+	v := m.last_activity_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastActivityAt returns the old "last_activity_at" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldLastActivityAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastActivityAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastActivityAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastActivityAt: %w", err)
+	}
+	return oldValue.LastActivityAt, nil
+}
+
+// ClearLastActivityAt clears the value of the "last_activity_at" field.
+func (m *WorkAreaMutation) ClearLastActivityAt() {
+	m.last_activity_at = nil
+	m.clearedFields[workarea.FieldLastActivityAt] = struct{}{}
+}
+
+// LastActivityAtCleared returns if the "last_activity_at" field was cleared in this mutation.
+func (m *WorkAreaMutation) LastActivityAtCleared() bool {
+	_, ok := m.clearedFields[workarea.FieldLastActivityAt]
+	return ok
+}
+
+// ResetLastActivityAt resets all changes to the "last_activity_at" field.
+func (m *WorkAreaMutation) ResetLastActivityAt() {
+	m.last_activity_at = nil
+	delete(m.clearedFields, workarea.FieldLastActivityAt)
+}
+
+// SetRankScore sets the "rank_score" field.
+func (m *WorkAreaMutation) SetRankScore(f float64) {
+	m.rank_score = &f
+	m.addrank_score = nil
+}
+
+// RankScore returns the value of the "rank_score" field in the mutation.
+func (m *WorkAreaMutation) RankScore() (r float64, exists bool) {
+	v := m.rank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRankScore returns the old "rank_score" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldRankScore(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRankScore is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRankScore requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRankScore: %w", err)
+	}
+	return oldValue.RankScore, nil
+}
+
+// AddRankScore adds f to the "rank_score" field.
+func (m *WorkAreaMutation) AddRankScore(f float64) {
+	if m.addrank_score != nil {
+		*m.addrank_score += f
+	} else {
+		m.addrank_score = &f
+	}
+}
+
+// AddedRankScore returns the value that was added to the "rank_score" field in this mutation.
+func (m *WorkAreaMutation) AddedRankScore() (r float64, exists bool) {
+	v := m.addrank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRankScore resets all changes to the "rank_score" field.
+func (m *WorkAreaMutation) ResetRankScore() {
+	m.rank_score = nil
+	m.addrank_score = nil
+}
+
+// SetFreshnessState sets the "freshness_state" field.
+func (m *WorkAreaMutation) SetFreshnessState(ws workarea.FreshnessState) {
+	m.freshness_state = &ws
+}
+
+// FreshnessState returns the value of the "freshness_state" field in the mutation.
+func (m *WorkAreaMutation) FreshnessState() (r workarea.FreshnessState, exists bool) {
+	v := m.freshness_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFreshnessState returns the old "freshness_state" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldFreshnessState(ctx context.Context) (v workarea.FreshnessState, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFreshnessState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFreshnessState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFreshnessState: %w", err)
+	}
+	return oldValue.FreshnessState, nil
+}
+
+// ResetFreshnessState resets all changes to the "freshness_state" field.
+func (m *WorkAreaMutation) ResetFreshnessState() {
+	m.freshness_state = nil
+}
+
+// SetVisibility sets the "visibility" field.
+func (m *WorkAreaMutation) SetVisibility(w workarea.Visibility) {
+	m.visibility = &w
+}
+
+// Visibility returns the value of the "visibility" field in the mutation.
+func (m *WorkAreaMutation) Visibility() (r workarea.Visibility, exists bool) {
+	v := m.visibility
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVisibility returns the old "visibility" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldVisibility(ctx context.Context) (v workarea.Visibility, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVisibility is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVisibility requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVisibility: %w", err)
+	}
+	return oldValue.Visibility, nil
+}
+
+// ResetVisibility resets all changes to the "visibility" field.
+func (m *WorkAreaMutation) ResetVisibility() {
+	m.visibility = nil
+}
+
+// SetConfidence sets the "confidence" field.
+func (m *WorkAreaMutation) SetConfidence(f float64) {
+	m.confidence = &f
+	m.addconfidence = nil
+}
+
+// Confidence returns the value of the "confidence" field in the mutation.
+func (m *WorkAreaMutation) Confidence() (r float64, exists bool) {
+	v := m.confidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfidence returns the old "confidence" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldConfidence(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfidence is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfidence requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfidence: %w", err)
+	}
+	return oldValue.Confidence, nil
+}
+
+// AddConfidence adds f to the "confidence" field.
+func (m *WorkAreaMutation) AddConfidence(f float64) {
+	if m.addconfidence != nil {
+		*m.addconfidence += f
+	} else {
+		m.addconfidence = &f
+	}
+}
+
+// AddedConfidence returns the value that was added to the "confidence" field in this mutation.
+func (m *WorkAreaMutation) AddedConfidence() (r float64, exists bool) {
+	v := m.addconfidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConfidence resets all changes to the "confidence" field.
+func (m *WorkAreaMutation) ResetConfidence() {
+	m.confidence = nil
+	m.addconfidence = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WorkAreaMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WorkAreaMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WorkAreaMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *WorkAreaMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *WorkAreaMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the WorkArea entity.
+// If the WorkArea object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *WorkAreaMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *WorkAreaMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearPerson clears the "person" edge to the Person entity.
+func (m *WorkAreaMutation) ClearPerson() {
+	m.clearedperson = true
+	m.clearedFields[workarea.FieldPersonID] = struct{}{}
+}
+
+// PersonCleared reports if the "person" edge to the Person entity was cleared.
+func (m *WorkAreaMutation) PersonCleared() bool {
+	return m.clearedperson
+}
+
+// PersonIDs returns the "person" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PersonID instead. It exists only for internal usage by the builders.
+func (m *WorkAreaMutation) PersonIDs() (ids []int) {
+	if id := m.person; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetPerson resets all changes to the "person" edge.
+func (m *WorkAreaMutation) ResetPerson() {
+	m.person = nil
+	m.clearedperson = false
+}
+
+// Where appends a list predicates to the WorkAreaMutation builder.
+func (m *WorkAreaMutation) Where(ps ...predicate.WorkArea) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WorkAreaMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WorkAreaMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.WorkArea, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WorkAreaMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WorkAreaMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (WorkArea).
+func (m *WorkAreaMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WorkAreaMutation) Fields() []string {
+	fields := make([]string, 0, 16)
+	if m.key != nil {
+		fields = append(fields, workarea.FieldKey)
+	}
+	if m.person != nil {
+		fields = append(fields, workarea.FieldPersonID)
+	}
+	if m.work_area_kind != nil {
+		fields = append(fields, workarea.FieldWorkAreaKind)
+	}
+	if m.display_name != nil {
+		fields = append(fields, workarea.FieldDisplayName)
+	}
+	if m.description != nil {
+		fields = append(fields, workarea.FieldDescription)
+	}
+	if m.lens_count != nil {
+		fields = append(fields, workarea.FieldLensCount)
+	}
+	if m.result_count != nil {
+		fields = append(fields, workarea.FieldResultCount)
+	}
+	if m.event_count != nil {
+		fields = append(fields, workarea.FieldEventCount)
+	}
+	if m.first_seen_at != nil {
+		fields = append(fields, workarea.FieldFirstSeenAt)
+	}
+	if m.last_activity_at != nil {
+		fields = append(fields, workarea.FieldLastActivityAt)
+	}
+	if m.rank_score != nil {
+		fields = append(fields, workarea.FieldRankScore)
+	}
+	if m.freshness_state != nil {
+		fields = append(fields, workarea.FieldFreshnessState)
+	}
+	if m.visibility != nil {
+		fields = append(fields, workarea.FieldVisibility)
+	}
+	if m.confidence != nil {
+		fields = append(fields, workarea.FieldConfidence)
+	}
+	if m.created_at != nil {
+		fields = append(fields, workarea.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, workarea.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WorkAreaMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case workarea.FieldKey:
+		return m.Key()
+	case workarea.FieldPersonID:
+		return m.PersonID()
+	case workarea.FieldWorkAreaKind:
+		return m.WorkAreaKind()
+	case workarea.FieldDisplayName:
+		return m.DisplayName()
+	case workarea.FieldDescription:
+		return m.Description()
+	case workarea.FieldLensCount:
+		return m.LensCount()
+	case workarea.FieldResultCount:
+		return m.ResultCount()
+	case workarea.FieldEventCount:
+		return m.EventCount()
+	case workarea.FieldFirstSeenAt:
+		return m.FirstSeenAt()
+	case workarea.FieldLastActivityAt:
+		return m.LastActivityAt()
+	case workarea.FieldRankScore:
+		return m.RankScore()
+	case workarea.FieldFreshnessState:
+		return m.FreshnessState()
+	case workarea.FieldVisibility:
+		return m.Visibility()
+	case workarea.FieldConfidence:
+		return m.Confidence()
+	case workarea.FieldCreatedAt:
+		return m.CreatedAt()
+	case workarea.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WorkAreaMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case workarea.FieldKey:
+		return m.OldKey(ctx)
+	case workarea.FieldPersonID:
+		return m.OldPersonID(ctx)
+	case workarea.FieldWorkAreaKind:
+		return m.OldWorkAreaKind(ctx)
+	case workarea.FieldDisplayName:
+		return m.OldDisplayName(ctx)
+	case workarea.FieldDescription:
+		return m.OldDescription(ctx)
+	case workarea.FieldLensCount:
+		return m.OldLensCount(ctx)
+	case workarea.FieldResultCount:
+		return m.OldResultCount(ctx)
+	case workarea.FieldEventCount:
+		return m.OldEventCount(ctx)
+	case workarea.FieldFirstSeenAt:
+		return m.OldFirstSeenAt(ctx)
+	case workarea.FieldLastActivityAt:
+		return m.OldLastActivityAt(ctx)
+	case workarea.FieldRankScore:
+		return m.OldRankScore(ctx)
+	case workarea.FieldFreshnessState:
+		return m.OldFreshnessState(ctx)
+	case workarea.FieldVisibility:
+		return m.OldVisibility(ctx)
+	case workarea.FieldConfidence:
+		return m.OldConfidence(ctx)
+	case workarea.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case workarea.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown WorkArea field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkAreaMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case workarea.FieldKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKey(v)
+		return nil
+	case workarea.FieldPersonID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPersonID(v)
+		return nil
+	case workarea.FieldWorkAreaKind:
+		v, ok := value.(workarea.WorkAreaKind)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkAreaKind(v)
+		return nil
+	case workarea.FieldDisplayName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDisplayName(v)
+		return nil
+	case workarea.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case workarea.FieldLensCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLensCount(v)
+		return nil
+	case workarea.FieldResultCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetResultCount(v)
+		return nil
+	case workarea.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventCount(v)
+		return nil
+	case workarea.FieldFirstSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstSeenAt(v)
+		return nil
+	case workarea.FieldLastActivityAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastActivityAt(v)
+		return nil
+	case workarea.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRankScore(v)
+		return nil
+	case workarea.FieldFreshnessState:
+		v, ok := value.(workarea.FreshnessState)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFreshnessState(v)
+		return nil
+	case workarea.FieldVisibility:
+		v, ok := value.(workarea.Visibility)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisibility(v)
+		return nil
+	case workarea.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfidence(v)
+		return nil
+	case workarea.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case workarea.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WorkArea field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WorkAreaMutation) AddedFields() []string {
+	var fields []string
+	if m.addlens_count != nil {
+		fields = append(fields, workarea.FieldLensCount)
+	}
+	if m.addresult_count != nil {
+		fields = append(fields, workarea.FieldResultCount)
+	}
+	if m.addevent_count != nil {
+		fields = append(fields, workarea.FieldEventCount)
+	}
+	if m.addrank_score != nil {
+		fields = append(fields, workarea.FieldRankScore)
+	}
+	if m.addconfidence != nil {
+		fields = append(fields, workarea.FieldConfidence)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WorkAreaMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case workarea.FieldLensCount:
+		return m.AddedLensCount()
+	case workarea.FieldResultCount:
+		return m.AddedResultCount()
+	case workarea.FieldEventCount:
+		return m.AddedEventCount()
+	case workarea.FieldRankScore:
+		return m.AddedRankScore()
+	case workarea.FieldConfidence:
+		return m.AddedConfidence()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkAreaMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case workarea.FieldLensCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLensCount(v)
+		return nil
+	case workarea.FieldResultCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddResultCount(v)
+		return nil
+	case workarea.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEventCount(v)
+		return nil
+	case workarea.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRankScore(v)
+		return nil
+	case workarea.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfidence(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WorkArea numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WorkAreaMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(workarea.FieldDescription) {
+		fields = append(fields, workarea.FieldDescription)
+	}
+	if m.FieldCleared(workarea.FieldFirstSeenAt) {
+		fields = append(fields, workarea.FieldFirstSeenAt)
+	}
+	if m.FieldCleared(workarea.FieldLastActivityAt) {
+		fields = append(fields, workarea.FieldLastActivityAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WorkAreaMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WorkAreaMutation) ClearField(name string) error {
+	switch name {
+	case workarea.FieldDescription:
+		m.ClearDescription()
+		return nil
+	case workarea.FieldFirstSeenAt:
+		m.ClearFirstSeenAt()
+		return nil
+	case workarea.FieldLastActivityAt:
+		m.ClearLastActivityAt()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkArea nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WorkAreaMutation) ResetField(name string) error {
+	switch name {
+	case workarea.FieldKey:
+		m.ResetKey()
+		return nil
+	case workarea.FieldPersonID:
+		m.ResetPersonID()
+		return nil
+	case workarea.FieldWorkAreaKind:
+		m.ResetWorkAreaKind()
+		return nil
+	case workarea.FieldDisplayName:
+		m.ResetDisplayName()
+		return nil
+	case workarea.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case workarea.FieldLensCount:
+		m.ResetLensCount()
+		return nil
+	case workarea.FieldResultCount:
+		m.ResetResultCount()
+		return nil
+	case workarea.FieldEventCount:
+		m.ResetEventCount()
+		return nil
+	case workarea.FieldFirstSeenAt:
+		m.ResetFirstSeenAt()
+		return nil
+	case workarea.FieldLastActivityAt:
+		m.ResetLastActivityAt()
+		return nil
+	case workarea.FieldRankScore:
+		m.ResetRankScore()
+		return nil
+	case workarea.FieldFreshnessState:
+		m.ResetFreshnessState()
+		return nil
+	case workarea.FieldVisibility:
+		m.ResetVisibility()
+		return nil
+	case workarea.FieldConfidence:
+		m.ResetConfidence()
+		return nil
+	case workarea.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case workarea.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkArea field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WorkAreaMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.person != nil {
+		edges = append(edges, workarea.EdgePerson)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WorkAreaMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case workarea.EdgePerson:
+		if id := m.person; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WorkAreaMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WorkAreaMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WorkAreaMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedperson {
+		edges = append(edges, workarea.EdgePerson)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WorkAreaMutation) EdgeCleared(name string) bool {
+	switch name {
+	case workarea.EdgePerson:
+		return m.clearedperson
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WorkAreaMutation) ClearEdge(name string) error {
+	switch name {
+	case workarea.EdgePerson:
+		m.ClearPerson()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkArea unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WorkAreaMutation) ResetEdge(name string) error {
+	switch name {
+	case workarea.EdgePerson:
+		m.ResetPerson()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkArea edge %s", name)
 }
 
 // WorkstreamMutation represents an operation that mutates the Workstream nodes in the graph.

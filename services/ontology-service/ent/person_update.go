@@ -6,6 +6,7 @@ import (
 	"context"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/predicate"
+	"cubicle/services/ontology-service/ent/workarea"
 	"errors"
 	"fmt"
 	"time"
@@ -351,9 +352,45 @@ func (_u *PersonUpdate) SetUpdatedAt(v time.Time) *PersonUpdate {
 	return _u
 }
 
+// AddWorkAreaIDs adds the "work_areas" edge to the WorkArea entity by IDs.
+func (_u *PersonUpdate) AddWorkAreaIDs(ids ...int) *PersonUpdate {
+	_u.mutation.AddWorkAreaIDs(ids...)
+	return _u
+}
+
+// AddWorkAreas adds the "work_areas" edges to the WorkArea entity.
+func (_u *PersonUpdate) AddWorkAreas(v ...*WorkArea) *PersonUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWorkAreaIDs(ids...)
+}
+
 // Mutation returns the PersonMutation object of the builder.
 func (_u *PersonUpdate) Mutation() *PersonMutation {
 	return _u.mutation
+}
+
+// ClearWorkAreas clears all "work_areas" edges to the WorkArea entity.
+func (_u *PersonUpdate) ClearWorkAreas() *PersonUpdate {
+	_u.mutation.ClearWorkAreas()
+	return _u
+}
+
+// RemoveWorkAreaIDs removes the "work_areas" edge to WorkArea entities by IDs.
+func (_u *PersonUpdate) RemoveWorkAreaIDs(ids ...int) *PersonUpdate {
+	_u.mutation.RemoveWorkAreaIDs(ids...)
+	return _u
+}
+
+// RemoveWorkAreas removes "work_areas" edges to WorkArea entities.
+func (_u *PersonUpdate) RemoveWorkAreas(v ...*WorkArea) *PersonUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWorkAreaIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -521,6 +558,51 @@ func (_u *PersonUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(person.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.WorkAreasCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   person.WorkAreasTable,
+			Columns: []string{person.WorkAreasColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workarea.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWorkAreasIDs(); len(nodes) > 0 && !_u.mutation.WorkAreasCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   person.WorkAreasTable,
+			Columns: []string{person.WorkAreasColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workarea.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WorkAreasIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   person.WorkAreasTable,
+			Columns: []string{person.WorkAreasColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workarea.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -865,9 +947,45 @@ func (_u *PersonUpdateOne) SetUpdatedAt(v time.Time) *PersonUpdateOne {
 	return _u
 }
 
+// AddWorkAreaIDs adds the "work_areas" edge to the WorkArea entity by IDs.
+func (_u *PersonUpdateOne) AddWorkAreaIDs(ids ...int) *PersonUpdateOne {
+	_u.mutation.AddWorkAreaIDs(ids...)
+	return _u
+}
+
+// AddWorkAreas adds the "work_areas" edges to the WorkArea entity.
+func (_u *PersonUpdateOne) AddWorkAreas(v ...*WorkArea) *PersonUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWorkAreaIDs(ids...)
+}
+
 // Mutation returns the PersonMutation object of the builder.
 func (_u *PersonUpdateOne) Mutation() *PersonMutation {
 	return _u.mutation
+}
+
+// ClearWorkAreas clears all "work_areas" edges to the WorkArea entity.
+func (_u *PersonUpdateOne) ClearWorkAreas() *PersonUpdateOne {
+	_u.mutation.ClearWorkAreas()
+	return _u
+}
+
+// RemoveWorkAreaIDs removes the "work_areas" edge to WorkArea entities by IDs.
+func (_u *PersonUpdateOne) RemoveWorkAreaIDs(ids ...int) *PersonUpdateOne {
+	_u.mutation.RemoveWorkAreaIDs(ids...)
+	return _u
+}
+
+// RemoveWorkAreas removes "work_areas" edges to WorkArea entities.
+func (_u *PersonUpdateOne) RemoveWorkAreas(v ...*WorkArea) *PersonUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWorkAreaIDs(ids...)
 }
 
 // Where appends a list predicates to the PersonUpdate builder.
@@ -1065,6 +1183,51 @@ func (_u *PersonUpdateOne) sqlSave(ctx context.Context) (_node *Person, err erro
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(person.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.WorkAreasCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   person.WorkAreasTable,
+			Columns: []string{person.WorkAreasColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workarea.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWorkAreasIDs(); len(nodes) > 0 && !_u.mutation.WorkAreasCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   person.WorkAreasTable,
+			Columns: []string{person.WorkAreasColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workarea.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WorkAreasIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   person.WorkAreasTable,
+			Columns: []string{person.WorkAreasColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workarea.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Person{config: _u.config}
 	_spec.Assign = _node.assignValues

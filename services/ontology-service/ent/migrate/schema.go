@@ -494,6 +494,52 @@ var (
 			},
 		},
 	}
+	// WorkAreasColumns holds the columns for the "work_areas" table.
+	WorkAreasColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "work_area_kind", Type: field.TypeEnum, Enums: []string{"documents", "code", "tickets", "communications"}},
+		{Name: "display_name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "lens_count", Type: field.TypeInt, Default: 0},
+		{Name: "result_count", Type: field.TypeInt, Default: 0},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "person_id", Type: field.TypeInt},
+	}
+	// WorkAreasTable holds the schema information for the "work_areas" table.
+	WorkAreasTable = &schema.Table{
+		Name:       "work_areas",
+		Columns:    WorkAreasColumns,
+		PrimaryKey: []*schema.Column{WorkAreasColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_areas_persons_work_areas",
+				Columns:    []*schema.Column{WorkAreasColumns[16]},
+				RefColumns: []*schema.Column{PersonsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workarea_person_id_work_area_kind",
+				Unique:  true,
+				Columns: []*schema.Column{WorkAreasColumns[16], WorkAreasColumns[2]},
+			},
+			{
+				Name:    "workarea_person_id_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkAreasColumns[16], WorkAreasColumns[10], WorkAreasColumns[9]},
+			},
+		},
+	}
 	// WorkstreamsColumns holds the columns for the "workstreams" table.
 	WorkstreamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -600,6 +646,7 @@ var (
 		TicketDocumentFragmentsTable,
 		TicketMessagesTable,
 		TicketPullRequestsTable,
+		WorkAreasTable,
 		WorkstreamsTable,
 		WorkstreamTicketsTable,
 	}
@@ -616,6 +663,7 @@ func init() {
 	TicketPullRequestsTable.ForeignKeys[0].RefTable = TicketsTable
 	TicketPullRequestsTable.ForeignKeys[1].RefTable = PullRequestsTable
 	TicketPullRequestsTable.ForeignKeys[2].RefTable = EvidencesTable
+	WorkAreasTable.ForeignKeys[0].RefTable = PersonsTable
 	WorkstreamTicketsTable.ForeignKeys[0].RefTable = WorkstreamsTable
 	WorkstreamTicketsTable.ForeignKeys[1].RefTable = TicketsTable
 	WorkstreamTicketsTable.ForeignKeys[2].RefTable = EvidencesTable

@@ -21,6 +21,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
+	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 
@@ -55,6 +56,8 @@ type Client struct {
 	TicketMessage *TicketMessageClient
 	// TicketPullRequest is the client for interacting with the TicketPullRequest builders.
 	TicketPullRequest *TicketPullRequestClient
+	// WorkArea is the client for interacting with the WorkArea builders.
+	WorkArea *WorkAreaClient
 	// Workstream is the client for interacting with the Workstream builders.
 	Workstream *WorkstreamClient
 	// WorkstreamTicket is the client for interacting with the WorkstreamTicket builders.
@@ -80,6 +83,7 @@ func (c *Client) init() {
 	c.TicketDocumentFragment = NewTicketDocumentFragmentClient(c.config)
 	c.TicketMessage = NewTicketMessageClient(c.config)
 	c.TicketPullRequest = NewTicketPullRequestClient(c.config)
+	c.WorkArea = NewWorkAreaClient(c.config)
 	c.Workstream = NewWorkstreamClient(c.config)
 	c.WorkstreamTicket = NewWorkstreamTicketClient(c.config)
 }
@@ -184,6 +188,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		TicketDocumentFragment: NewTicketDocumentFragmentClient(cfg),
 		TicketMessage:          NewTicketMessageClient(cfg),
 		TicketPullRequest:      NewTicketPullRequestClient(cfg),
+		WorkArea:               NewWorkAreaClient(cfg),
 		Workstream:             NewWorkstreamClient(cfg),
 		WorkstreamTicket:       NewWorkstreamTicketClient(cfg),
 	}, nil
@@ -215,6 +220,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		TicketDocumentFragment: NewTicketDocumentFragmentClient(cfg),
 		TicketMessage:          NewTicketMessageClient(cfg),
 		TicketPullRequest:      NewTicketPullRequestClient(cfg),
+		WorkArea:               NewWorkAreaClient(cfg),
 		Workstream:             NewWorkstreamClient(cfg),
 		WorkstreamTicket:       NewWorkstreamTicketClient(cfg),
 	}, nil
@@ -248,7 +254,7 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Document, c.DocumentFragment, c.Evidence, c.Message, c.Person, c.PullRequest,
 		c.Ticket, c.TicketDocumentFragment, c.TicketMessage, c.TicketPullRequest,
-		c.Workstream, c.WorkstreamTicket,
+		c.WorkArea, c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Use(hooks...)
 	}
@@ -260,7 +266,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Document, c.DocumentFragment, c.Evidence, c.Message, c.Person, c.PullRequest,
 		c.Ticket, c.TicketDocumentFragment, c.TicketMessage, c.TicketPullRequest,
-		c.Workstream, c.WorkstreamTicket,
+		c.WorkArea, c.Workstream, c.WorkstreamTicket,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -289,6 +295,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.TicketMessage.mutate(ctx, m)
 	case *TicketPullRequestMutation:
 		return c.TicketPullRequest.mutate(ctx, m)
+	case *WorkAreaMutation:
+		return c.WorkArea.mutate(ctx, m)
 	case *WorkstreamMutation:
 		return c.Workstream.mutate(ctx, m)
 	case *WorkstreamTicketMutation:
@@ -1000,6 +1008,22 @@ func (c *PersonClient) GetX(ctx context.Context, id int) *Person {
 		panic(err)
 	}
 	return obj
+}
+
+// QueryWorkAreas queries the work_areas edge of a Person.
+func (c *PersonClient) QueryWorkAreas(_m *Person) *WorkAreaQuery {
+	query := (&WorkAreaClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(person.Table, person.FieldID, id),
+			sqlgraph.To(workarea.Table, workarea.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, person.WorkAreasTable, person.WorkAreasColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
 }
 
 // Hooks returns the client hooks.
@@ -1790,6 +1814,155 @@ func (c *TicketPullRequestClient) mutate(ctx context.Context, m *TicketPullReque
 	}
 }
 
+// WorkAreaClient is a client for the WorkArea schema.
+type WorkAreaClient struct {
+	config
+}
+
+// NewWorkAreaClient returns a client for the WorkArea from the given config.
+func NewWorkAreaClient(c config) *WorkAreaClient {
+	return &WorkAreaClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workarea.Hooks(f(g(h())))`.
+func (c *WorkAreaClient) Use(hooks ...Hook) {
+	c.hooks.WorkArea = append(c.hooks.WorkArea, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workarea.Intercept(f(g(h())))`.
+func (c *WorkAreaClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkArea = append(c.inters.WorkArea, interceptors...)
+}
+
+// Create returns a builder for creating a WorkArea entity.
+func (c *WorkAreaClient) Create() *WorkAreaCreate {
+	mutation := newWorkAreaMutation(c.config, OpCreate)
+	return &WorkAreaCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkArea entities.
+func (c *WorkAreaClient) CreateBulk(builders ...*WorkAreaCreate) *WorkAreaCreateBulk {
+	return &WorkAreaCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkAreaClient) MapCreateBulk(slice any, setFunc func(*WorkAreaCreate, int)) *WorkAreaCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkAreaCreateBulk{err: fmt.Errorf("calling to WorkAreaClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkAreaCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkAreaCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkArea.
+func (c *WorkAreaClient) Update() *WorkAreaUpdate {
+	mutation := newWorkAreaMutation(c.config, OpUpdate)
+	return &WorkAreaUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkAreaClient) UpdateOne(_m *WorkArea) *WorkAreaUpdateOne {
+	mutation := newWorkAreaMutation(c.config, OpUpdateOne, withWorkArea(_m))
+	return &WorkAreaUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkAreaClient) UpdateOneID(id int) *WorkAreaUpdateOne {
+	mutation := newWorkAreaMutation(c.config, OpUpdateOne, withWorkAreaID(id))
+	return &WorkAreaUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkArea.
+func (c *WorkAreaClient) Delete() *WorkAreaDelete {
+	mutation := newWorkAreaMutation(c.config, OpDelete)
+	return &WorkAreaDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkAreaClient) DeleteOne(_m *WorkArea) *WorkAreaDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkAreaClient) DeleteOneID(id int) *WorkAreaDeleteOne {
+	builder := c.Delete().Where(workarea.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkAreaDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkArea.
+func (c *WorkAreaClient) Query() *WorkAreaQuery {
+	return &WorkAreaQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkArea},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkArea entity by its id.
+func (c *WorkAreaClient) Get(ctx context.Context, id int) (*WorkArea, error) {
+	return c.Query().Where(workarea.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkAreaClient) GetX(ctx context.Context, id int) *WorkArea {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPerson queries the person edge of a WorkArea.
+func (c *WorkAreaClient) QueryPerson(_m *WorkArea) *PersonQuery {
+	query := (&PersonClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workarea.Table, workarea.FieldID, id),
+			sqlgraph.To(person.Table, person.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, workarea.PersonTable, workarea.PersonColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkAreaClient) Hooks() []Hook {
+	return c.hooks.WorkArea
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkAreaClient) Interceptors() []Interceptor {
+	return c.inters.WorkArea
+}
+
+func (c *WorkAreaClient) mutate(ctx context.Context, m *WorkAreaMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkAreaCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkAreaUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkAreaUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkAreaDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkArea mutation op: %q", m.Op())
+	}
+}
+
 // WorkstreamClient is a client for the Workstream schema.
 type WorkstreamClient struct {
 	config
@@ -2082,12 +2255,12 @@ func (c *WorkstreamTicketClient) mutate(ctx context.Context, m *WorkstreamTicket
 type (
 	hooks struct {
 		Document, DocumentFragment, Evidence, Message, Person, PullRequest, Ticket,
-		TicketDocumentFragment, TicketMessage, TicketPullRequest, Workstream,
+		TicketDocumentFragment, TicketMessage, TicketPullRequest, WorkArea, Workstream,
 		WorkstreamTicket []ent.Hook
 	}
 	inters struct {
 		Document, DocumentFragment, Evidence, Message, Person, PullRequest, Ticket,
-		TicketDocumentFragment, TicketMessage, TicketPullRequest, Workstream,
+		TicketDocumentFragment, TicketMessage, TicketPullRequest, WorkArea, Workstream,
 		WorkstreamTicket []ent.Interceptor
 	}
 )

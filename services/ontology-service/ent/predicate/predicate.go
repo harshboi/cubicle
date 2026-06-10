@@ -36,6 +36,9 @@ type TicketMessage func(*sql.Selector)
 // TicketPullRequest is the predicate function for ticketpullrequest builders.
 type TicketPullRequest func(*sql.Selector)
 
+// WorkArea is the predicate function for workarea builders.
+type WorkArea func(*sql.Selector)
+
 // Workstream is the predicate function for workstream builders.
 type Workstream func(*sql.Selector)
 

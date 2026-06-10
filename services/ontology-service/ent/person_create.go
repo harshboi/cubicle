@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"cubicle/services/ontology-service/ent/person"
+	"cubicle/services/ontology-service/ent/workarea"
 	"errors"
 	"fmt"
 	"time"
@@ -272,6 +273,21 @@ func (_c *PersonCreate) SetNillableUpdatedAt(v *time.Time) *PersonCreate {
 	return _c
 }
 
+// AddWorkAreaIDs adds the "work_areas" edge to the WorkArea entity by IDs.
+func (_c *PersonCreate) AddWorkAreaIDs(ids ...int) *PersonCreate {
+	_c.mutation.AddWorkAreaIDs(ids...)
+	return _c
+}
+
+// AddWorkAreas adds the "work_areas" edges to the WorkArea entity.
+func (_c *PersonCreate) AddWorkAreas(v ...*WorkArea) *PersonCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddWorkAreaIDs(ids...)
+}
+
 // Mutation returns the PersonMutation object of the builder.
 func (_c *PersonCreate) Mutation() *PersonMutation {
 	return _c.mutation
@@ -474,6 +490,22 @@ func (_c *PersonCreate) createSpec() (*Person, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(person.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.WorkAreasIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   person.WorkAreasTable,
+			Columns: []string{person.WorkAreasColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workarea.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

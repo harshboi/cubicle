@@ -54,8 +54,29 @@ type Person struct {
 	// Time this row was first created in Cubicle storage.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Time this row was last updated in Cubicle storage.
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the PersonQuery when eager-loading is set.
+	Edges        PersonEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// PersonEdges holds the relations/edges for other nodes in the graph.
+type PersonEdges struct {
+	// Bounded Cubicle work areas owned by this person.
+	WorkAreas []*WorkArea `json:"work_areas,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// WorkAreasOrErr returns the WorkAreas value or an error if the edge
+// was not loaded in eager-loading.
+func (e PersonEdges) WorkAreasOrErr() ([]*WorkArea, error) {
+	if e.loadedTypes[0] {
+		return e.WorkAreas, nil
+	}
+	return nil, &NotLoadedError{edge: "work_areas"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -217,6 +238,11 @@ func (_m *Person) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Person) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryWorkAreas queries the "work_areas" edge of the Person entity.
+func (_m *Person) QueryWorkAreas() *WorkAreaQuery {
+	return NewPersonClient(_m.config).QueryWorkAreas(_m)
 }
 
 // Update returns a builder for updating this Person.

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -52,8 +53,17 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeWorkAreas holds the string denoting the work_areas edge name in mutations.
+	EdgeWorkAreas = "work_areas"
 	// Table holds the table name of the person in the database.
 	Table = "persons"
+	// WorkAreasTable is the table that holds the work_areas relation/edge.
+	WorkAreasTable = "work_areas"
+	// WorkAreasInverseTable is the table name for the WorkArea entity.
+	// It exists in this package in order to avoid circular dependency with the "workarea" package.
+	WorkAreasInverseTable = "work_areas"
+	// WorkAreasColumn is the table column denoting the work_areas relation/edge.
+	WorkAreasColumn = "person_id"
 )
 
 // Columns holds all SQL columns for person fields.
@@ -263,4 +273,25 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByWorkAreasCount orders the results by work_areas count.
+func ByWorkAreasCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWorkAreasStep(), opts...)
+	}
+}
+
+// ByWorkAreas orders the results by work_areas terms.
+func ByWorkAreas(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWorkAreasStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newWorkAreasStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkAreasInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, WorkAreasTable, WorkAreasColumn),
+	)
 }
