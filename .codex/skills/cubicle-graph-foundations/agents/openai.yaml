@@ -1,0 +1,3 @@
+display_name: Cubicle Graph Foundations
+short_description: Preserve the Source Evidence Spine and ontology-service graph foundation decisions.
+default_prompt: Use the Cubicle graph foundations skill to reason about ontology-service Ent schemas, source provenance, evidence anchors, and graph PR boundaries.
