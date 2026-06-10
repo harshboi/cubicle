@@ -58,8 +58,12 @@ const (
 	EdgeArea = "area"
 	// EdgeDocuments holds the string denoting the documents edge name in mutations.
 	EdgeDocuments = "documents"
+	// EdgePullRequests holds the string denoting the pull_requests edge name in mutations.
+	EdgePullRequests = "pull_requests"
 	// EdgeDocumentResults holds the string denoting the document_results edge name in mutations.
 	EdgeDocumentResults = "document_results"
+	// EdgePullRequestResults holds the string denoting the pull_request_results edge name in mutations.
+	EdgePullRequestResults = "pull_request_results"
 	// Table holds the table name of the worklens in the database.
 	Table = "work_lenses"
 	// AreaTable is the table that holds the area relation/edge.
@@ -74,6 +78,11 @@ const (
 	// DocumentsInverseTable is the table name for the Document entity.
 	// It exists in this package in order to avoid circular dependency with the "document" package.
 	DocumentsInverseTable = "documents"
+	// PullRequestsTable is the table that holds the pull_requests relation/edge. The primary key declared below.
+	PullRequestsTable = "pull_request_lens_results"
+	// PullRequestsInverseTable is the table name for the PullRequest entity.
+	// It exists in this package in order to avoid circular dependency with the "pullrequest" package.
+	PullRequestsInverseTable = "pull_requests"
 	// DocumentResultsTable is the table that holds the document_results relation/edge.
 	DocumentResultsTable = "document_lens_results"
 	// DocumentResultsInverseTable is the table name for the DocumentLensResult entity.
@@ -81,6 +90,13 @@ const (
 	DocumentResultsInverseTable = "document_lens_results"
 	// DocumentResultsColumn is the table column denoting the document_results relation/edge.
 	DocumentResultsColumn = "work_lens_id"
+	// PullRequestResultsTable is the table that holds the pull_request_results relation/edge.
+	PullRequestResultsTable = "pull_request_lens_results"
+	// PullRequestResultsInverseTable is the table name for the PullRequestLensResult entity.
+	// It exists in this package in order to avoid circular dependency with the "pullrequestlensresult" package.
+	PullRequestResultsInverseTable = "pull_request_lens_results"
+	// PullRequestResultsColumn is the table column denoting the pull_request_results relation/edge.
+	PullRequestResultsColumn = "work_lens_id"
 )
 
 // Columns holds all SQL columns for worklens fields.
@@ -111,6 +127,9 @@ var (
 	// DocumentsPrimaryKey and DocumentsColumn2 are the table columns denoting the
 	// primary key for the documents relation (M2M).
 	DocumentsPrimaryKey = []string{"work_lens_id", "document_id"}
+	// PullRequestsPrimaryKey and PullRequestsColumn2 are the table columns denoting the
+	// primary key for the pull_requests relation (M2M).
+	PullRequestsPrimaryKey = []string{"work_lens_id", "pull_request_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -393,6 +412,20 @@ func ByDocuments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByPullRequestsCount orders the results by pull_requests count.
+func ByPullRequestsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPullRequestsStep(), opts...)
+	}
+}
+
+// ByPullRequests orders the results by pull_requests terms.
+func ByPullRequests(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPullRequestsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByDocumentResultsCount orders the results by document_results count.
 func ByDocumentResultsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -404,6 +437,20 @@ func ByDocumentResultsCount(opts ...sql.OrderTermOption) OrderOption {
 func ByDocumentResults(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newDocumentResultsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByPullRequestResultsCount orders the results by pull_request_results count.
+func ByPullRequestResultsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPullRequestResultsStep(), opts...)
+	}
+}
+
+// ByPullRequestResults orders the results by pull_request_results terms.
+func ByPullRequestResults(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPullRequestResultsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newAreaStep() *sqlgraph.Step {
@@ -420,10 +467,24 @@ func newDocumentsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2M, false, DocumentsTable, DocumentsPrimaryKey...),
 	)
 }
+func newPullRequestsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PullRequestsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, PullRequestsTable, PullRequestsPrimaryKey...),
+	)
+}
 func newDocumentResultsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(DocumentResultsInverseTable, DocumentResultsColumn),
 		sqlgraph.Edge(sqlgraph.O2M, true, DocumentResultsTable, DocumentResultsColumn),
+	)
+}
+func newPullRequestResultsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PullRequestResultsInverseTable, PullRequestResultsColumn),
+		sqlgraph.Edge(sqlgraph.O2M, true, PullRequestResultsTable, PullRequestResultsColumn),
 	)
 }

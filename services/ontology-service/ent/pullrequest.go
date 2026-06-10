@@ -69,9 +69,11 @@ type PullRequest struct {
 type PullRequestEdges struct {
 	// Tickets this pull request implements.
 	Tickets []*Ticket `json:"tickets,omitempty"`
+	// Work lenses that ranked this pull request as a result.
+	WorkLenses []*WorkLens `json:"work_lenses,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // TicketsOrErr returns the Tickets value or an error if the edge
@@ -81,6 +83,15 @@ func (e PullRequestEdges) TicketsOrErr() ([]*Ticket, error) {
 		return e.Tickets, nil
 	}
 	return nil, &NotLoadedError{edge: "tickets"}
+}
+
+// WorkLensesOrErr returns the WorkLenses value or an error if the edge
+// was not loaded in eager-loading.
+func (e PullRequestEdges) WorkLensesOrErr() ([]*WorkLens, error) {
+	if e.loadedTypes[1] {
+		return e.WorkLenses, nil
+	}
+	return nil, &NotLoadedError{edge: "work_lenses"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -259,6 +270,11 @@ func (_m *PullRequest) Value(name string) (ent.Value, error) {
 // QueryTickets queries the "tickets" edge of the PullRequest entity.
 func (_m *PullRequest) QueryTickets() *TicketQuery {
 	return NewPullRequestClient(_m.config).QueryTickets(_m)
+}
+
+// QueryWorkLenses queries the "work_lenses" edge of the PullRequest entity.
+func (_m *PullRequest) QueryWorkLenses() *WorkLensQuery {
+	return NewPullRequestClient(_m.config).QueryWorkLenses(_m)
 }
 
 // Update returns a builder for updating this PullRequest.

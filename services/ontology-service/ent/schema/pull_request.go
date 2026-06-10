@@ -48,12 +48,15 @@ func (PullRequest) Fields() []ent.Field {
 	)
 }
 
-// Edges exposes tickets implemented by this pull request.
+// Edges exposes tickets implemented by this pull request and lenses ranking it.
 func (PullRequest) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("tickets", Ticket.Type).
 			Ref("pull_requests").
 			Comment("Tickets this pull request implements."),
+		edge.From("work_lenses", WorkLens.Type).
+			Ref("pull_requests").
+			Comment("Work lenses that ranked this pull request as a result."),
 	}
 }
 

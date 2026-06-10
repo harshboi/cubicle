@@ -26,6 +26,8 @@ type Tx struct {
 	Person *PersonClient
 	// PullRequest is the client for interacting with the PullRequest builders.
 	PullRequest *PullRequestClient
+	// PullRequestLensResult is the client for interacting with the PullRequestLensResult builders.
+	PullRequestLensResult *PullRequestLensResultClient
 	// Ticket is the client for interacting with the Ticket builders.
 	Ticket *TicketClient
 	// TicketDocumentFragment is the client for interacting with the TicketDocumentFragment builders.
@@ -180,6 +182,7 @@ func (tx *Tx) init() {
 	tx.Message = NewMessageClient(tx.config)
 	tx.Person = NewPersonClient(tx.config)
 	tx.PullRequest = NewPullRequestClient(tx.config)
+	tx.PullRequestLensResult = NewPullRequestLensResultClient(tx.config)
 	tx.Ticket = NewTicketClient(tx.config)
 	tx.TicketDocumentFragment = NewTicketDocumentFragmentClient(tx.config)
 	tx.TicketMessage = NewTicketMessageClient(tx.config)

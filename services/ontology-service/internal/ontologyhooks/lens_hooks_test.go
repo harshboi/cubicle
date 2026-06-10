@@ -7,6 +7,7 @@ import (
 	genent "cubicle/services/ontology-service/ent"
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/enttest"
+	"cubicle/services/ontology-service/ent/pullrequestlensresult"
 	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/worklens"
 
@@ -28,6 +29,52 @@ func TestRegisterRejectsLensOnWrongArea(t *testing.T) {
 		SetDisplayName("Bad Area").
 		Save(ctx); err == nil {
 		t.Fatal("expected pull request lens under documents area to fail")
+	}
+}
+
+// TestRegisterRejectsPullRequestResultWithWrongRelation proves relation validation.
+func TestRegisterRejectsPullRequestResultWithWrongRelation(t *testing.T) {
+	ctx := context.Background()
+	client := openHookedClient(t, "ontology-hooks-pr-result-relation")
+	defer client.Close()
+
+	codeArea := createHookTestArea(t, ctx, client, "area:person:hooks:code-relation", workarea.WorkAreaKindCode)
+	authoredLens := createHookTestLens(t, ctx, client, codeArea.ID, worklens.WorkLensKindPullRequestsAuthored, worklens.LensTargetKindPullRequest)
+	pullRequest := createHookTestPullRequest(t, ctx, client, "pull-request:hooks:relation")
+
+	if _, err := client.PullRequestLensResult.Create().
+		SetWorkLensID(authoredLens.ID).
+		SetPullRequestID(pullRequest.ID).
+		SetRelationKind(pullrequestlensresult.RelationKindReviewed).
+		Save(ctx); err == nil {
+		t.Fatal("expected pull_requests_authored lens to reject reviewed relation")
+	}
+
+	if _, err := client.PullRequestLensResult.Create().
+		SetWorkLensID(authoredLens.ID).
+		SetPullRequestID(pullRequest.ID).
+		SetRelationKind(pullrequestlensresult.RelationKindAuthored).
+		Save(ctx); err != nil {
+		t.Fatalf("expected pull_requests_authored lens to accept authored relation: %v", err)
+	}
+}
+
+// TestRegisterRejectsPullRequestResultForDocumentLens proves target validation.
+func TestRegisterRejectsPullRequestResultForDocumentLens(t *testing.T) {
+	ctx := context.Background()
+	client := openHookedClient(t, "ontology-hooks-pr-result-target")
+	defer client.Close()
+
+	documentsArea := createHookTestArea(t, ctx, client, "area:person:hooks:docs-target", workarea.WorkAreaKindDocuments)
+	documentLens := createHookTestLens(t, ctx, client, documentsArea.ID, worklens.WorkLensKindDocumentsCreated, worklens.LensTargetKindDocument)
+	pullRequest := createHookTestPullRequest(t, ctx, client, "pull-request:hooks:target")
+
+	if _, err := client.PullRequestLensResult.Create().
+		SetWorkLensID(documentLens.ID).
+		SetPullRequestID(pullRequest.ID).
+		SetRelationKind(pullrequestlensresult.RelationKindAuthored).
+		Save(ctx); err == nil {
+		t.Fatal("expected pull-request result table to reject document-target lens")
 	}
 }
 
@@ -118,5 +165,14 @@ func createHookTestDocument(t *testing.T, ctx context.Context, client *genent.Cl
 	return client.Document.Create().
 		SetKey(key).
 		SetTitle("Hook Test Document").
+		SaveX(ctx)
+}
+
+// createHookTestPullRequest creates a PullRequest target for result-hook tests.
+func createHookTestPullRequest(t *testing.T, ctx context.Context, client *genent.Client, key string) *genent.PullRequest {
+	t.Helper()
+	return client.PullRequest.Create().
+		SetKey(key).
+		SetTitle("Hook Test Pull Request").
 		SaveX(ctx)
 }

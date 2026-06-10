@@ -68,11 +68,15 @@ type WorkLensEdges struct {
 	Area *WorkArea `json:"area,omitempty"`
 	// Documents ranked under this lens.
 	Documents []*Document `json:"documents,omitempty"`
+	// Pull requests ranked under this lens.
+	PullRequests []*PullRequest `json:"pull_requests,omitempty"`
 	// DocumentResults holds the value of the document_results edge.
 	DocumentResults []*DocumentLensResult `json:"document_results,omitempty"`
+	// PullRequestResults holds the value of the pull_request_results edge.
+	PullRequestResults []*PullRequestLensResult `json:"pull_request_results,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [5]bool
 }
 
 // AreaOrErr returns the Area value or an error if the edge
@@ -95,13 +99,31 @@ func (e WorkLensEdges) DocumentsOrErr() ([]*Document, error) {
 	return nil, &NotLoadedError{edge: "documents"}
 }
 
+// PullRequestsOrErr returns the PullRequests value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkLensEdges) PullRequestsOrErr() ([]*PullRequest, error) {
+	if e.loadedTypes[2] {
+		return e.PullRequests, nil
+	}
+	return nil, &NotLoadedError{edge: "pull_requests"}
+}
+
 // DocumentResultsOrErr returns the DocumentResults value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) DocumentResultsOrErr() ([]*DocumentLensResult, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.DocumentResults, nil
 	}
 	return nil, &NotLoadedError{edge: "document_results"}
+}
+
+// PullRequestResultsOrErr returns the PullRequestResults value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkLensEdges) PullRequestResultsOrErr() ([]*PullRequestLensResult, error) {
+	if e.loadedTypes[4] {
+		return e.PullRequestResults, nil
+	}
+	return nil, &NotLoadedError{edge: "pull_request_results"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -277,9 +299,19 @@ func (_m *WorkLens) QueryDocuments() *DocumentQuery {
 	return NewWorkLensClient(_m.config).QueryDocuments(_m)
 }
 
+// QueryPullRequests queries the "pull_requests" edge of the WorkLens entity.
+func (_m *WorkLens) QueryPullRequests() *PullRequestQuery {
+	return NewWorkLensClient(_m.config).QueryPullRequests(_m)
+}
+
 // QueryDocumentResults queries the "document_results" edge of the WorkLens entity.
 func (_m *WorkLens) QueryDocumentResults() *DocumentLensResultQuery {
 	return NewWorkLensClient(_m.config).QueryDocumentResults(_m)
+}
+
+// QueryPullRequestResults queries the "pull_request_results" edge of the WorkLens entity.
+func (_m *WorkLens) QueryPullRequestResults() *PullRequestLensResultQuery {
+	return NewWorkLensClient(_m.config).QueryPullRequestResults(_m)
 }
 
 // Update returns a builder for updating this WorkLens.

@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"cubicle/services/ontology-service/ent/document"
+	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/worklens"
 	"errors"
@@ -274,6 +275,21 @@ func (_c *WorkLensCreate) AddDocuments(v ...*Document) *WorkLensCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddDocumentIDs(ids...)
+}
+
+// AddPullRequestIDs adds the "pull_requests" edge to the PullRequest entity by IDs.
+func (_c *WorkLensCreate) AddPullRequestIDs(ids ...int) *WorkLensCreate {
+	_c.mutation.AddPullRequestIDs(ids...)
+	return _c
+}
+
+// AddPullRequests adds the "pull_requests" edges to the PullRequest entity.
+func (_c *WorkLensCreate) AddPullRequests(v ...*PullRequest) *WorkLensCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddPullRequestIDs(ids...)
 }
 
 // Mutation returns the WorkLensMutation object of the builder.
@@ -573,6 +589,26 @@ func (_c *WorkLensCreate) createSpec() (*WorkLens, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &DocumentLensResultCreate{config: _c.config, mutation: newDocumentLensResultMutation(_c.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.PullRequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.PullRequestsTable,
+			Columns: worklens.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &PullRequestLensResultCreate{config: _c.config, mutation: newPullRequestLensResultMutation(_c.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields

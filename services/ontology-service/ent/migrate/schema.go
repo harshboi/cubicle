@@ -340,6 +340,70 @@ var (
 			},
 		},
 	}
+	// PullRequestLensResultsColumns holds the columns for the "pull_request_lens_results" table.
+	PullRequestLensResultsColumns = []*schema.Column{
+		{Name: "relation_kind", Type: field.TypeEnum, Enums: []string{"authored", "reviewed", "commented_on"}},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "source", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_lens_id", Type: field.TypeInt},
+		{Name: "pull_request_id", Type: field.TypeInt},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// PullRequestLensResultsTable holds the schema information for the "pull_request_lens_results" table.
+	PullRequestLensResultsTable = &schema.Table{
+		Name:       "pull_request_lens_results",
+		Columns:    PullRequestLensResultsColumns,
+		PrimaryKey: []*schema.Column{PullRequestLensResultsColumns[15], PullRequestLensResultsColumns[16]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "pull_request_lens_results_work_lenses_lens",
+				Columns:    []*schema.Column{PullRequestLensResultsColumns[15]},
+				RefColumns: []*schema.Column{WorkLensesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "pull_request_lens_results_pull_requests_pull_request",
+				Columns:    []*schema.Column{PullRequestLensResultsColumns[16]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "pull_request_lens_results_evidences_latest_evidence",
+				Columns:    []*schema.Column{PullRequestLensResultsColumns[17]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "pullrequestlensresult_work_lens_id_freshness_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{PullRequestLensResultsColumns[15], PullRequestLensResultsColumns[10], PullRequestLensResultsColumns[5], PullRequestLensResultsColumns[4]},
+			},
+			{
+				Name:    "pullrequestlensresult_work_lens_id_relation_kind_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{PullRequestLensResultsColumns[15], PullRequestLensResultsColumns[0], PullRequestLensResultsColumns[4]},
+			},
+			{
+				Name:    "pullrequestlensresult_pull_request_id",
+				Unique:  false,
+				Columns: []*schema.Column{PullRequestLensResultsColumns[16]},
+			},
+		},
+	}
 	// TicketsColumns holds the columns for the "tickets" table.
 	TicketsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -757,6 +821,7 @@ var (
 		MessagesTable,
 		PersonsTable,
 		PullRequestsTable,
+		PullRequestLensResultsTable,
 		TicketsTable,
 		TicketDocumentFragmentsTable,
 		TicketMessagesTable,
@@ -773,6 +838,9 @@ func init() {
 	DocumentLensResultsTable.ForeignKeys[0].RefTable = WorkLensesTable
 	DocumentLensResultsTable.ForeignKeys[1].RefTable = DocumentsTable
 	DocumentLensResultsTable.ForeignKeys[2].RefTable = EvidencesTable
+	PullRequestLensResultsTable.ForeignKeys[0].RefTable = WorkLensesTable
+	PullRequestLensResultsTable.ForeignKeys[1].RefTable = PullRequestsTable
+	PullRequestLensResultsTable.ForeignKeys[2].RefTable = EvidencesTable
 	TicketDocumentFragmentsTable.ForeignKeys[0].RefTable = TicketsTable
 	TicketDocumentFragmentsTable.ForeignKeys[1].RefTable = DocumentFragmentsTable
 	TicketDocumentFragmentsTable.ForeignKeys[2].RefTable = EvidencesTable

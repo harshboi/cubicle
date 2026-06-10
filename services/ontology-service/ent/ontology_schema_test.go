@@ -34,6 +34,16 @@ func TestDocumentLensResultCarriesPagingIndex(t *testing.T) {
 	assertColumn(t, table, "evidence_count")
 }
 
+// TestPullRequestLensResultCarriesPagingIndex proves the result layer can be
+// ranked and paged before loading high-cardinality pull-request targets.
+func TestPullRequestLensResultCarriesPagingIndex(t *testing.T) {
+	table := findTable(t, "pull_request_lens_results")
+	assertIndexColumns(t, table, []string{"work_lens_id", "freshness_state", "rank_score", "last_activity_at"})
+	assertColumn(t, table, "relation_kind")
+	assertColumn(t, table, "latest_evidence_id")
+	assertColumn(t, table, "evidence_count")
+}
+
 // TestWorkLensRejectsMismatchedTargetKind proves lens kind is semantic truth.
 func TestWorkLensRejectsMismatchedTargetKind(t *testing.T) {
 	ctx := context.Background()

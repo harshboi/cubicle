@@ -6,6 +6,7 @@ import (
 	"context"
 	"cubicle/services/ontology-service/ent/document"
 	"cubicle/services/ontology-service/ent/predicate"
+	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/worklens"
 	"errors"
 	"fmt"
@@ -305,6 +306,21 @@ func (_u *WorkLensUpdate) AddDocuments(v ...*Document) *WorkLensUpdate {
 	return _u.AddDocumentIDs(ids...)
 }
 
+// AddPullRequestIDs adds the "pull_requests" edge to the PullRequest entity by IDs.
+func (_u *WorkLensUpdate) AddPullRequestIDs(ids ...int) *WorkLensUpdate {
+	_u.mutation.AddPullRequestIDs(ids...)
+	return _u
+}
+
+// AddPullRequests adds the "pull_requests" edges to the PullRequest entity.
+func (_u *WorkLensUpdate) AddPullRequests(v ...*PullRequest) *WorkLensUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPullRequestIDs(ids...)
+}
+
 // Mutation returns the WorkLensMutation object of the builder.
 func (_u *WorkLensUpdate) Mutation() *WorkLensMutation {
 	return _u.mutation
@@ -329,6 +345,27 @@ func (_u *WorkLensUpdate) RemoveDocuments(v ...*Document) *WorkLensUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveDocumentIDs(ids...)
+}
+
+// ClearPullRequests clears all "pull_requests" edges to the PullRequest entity.
+func (_u *WorkLensUpdate) ClearPullRequests() *WorkLensUpdate {
+	_u.mutation.ClearPullRequests()
+	return _u
+}
+
+// RemovePullRequestIDs removes the "pull_requests" edge to PullRequest entities by IDs.
+func (_u *WorkLensUpdate) RemovePullRequestIDs(ids ...int) *WorkLensUpdate {
+	_u.mutation.RemovePullRequestIDs(ids...)
+	return _u
+}
+
+// RemovePullRequests removes "pull_requests" edges to PullRequest entities.
+func (_u *WorkLensUpdate) RemovePullRequests(v ...*PullRequest) *WorkLensUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePullRequestIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -537,6 +574,63 @@ func (_u *WorkLensUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &DocumentLensResultCreate{config: _u.config, mutation: newDocumentLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.PullRequestsTable,
+			Columns: worklens.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		createE := &PullRequestLensResultCreate{config: _u.config, mutation: newPullRequestLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPullRequestsIDs(); len(nodes) > 0 && !_u.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.PullRequestsTable,
+			Columns: worklens.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &PullRequestLensResultCreate{config: _u.config, mutation: newPullRequestLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PullRequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.PullRequestsTable,
+			Columns: worklens.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &PullRequestLensResultCreate{config: _u.config, mutation: newPullRequestLensResultMutation(_u.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields
@@ -838,6 +932,21 @@ func (_u *WorkLensUpdateOne) AddDocuments(v ...*Document) *WorkLensUpdateOne {
 	return _u.AddDocumentIDs(ids...)
 }
 
+// AddPullRequestIDs adds the "pull_requests" edge to the PullRequest entity by IDs.
+func (_u *WorkLensUpdateOne) AddPullRequestIDs(ids ...int) *WorkLensUpdateOne {
+	_u.mutation.AddPullRequestIDs(ids...)
+	return _u
+}
+
+// AddPullRequests adds the "pull_requests" edges to the PullRequest entity.
+func (_u *WorkLensUpdateOne) AddPullRequests(v ...*PullRequest) *WorkLensUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPullRequestIDs(ids...)
+}
+
 // Mutation returns the WorkLensMutation object of the builder.
 func (_u *WorkLensUpdateOne) Mutation() *WorkLensMutation {
 	return _u.mutation
@@ -862,6 +971,27 @@ func (_u *WorkLensUpdateOne) RemoveDocuments(v ...*Document) *WorkLensUpdateOne 
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveDocumentIDs(ids...)
+}
+
+// ClearPullRequests clears all "pull_requests" edges to the PullRequest entity.
+func (_u *WorkLensUpdateOne) ClearPullRequests() *WorkLensUpdateOne {
+	_u.mutation.ClearPullRequests()
+	return _u
+}
+
+// RemovePullRequestIDs removes the "pull_requests" edge to PullRequest entities by IDs.
+func (_u *WorkLensUpdateOne) RemovePullRequestIDs(ids ...int) *WorkLensUpdateOne {
+	_u.mutation.RemovePullRequestIDs(ids...)
+	return _u
+}
+
+// RemovePullRequests removes "pull_requests" edges to PullRequest entities.
+func (_u *WorkLensUpdateOne) RemovePullRequests(v ...*PullRequest) *WorkLensUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePullRequestIDs(ids...)
 }
 
 // Where appends a list predicates to the WorkLensUpdate builder.
@@ -1100,6 +1230,63 @@ func (_u *WorkLensUpdateOne) sqlSave(ctx context.Context) (_node *WorkLens, err 
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &DocumentLensResultCreate{config: _u.config, mutation: newDocumentLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.PullRequestsTable,
+			Columns: worklens.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		createE := &PullRequestLensResultCreate{config: _u.config, mutation: newPullRequestLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPullRequestsIDs(); len(nodes) > 0 && !_u.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.PullRequestsTable,
+			Columns: worklens.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &PullRequestLensResultCreate{config: _u.config, mutation: newPullRequestLensResultMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PullRequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   worklens.PullRequestsTable,
+			Columns: worklens.PullRequestsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &PullRequestLensResultCreate{config: _u.config, mutation: newPullRequestLensResultMutation(_u.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields

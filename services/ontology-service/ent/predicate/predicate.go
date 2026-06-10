@@ -27,6 +27,9 @@ type Person func(*sql.Selector)
 // PullRequest is the predicate function for pullrequest builders.
 type PullRequest func(*sql.Selector)
 
+// PullRequestLensResult is the predicate function for pullrequestlensresult builders.
+type PullRequestLensResult func(*sql.Selector)
+
 // Ticket is the predicate function for ticket builders.
 type Ticket func(*sql.Selector)
 

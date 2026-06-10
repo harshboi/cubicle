@@ -921,6 +921,29 @@ func HasDocumentsWith(preds ...predicate.Document) predicate.WorkLens {
 	})
 }
 
+// HasPullRequests applies the HasEdge predicate on the "pull_requests" edge.
+func HasPullRequests() predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, PullRequestsTable, PullRequestsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPullRequestsWith applies the HasEdge predicate on the "pull_requests" edge with a given conditions (other predicates).
+func HasPullRequestsWith(preds ...predicate.PullRequest) predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := newPullRequestsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasDocumentResults applies the HasEdge predicate on the "document_results" edge.
 func HasDocumentResults() predicate.WorkLens {
 	return predicate.WorkLens(func(s *sql.Selector) {
@@ -936,6 +959,29 @@ func HasDocumentResults() predicate.WorkLens {
 func HasDocumentResultsWith(preds ...predicate.DocumentLensResult) predicate.WorkLens {
 	return predicate.WorkLens(func(s *sql.Selector) {
 		step := newDocumentResultsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPullRequestResults applies the HasEdge predicate on the "pull_request_results" edge.
+func HasPullRequestResults() predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, PullRequestResultsTable, PullRequestResultsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPullRequestResultsWith applies the HasEdge predicate on the "pull_request_results" edge with a given conditions (other predicates).
+func HasPullRequestResultsWith(preds ...predicate.PullRequestLensResult) predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := newPullRequestResultsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

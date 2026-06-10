@@ -92,6 +92,18 @@ func (f PullRequestFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PullRequestMutation", m)
 }
 
+// The PullRequestLensResultFunc type is an adapter to allow the use of ordinary
+// function as PullRequestLensResult mutator.
+type PullRequestLensResultFunc func(context.Context, *ent.PullRequestLensResultMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PullRequestLensResultFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PullRequestLensResultMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PullRequestLensResultMutation", m)
+}
+
 // The TicketFunc type is an adapter to allow the use of ordinary
 // function as Ticket mutator.
 type TicketFunc func(context.Context, *ent.TicketMutation) (ent.Value, error)

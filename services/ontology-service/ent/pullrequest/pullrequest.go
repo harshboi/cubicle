@@ -59,6 +59,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeTickets holds the string denoting the tickets edge name in mutations.
 	EdgeTickets = "tickets"
+	// EdgeWorkLenses holds the string denoting the work_lenses edge name in mutations.
+	EdgeWorkLenses = "work_lenses"
 	// Table holds the table name of the pullrequest in the database.
 	Table = "pull_requests"
 	// TicketsTable is the table that holds the tickets relation/edge. The primary key declared below.
@@ -66,6 +68,11 @@ const (
 	// TicketsInverseTable is the table name for the Ticket entity.
 	// It exists in this package in order to avoid circular dependency with the "ticket" package.
 	TicketsInverseTable = "tickets"
+	// WorkLensesTable is the table that holds the work_lenses relation/edge. The primary key declared below.
+	WorkLensesTable = "pull_request_lens_results"
+	// WorkLensesInverseTable is the table name for the WorkLens entity.
+	// It exists in this package in order to avoid circular dependency with the "worklens" package.
+	WorkLensesInverseTable = "work_lenses"
 )
 
 // Columns holds all SQL columns for pullrequest fields.
@@ -98,6 +105,9 @@ var (
 	// TicketsPrimaryKey and TicketsColumn2 are the table columns denoting the
 	// primary key for the tickets relation (M2M).
 	TicketsPrimaryKey = []string{"ticket_id", "pull_request_id"}
+	// WorkLensesPrimaryKey and WorkLensesColumn2 are the table columns denoting the
+	// primary key for the work_lenses relation (M2M).
+	WorkLensesPrimaryKey = []string{"work_lens_id", "pull_request_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -340,10 +350,31 @@ func ByTickets(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newTicketsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByWorkLensesCount orders the results by work_lenses count.
+func ByWorkLensesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWorkLensesStep(), opts...)
+	}
+}
+
+// ByWorkLenses orders the results by work_lenses terms.
+func ByWorkLenses(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWorkLensesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newTicketsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TicketsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, true, TicketsTable, TicketsPrimaryKey...),
+	)
+}
+func newWorkLensesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WorkLensesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, WorkLensesTable, WorkLensesPrimaryKey...),
 	)
 }
