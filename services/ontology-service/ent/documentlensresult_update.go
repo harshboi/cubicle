@@ -354,6 +354,9 @@ func (_u *DocumentLensResultUpdate) check() error {
 	if _u.mutation.LensCleared() && len(_u.mutation.LensIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "DocumentLensResult.lens"`)
 	}
+	if _u.mutation.WindowCleared() && len(_u.mutation.WindowIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "DocumentLensResult.window"`)
+	}
 	if _u.mutation.DocumentCleared() && len(_u.mutation.DocumentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "DocumentLensResult.document"`)
 	}
@@ -827,6 +830,9 @@ func (_u *DocumentLensResultUpdateOne) check() error {
 	}
 	if _u.mutation.LensCleared() && len(_u.mutation.LensIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "DocumentLensResult.lens"`)
+	}
+	if _u.mutation.WindowCleared() && len(_u.mutation.WindowIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "DocumentLensResult.window"`)
 	}
 	if _u.mutation.DocumentCleared() && len(_u.mutation.DocumentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "DocumentLensResult.document"`)

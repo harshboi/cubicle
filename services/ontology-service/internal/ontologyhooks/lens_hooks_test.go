@@ -42,10 +42,12 @@ func TestRegisterRejectsMessageResultWithWrongRelation(t *testing.T) {
 
 	communicationsArea := createHookTestArea(t, ctx, client, "area:person:hooks:messages-relation", workarea.WorkAreaKindCommunications)
 	authoredLens := createHookTestLens(t, ctx, client, communicationsArea.ID, worklens.WorkLensKindMessagesAuthored, worklens.LensTargetKindMessage)
+	authoredWindow := createHookTestWindow(t, ctx, client, authoredLens.ID, "messages-authored")
 	message := createHookTestMessage(t, ctx, client, "message:hooks:relation")
 
 	if _, err := client.MessageLensResult.Create().
 		SetWorkLensID(authoredLens.ID).
+		SetWorkLensWindowID(authoredWindow.ID).
 		SetMessageID(message.ID).
 		SetRelationKind(messagelensresult.RelationKindRepliedTo).
 		Save(ctx); err == nil {
@@ -54,6 +56,7 @@ func TestRegisterRejectsMessageResultWithWrongRelation(t *testing.T) {
 
 	if _, err := client.MessageLensResult.Create().
 		SetWorkLensID(authoredLens.ID).
+		SetWorkLensWindowID(authoredWindow.ID).
 		SetMessageID(message.ID).
 		SetRelationKind(messagelensresult.RelationKindAuthored).
 		Save(ctx); err != nil {
@@ -69,14 +72,39 @@ func TestRegisterRejectsMessageResultForDocumentLens(t *testing.T) {
 
 	documentsArea := createHookTestArea(t, ctx, client, "area:person:hooks:docs-message-target", workarea.WorkAreaKindDocuments)
 	documentLens := createHookTestLens(t, ctx, client, documentsArea.ID, worklens.WorkLensKindDocumentsCreated, worklens.LensTargetKindDocument)
+	documentWindow := createHookTestWindow(t, ctx, client, documentLens.ID, "docs-message-target")
 	message := createHookTestMessage(t, ctx, client, "message:hooks:target")
 
 	if _, err := client.MessageLensResult.Create().
 		SetWorkLensID(documentLens.ID).
+		SetWorkLensWindowID(documentWindow.ID).
 		SetMessageID(message.ID).
 		SetRelationKind(messagelensresult.RelationKindAuthored).
 		Save(ctx); err == nil {
 		t.Fatal("expected message result table to reject document-target lens")
+	}
+}
+
+// TestRegisterRejectsResultWithWrongWindow proves result rows cannot cross windows.
+func TestRegisterRejectsResultWithWrongWindow(t *testing.T) {
+	ctx := context.Background()
+	client := openHookedClient(t, "ontology-hooks-result-window")
+	defer client.Close()
+
+	communicationsArea := createHookTestArea(t, ctx, client, "area:person:hooks:messages-window", workarea.WorkAreaKindCommunications)
+	messageLens := createHookTestLens(t, ctx, client, communicationsArea.ID, worklens.WorkLensKindMessagesAuthored, worklens.LensTargetKindMessage)
+	documentsArea := createHookTestArea(t, ctx, client, "area:person:hooks:docs-window", workarea.WorkAreaKindDocuments)
+	documentLens := createHookTestLens(t, ctx, client, documentsArea.ID, worklens.WorkLensKindDocumentsCreated, worklens.LensTargetKindDocument)
+	documentWindow := createHookTestWindow(t, ctx, client, documentLens.ID, "docs-window")
+	message := createHookTestMessage(t, ctx, client, "message:hooks:wrong-window")
+
+	if _, err := client.MessageLensResult.Create().
+		SetWorkLensID(messageLens.ID).
+		SetWorkLensWindowID(documentWindow.ID).
+		SetMessageID(message.ID).
+		SetRelationKind(messagelensresult.RelationKindAuthored).
+		Save(ctx); err == nil {
+		t.Fatal("expected message result to reject a window owned by another lens")
 	}
 }
 
@@ -88,10 +116,12 @@ func TestRegisterRejectsTicketResultWithWrongRelation(t *testing.T) {
 
 	ticketsArea := createHookTestArea(t, ctx, client, "area:person:hooks:tickets-relation", workarea.WorkAreaKindTickets)
 	ownedLens := createHookTestLens(t, ctx, client, ticketsArea.ID, worklens.WorkLensKindTicketsOwned, worklens.LensTargetKindTicket)
+	ownedWindow := createHookTestWindow(t, ctx, client, ownedLens.ID, "tickets-owned")
 	ticket := createHookTestTicket(t, ctx, client, "ticket:hooks:relation")
 
 	if _, err := client.TicketLensResult.Create().
 		SetWorkLensID(ownedLens.ID).
+		SetWorkLensWindowID(ownedWindow.ID).
 		SetTicketID(ticket.ID).
 		SetRelationKind(ticketlensresult.RelationKindReviewed).
 		Save(ctx); err == nil {
@@ -100,6 +130,7 @@ func TestRegisterRejectsTicketResultWithWrongRelation(t *testing.T) {
 
 	if _, err := client.TicketLensResult.Create().
 		SetWorkLensID(ownedLens.ID).
+		SetWorkLensWindowID(ownedWindow.ID).
 		SetTicketID(ticket.ID).
 		SetRelationKind(ticketlensresult.RelationKindOwned).
 		Save(ctx); err != nil {
@@ -115,10 +146,12 @@ func TestRegisterRejectsTicketResultForDocumentLens(t *testing.T) {
 
 	documentsArea := createHookTestArea(t, ctx, client, "area:person:hooks:docs-ticket-target", workarea.WorkAreaKindDocuments)
 	documentLens := createHookTestLens(t, ctx, client, documentsArea.ID, worklens.WorkLensKindDocumentsCreated, worklens.LensTargetKindDocument)
+	documentWindow := createHookTestWindow(t, ctx, client, documentLens.ID, "docs-ticket-target")
 	ticket := createHookTestTicket(t, ctx, client, "ticket:hooks:target")
 
 	if _, err := client.TicketLensResult.Create().
 		SetWorkLensID(documentLens.ID).
+		SetWorkLensWindowID(documentWindow.ID).
 		SetTicketID(ticket.ID).
 		SetRelationKind(ticketlensresult.RelationKindOwned).
 		Save(ctx); err == nil {
@@ -134,10 +167,12 @@ func TestRegisterRejectsPullRequestResultWithWrongRelation(t *testing.T) {
 
 	codeArea := createHookTestArea(t, ctx, client, "area:person:hooks:code-relation", workarea.WorkAreaKindCode)
 	authoredLens := createHookTestLens(t, ctx, client, codeArea.ID, worklens.WorkLensKindPullRequestsAuthored, worklens.LensTargetKindPullRequest)
+	authoredWindow := createHookTestWindow(t, ctx, client, authoredLens.ID, "pull-requests-authored")
 	pullRequest := createHookTestPullRequest(t, ctx, client, "pull-request:hooks:relation")
 
 	if _, err := client.PullRequestLensResult.Create().
 		SetWorkLensID(authoredLens.ID).
+		SetWorkLensWindowID(authoredWindow.ID).
 		SetPullRequestID(pullRequest.ID).
 		SetRelationKind(pullrequestlensresult.RelationKindReviewed).
 		Save(ctx); err == nil {
@@ -146,6 +181,7 @@ func TestRegisterRejectsPullRequestResultWithWrongRelation(t *testing.T) {
 
 	if _, err := client.PullRequestLensResult.Create().
 		SetWorkLensID(authoredLens.ID).
+		SetWorkLensWindowID(authoredWindow.ID).
 		SetPullRequestID(pullRequest.ID).
 		SetRelationKind(pullrequestlensresult.RelationKindAuthored).
 		Save(ctx); err != nil {
@@ -161,10 +197,12 @@ func TestRegisterRejectsPullRequestResultForDocumentLens(t *testing.T) {
 
 	documentsArea := createHookTestArea(t, ctx, client, "area:person:hooks:docs-target", workarea.WorkAreaKindDocuments)
 	documentLens := createHookTestLens(t, ctx, client, documentsArea.ID, worklens.WorkLensKindDocumentsCreated, worklens.LensTargetKindDocument)
+	documentWindow := createHookTestWindow(t, ctx, client, documentLens.ID, "docs-pr-target")
 	pullRequest := createHookTestPullRequest(t, ctx, client, "pull-request:hooks:target")
 
 	if _, err := client.PullRequestLensResult.Create().
 		SetWorkLensID(documentLens.ID).
+		SetWorkLensWindowID(documentWindow.ID).
 		SetPullRequestID(pullRequest.ID).
 		SetRelationKind(pullrequestlensresult.RelationKindAuthored).
 		Save(ctx); err == nil {
@@ -180,10 +218,12 @@ func TestRegisterRejectsDocumentResultWithWrongRelation(t *testing.T) {
 
 	documentsArea := createHookTestArea(t, ctx, client, "area:person:hooks:docs-relation", workarea.WorkAreaKindDocuments)
 	createdLens := createHookTestLens(t, ctx, client, documentsArea.ID, worklens.WorkLensKindDocumentsCreated, worklens.LensTargetKindDocument)
+	createdWindow := createHookTestWindow(t, ctx, client, createdLens.ID, "documents-created")
 	document := createHookTestDocument(t, ctx, client, "document:hooks:relation")
 
 	if _, err := client.DocumentLensResult.Create().
 		SetWorkLensID(createdLens.ID).
+		SetWorkLensWindowID(createdWindow.ID).
 		SetDocumentID(document.ID).
 		SetRelationKind(documentlensresult.RelationKindEdited).
 		Save(ctx); err == nil {
@@ -192,6 +232,7 @@ func TestRegisterRejectsDocumentResultWithWrongRelation(t *testing.T) {
 
 	if _, err := client.DocumentLensResult.Create().
 		SetWorkLensID(createdLens.ID).
+		SetWorkLensWindowID(createdWindow.ID).
 		SetDocumentID(document.ID).
 		SetRelationKind(documentlensresult.RelationKindCreated).
 		Save(ctx); err != nil {
@@ -207,10 +248,12 @@ func TestRegisterRejectsDocumentResultForTicketLens(t *testing.T) {
 
 	ticketsArea := createHookTestArea(t, ctx, client, "area:person:hooks:tickets", workarea.WorkAreaKindTickets)
 	ticketLens := createHookTestLens(t, ctx, client, ticketsArea.ID, worklens.WorkLensKindTicketsOwned, worklens.LensTargetKindTicket)
+	ticketWindow := createHookTestWindow(t, ctx, client, ticketLens.ID, "tickets-document-target")
 	document := createHookTestDocument(t, ctx, client, "document:hooks:target")
 
 	if _, err := client.DocumentLensResult.Create().
 		SetWorkLensID(ticketLens.ID).
+		SetWorkLensWindowID(ticketWindow.ID).
 		SetDocumentID(document.ID).
 		SetRelationKind(documentlensresult.RelationKindCreated).
 		Save(ctx); err == nil {
@@ -250,6 +293,15 @@ func createHookTestLens(t *testing.T, ctx context.Context, client *genent.Client
 		SetWorkLensKind(lensKind).
 		SetLensTargetKind(targetKind).
 		SetDisplayName(lensKind.String()).
+		SaveX(ctx)
+}
+
+// createHookTestWindow creates a bounded WorkLensWindow for result-hook tests.
+func createHookTestWindow(t *testing.T, ctx context.Context, client *genent.Client, lensID int, keySuffix string) *genent.WorkLensWindow {
+	t.Helper()
+	return client.WorkLensWindow.Create().
+		SetKey("window:" + keySuffix).
+		SetWorkLensID(lensID).
 		SaveX(ctx)
 }
 

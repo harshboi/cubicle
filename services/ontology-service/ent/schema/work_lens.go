@@ -109,6 +109,8 @@ func (WorkLens) Edges() []ent.Edge {
 			Immutable().
 			Field("work_area_id").
 			Comment("Parent work area that owns this lens."),
+		edge.To("windows", WorkLensWindow.Type).
+			Comment("Bounded windows that partition this lens before result rows are loaded."),
 		edge.To("documents", Document.Type).
 			Through("document_results", DocumentLensResult.Type).
 			Comment("Documents ranked under this lens."),

@@ -54,6 +54,9 @@ type WorkArea func(*sql.Selector)
 // WorkLens is the predicate function for worklens builders.
 type WorkLens func(*sql.Selector)
 
+// WorkLensWindow is the predicate function for worklenswindow builders.
+type WorkLensWindow func(*sql.Selector)
+
 // Workstream is the predicate function for workstream builders.
 type Workstream func(*sql.Selector)
 

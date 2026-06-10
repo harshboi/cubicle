@@ -354,6 +354,9 @@ func (_u *TicketLensResultUpdate) check() error {
 	if _u.mutation.LensCleared() && len(_u.mutation.LensIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "TicketLensResult.lens"`)
 	}
+	if _u.mutation.WindowCleared() && len(_u.mutation.WindowIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "TicketLensResult.window"`)
+	}
 	if _u.mutation.TicketCleared() && len(_u.mutation.TicketIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "TicketLensResult.ticket"`)
 	}
@@ -827,6 +830,9 @@ func (_u *TicketLensResultUpdateOne) check() error {
 	}
 	if _u.mutation.LensCleared() && len(_u.mutation.LensIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "TicketLensResult.lens"`)
+	}
+	if _u.mutation.WindowCleared() && len(_u.mutation.WindowIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "TicketLensResult.window"`)
 	}
 	if _u.mutation.TicketCleared() && len(_u.mutation.TicketIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "TicketLensResult.ticket"`)

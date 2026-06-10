@@ -7,6 +7,7 @@ import (
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"fmt"
 	"strings"
 	"time"
@@ -20,6 +21,8 @@ type PullRequestLensResult struct {
 	config `json:"-"`
 	// Source WorkLens endpoint for this result.
 	WorkLensID int `json:"work_lens_id,omitempty"`
+	// Bounded WorkLensWindow this result is assigned to for paging and recrawl.
+	WorkLensWindowID int `json:"work_lens_window_id,omitempty"`
 	// Target PullRequest endpoint for this result.
 	PullRequestID int `json:"pull_request_id,omitempty"`
 	// Semantic relationship represented by this link row.
@@ -64,13 +67,15 @@ type PullRequestLensResult struct {
 type PullRequestLensResultEdges struct {
 	// Work lens that owns this pull-request result.
 	Lens *WorkLens `json:"lens,omitempty"`
+	// Bounded lens window used to page this pull-request result.
+	Window *WorkLensWindow `json:"window,omitempty"`
 	// Pull request target for this result.
 	PullRequest *PullRequest `json:"pull_request,omitempty"`
 	// Most recent evidence supporting this result.
 	LatestEvidence *Evidence `json:"latest_evidence,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // LensOrErr returns the Lens value or an error if the edge
@@ -84,12 +89,23 @@ func (e PullRequestLensResultEdges) LensOrErr() (*WorkLens, error) {
 	return nil, &NotLoadedError{edge: "lens"}
 }
 
+// WindowOrErr returns the Window value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e PullRequestLensResultEdges) WindowOrErr() (*WorkLensWindow, error) {
+	if e.Window != nil {
+		return e.Window, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: worklenswindow.Label}
+	}
+	return nil, &NotLoadedError{edge: "window"}
+}
+
 // PullRequestOrErr returns the PullRequest value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e PullRequestLensResultEdges) PullRequestOrErr() (*PullRequest, error) {
 	if e.PullRequest != nil {
 		return e.PullRequest, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[2] {
 		return nil, &NotFoundError{label: pullrequest.Label}
 	}
 	return nil, &NotLoadedError{edge: "pull_request"}
@@ -100,7 +116,7 @@ func (e PullRequestLensResultEdges) PullRequestOrErr() (*PullRequest, error) {
 func (e PullRequestLensResultEdges) LatestEvidenceOrErr() (*Evidence, error) {
 	if e.LatestEvidence != nil {
 		return e.LatestEvidence, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: evidence.Label}
 	}
 	return nil, &NotLoadedError{edge: "latest_evidence"}
@@ -113,7 +129,7 @@ func (*PullRequestLensResult) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case pullrequestlensresult.FieldRankScore, pullrequestlensresult.FieldConfidence:
 			values[i] = new(sql.NullFloat64)
-		case pullrequestlensresult.FieldWorkLensID, pullrequestlensresult.FieldPullRequestID, pullrequestlensresult.FieldLatestEvidenceID, pullrequestlensresult.FieldEvidenceCount, pullrequestlensresult.FieldEventCount:
+		case pullrequestlensresult.FieldWorkLensID, pullrequestlensresult.FieldWorkLensWindowID, pullrequestlensresult.FieldPullRequestID, pullrequestlensresult.FieldLatestEvidenceID, pullrequestlensresult.FieldEvidenceCount, pullrequestlensresult.FieldEventCount:
 			values[i] = new(sql.NullInt64)
 		case pullrequestlensresult.FieldRelationKind, pullrequestlensresult.FieldSource, pullrequestlensresult.FieldSourceInstance, pullrequestlensresult.FieldExternalID, pullrequestlensresult.FieldSourceURL, pullrequestlensresult.FieldFreshnessState, pullrequestlensresult.FieldVisibility:
 			values[i] = new(sql.NullString)
@@ -139,6 +155,12 @@ func (_m *PullRequestLensResult) assignValues(columns []string, values []any) er
 				return fmt.Errorf("unexpected type %T for field work_lens_id", values[i])
 			} else if value.Valid {
 				_m.WorkLensID = int(value.Int64)
+			}
+		case pullrequestlensresult.FieldWorkLensWindowID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field work_lens_window_id", values[i])
+			} else if value.Valid {
+				_m.WorkLensWindowID = int(value.Int64)
 			}
 		case pullrequestlensresult.FieldPullRequestID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -260,6 +282,11 @@ func (_m *PullRequestLensResult) QueryLens() *WorkLensQuery {
 	return NewPullRequestLensResultClient(_m.config).QueryLens(_m)
 }
 
+// QueryWindow queries the "window" edge of the PullRequestLensResult entity.
+func (_m *PullRequestLensResult) QueryWindow() *WorkLensWindowQuery {
+	return NewPullRequestLensResultClient(_m.config).QueryWindow(_m)
+}
+
 // QueryPullRequest queries the "pull_request" edge of the PullRequestLensResult entity.
 func (_m *PullRequestLensResult) QueryPullRequest() *PullRequestQuery {
 	return NewPullRequestLensResultClient(_m.config).QueryPullRequest(_m)
@@ -294,6 +321,9 @@ func (_m *PullRequestLensResult) String() string {
 	builder.WriteString("PullRequestLensResult(")
 	builder.WriteString("work_lens_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.WorkLensID))
+	builder.WriteString(", ")
+	builder.WriteString("work_lens_window_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkLensWindowID))
 	builder.WriteString(", ")
 	builder.WriteString("pull_request_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.PullRequestID))

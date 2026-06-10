@@ -8,6 +8,9 @@ type WorkAreaKind string
 // LensTargetKind is the concrete Ent object kind a WorkLens can link to.
 type LensTargetKind string
 
+// LensWindowKind is the partition strategy for a WorkLens result set.
+type LensWindowKind string
+
 // WorkLensKind is a specific bounded view inside a person's work area.
 type WorkLensKind string
 
@@ -26,6 +29,12 @@ const (
 	LensTargetPullRequest LensTargetKind = "pull_request" // LensTargetPullRequest means a lens points to PullRequest rows.
 	LensTargetTicket      LensTargetKind = "ticket"       // LensTargetTicket means a lens points to Ticket rows.
 	LensTargetMessage     LensTargetKind = "message"      // LensTargetMessage means a lens points to Message rows.
+)
+
+const (
+	LensWindowRecent     LensWindowKind = "recent"      // LensWindowRecent contains the current ranked head of a lens.
+	LensWindowTimeBucket LensWindowKind = "time_bucket" // LensWindowTimeBucket contains results bounded by source activity time.
+	LensWindowSource     LensWindowKind = "source"      // LensWindowSource contains results contributed by one source system.
 )
 
 const (
@@ -156,6 +165,15 @@ func LensTargetKindStrings() []string {
 		string(LensTargetPullRequest),
 		string(LensTargetTicket),
 		string(LensTargetMessage),
+	}
+}
+
+// LensWindowKindStrings returns all closed lens-window-kind enum values.
+func LensWindowKindStrings() []string {
+	return []string{
+		string(LensWindowRecent),
+		string(LensWindowTimeBucket),
+		string(LensWindowSource),
 	}
 }
 

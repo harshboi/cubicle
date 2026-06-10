@@ -56,6 +56,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeArea holds the string denoting the area edge name in mutations.
 	EdgeArea = "area"
+	// EdgeWindows holds the string denoting the windows edge name in mutations.
+	EdgeWindows = "windows"
 	// EdgeDocuments holds the string denoting the documents edge name in mutations.
 	EdgeDocuments = "documents"
 	// EdgePullRequests holds the string denoting the pull_requests edge name in mutations.
@@ -81,6 +83,13 @@ const (
 	AreaInverseTable = "work_areas"
 	// AreaColumn is the table column denoting the area relation/edge.
 	AreaColumn = "work_area_id"
+	// WindowsTable is the table that holds the windows relation/edge.
+	WindowsTable = "work_lens_windows"
+	// WindowsInverseTable is the table name for the WorkLensWindow entity.
+	// It exists in this package in order to avoid circular dependency with the "worklenswindow" package.
+	WindowsInverseTable = "work_lens_windows"
+	// WindowsColumn is the table column denoting the windows relation/edge.
+	WindowsColumn = "work_lens_id"
 	// DocumentsTable is the table that holds the documents relation/edge. The primary key declared below.
 	DocumentsTable = "document_lens_results"
 	// DocumentsInverseTable is the table name for the Document entity.
@@ -436,6 +445,20 @@ func ByAreaField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
+// ByWindowsCount orders the results by windows count.
+func ByWindowsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWindowsStep(), opts...)
+	}
+}
+
+// ByWindows orders the results by windows terms.
+func ByWindows(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWindowsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByDocumentsCount orders the results by documents count.
 func ByDocumentsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -552,6 +575,13 @@ func newAreaStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AreaInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, AreaTable, AreaColumn),
+	)
+}
+func newWindowsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WindowsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, WindowsTable, WindowsColumn),
 	)
 }
 func newDocumentsStep() *sqlgraph.Step {

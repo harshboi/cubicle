@@ -898,6 +898,29 @@ func HasAreaWith(preds ...predicate.WorkArea) predicate.WorkLens {
 	})
 }
 
+// HasWindows applies the HasEdge predicate on the "windows" edge.
+func HasWindows() predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, WindowsTable, WindowsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWindowsWith applies the HasEdge predicate on the "windows" edge with a given conditions (other predicates).
+func HasWindowsWith(preds ...predicate.WorkLensWindow) predicate.WorkLens {
+	return predicate.WorkLens(func(s *sql.Selector) {
+		step := newWindowsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasDocuments applies the HasEdge predicate on the "documents" edge.
 func HasDocuments() predicate.WorkLens {
 	return predicate.WorkLens(func(s *sql.Selector) {

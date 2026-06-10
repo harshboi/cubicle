@@ -8,6 +8,7 @@ import (
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"errors"
 	"fmt"
 	"time"
@@ -28,6 +29,12 @@ type DocumentLensResultCreate struct {
 // SetWorkLensID sets the "work_lens_id" field.
 func (_c *DocumentLensResultCreate) SetWorkLensID(v int) *DocumentLensResultCreate {
 	_c.mutation.SetWorkLensID(v)
+	return _c
+}
+
+// SetWorkLensWindowID sets the "work_lens_window_id" field.
+func (_c *DocumentLensResultCreate) SetWorkLensWindowID(v int) *DocumentLensResultCreate {
+	_c.mutation.SetWorkLensWindowID(v)
 	return _c
 }
 
@@ -264,6 +271,17 @@ func (_c *DocumentLensResultCreate) SetLens(v *WorkLens) *DocumentLensResultCrea
 	return _c.SetLensID(v.ID)
 }
 
+// SetWindowID sets the "window" edge to the WorkLensWindow entity by ID.
+func (_c *DocumentLensResultCreate) SetWindowID(id int) *DocumentLensResultCreate {
+	_c.mutation.SetWindowID(id)
+	return _c
+}
+
+// SetWindow sets the "window" edge to the WorkLensWindow entity.
+func (_c *DocumentLensResultCreate) SetWindow(v *WorkLensWindow) *DocumentLensResultCreate {
+	return _c.SetWindowID(v.ID)
+}
+
 // SetDocument sets the "document" edge to the Document entity.
 func (_c *DocumentLensResultCreate) SetDocument(v *Document) *DocumentLensResultCreate {
 	return _c.SetDocumentID(v.ID)
@@ -348,6 +366,9 @@ func (_c *DocumentLensResultCreate) check() error {
 	if _, ok := _c.mutation.WorkLensID(); !ok {
 		return &ValidationError{Name: "work_lens_id", err: errors.New(`ent: missing required field "DocumentLensResult.work_lens_id"`)}
 	}
+	if _, ok := _c.mutation.WorkLensWindowID(); !ok {
+		return &ValidationError{Name: "work_lens_window_id", err: errors.New(`ent: missing required field "DocumentLensResult.work_lens_window_id"`)}
+	}
 	if _, ok := _c.mutation.DocumentID(); !ok {
 		return &ValidationError{Name: "document_id", err: errors.New(`ent: missing required field "DocumentLensResult.document_id"`)}
 	}
@@ -395,6 +416,9 @@ func (_c *DocumentLensResultCreate) check() error {
 	}
 	if len(_c.mutation.LensIDs()) == 0 {
 		return &ValidationError{Name: "lens", err: errors.New(`ent: missing required edge "DocumentLensResult.lens"`)}
+	}
+	if len(_c.mutation.WindowIDs()) == 0 {
+		return &ValidationError{Name: "window", err: errors.New(`ent: missing required edge "DocumentLensResult.window"`)}
 	}
 	if len(_c.mutation.DocumentIDs()) == 0 {
 		return &ValidationError{Name: "document", err: errors.New(`ent: missing required edge "DocumentLensResult.document"`)}
@@ -497,6 +521,23 @@ func (_c *DocumentLensResultCreate) createSpec() (*DocumentLensResult, *sqlgraph
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.WorkLensID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.WindowIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   documentlensresult.WindowTable,
+			Columns: []string{documentlensresult.WindowColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklenswindow.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkLensWindowID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.DocumentIDs(); len(nodes) > 0 {
@@ -832,6 +873,9 @@ func (u *DocumentLensResultUpsertOne) UpdateNewValues() *DocumentLensResultUpser
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.WorkLensID(); exists {
 			s.SetIgnore(documentlensresult.FieldWorkLensID)
+		}
+		if _, exists := u.create.mutation.WorkLensWindowID(); exists {
+			s.SetIgnore(documentlensresult.FieldWorkLensWindowID)
 		}
 		if _, exists := u.create.mutation.DocumentID(); exists {
 			s.SetIgnore(documentlensresult.FieldDocumentID)
@@ -1301,6 +1345,9 @@ func (u *DocumentLensResultUpsertBulk) UpdateNewValues() *DocumentLensResultUpse
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.WorkLensID(); exists {
 				s.SetIgnore(documentlensresult.FieldWorkLensID)
+			}
+			if _, exists := b.mutation.WorkLensWindowID(); exists {
+				s.SetIgnore(documentlensresult.FieldWorkLensWindowID)
 			}
 			if _, exists := b.mutation.DocumentID(); exists {
 				s.SetIgnore(documentlensresult.FieldDocumentID)

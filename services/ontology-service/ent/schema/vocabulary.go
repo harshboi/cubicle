@@ -32,6 +32,12 @@ const (
 )
 
 const (
+	lensWindowRecent     = string(ontology.LensWindowRecent)     // lensWindowRecent stores the ranked head of a lens.
+	lensWindowTimeBucket = string(ontology.LensWindowTimeBucket) // lensWindowTimeBucket stores a time-bounded lens partition.
+	lensWindowSource     = string(ontology.LensWindowSource)     // lensWindowSource stores a source-bounded lens partition.
+)
+
+const (
 	workLensDocumentsCreated         = string(ontology.WorkLensDocumentsCreated)         // workLensDocumentsCreated contains documents created by the person.
 	workLensDocumentsEdited          = string(ontology.WorkLensDocumentsEdited)          // workLensDocumentsEdited contains documents edited by the person.
 	workLensDocumentsCommentedOn     = string(ontology.WorkLensDocumentsCommentedOn)     // workLensDocumentsCommentedOn contains documents the person commented on.
@@ -103,6 +109,10 @@ func workAreaKindValues() []string {
 
 func lensTargetKindValues() []string {
 	return ontology.LensTargetKindStrings()
+}
+
+func lensWindowKindValues() []string {
+	return ontology.LensWindowKindStrings()
 }
 
 func workLensKindValues() []string {

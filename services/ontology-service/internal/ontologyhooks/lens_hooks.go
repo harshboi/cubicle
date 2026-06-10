@@ -69,11 +69,15 @@ func validateDocumentLensResult() genent.Hook {
 			if !ok {
 				return nil, missingFieldError("document_lens_results", "work_lens_id")
 			}
+			workLensWindowID, ok := mutation.WorkLensWindowID()
+			if !ok {
+				return nil, missingFieldError("document_lens_results", "work_lens_window_id")
+			}
 			relationKind, ok := mutation.RelationKind()
 			if !ok {
 				return nil, missingFieldError("document_lens_results", "relation_kind")
 			}
-			if err := validateLensResult(ctx, mutation.Client(), workLensID, ontology.LensTargetDocument, ontology.WorkRelationKind(relationKind)); err != nil {
+			if err := validateLensResult(ctx, mutation.Client(), workLensID, workLensWindowID, ontology.LensTargetDocument, ontology.WorkRelationKind(relationKind)); err != nil {
 				return nil, err
 			}
 			return next.Mutate(ctx, mutation)
@@ -89,11 +93,15 @@ func validatePullRequestLensResult() genent.Hook {
 			if !ok {
 				return nil, missingFieldError("pull_request_lens_results", "work_lens_id")
 			}
+			workLensWindowID, ok := mutation.WorkLensWindowID()
+			if !ok {
+				return nil, missingFieldError("pull_request_lens_results", "work_lens_window_id")
+			}
 			relationKind, ok := mutation.RelationKind()
 			if !ok {
 				return nil, missingFieldError("pull_request_lens_results", "relation_kind")
 			}
-			if err := validateLensResult(ctx, mutation.Client(), workLensID, ontology.LensTargetPullRequest, ontology.WorkRelationKind(relationKind)); err != nil {
+			if err := validateLensResult(ctx, mutation.Client(), workLensID, workLensWindowID, ontology.LensTargetPullRequest, ontology.WorkRelationKind(relationKind)); err != nil {
 				return nil, err
 			}
 			return next.Mutate(ctx, mutation)
@@ -109,11 +117,15 @@ func validateTicketLensResult() genent.Hook {
 			if !ok {
 				return nil, missingFieldError("ticket_lens_results", "work_lens_id")
 			}
+			workLensWindowID, ok := mutation.WorkLensWindowID()
+			if !ok {
+				return nil, missingFieldError("ticket_lens_results", "work_lens_window_id")
+			}
 			relationKind, ok := mutation.RelationKind()
 			if !ok {
 				return nil, missingFieldError("ticket_lens_results", "relation_kind")
 			}
-			if err := validateLensResult(ctx, mutation.Client(), workLensID, ontology.LensTargetTicket, ontology.WorkRelationKind(relationKind)); err != nil {
+			if err := validateLensResult(ctx, mutation.Client(), workLensID, workLensWindowID, ontology.LensTargetTicket, ontology.WorkRelationKind(relationKind)); err != nil {
 				return nil, err
 			}
 			return next.Mutate(ctx, mutation)
@@ -129,11 +141,15 @@ func validateMessageLensResult() genent.Hook {
 			if !ok {
 				return nil, missingFieldError("message_lens_results", "work_lens_id")
 			}
+			workLensWindowID, ok := mutation.WorkLensWindowID()
+			if !ok {
+				return nil, missingFieldError("message_lens_results", "work_lens_window_id")
+			}
 			relationKind, ok := mutation.RelationKind()
 			if !ok {
 				return nil, missingFieldError("message_lens_results", "relation_kind")
 			}
-			if err := validateLensResult(ctx, mutation.Client(), workLensID, ontology.LensTargetMessage, ontology.WorkRelationKind(relationKind)); err != nil {
+			if err := validateLensResult(ctx, mutation.Client(), workLensID, workLensWindowID, ontology.LensTargetMessage, ontology.WorkRelationKind(relationKind)); err != nil {
 				return nil, err
 			}
 			return next.Mutate(ctx, mutation)
@@ -141,11 +157,18 @@ func validateMessageLensResult() genent.Hook {
 	}
 }
 
-// validateLensResult checks that a lens result table matches its parent lens.
-func validateLensResult(ctx context.Context, client *genent.Client, workLensID int, resultLensTargetKind ontology.LensTargetKind, relationKind ontology.WorkRelationKind) error {
+// validateLensResult checks that a lens result table matches its parent lens and window.
+func validateLensResult(ctx context.Context, client *genent.Client, workLensID int, workLensWindowID int, resultLensTargetKind ontology.LensTargetKind, relationKind ontology.WorkRelationKind) error {
 	lens, err := client.WorkLens.Get(ctx, workLensID)
 	if err != nil {
 		return fmt.Errorf("load work lens %d for result validation: %w", workLensID, err)
+	}
+	window, err := client.WorkLensWindow.Get(ctx, workLensWindowID)
+	if err != nil {
+		return fmt.Errorf("load work lens window %d for result validation: %w", workLensWindowID, err)
+	}
+	if window.WorkLensID != workLensID {
+		return fmt.Errorf("work lens window %d belongs to work lens %d, not %d", workLensWindowID, window.WorkLensID, workLensID)
 	}
 	return ontology.ValidateLensResult(
 		ontology.WorkLensKind(lens.WorkLensKind),

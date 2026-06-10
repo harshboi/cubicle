@@ -22,9 +22,9 @@ Gin localhost server
  v
 Ent typed ontology
  |
- +-- Person -> WorkArea -> WorkLens -> *LensResult -> target
+ +-- Person -> WorkArea -> WorkLens -> WorkLensWindow -> *LensResult -> target
  |
- v
+v
 SQLite local POC database
 ```
 
@@ -37,6 +37,7 @@ included now
  +-- gqlgen schema/codegen wiring
  +-- minimal GraphQL health query
  +-- SQLite storage foundation
+ +-- Ent runtime startup, migration, and ontology hook registration
  +-- HOCON/env/flag runtime configuration
  +-- typed Ent schemas for the cardinality-safe ontology
 
@@ -188,8 +189,8 @@ Current Architecture              Better Architecture
  +-- one edge per raw activity    +-- WorkArea -> WorkLens
  |   -> hard to page/reason       |   -> saved bounded view
  |                                |
- +-- target loaded directly       +-- WorkLens -> *LensResult
-     -> timeout risk                  -> page/rank/filter first
+ +-- target loaded directly       +-- WorkLens -> WorkLensWindow -> *LensResult
+     -> timeout risk                  -> bound, page, rank, then load targets
 
 The implemented topology is:
 
@@ -200,36 +201,44 @@ Person
  |    |
  |    +-- WorkLens(kind: documents_commented_on, target: document)
  |         |
- |         +-- DocumentLensResult
+ |         +-- WorkLensWindow(kind: recent/time_bucket/source)
  |              |
- |              +-- Document
+ |              +-- DocumentLensResult
+ |                   |
+ |                   +-- Document
  |
  +-- WorkArea(kind: code)
  |    |
  |    +-- WorkLens(kind: pull_requests_reviewed, target: pull_request)
  |         |
- |         +-- PullRequestLensResult
+ |         +-- WorkLensWindow(kind: recent/time_bucket/source)
  |              |
- |              +-- PullRequest
+ |              +-- PullRequestLensResult
+ |                   |
+ |                   +-- PullRequest
  |
  +-- WorkArea(kind: tickets)
  |    |
  |    +-- WorkLens(kind: tickets_owned, target: ticket)
  |         |
- |         +-- TicketLensResult
+ |         +-- WorkLensWindow(kind: recent/time_bucket/source)
  |              |
- |              +-- Ticket
+ |              +-- TicketLensResult
+ |                   |
+ |                   +-- Ticket
  |
  +-- WorkArea(kind: communications)
       |
       +-- WorkLens(kind: messages_authored, target: message)
            |
-           +-- MessageLensResult
+           +-- WorkLensWindow(kind: recent/time_bucket/source)
                 |
-                +-- Message
+                +-- MessageLensResult
+                     |
+                     +-- Message
 ```
 
-The schema has 18 ontology tables.
+The schema has 19 ontology tables.
 
 ```text
 core objects
@@ -247,6 +256,7 @@ bounded person graph
  |
  +-- work_areas
  +-- work_lenses
+ +-- work_lens_windows
 
 execution links
  |
@@ -265,7 +275,8 @@ lens result links
 
 Each `*LensResult` row stores relation metadata, freshness, rank score,
 activity timestamps, source identity, visibility, confidence, and evidence
-counts. Query code should page and rank result rows before loading targets.
+counts. Query code should select bounded `WorkLensWindow` rows first, then page
+and rank result rows before loading targets.
 
 ## Current Packages
 
@@ -286,6 +297,9 @@ ent/schema
  +-- work_lens.go
  |     -> bounded saved view under a work area
  |
+ +-- work_lens_window.go
+ |     -> bounded partition for paging and crawler checkpoints
+ |
  +-- *_lens_result.go
        -> metadata-bearing Through edges to targets
 
@@ -298,6 +312,11 @@ internal/ontologyhooks
  |
  +-- lens_hooks.go
        -> cross-row invariant checks for WorkLens and results
+
+internal/entstore
+ |
+ +-- entstore.go
+      -> SQLite-backed Ent startup, migration, and hook registration
 
 internal/graphql
  |
@@ -327,7 +346,7 @@ internal/httpapi
 internal/storage
  |
  +-- storage.go
-       -> SQLite open, PRAGMAs, transaction helper
+      -> SQLite open, PRAGMAs, transaction helper used under Ent
 
 internal/config
  |
@@ -337,15 +356,17 @@ internal/config
 cmd/ontology-service
  |
  +-- main.go
-       -> serve command, config parsing, SQLite startup, localhost bind guard
+      -> serve command, config parsing, Ent startup, localhost bind guard
 ```
 
 ## Design Rules
 
 - Use typed Ent schemas, not durable generic `Object` / `Association` tables.
-- Keep high-cardinality activity behind `WorkLens -> *LensResult`.
+- Keep high-cardinality activity behind `WorkLens -> WorkLensWindow -> *LensResult`.
+- Use `WorkLensWindow` for source/time/rank bounded reads and crawler checkpoints.
 - Keep result table endpoint and relation identity immutable.
-- Install `ontologyhooks.Register(client)` on every Ent client used for writes.
+- Build runtime writers through `internal/entstore.Open`, which migrates schema
+  and installs `ontologyhooks.Register(client)`.
 - Expose product queries through GraphQL; keep REST for health and mechanics.
 - Keep generated gqlgen and Ent code committed because generation is part of
   review and build verification.
@@ -380,4 +401,6 @@ Person ontology foundation
  +-- MessageLensResult
  |
  +-- Cardinality docs
+ |
+ +-- Ent runtime + WorkLensWindow cardinality hardening
 ```

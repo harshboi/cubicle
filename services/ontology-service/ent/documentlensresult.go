@@ -7,6 +7,7 @@ import (
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"fmt"
 	"strings"
 	"time"
@@ -20,6 +21,8 @@ type DocumentLensResult struct {
 	config `json:"-"`
 	// Source WorkLens endpoint for this result.
 	WorkLensID int `json:"work_lens_id,omitempty"`
+	// Bounded WorkLensWindow this result is assigned to for paging and recrawl.
+	WorkLensWindowID int `json:"work_lens_window_id,omitempty"`
 	// Target Document endpoint for this result.
 	DocumentID int `json:"document_id,omitempty"`
 	// Semantic relationship represented by this link row.
@@ -64,13 +67,15 @@ type DocumentLensResult struct {
 type DocumentLensResultEdges struct {
 	// Work lens that owns this document result.
 	Lens *WorkLens `json:"lens,omitempty"`
+	// Bounded lens window used to page this document result.
+	Window *WorkLensWindow `json:"window,omitempty"`
 	// Document target for this result.
 	Document *Document `json:"document,omitempty"`
 	// Most recent evidence supporting this result.
 	LatestEvidence *Evidence `json:"latest_evidence,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // LensOrErr returns the Lens value or an error if the edge
@@ -84,12 +89,23 @@ func (e DocumentLensResultEdges) LensOrErr() (*WorkLens, error) {
 	return nil, &NotLoadedError{edge: "lens"}
 }
 
+// WindowOrErr returns the Window value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e DocumentLensResultEdges) WindowOrErr() (*WorkLensWindow, error) {
+	if e.Window != nil {
+		return e.Window, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: worklenswindow.Label}
+	}
+	return nil, &NotLoadedError{edge: "window"}
+}
+
 // DocumentOrErr returns the Document value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e DocumentLensResultEdges) DocumentOrErr() (*Document, error) {
 	if e.Document != nil {
 		return e.Document, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[2] {
 		return nil, &NotFoundError{label: document.Label}
 	}
 	return nil, &NotLoadedError{edge: "document"}
@@ -100,7 +116,7 @@ func (e DocumentLensResultEdges) DocumentOrErr() (*Document, error) {
 func (e DocumentLensResultEdges) LatestEvidenceOrErr() (*Evidence, error) {
 	if e.LatestEvidence != nil {
 		return e.LatestEvidence, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: evidence.Label}
 	}
 	return nil, &NotLoadedError{edge: "latest_evidence"}
@@ -113,7 +129,7 @@ func (*DocumentLensResult) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case documentlensresult.FieldRankScore, documentlensresult.FieldConfidence:
 			values[i] = new(sql.NullFloat64)
-		case documentlensresult.FieldWorkLensID, documentlensresult.FieldDocumentID, documentlensresult.FieldLatestEvidenceID, documentlensresult.FieldEvidenceCount, documentlensresult.FieldEventCount:
+		case documentlensresult.FieldWorkLensID, documentlensresult.FieldWorkLensWindowID, documentlensresult.FieldDocumentID, documentlensresult.FieldLatestEvidenceID, documentlensresult.FieldEvidenceCount, documentlensresult.FieldEventCount:
 			values[i] = new(sql.NullInt64)
 		case documentlensresult.FieldRelationKind, documentlensresult.FieldSource, documentlensresult.FieldSourceInstance, documentlensresult.FieldExternalID, documentlensresult.FieldSourceURL, documentlensresult.FieldFreshnessState, documentlensresult.FieldVisibility:
 			values[i] = new(sql.NullString)
@@ -139,6 +155,12 @@ func (_m *DocumentLensResult) assignValues(columns []string, values []any) error
 				return fmt.Errorf("unexpected type %T for field work_lens_id", values[i])
 			} else if value.Valid {
 				_m.WorkLensID = int(value.Int64)
+			}
+		case documentlensresult.FieldWorkLensWindowID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field work_lens_window_id", values[i])
+			} else if value.Valid {
+				_m.WorkLensWindowID = int(value.Int64)
 			}
 		case documentlensresult.FieldDocumentID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -260,6 +282,11 @@ func (_m *DocumentLensResult) QueryLens() *WorkLensQuery {
 	return NewDocumentLensResultClient(_m.config).QueryLens(_m)
 }
 
+// QueryWindow queries the "window" edge of the DocumentLensResult entity.
+func (_m *DocumentLensResult) QueryWindow() *WorkLensWindowQuery {
+	return NewDocumentLensResultClient(_m.config).QueryWindow(_m)
+}
+
 // QueryDocument queries the "document" edge of the DocumentLensResult entity.
 func (_m *DocumentLensResult) QueryDocument() *DocumentQuery {
 	return NewDocumentLensResultClient(_m.config).QueryDocument(_m)
@@ -294,6 +321,9 @@ func (_m *DocumentLensResult) String() string {
 	builder.WriteString("DocumentLensResult(")
 	builder.WriteString("work_lens_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.WorkLensID))
+	builder.WriteString(", ")
+	builder.WriteString("work_lens_window_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkLensWindowID))
 	builder.WriteString(", ")
 	builder.WriteString("document_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DocumentID))

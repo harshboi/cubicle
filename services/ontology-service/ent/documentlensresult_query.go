@@ -9,6 +9,7 @@ import (
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"fmt"
 	"math"
 
@@ -25,6 +26,7 @@ type DocumentLensResultQuery struct {
 	inters             []Interceptor
 	predicates         []predicate.DocumentLensResult
 	withLens           *WorkLensQuery
+	withWindow         *WorkLensWindowQuery
 	withDocument       *DocumentQuery
 	withLatestEvidence *EvidenceQuery
 	// intermediate query (i.e. traversal path).
@@ -78,6 +80,28 @@ func (_q *DocumentLensResultQuery) QueryLens() *WorkLensQuery {
 			sqlgraph.From(documentlensresult.Table, documentlensresult.LensColumn, selector),
 			sqlgraph.To(worklens.Table, worklens.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, documentlensresult.LensTable, documentlensresult.LensColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryWindow chains the current query on the "window" edge.
+func (_q *DocumentLensResultQuery) QueryWindow() *WorkLensWindowQuery {
+	query := (&WorkLensWindowClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(documentlensresult.Table, documentlensresult.WindowColumn, selector),
+			sqlgraph.To(worklenswindow.Table, worklenswindow.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, documentlensresult.WindowTable, documentlensresult.WindowColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -250,6 +274,7 @@ func (_q *DocumentLensResultQuery) Clone() *DocumentLensResultQuery {
 		inters:             append([]Interceptor{}, _q.inters...),
 		predicates:         append([]predicate.DocumentLensResult{}, _q.predicates...),
 		withLens:           _q.withLens.Clone(),
+		withWindow:         _q.withWindow.Clone(),
 		withDocument:       _q.withDocument.Clone(),
 		withLatestEvidence: _q.withLatestEvidence.Clone(),
 		// clone intermediate query.
@@ -266,6 +291,17 @@ func (_q *DocumentLensResultQuery) WithLens(opts ...func(*WorkLensQuery)) *Docum
 		opt(query)
 	}
 	_q.withLens = query
+	return _q
+}
+
+// WithWindow tells the query-builder to eager-load the nodes that are connected to
+// the "window" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *DocumentLensResultQuery) WithWindow(opts ...func(*WorkLensWindowQuery)) *DocumentLensResultQuery {
+	query := (&WorkLensWindowClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withWindow = query
 	return _q
 }
 
@@ -369,8 +405,9 @@ func (_q *DocumentLensResultQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	var (
 		nodes       = []*DocumentLensResult{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			_q.withLens != nil,
+			_q.withWindow != nil,
 			_q.withDocument != nil,
 			_q.withLatestEvidence != nil,
 		}
@@ -396,6 +433,12 @@ func (_q *DocumentLensResultQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	if query := _q.withLens; query != nil {
 		if err := _q.loadLens(ctx, query, nodes, nil,
 			func(n *DocumentLensResult, e *WorkLens) { n.Edges.Lens = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withWindow; query != nil {
+		if err := _q.loadWindow(ctx, query, nodes, nil,
+			func(n *DocumentLensResult, e *WorkLensWindow) { n.Edges.Window = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -436,6 +479,35 @@ func (_q *DocumentLensResultQuery) loadLens(ctx context.Context, query *WorkLens
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "work_lens_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *DocumentLensResultQuery) loadWindow(ctx context.Context, query *WorkLensWindowQuery, nodes []*DocumentLensResult, init func(*DocumentLensResult), assign func(*DocumentLensResult, *WorkLensWindow)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*DocumentLensResult)
+	for i := range nodes {
+		fk := nodes[i].WorkLensWindowID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(worklenswindow.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "work_lens_window_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -524,6 +596,9 @@ func (_q *DocumentLensResultQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if _q.withLens != nil {
 			_spec.Node.AddColumnOnce(documentlensresult.FieldWorkLensID)
+		}
+		if _q.withWindow != nil {
+			_spec.Node.AddColumnOnce(documentlensresult.FieldWorkLensWindowID)
 		}
 		if _q.withDocument != nil {
 			_spec.Node.AddColumnOnce(documentlensresult.FieldDocumentID)

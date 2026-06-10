@@ -8,6 +8,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketlensresult"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"errors"
 	"fmt"
 	"time"
@@ -28,6 +29,12 @@ type TicketLensResultCreate struct {
 // SetWorkLensID sets the "work_lens_id" field.
 func (_c *TicketLensResultCreate) SetWorkLensID(v int) *TicketLensResultCreate {
 	_c.mutation.SetWorkLensID(v)
+	return _c
+}
+
+// SetWorkLensWindowID sets the "work_lens_window_id" field.
+func (_c *TicketLensResultCreate) SetWorkLensWindowID(v int) *TicketLensResultCreate {
+	_c.mutation.SetWorkLensWindowID(v)
 	return _c
 }
 
@@ -264,6 +271,17 @@ func (_c *TicketLensResultCreate) SetLens(v *WorkLens) *TicketLensResultCreate {
 	return _c.SetLensID(v.ID)
 }
 
+// SetWindowID sets the "window" edge to the WorkLensWindow entity by ID.
+func (_c *TicketLensResultCreate) SetWindowID(id int) *TicketLensResultCreate {
+	_c.mutation.SetWindowID(id)
+	return _c
+}
+
+// SetWindow sets the "window" edge to the WorkLensWindow entity.
+func (_c *TicketLensResultCreate) SetWindow(v *WorkLensWindow) *TicketLensResultCreate {
+	return _c.SetWindowID(v.ID)
+}
+
 // SetTicket sets the "ticket" edge to the Ticket entity.
 func (_c *TicketLensResultCreate) SetTicket(v *Ticket) *TicketLensResultCreate {
 	return _c.SetTicketID(v.ID)
@@ -348,6 +366,9 @@ func (_c *TicketLensResultCreate) check() error {
 	if _, ok := _c.mutation.WorkLensID(); !ok {
 		return &ValidationError{Name: "work_lens_id", err: errors.New(`ent: missing required field "TicketLensResult.work_lens_id"`)}
 	}
+	if _, ok := _c.mutation.WorkLensWindowID(); !ok {
+		return &ValidationError{Name: "work_lens_window_id", err: errors.New(`ent: missing required field "TicketLensResult.work_lens_window_id"`)}
+	}
 	if _, ok := _c.mutation.TicketID(); !ok {
 		return &ValidationError{Name: "ticket_id", err: errors.New(`ent: missing required field "TicketLensResult.ticket_id"`)}
 	}
@@ -395,6 +416,9 @@ func (_c *TicketLensResultCreate) check() error {
 	}
 	if len(_c.mutation.LensIDs()) == 0 {
 		return &ValidationError{Name: "lens", err: errors.New(`ent: missing required edge "TicketLensResult.lens"`)}
+	}
+	if len(_c.mutation.WindowIDs()) == 0 {
+		return &ValidationError{Name: "window", err: errors.New(`ent: missing required edge "TicketLensResult.window"`)}
 	}
 	if len(_c.mutation.TicketIDs()) == 0 {
 		return &ValidationError{Name: "ticket", err: errors.New(`ent: missing required edge "TicketLensResult.ticket"`)}
@@ -497,6 +521,23 @@ func (_c *TicketLensResultCreate) createSpec() (*TicketLensResult, *sqlgraph.Cre
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.WorkLensID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.WindowIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   ticketlensresult.WindowTable,
+			Columns: []string{ticketlensresult.WindowColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklenswindow.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkLensWindowID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.TicketIDs(); len(nodes) > 0 {
@@ -832,6 +873,9 @@ func (u *TicketLensResultUpsertOne) UpdateNewValues() *TicketLensResultUpsertOne
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.WorkLensID(); exists {
 			s.SetIgnore(ticketlensresult.FieldWorkLensID)
+		}
+		if _, exists := u.create.mutation.WorkLensWindowID(); exists {
+			s.SetIgnore(ticketlensresult.FieldWorkLensWindowID)
 		}
 		if _, exists := u.create.mutation.TicketID(); exists {
 			s.SetIgnore(ticketlensresult.FieldTicketID)
@@ -1301,6 +1345,9 @@ func (u *TicketLensResultUpsertBulk) UpdateNewValues() *TicketLensResultUpsertBu
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.WorkLensID(); exists {
 				s.SetIgnore(ticketlensresult.FieldWorkLensID)
+			}
+			if _, exists := b.mutation.WorkLensWindowID(); exists {
+				s.SetIgnore(ticketlensresult.FieldWorkLensWindowID)
 			}
 			if _, exists := b.mutation.TicketID(); exists {
 				s.SetIgnore(ticketlensresult.FieldTicketID)

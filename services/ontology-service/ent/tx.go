@@ -44,6 +44,8 @@ type Tx struct {
 	WorkArea *WorkAreaClient
 	// WorkLens is the client for interacting with the WorkLens builders.
 	WorkLens *WorkLensClient
+	// WorkLensWindow is the client for interacting with the WorkLensWindow builders.
+	WorkLensWindow *WorkLensWindowClient
 	// Workstream is the client for interacting with the Workstream builders.
 	Workstream *WorkstreamClient
 	// WorkstreamTicket is the client for interacting with the WorkstreamTicket builders.
@@ -195,6 +197,7 @@ func (tx *Tx) init() {
 	tx.TicketPullRequest = NewTicketPullRequestClient(tx.config)
 	tx.WorkArea = NewWorkAreaClient(tx.config)
 	tx.WorkLens = NewWorkLensClient(tx.config)
+	tx.WorkLensWindow = NewWorkLensWindowClient(tx.config)
 	tx.Workstream = NewWorkstreamClient(tx.config)
 	tx.WorkstreamTicket = NewWorkstreamTicketClient(tx.config)
 }

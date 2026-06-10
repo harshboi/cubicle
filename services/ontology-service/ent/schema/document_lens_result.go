@@ -25,6 +25,9 @@ func (DocumentLensResult) Fields() []ent.Field {
 			field.Int("work_lens_id").
 				Immutable().
 				Comment("Source WorkLens endpoint for this result."),
+			field.Int("work_lens_window_id").
+				Immutable().
+				Comment("Bounded WorkLensWindow this result is assigned to for paging and recrawl."),
 			field.Int("document_id").
 				Immutable().
 				Comment("Target Document endpoint for this result."),
@@ -42,6 +45,13 @@ func (DocumentLensResult) Edges() []ent.Edge {
 			Immutable().
 			Field("work_lens_id").
 			Comment("Work lens that owns this document result."),
+		edge.From("window", WorkLensWindow.Type).
+			Ref("document_results").
+			Unique().
+			Required().
+			Immutable().
+			Field("work_lens_window_id").
+			Comment("Bounded lens window used to page this document result."),
 		edge.To("document", Document.Type).
 			Unique().
 			Required().
@@ -58,6 +68,8 @@ func (DocumentLensResult) Edges() []ent.Edge {
 // Indexes supports fast paged document reads from a lens.
 func (DocumentLensResult) Indexes() []ent.Index {
 	return []ent.Index{
+		index.Fields("work_lens_window_id", "freshness_state", "rank_score", "last_activity_at"),
+		index.Fields("work_lens_window_id", "relation_kind", "last_activity_at"),
 		index.Fields("work_lens_id", "freshness_state", "rank_score", "last_activity_at"),
 		index.Fields("work_lens_id", "relation_kind", "last_activity_at"),
 		index.Fields("document_id"),

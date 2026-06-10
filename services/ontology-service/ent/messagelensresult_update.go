@@ -354,6 +354,9 @@ func (_u *MessageLensResultUpdate) check() error {
 	if _u.mutation.LensCleared() && len(_u.mutation.LensIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessageLensResult.lens"`)
 	}
+	if _u.mutation.WindowCleared() && len(_u.mutation.WindowIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "MessageLensResult.window"`)
+	}
 	if _u.mutation.MessageCleared() && len(_u.mutation.MessageIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessageLensResult.message"`)
 	}
@@ -827,6 +830,9 @@ func (_u *MessageLensResultUpdateOne) check() error {
 	}
 	if _u.mutation.LensCleared() && len(_u.mutation.LensIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessageLensResult.lens"`)
+	}
+	if _u.mutation.WindowCleared() && len(_u.mutation.WindowIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "MessageLensResult.window"`)
 	}
 	if _u.mutation.MessageCleared() && len(_u.mutation.MessageIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessageLensResult.message"`)

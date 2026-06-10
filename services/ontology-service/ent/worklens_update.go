@@ -10,6 +10,7 @@ import (
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"errors"
 	"fmt"
 	"time"
@@ -293,6 +294,21 @@ func (_u *WorkLensUpdate) SetUpdatedAt(v time.Time) *WorkLensUpdate {
 	return _u
 }
 
+// AddWindowIDs adds the "windows" edge to the WorkLensWindow entity by IDs.
+func (_u *WorkLensUpdate) AddWindowIDs(ids ...int) *WorkLensUpdate {
+	_u.mutation.AddWindowIDs(ids...)
+	return _u
+}
+
+// AddWindows adds the "windows" edges to the WorkLensWindow entity.
+func (_u *WorkLensUpdate) AddWindows(v ...*WorkLensWindow) *WorkLensUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWindowIDs(ids...)
+}
+
 // AddDocumentIDs adds the "documents" edge to the Document entity by IDs.
 func (_u *WorkLensUpdate) AddDocumentIDs(ids ...int) *WorkLensUpdate {
 	_u.mutation.AddDocumentIDs(ids...)
@@ -356,6 +372,27 @@ func (_u *WorkLensUpdate) AddMessages(v ...*Message) *WorkLensUpdate {
 // Mutation returns the WorkLensMutation object of the builder.
 func (_u *WorkLensUpdate) Mutation() *WorkLensMutation {
 	return _u.mutation
+}
+
+// ClearWindows clears all "windows" edges to the WorkLensWindow entity.
+func (_u *WorkLensUpdate) ClearWindows() *WorkLensUpdate {
+	_u.mutation.ClearWindows()
+	return _u
+}
+
+// RemoveWindowIDs removes the "windows" edge to WorkLensWindow entities by IDs.
+func (_u *WorkLensUpdate) RemoveWindowIDs(ids ...int) *WorkLensUpdate {
+	_u.mutation.RemoveWindowIDs(ids...)
+	return _u
+}
+
+// RemoveWindows removes "windows" edges to WorkLensWindow entities.
+func (_u *WorkLensUpdate) RemoveWindows(v ...*WorkLensWindow) *WorkLensUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWindowIDs(ids...)
 }
 
 // ClearDocuments clears all "documents" edges to the Document entity.
@@ -595,6 +632,51 @@ func (_u *WorkLensUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(worklens.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.WindowsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worklens.WindowsTable,
+			Columns: []string{worklens.WindowsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklenswindow.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWindowsIDs(); len(nodes) > 0 && !_u.mutation.WindowsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worklens.WindowsTable,
+			Columns: []string{worklens.WindowsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklenswindow.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WindowsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worklens.WindowsTable,
+			Columns: []string{worklens.WindowsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklenswindow.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.DocumentsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1105,6 +1187,21 @@ func (_u *WorkLensUpdateOne) SetUpdatedAt(v time.Time) *WorkLensUpdateOne {
 	return _u
 }
 
+// AddWindowIDs adds the "windows" edge to the WorkLensWindow entity by IDs.
+func (_u *WorkLensUpdateOne) AddWindowIDs(ids ...int) *WorkLensUpdateOne {
+	_u.mutation.AddWindowIDs(ids...)
+	return _u
+}
+
+// AddWindows adds the "windows" edges to the WorkLensWindow entity.
+func (_u *WorkLensUpdateOne) AddWindows(v ...*WorkLensWindow) *WorkLensUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWindowIDs(ids...)
+}
+
 // AddDocumentIDs adds the "documents" edge to the Document entity by IDs.
 func (_u *WorkLensUpdateOne) AddDocumentIDs(ids ...int) *WorkLensUpdateOne {
 	_u.mutation.AddDocumentIDs(ids...)
@@ -1168,6 +1265,27 @@ func (_u *WorkLensUpdateOne) AddMessages(v ...*Message) *WorkLensUpdateOne {
 // Mutation returns the WorkLensMutation object of the builder.
 func (_u *WorkLensUpdateOne) Mutation() *WorkLensMutation {
 	return _u.mutation
+}
+
+// ClearWindows clears all "windows" edges to the WorkLensWindow entity.
+func (_u *WorkLensUpdateOne) ClearWindows() *WorkLensUpdateOne {
+	_u.mutation.ClearWindows()
+	return _u
+}
+
+// RemoveWindowIDs removes the "windows" edge to WorkLensWindow entities by IDs.
+func (_u *WorkLensUpdateOne) RemoveWindowIDs(ids ...int) *WorkLensUpdateOne {
+	_u.mutation.RemoveWindowIDs(ids...)
+	return _u
+}
+
+// RemoveWindows removes "windows" edges to WorkLensWindow entities.
+func (_u *WorkLensUpdateOne) RemoveWindows(v ...*WorkLensWindow) *WorkLensUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWindowIDs(ids...)
 }
 
 // ClearDocuments clears all "documents" edges to the Document entity.
@@ -1437,6 +1555,51 @@ func (_u *WorkLensUpdateOne) sqlSave(ctx context.Context) (_node *WorkLens, err 
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(worklens.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.WindowsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worklens.WindowsTable,
+			Columns: []string{worklens.WindowsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklenswindow.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWindowsIDs(); len(nodes) > 0 && !_u.mutation.WindowsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worklens.WindowsTable,
+			Columns: []string{worklens.WindowsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklenswindow.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WindowsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worklens.WindowsTable,
+			Columns: []string{worklens.WindowsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklenswindow.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.DocumentsCleared() {
 		edge := &sqlgraph.EdgeSpec{

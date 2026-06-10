@@ -8,6 +8,7 @@ import (
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/messagelensresult"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"errors"
 	"fmt"
 	"time"
@@ -28,6 +29,12 @@ type MessageLensResultCreate struct {
 // SetWorkLensID sets the "work_lens_id" field.
 func (_c *MessageLensResultCreate) SetWorkLensID(v int) *MessageLensResultCreate {
 	_c.mutation.SetWorkLensID(v)
+	return _c
+}
+
+// SetWorkLensWindowID sets the "work_lens_window_id" field.
+func (_c *MessageLensResultCreate) SetWorkLensWindowID(v int) *MessageLensResultCreate {
+	_c.mutation.SetWorkLensWindowID(v)
 	return _c
 }
 
@@ -264,6 +271,17 @@ func (_c *MessageLensResultCreate) SetLens(v *WorkLens) *MessageLensResultCreate
 	return _c.SetLensID(v.ID)
 }
 
+// SetWindowID sets the "window" edge to the WorkLensWindow entity by ID.
+func (_c *MessageLensResultCreate) SetWindowID(id int) *MessageLensResultCreate {
+	_c.mutation.SetWindowID(id)
+	return _c
+}
+
+// SetWindow sets the "window" edge to the WorkLensWindow entity.
+func (_c *MessageLensResultCreate) SetWindow(v *WorkLensWindow) *MessageLensResultCreate {
+	return _c.SetWindowID(v.ID)
+}
+
 // SetMessage sets the "message" edge to the Message entity.
 func (_c *MessageLensResultCreate) SetMessage(v *Message) *MessageLensResultCreate {
 	return _c.SetMessageID(v.ID)
@@ -348,6 +366,9 @@ func (_c *MessageLensResultCreate) check() error {
 	if _, ok := _c.mutation.WorkLensID(); !ok {
 		return &ValidationError{Name: "work_lens_id", err: errors.New(`ent: missing required field "MessageLensResult.work_lens_id"`)}
 	}
+	if _, ok := _c.mutation.WorkLensWindowID(); !ok {
+		return &ValidationError{Name: "work_lens_window_id", err: errors.New(`ent: missing required field "MessageLensResult.work_lens_window_id"`)}
+	}
 	if _, ok := _c.mutation.MessageID(); !ok {
 		return &ValidationError{Name: "message_id", err: errors.New(`ent: missing required field "MessageLensResult.message_id"`)}
 	}
@@ -395,6 +416,9 @@ func (_c *MessageLensResultCreate) check() error {
 	}
 	if len(_c.mutation.LensIDs()) == 0 {
 		return &ValidationError{Name: "lens", err: errors.New(`ent: missing required edge "MessageLensResult.lens"`)}
+	}
+	if len(_c.mutation.WindowIDs()) == 0 {
+		return &ValidationError{Name: "window", err: errors.New(`ent: missing required edge "MessageLensResult.window"`)}
 	}
 	if len(_c.mutation.MessageIDs()) == 0 {
 		return &ValidationError{Name: "message", err: errors.New(`ent: missing required edge "MessageLensResult.message"`)}
@@ -497,6 +521,23 @@ func (_c *MessageLensResultCreate) createSpec() (*MessageLensResult, *sqlgraph.C
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.WorkLensID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.WindowIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   messagelensresult.WindowTable,
+			Columns: []string{messagelensresult.WindowColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklenswindow.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkLensWindowID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.MessageIDs(); len(nodes) > 0 {
@@ -832,6 +873,9 @@ func (u *MessageLensResultUpsertOne) UpdateNewValues() *MessageLensResultUpsertO
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.WorkLensID(); exists {
 			s.SetIgnore(messagelensresult.FieldWorkLensID)
+		}
+		if _, exists := u.create.mutation.WorkLensWindowID(); exists {
+			s.SetIgnore(messagelensresult.FieldWorkLensWindowID)
 		}
 		if _, exists := u.create.mutation.MessageID(); exists {
 			s.SetIgnore(messagelensresult.FieldMessageID)
@@ -1301,6 +1345,9 @@ func (u *MessageLensResultUpsertBulk) UpdateNewValues() *MessageLensResultUpsert
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.WorkLensID(); exists {
 				s.SetIgnore(messagelensresult.FieldWorkLensID)
+			}
+			if _, exists := b.mutation.WorkLensWindowID(); exists {
+				s.SetIgnore(messagelensresult.FieldWorkLensWindowID)
 			}
 			if _, exists := b.mutation.MessageID(); exists {
 				s.SetIgnore(messagelensresult.FieldMessageID)

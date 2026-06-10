@@ -15,6 +15,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticketlensresult"
 	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"database/sql/driver"
 	"fmt"
 	"math"
@@ -33,6 +34,7 @@ type WorkLensQuery struct {
 	inters                 []Interceptor
 	predicates             []predicate.WorkLens
 	withArea               *WorkAreaQuery
+	withWindows            *WorkLensWindowQuery
 	withDocuments          *DocumentQuery
 	withPullRequests       *PullRequestQuery
 	withTickets            *TicketQuery
@@ -92,6 +94,28 @@ func (_q *WorkLensQuery) QueryArea() *WorkAreaQuery {
 			sqlgraph.From(worklens.Table, worklens.FieldID, selector),
 			sqlgraph.To(workarea.Table, workarea.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, worklens.AreaTable, worklens.AreaColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryWindows chains the current query on the "windows" edge.
+func (_q *WorkLensQuery) QueryWindows() *WorkLensWindowQuery {
+	query := (&WorkLensWindowClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklens.Table, worklens.FieldID, selector),
+			sqlgraph.To(worklenswindow.Table, worklenswindow.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, worklens.WindowsTable, worklens.WindowsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -468,6 +492,7 @@ func (_q *WorkLensQuery) Clone() *WorkLensQuery {
 		inters:                 append([]Interceptor{}, _q.inters...),
 		predicates:             append([]predicate.WorkLens{}, _q.predicates...),
 		withArea:               _q.withArea.Clone(),
+		withWindows:            _q.withWindows.Clone(),
 		withDocuments:          _q.withDocuments.Clone(),
 		withPullRequests:       _q.withPullRequests.Clone(),
 		withTickets:            _q.withTickets.Clone(),
@@ -490,6 +515,17 @@ func (_q *WorkLensQuery) WithArea(opts ...func(*WorkAreaQuery)) *WorkLensQuery {
 		opt(query)
 	}
 	_q.withArea = query
+	return _q
+}
+
+// WithWindows tells the query-builder to eager-load the nodes that are connected to
+// the "windows" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkLensQuery) WithWindows(opts ...func(*WorkLensWindowQuery)) *WorkLensQuery {
+	query := (&WorkLensWindowClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withWindows = query
 	return _q
 }
 
@@ -659,8 +695,9 @@ func (_q *WorkLensQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wor
 	var (
 		nodes       = []*WorkLens{}
 		_spec       = _q.querySpec()
-		loadedTypes = [9]bool{
+		loadedTypes = [10]bool{
 			_q.withArea != nil,
+			_q.withWindows != nil,
 			_q.withDocuments != nil,
 			_q.withPullRequests != nil,
 			_q.withTickets != nil,
@@ -692,6 +729,13 @@ func (_q *WorkLensQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Wor
 	if query := _q.withArea; query != nil {
 		if err := _q.loadArea(ctx, query, nodes, nil,
 			func(n *WorkLens, e *WorkArea) { n.Edges.Area = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withWindows; query != nil {
+		if err := _q.loadWindows(ctx, query, nodes,
+			func(n *WorkLens) { n.Edges.Windows = []*WorkLensWindow{} },
+			func(n *WorkLens, e *WorkLensWindow) { n.Edges.Windows = append(n.Edges.Windows, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -782,6 +826,36 @@ func (_q *WorkLensQuery) loadArea(ctx context.Context, query *WorkAreaQuery, nod
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (_q *WorkLensQuery) loadWindows(ctx context.Context, query *WorkLensWindowQuery, nodes []*WorkLens, init func(*WorkLens), assign func(*WorkLens, *WorkLensWindow)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*WorkLens)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(worklenswindow.FieldWorkLensID)
+	}
+	query.Where(predicate.WorkLensWindow(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(worklens.WindowsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkLensID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "work_lens_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

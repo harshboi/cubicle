@@ -10,6 +10,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"errors"
 	"fmt"
 	"time"
@@ -262,6 +263,21 @@ func (_c *WorkLensCreate) SetAreaID(id int) *WorkLensCreate {
 // SetArea sets the "area" edge to the WorkArea entity.
 func (_c *WorkLensCreate) SetArea(v *WorkArea) *WorkLensCreate {
 	return _c.SetAreaID(v.ID)
+}
+
+// AddWindowIDs adds the "windows" edge to the WorkLensWindow entity by IDs.
+func (_c *WorkLensCreate) AddWindowIDs(ids ...int) *WorkLensCreate {
+	_c.mutation.AddWindowIDs(ids...)
+	return _c
+}
+
+// AddWindows adds the "windows" edges to the WorkLensWindow entity.
+func (_c *WorkLensCreate) AddWindows(v ...*WorkLensWindow) *WorkLensCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddWindowIDs(ids...)
 }
 
 // AddDocumentIDs adds the "documents" edge to the Document entity by IDs.
@@ -604,6 +620,22 @@ func (_c *WorkLensCreate) createSpec() (*WorkLens, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.WorkAreaID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.WindowsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   worklens.WindowsTable,
+			Columns: []string{worklens.WindowsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklenswindow.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.DocumentsIDs(); len(nodes) > 0 {

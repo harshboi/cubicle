@@ -27,6 +27,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 
@@ -73,6 +74,8 @@ type Client struct {
 	WorkArea *WorkAreaClient
 	// WorkLens is the client for interacting with the WorkLens builders.
 	WorkLens *WorkLensClient
+	// WorkLensWindow is the client for interacting with the WorkLensWindow builders.
+	WorkLensWindow *WorkLensWindowClient
 	// Workstream is the client for interacting with the Workstream builders.
 	Workstream *WorkstreamClient
 	// WorkstreamTicket is the client for interacting with the WorkstreamTicket builders.
@@ -104,6 +107,7 @@ func (c *Client) init() {
 	c.TicketPullRequest = NewTicketPullRequestClient(c.config)
 	c.WorkArea = NewWorkAreaClient(c.config)
 	c.WorkLens = NewWorkLensClient(c.config)
+	c.WorkLensWindow = NewWorkLensWindowClient(c.config)
 	c.Workstream = NewWorkstreamClient(c.config)
 	c.WorkstreamTicket = NewWorkstreamTicketClient(c.config)
 }
@@ -214,6 +218,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		TicketPullRequest:      NewTicketPullRequestClient(cfg),
 		WorkArea:               NewWorkAreaClient(cfg),
 		WorkLens:               NewWorkLensClient(cfg),
+		WorkLensWindow:         NewWorkLensWindowClient(cfg),
 		Workstream:             NewWorkstreamClient(cfg),
 		WorkstreamTicket:       NewWorkstreamTicketClient(cfg),
 	}, nil
@@ -251,6 +256,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		TicketPullRequest:      NewTicketPullRequestClient(cfg),
 		WorkArea:               NewWorkAreaClient(cfg),
 		WorkLens:               NewWorkLensClient(cfg),
+		WorkLensWindow:         NewWorkLensWindowClient(cfg),
 		Workstream:             NewWorkstreamClient(cfg),
 		WorkstreamTicket:       NewWorkstreamTicketClient(cfg),
 	}, nil
@@ -285,7 +291,8 @@ func (c *Client) Use(hooks ...Hook) {
 		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence, c.Message,
 		c.MessageLensResult, c.Person, c.PullRequest, c.PullRequestLensResult,
 		c.Ticket, c.TicketDocumentFragment, c.TicketLensResult, c.TicketMessage,
-		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
+		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.WorkLensWindow, c.Workstream,
+		c.WorkstreamTicket,
 	} {
 		n.Use(hooks...)
 	}
@@ -298,7 +305,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.Document, c.DocumentFragment, c.DocumentLensResult, c.Evidence, c.Message,
 		c.MessageLensResult, c.Person, c.PullRequest, c.PullRequestLensResult,
 		c.Ticket, c.TicketDocumentFragment, c.TicketLensResult, c.TicketMessage,
-		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.Workstream, c.WorkstreamTicket,
+		c.TicketPullRequest, c.WorkArea, c.WorkLens, c.WorkLensWindow, c.Workstream,
+		c.WorkstreamTicket,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -339,6 +347,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.WorkArea.mutate(ctx, m)
 	case *WorkLensMutation:
 		return c.WorkLens.mutate(ctx, m)
+	case *WorkLensWindowMutation:
+		return c.WorkLensWindow.mutate(ctx, m)
 	case *WorkstreamMutation:
 		return c.Workstream.mutate(ctx, m)
 	case *WorkstreamTicketMutation:
@@ -762,6 +772,13 @@ func (c *DocumentLensResultClient) QueryLens(_m *DocumentLensResult) *WorkLensQu
 		QueryLens()
 }
 
+// QueryWindow queries the window edge of a DocumentLensResult.
+func (c *DocumentLensResultClient) QueryWindow(_m *DocumentLensResult) *WorkLensWindowQuery {
+	return c.Query().
+		Where(documentlensresult.WorkLensID(_m.WorkLensID), documentlensresult.DocumentID(_m.DocumentID)).
+		QueryWindow()
+}
+
 // QueryDocument queries the document edge of a DocumentLensResult.
 func (c *DocumentLensResultClient) QueryDocument(_m *DocumentLensResult) *DocumentQuery {
 	return c.Query().
@@ -1181,6 +1198,13 @@ func (c *MessageLensResultClient) QueryLens(_m *MessageLensResult) *WorkLensQuer
 	return c.Query().
 		Where(messagelensresult.WorkLensID(_m.WorkLensID), messagelensresult.MessageID(_m.MessageID)).
 		QueryLens()
+}
+
+// QueryWindow queries the window edge of a MessageLensResult.
+func (c *MessageLensResultClient) QueryWindow(_m *MessageLensResult) *WorkLensWindowQuery {
+	return c.Query().
+		Where(messagelensresult.WorkLensID(_m.WorkLensID), messagelensresult.MessageID(_m.MessageID)).
+		QueryWindow()
 }
 
 // QueryMessage queries the message edge of a MessageLensResult.
@@ -1618,6 +1642,13 @@ func (c *PullRequestLensResultClient) QueryLens(_m *PullRequestLensResult) *Work
 	return c.Query().
 		Where(pullrequestlensresult.WorkLensID(_m.WorkLensID), pullrequestlensresult.PullRequestID(_m.PullRequestID)).
 		QueryLens()
+}
+
+// QueryWindow queries the window edge of a PullRequestLensResult.
+func (c *PullRequestLensResultClient) QueryWindow(_m *PullRequestLensResult) *WorkLensWindowQuery {
+	return c.Query().
+		Where(pullrequestlensresult.WorkLensID(_m.WorkLensID), pullrequestlensresult.PullRequestID(_m.PullRequestID)).
+		QueryWindow()
 }
 
 // QueryPullRequest queries the pull_request edge of a PullRequestLensResult.
@@ -2125,6 +2156,13 @@ func (c *TicketLensResultClient) QueryLens(_m *TicketLensResult) *WorkLensQuery 
 	return c.Query().
 		Where(ticketlensresult.WorkLensID(_m.WorkLensID), ticketlensresult.TicketID(_m.TicketID)).
 		QueryLens()
+}
+
+// QueryWindow queries the window edge of a TicketLensResult.
+func (c *TicketLensResultClient) QueryWindow(_m *TicketLensResult) *WorkLensWindowQuery {
+	return c.Query().
+		Where(ticketlensresult.WorkLensID(_m.WorkLensID), ticketlensresult.TicketID(_m.TicketID)).
+		QueryWindow()
 }
 
 // QueryTicket queries the ticket edge of a TicketLensResult.
@@ -2701,6 +2739,22 @@ func (c *WorkLensClient) QueryArea(_m *WorkLens) *WorkAreaQuery {
 	return query
 }
 
+// QueryWindows queries the windows edge of a WorkLens.
+func (c *WorkLensClient) QueryWindows(_m *WorkLens) *WorkLensWindowQuery {
+	query := (&WorkLensWindowClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklens.Table, worklens.FieldID, id),
+			sqlgraph.To(worklenswindow.Table, worklenswindow.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, worklens.WindowsTable, worklens.WindowsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryDocuments queries the documents edge of a WorkLens.
 func (c *WorkLensClient) QueryDocuments(_m *WorkLens) *DocumentQuery {
 	query := (&DocumentClient{config: c.config}).Query()
@@ -2852,6 +2906,219 @@ func (c *WorkLensClient) mutate(ctx context.Context, m *WorkLensMutation) (Value
 		return (&WorkLensDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown WorkLens mutation op: %q", m.Op())
+	}
+}
+
+// WorkLensWindowClient is a client for the WorkLensWindow schema.
+type WorkLensWindowClient struct {
+	config
+}
+
+// NewWorkLensWindowClient returns a client for the WorkLensWindow from the given config.
+func NewWorkLensWindowClient(c config) *WorkLensWindowClient {
+	return &WorkLensWindowClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `worklenswindow.Hooks(f(g(h())))`.
+func (c *WorkLensWindowClient) Use(hooks ...Hook) {
+	c.hooks.WorkLensWindow = append(c.hooks.WorkLensWindow, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `worklenswindow.Intercept(f(g(h())))`.
+func (c *WorkLensWindowClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkLensWindow = append(c.inters.WorkLensWindow, interceptors...)
+}
+
+// Create returns a builder for creating a WorkLensWindow entity.
+func (c *WorkLensWindowClient) Create() *WorkLensWindowCreate {
+	mutation := newWorkLensWindowMutation(c.config, OpCreate)
+	return &WorkLensWindowCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkLensWindow entities.
+func (c *WorkLensWindowClient) CreateBulk(builders ...*WorkLensWindowCreate) *WorkLensWindowCreateBulk {
+	return &WorkLensWindowCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkLensWindowClient) MapCreateBulk(slice any, setFunc func(*WorkLensWindowCreate, int)) *WorkLensWindowCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkLensWindowCreateBulk{err: fmt.Errorf("calling to WorkLensWindowClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkLensWindowCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkLensWindowCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkLensWindow.
+func (c *WorkLensWindowClient) Update() *WorkLensWindowUpdate {
+	mutation := newWorkLensWindowMutation(c.config, OpUpdate)
+	return &WorkLensWindowUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkLensWindowClient) UpdateOne(_m *WorkLensWindow) *WorkLensWindowUpdateOne {
+	mutation := newWorkLensWindowMutation(c.config, OpUpdateOne, withWorkLensWindow(_m))
+	return &WorkLensWindowUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkLensWindowClient) UpdateOneID(id int) *WorkLensWindowUpdateOne {
+	mutation := newWorkLensWindowMutation(c.config, OpUpdateOne, withWorkLensWindowID(id))
+	return &WorkLensWindowUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkLensWindow.
+func (c *WorkLensWindowClient) Delete() *WorkLensWindowDelete {
+	mutation := newWorkLensWindowMutation(c.config, OpDelete)
+	return &WorkLensWindowDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkLensWindowClient) DeleteOne(_m *WorkLensWindow) *WorkLensWindowDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkLensWindowClient) DeleteOneID(id int) *WorkLensWindowDeleteOne {
+	builder := c.Delete().Where(worklenswindow.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkLensWindowDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkLensWindow.
+func (c *WorkLensWindowClient) Query() *WorkLensWindowQuery {
+	return &WorkLensWindowQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkLensWindow},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkLensWindow entity by its id.
+func (c *WorkLensWindowClient) Get(ctx context.Context, id int) (*WorkLensWindow, error) {
+	return c.Query().Where(worklenswindow.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkLensWindowClient) GetX(ctx context.Context, id int) *WorkLensWindow {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryLens queries the lens edge of a WorkLensWindow.
+func (c *WorkLensWindowClient) QueryLens(_m *WorkLensWindow) *WorkLensQuery {
+	query := (&WorkLensClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklenswindow.Table, worklenswindow.FieldID, id),
+			sqlgraph.To(worklens.Table, worklens.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, worklenswindow.LensTable, worklenswindow.LensColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryDocumentResults queries the document_results edge of a WorkLensWindow.
+func (c *WorkLensWindowClient) QueryDocumentResults(_m *WorkLensWindow) *DocumentLensResultQuery {
+	query := (&DocumentLensResultClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklenswindow.Table, worklenswindow.FieldID, id),
+			sqlgraph.To(documentlensresult.Table, documentlensresult.WindowColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, worklenswindow.DocumentResultsTable, worklenswindow.DocumentResultsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPullRequestResults queries the pull_request_results edge of a WorkLensWindow.
+func (c *WorkLensWindowClient) QueryPullRequestResults(_m *WorkLensWindow) *PullRequestLensResultQuery {
+	query := (&PullRequestLensResultClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklenswindow.Table, worklenswindow.FieldID, id),
+			sqlgraph.To(pullrequestlensresult.Table, pullrequestlensresult.WindowColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, worklenswindow.PullRequestResultsTable, worklenswindow.PullRequestResultsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicketResults queries the ticket_results edge of a WorkLensWindow.
+func (c *WorkLensWindowClient) QueryTicketResults(_m *WorkLensWindow) *TicketLensResultQuery {
+	query := (&TicketLensResultClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklenswindow.Table, worklenswindow.FieldID, id),
+			sqlgraph.To(ticketlensresult.Table, ticketlensresult.WindowColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, worklenswindow.TicketResultsTable, worklenswindow.TicketResultsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMessageResults queries the message_results edge of a WorkLensWindow.
+func (c *WorkLensWindowClient) QueryMessageResults(_m *WorkLensWindow) *MessageLensResultQuery {
+	query := (&MessageLensResultClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(worklenswindow.Table, worklenswindow.FieldID, id),
+			sqlgraph.To(messagelensresult.Table, messagelensresult.WindowColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, worklenswindow.MessageResultsTable, worklenswindow.MessageResultsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkLensWindowClient) Hooks() []Hook {
+	return c.hooks.WorkLensWindow
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkLensWindowClient) Interceptors() []Interceptor {
+	return c.inters.WorkLensWindow
+}
+
+func (c *WorkLensWindowClient) mutate(ctx context.Context, m *WorkLensWindowMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkLensWindowCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkLensWindowUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkLensWindowUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkLensWindowDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkLensWindow mutation op: %q", m.Op())
 	}
 }
 
@@ -3149,12 +3416,13 @@ type (
 		Document, DocumentFragment, DocumentLensResult, Evidence, Message,
 		MessageLensResult, Person, PullRequest, PullRequestLensResult, Ticket,
 		TicketDocumentFragment, TicketLensResult, TicketMessage, TicketPullRequest,
-		WorkArea, WorkLens, Workstream, WorkstreamTicket []ent.Hook
+		WorkArea, WorkLens, WorkLensWindow, Workstream, WorkstreamTicket []ent.Hook
 	}
 	inters struct {
 		Document, DocumentFragment, DocumentLensResult, Evidence, Message,
 		MessageLensResult, Person, PullRequest, PullRequestLensResult, Ticket,
 		TicketDocumentFragment, TicketLensResult, TicketMessage, TicketPullRequest,
-		WorkArea, WorkLens, Workstream, WorkstreamTicket []ent.Interceptor
+		WorkArea, WorkLens, WorkLensWindow, Workstream,
+		WorkstreamTicket []ent.Interceptor
 	}
 )

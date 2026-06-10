@@ -354,6 +354,9 @@ func (_u *PullRequestLensResultUpdate) check() error {
 	if _u.mutation.LensCleared() && len(_u.mutation.LensIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "PullRequestLensResult.lens"`)
 	}
+	if _u.mutation.WindowCleared() && len(_u.mutation.WindowIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "PullRequestLensResult.window"`)
+	}
 	if _u.mutation.PullRequestCleared() && len(_u.mutation.PullRequestIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "PullRequestLensResult.pull_request"`)
 	}
@@ -827,6 +830,9 @@ func (_u *PullRequestLensResultUpdateOne) check() error {
 	}
 	if _u.mutation.LensCleared() && len(_u.mutation.LensIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "PullRequestLensResult.lens"`)
+	}
+	if _u.mutation.WindowCleared() && len(_u.mutation.WindowIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "PullRequestLensResult.window"`)
 	}
 	if _u.mutation.PullRequestCleared() && len(_u.mutation.PullRequestIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "PullRequestLensResult.pull_request"`)

@@ -200,6 +200,18 @@ func (f WorkLensFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkLensMutation", m)
 }
 
+// The WorkLensWindowFunc type is an adapter to allow the use of ordinary
+// function as WorkLensWindow mutator.
+type WorkLensWindowFunc func(context.Context, *ent.WorkLensWindowMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkLensWindowFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkLensWindowMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkLensWindowMutation", m)
+}
+
 // The WorkstreamFunc type is an adapter to allow the use of ordinary
 // function as Workstream mutator.
 type WorkstreamFunc func(context.Context, *ent.WorkstreamMutation) (ent.Value, error)

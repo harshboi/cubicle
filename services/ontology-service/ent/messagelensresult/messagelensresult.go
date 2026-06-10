@@ -15,6 +15,8 @@ const (
 	Label = "message_lens_result"
 	// FieldWorkLensID holds the string denoting the work_lens_id field in the database.
 	FieldWorkLensID = "work_lens_id"
+	// FieldWorkLensWindowID holds the string denoting the work_lens_window_id field in the database.
+	FieldWorkLensWindowID = "work_lens_window_id"
 	// FieldMessageID holds the string denoting the message_id field in the database.
 	FieldMessageID = "message_id"
 	// FieldRelationKind holds the string denoting the relation_kind field in the database.
@@ -51,12 +53,16 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeLens holds the string denoting the lens edge name in mutations.
 	EdgeLens = "lens"
+	// EdgeWindow holds the string denoting the window edge name in mutations.
+	EdgeWindow = "window"
 	// EdgeMessage holds the string denoting the message edge name in mutations.
 	EdgeMessage = "message"
 	// EdgeLatestEvidence holds the string denoting the latest_evidence edge name in mutations.
 	EdgeLatestEvidence = "latest_evidence"
 	// WorkLensFieldID holds the string denoting the ID field of the WorkLens.
 	WorkLensFieldID = "id"
+	// WorkLensWindowFieldID holds the string denoting the ID field of the WorkLensWindow.
+	WorkLensWindowFieldID = "id"
 	// MessageFieldID holds the string denoting the ID field of the Message.
 	MessageFieldID = "id"
 	// EvidenceFieldID holds the string denoting the ID field of the Evidence.
@@ -70,6 +76,13 @@ const (
 	LensInverseTable = "work_lenses"
 	// LensColumn is the table column denoting the lens relation/edge.
 	LensColumn = "work_lens_id"
+	// WindowTable is the table that holds the window relation/edge.
+	WindowTable = "message_lens_results"
+	// WindowInverseTable is the table name for the WorkLensWindow entity.
+	// It exists in this package in order to avoid circular dependency with the "worklenswindow" package.
+	WindowInverseTable = "work_lens_windows"
+	// WindowColumn is the table column denoting the window relation/edge.
+	WindowColumn = "work_lens_window_id"
 	// MessageTable is the table that holds the message relation/edge.
 	MessageTable = "message_lens_results"
 	// MessageInverseTable is the table name for the Message entity.
@@ -89,6 +102,7 @@ const (
 // Columns holds all SQL columns for messagelensresult fields.
 var Columns = []string{
 	FieldWorkLensID,
+	FieldWorkLensWindowID,
 	FieldMessageID,
 	FieldRelationKind,
 	FieldLatestEvidenceID,
@@ -224,6 +238,11 @@ func ByWorkLensID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldWorkLensID, opts...).ToFunc()
 }
 
+// ByWorkLensWindowID orders the results by the work_lens_window_id field.
+func ByWorkLensWindowID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkLensWindowID, opts...).ToFunc()
+}
+
 // ByMessageID orders the results by the message_id field.
 func ByMessageID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMessageID, opts...).ToFunc()
@@ -316,6 +335,13 @@ func ByLensField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
+// ByWindowField orders the results by window field.
+func ByWindowField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWindowStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByMessageField orders the results by message field.
 func ByMessageField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -334,6 +360,13 @@ func newLensStep() *sqlgraph.Step {
 		sqlgraph.From(Table, LensColumn),
 		sqlgraph.To(LensInverseTable, WorkLensFieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, LensTable, LensColumn),
+	)
+}
+func newWindowStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, WindowColumn),
+		sqlgraph.To(WindowInverseTable, WorkLensWindowFieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, WindowTable, WindowColumn),
 	)
 }
 func newMessageStep() *sqlgraph.Step {

@@ -24,10 +24,26 @@ func TestWorkLensDeclaresCardinalityBoundary(t *testing.T) {
 	assertColumn(t, table, "last_indexed_at")
 }
 
+// TestWorkLensWindowDeclaresTraversalBoundary documents the partition between
+// a broad lens and high-volume result rows.
+func TestWorkLensWindowDeclaresTraversalBoundary(t *testing.T) {
+	table := findTable(t, "work_lens_windows")
+	assertColumn(t, table, "work_lens_id")
+	assertColumn(t, table, "lens_window_kind")
+	assertColumn(t, table, "window_start_at")
+	assertColumn(t, table, "window_end_at")
+	assertColumn(t, table, "rank_start")
+	assertColumn(t, table, "rank_end")
+	assertColumn(t, table, "checkpoint")
+	assertIndexColumns(t, table, []string{"work_lens_id", "lens_window_kind", "last_activity_at"})
+}
+
 // TestDocumentLensResultCarriesPagingIndex proves the result layer can be
 // ranked and paged before loading high-cardinality document targets.
 func TestDocumentLensResultCarriesPagingIndex(t *testing.T) {
 	table := findTable(t, "document_lens_results")
+	assertColumn(t, table, "work_lens_window_id")
+	assertIndexColumns(t, table, []string{"work_lens_window_id", "freshness_state", "rank_score", "last_activity_at"})
 	assertIndexColumns(t, table, []string{"work_lens_id", "freshness_state", "rank_score", "last_activity_at"})
 	assertColumn(t, table, "relation_kind")
 	assertColumn(t, table, "latest_evidence_id")
@@ -38,6 +54,8 @@ func TestDocumentLensResultCarriesPagingIndex(t *testing.T) {
 // ranked and paged before loading high-cardinality pull-request targets.
 func TestPullRequestLensResultCarriesPagingIndex(t *testing.T) {
 	table := findTable(t, "pull_request_lens_results")
+	assertColumn(t, table, "work_lens_window_id")
+	assertIndexColumns(t, table, []string{"work_lens_window_id", "freshness_state", "rank_score", "last_activity_at"})
 	assertIndexColumns(t, table, []string{"work_lens_id", "freshness_state", "rank_score", "last_activity_at"})
 	assertColumn(t, table, "relation_kind")
 	assertColumn(t, table, "latest_evidence_id")
@@ -48,6 +66,8 @@ func TestPullRequestLensResultCarriesPagingIndex(t *testing.T) {
 // and paged before loading high-cardinality ticket targets.
 func TestTicketLensResultCarriesPagingIndex(t *testing.T) {
 	table := findTable(t, "ticket_lens_results")
+	assertColumn(t, table, "work_lens_window_id")
+	assertIndexColumns(t, table, []string{"work_lens_window_id", "freshness_state", "rank_score", "last_activity_at"})
 	assertIndexColumns(t, table, []string{"work_lens_id", "freshness_state", "rank_score", "last_activity_at"})
 	assertColumn(t, table, "relation_kind")
 	assertColumn(t, table, "latest_evidence_id")
@@ -58,6 +78,8 @@ func TestTicketLensResultCarriesPagingIndex(t *testing.T) {
 // ranked and paged before loading high-cardinality message targets.
 func TestMessageLensResultCarriesPagingIndex(t *testing.T) {
 	table := findTable(t, "message_lens_results")
+	assertColumn(t, table, "work_lens_window_id")
+	assertIndexColumns(t, table, []string{"work_lens_window_id", "freshness_state", "rank_score", "last_activity_at"})
 	assertIndexColumns(t, table, []string{"work_lens_id", "freshness_state", "rank_score", "last_activity_at"})
 	assertColumn(t, table, "relation_kind")
 	assertColumn(t, table, "latest_evidence_id")

@@ -20,6 +20,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 	"time"
@@ -88,27 +89,27 @@ func init() {
 	documentlensresultFields := schema.DocumentLensResult{}.Fields()
 	_ = documentlensresultFields
 	// documentlensresultDescEvidenceCount is the schema descriptor for evidence_count field.
-	documentlensresultDescEvidenceCount := documentlensresultFields[4].Descriptor()
+	documentlensresultDescEvidenceCount := documentlensresultFields[5].Descriptor()
 	// documentlensresult.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	documentlensresult.DefaultEvidenceCount = documentlensresultDescEvidenceCount.Default.(int)
 	// documentlensresultDescEventCount is the schema descriptor for event_count field.
-	documentlensresultDescEventCount := documentlensresultFields[5].Descriptor()
+	documentlensresultDescEventCount := documentlensresultFields[6].Descriptor()
 	// documentlensresult.DefaultEventCount holds the default value on creation for the event_count field.
 	documentlensresult.DefaultEventCount = documentlensresultDescEventCount.Default.(int)
 	// documentlensresultDescRankScore is the schema descriptor for rank_score field.
-	documentlensresultDescRankScore := documentlensresultFields[8].Descriptor()
+	documentlensresultDescRankScore := documentlensresultFields[9].Descriptor()
 	// documentlensresult.DefaultRankScore holds the default value on creation for the rank_score field.
 	documentlensresult.DefaultRankScore = documentlensresultDescRankScore.Default.(float64)
 	// documentlensresultDescConfidence is the schema descriptor for confidence field.
-	documentlensresultDescConfidence := documentlensresultFields[15].Descriptor()
+	documentlensresultDescConfidence := documentlensresultFields[16].Descriptor()
 	// documentlensresult.DefaultConfidence holds the default value on creation for the confidence field.
 	documentlensresult.DefaultConfidence = documentlensresultDescConfidence.Default.(float64)
 	// documentlensresultDescCreatedAt is the schema descriptor for created_at field.
-	documentlensresultDescCreatedAt := documentlensresultFields[16].Descriptor()
+	documentlensresultDescCreatedAt := documentlensresultFields[17].Descriptor()
 	// documentlensresult.DefaultCreatedAt holds the default value on creation for the created_at field.
 	documentlensresult.DefaultCreatedAt = documentlensresultDescCreatedAt.Default.(func() time.Time)
 	// documentlensresultDescUpdatedAt is the schema descriptor for updated_at field.
-	documentlensresultDescUpdatedAt := documentlensresultFields[17].Descriptor()
+	documentlensresultDescUpdatedAt := documentlensresultFields[18].Descriptor()
 	// documentlensresult.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	documentlensresult.DefaultUpdatedAt = documentlensresultDescUpdatedAt.Default.(func() time.Time)
 	// documentlensresult.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -164,27 +165,27 @@ func init() {
 	messagelensresultFields := schema.MessageLensResult{}.Fields()
 	_ = messagelensresultFields
 	// messagelensresultDescEvidenceCount is the schema descriptor for evidence_count field.
-	messagelensresultDescEvidenceCount := messagelensresultFields[4].Descriptor()
+	messagelensresultDescEvidenceCount := messagelensresultFields[5].Descriptor()
 	// messagelensresult.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	messagelensresult.DefaultEvidenceCount = messagelensresultDescEvidenceCount.Default.(int)
 	// messagelensresultDescEventCount is the schema descriptor for event_count field.
-	messagelensresultDescEventCount := messagelensresultFields[5].Descriptor()
+	messagelensresultDescEventCount := messagelensresultFields[6].Descriptor()
 	// messagelensresult.DefaultEventCount holds the default value on creation for the event_count field.
 	messagelensresult.DefaultEventCount = messagelensresultDescEventCount.Default.(int)
 	// messagelensresultDescRankScore is the schema descriptor for rank_score field.
-	messagelensresultDescRankScore := messagelensresultFields[8].Descriptor()
+	messagelensresultDescRankScore := messagelensresultFields[9].Descriptor()
 	// messagelensresult.DefaultRankScore holds the default value on creation for the rank_score field.
 	messagelensresult.DefaultRankScore = messagelensresultDescRankScore.Default.(float64)
 	// messagelensresultDescConfidence is the schema descriptor for confidence field.
-	messagelensresultDescConfidence := messagelensresultFields[15].Descriptor()
+	messagelensresultDescConfidence := messagelensresultFields[16].Descriptor()
 	// messagelensresult.DefaultConfidence holds the default value on creation for the confidence field.
 	messagelensresult.DefaultConfidence = messagelensresultDescConfidence.Default.(float64)
 	// messagelensresultDescCreatedAt is the schema descriptor for created_at field.
-	messagelensresultDescCreatedAt := messagelensresultFields[16].Descriptor()
+	messagelensresultDescCreatedAt := messagelensresultFields[17].Descriptor()
 	// messagelensresult.DefaultCreatedAt holds the default value on creation for the created_at field.
 	messagelensresult.DefaultCreatedAt = messagelensresultDescCreatedAt.Default.(func() time.Time)
 	// messagelensresultDescUpdatedAt is the schema descriptor for updated_at field.
-	messagelensresultDescUpdatedAt := messagelensresultFields[17].Descriptor()
+	messagelensresultDescUpdatedAt := messagelensresultFields[18].Descriptor()
 	// messagelensresult.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	messagelensresult.DefaultUpdatedAt = messagelensresultDescUpdatedAt.Default.(func() time.Time)
 	// messagelensresult.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -248,27 +249,27 @@ func init() {
 	pullrequestlensresultFields := schema.PullRequestLensResult{}.Fields()
 	_ = pullrequestlensresultFields
 	// pullrequestlensresultDescEvidenceCount is the schema descriptor for evidence_count field.
-	pullrequestlensresultDescEvidenceCount := pullrequestlensresultFields[4].Descriptor()
+	pullrequestlensresultDescEvidenceCount := pullrequestlensresultFields[5].Descriptor()
 	// pullrequestlensresult.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	pullrequestlensresult.DefaultEvidenceCount = pullrequestlensresultDescEvidenceCount.Default.(int)
 	// pullrequestlensresultDescEventCount is the schema descriptor for event_count field.
-	pullrequestlensresultDescEventCount := pullrequestlensresultFields[5].Descriptor()
+	pullrequestlensresultDescEventCount := pullrequestlensresultFields[6].Descriptor()
 	// pullrequestlensresult.DefaultEventCount holds the default value on creation for the event_count field.
 	pullrequestlensresult.DefaultEventCount = pullrequestlensresultDescEventCount.Default.(int)
 	// pullrequestlensresultDescRankScore is the schema descriptor for rank_score field.
-	pullrequestlensresultDescRankScore := pullrequestlensresultFields[8].Descriptor()
+	pullrequestlensresultDescRankScore := pullrequestlensresultFields[9].Descriptor()
 	// pullrequestlensresult.DefaultRankScore holds the default value on creation for the rank_score field.
 	pullrequestlensresult.DefaultRankScore = pullrequestlensresultDescRankScore.Default.(float64)
 	// pullrequestlensresultDescConfidence is the schema descriptor for confidence field.
-	pullrequestlensresultDescConfidence := pullrequestlensresultFields[15].Descriptor()
+	pullrequestlensresultDescConfidence := pullrequestlensresultFields[16].Descriptor()
 	// pullrequestlensresult.DefaultConfidence holds the default value on creation for the confidence field.
 	pullrequestlensresult.DefaultConfidence = pullrequestlensresultDescConfidence.Default.(float64)
 	// pullrequestlensresultDescCreatedAt is the schema descriptor for created_at field.
-	pullrequestlensresultDescCreatedAt := pullrequestlensresultFields[16].Descriptor()
+	pullrequestlensresultDescCreatedAt := pullrequestlensresultFields[17].Descriptor()
 	// pullrequestlensresult.DefaultCreatedAt holds the default value on creation for the created_at field.
 	pullrequestlensresult.DefaultCreatedAt = pullrequestlensresultDescCreatedAt.Default.(func() time.Time)
 	// pullrequestlensresultDescUpdatedAt is the schema descriptor for updated_at field.
-	pullrequestlensresultDescUpdatedAt := pullrequestlensresultFields[17].Descriptor()
+	pullrequestlensresultDescUpdatedAt := pullrequestlensresultFields[18].Descriptor()
 	// pullrequestlensresult.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	pullrequestlensresult.DefaultUpdatedAt = pullrequestlensresultDescUpdatedAt.Default.(func() time.Time)
 	// pullrequestlensresult.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -336,27 +337,27 @@ func init() {
 	ticketlensresultFields := schema.TicketLensResult{}.Fields()
 	_ = ticketlensresultFields
 	// ticketlensresultDescEvidenceCount is the schema descriptor for evidence_count field.
-	ticketlensresultDescEvidenceCount := ticketlensresultFields[4].Descriptor()
+	ticketlensresultDescEvidenceCount := ticketlensresultFields[5].Descriptor()
 	// ticketlensresult.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	ticketlensresult.DefaultEvidenceCount = ticketlensresultDescEvidenceCount.Default.(int)
 	// ticketlensresultDescEventCount is the schema descriptor for event_count field.
-	ticketlensresultDescEventCount := ticketlensresultFields[5].Descriptor()
+	ticketlensresultDescEventCount := ticketlensresultFields[6].Descriptor()
 	// ticketlensresult.DefaultEventCount holds the default value on creation for the event_count field.
 	ticketlensresult.DefaultEventCount = ticketlensresultDescEventCount.Default.(int)
 	// ticketlensresultDescRankScore is the schema descriptor for rank_score field.
-	ticketlensresultDescRankScore := ticketlensresultFields[8].Descriptor()
+	ticketlensresultDescRankScore := ticketlensresultFields[9].Descriptor()
 	// ticketlensresult.DefaultRankScore holds the default value on creation for the rank_score field.
 	ticketlensresult.DefaultRankScore = ticketlensresultDescRankScore.Default.(float64)
 	// ticketlensresultDescConfidence is the schema descriptor for confidence field.
-	ticketlensresultDescConfidence := ticketlensresultFields[15].Descriptor()
+	ticketlensresultDescConfidence := ticketlensresultFields[16].Descriptor()
 	// ticketlensresult.DefaultConfidence holds the default value on creation for the confidence field.
 	ticketlensresult.DefaultConfidence = ticketlensresultDescConfidence.Default.(float64)
 	// ticketlensresultDescCreatedAt is the schema descriptor for created_at field.
-	ticketlensresultDescCreatedAt := ticketlensresultFields[16].Descriptor()
+	ticketlensresultDescCreatedAt := ticketlensresultFields[17].Descriptor()
 	// ticketlensresult.DefaultCreatedAt holds the default value on creation for the created_at field.
 	ticketlensresult.DefaultCreatedAt = ticketlensresultDescCreatedAt.Default.(func() time.Time)
 	// ticketlensresultDescUpdatedAt is the schema descriptor for updated_at field.
-	ticketlensresultDescUpdatedAt := ticketlensresultFields[17].Descriptor()
+	ticketlensresultDescUpdatedAt := ticketlensresultFields[18].Descriptor()
 	// ticketlensresult.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	ticketlensresult.DefaultUpdatedAt = ticketlensresultDescUpdatedAt.Default.(func() time.Time)
 	// ticketlensresult.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -503,6 +504,42 @@ func init() {
 	worklens.DefaultUpdatedAt = worklensDescUpdatedAt.Default.(func() time.Time)
 	// worklens.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	worklens.UpdateDefaultUpdatedAt = worklensDescUpdatedAt.UpdateDefault.(func() time.Time)
+	worklenswindowFields := schema.WorkLensWindow{}.Fields()
+	_ = worklenswindowFields
+	// worklenswindowDescKey is the schema descriptor for key field.
+	worklenswindowDescKey := worklenswindowFields[0].Descriptor()
+	// worklenswindow.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	worklenswindow.KeyValidator = worklenswindowDescKey.Validators[0].(func(string) error)
+	// worklenswindowDescResultCount is the schema descriptor for result_count field.
+	worklenswindowDescResultCount := worklenswindowFields[8].Descriptor()
+	// worklenswindow.DefaultResultCount holds the default value on creation for the result_count field.
+	worklenswindow.DefaultResultCount = worklenswindowDescResultCount.Default.(int)
+	// worklenswindowDescIsComplete is the schema descriptor for is_complete field.
+	worklenswindowDescIsComplete := worklenswindowFields[9].Descriptor()
+	// worklenswindow.DefaultIsComplete holds the default value on creation for the is_complete field.
+	worklenswindow.DefaultIsComplete = worklenswindowDescIsComplete.Default.(bool)
+	// worklenswindowDescEventCount is the schema descriptor for event_count field.
+	worklenswindowDescEventCount := worklenswindowFields[15].Descriptor()
+	// worklenswindow.DefaultEventCount holds the default value on creation for the event_count field.
+	worklenswindow.DefaultEventCount = worklenswindowDescEventCount.Default.(int)
+	// worklenswindowDescRankScore is the schema descriptor for rank_score field.
+	worklenswindowDescRankScore := worklenswindowFields[18].Descriptor()
+	// worklenswindow.DefaultRankScore holds the default value on creation for the rank_score field.
+	worklenswindow.DefaultRankScore = worklenswindowDescRankScore.Default.(float64)
+	// worklenswindowDescConfidence is the schema descriptor for confidence field.
+	worklenswindowDescConfidence := worklenswindowFields[21].Descriptor()
+	// worklenswindow.DefaultConfidence holds the default value on creation for the confidence field.
+	worklenswindow.DefaultConfidence = worklenswindowDescConfidence.Default.(float64)
+	// worklenswindowDescCreatedAt is the schema descriptor for created_at field.
+	worklenswindowDescCreatedAt := worklenswindowFields[22].Descriptor()
+	// worklenswindow.DefaultCreatedAt holds the default value on creation for the created_at field.
+	worklenswindow.DefaultCreatedAt = worklenswindowDescCreatedAt.Default.(func() time.Time)
+	// worklenswindowDescUpdatedAt is the schema descriptor for updated_at field.
+	worklenswindowDescUpdatedAt := worklenswindowFields[23].Descriptor()
+	// worklenswindow.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	worklenswindow.DefaultUpdatedAt = worklenswindowDescUpdatedAt.Default.(func() time.Time)
+	// worklenswindow.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	worklenswindow.UpdateDefaultUpdatedAt = worklenswindowDescUpdatedAt.UpdateDefault.(func() time.Time)
 	workstreamFields := schema.Workstream{}.Fields()
 	_ = workstreamFields
 	// workstreamDescKey is the schema descriptor for key field.

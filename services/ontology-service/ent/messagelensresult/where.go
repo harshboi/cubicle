@@ -15,6 +15,11 @@ func WorkLensID(v int) predicate.MessageLensResult {
 	return predicate.MessageLensResult(sql.FieldEQ(FieldWorkLensID, v))
 }
 
+// WorkLensWindowID applies equality check predicate on the "work_lens_window_id" field. It's identical to WorkLensWindowIDEQ.
+func WorkLensWindowID(v int) predicate.MessageLensResult {
+	return predicate.MessageLensResult(sql.FieldEQ(FieldWorkLensWindowID, v))
+}
+
 // MessageID applies equality check predicate on the "message_id" field. It's identical to MessageIDEQ.
 func MessageID(v int) predicate.MessageLensResult {
 	return predicate.MessageLensResult(sql.FieldEQ(FieldMessageID, v))
@@ -103,6 +108,26 @@ func WorkLensIDIn(vs ...int) predicate.MessageLensResult {
 // WorkLensIDNotIn applies the NotIn predicate on the "work_lens_id" field.
 func WorkLensIDNotIn(vs ...int) predicate.MessageLensResult {
 	return predicate.MessageLensResult(sql.FieldNotIn(FieldWorkLensID, vs...))
+}
+
+// WorkLensWindowIDEQ applies the EQ predicate on the "work_lens_window_id" field.
+func WorkLensWindowIDEQ(v int) predicate.MessageLensResult {
+	return predicate.MessageLensResult(sql.FieldEQ(FieldWorkLensWindowID, v))
+}
+
+// WorkLensWindowIDNEQ applies the NEQ predicate on the "work_lens_window_id" field.
+func WorkLensWindowIDNEQ(v int) predicate.MessageLensResult {
+	return predicate.MessageLensResult(sql.FieldNEQ(FieldWorkLensWindowID, v))
+}
+
+// WorkLensWindowIDIn applies the In predicate on the "work_lens_window_id" field.
+func WorkLensWindowIDIn(vs ...int) predicate.MessageLensResult {
+	return predicate.MessageLensResult(sql.FieldIn(FieldWorkLensWindowID, vs...))
+}
+
+// WorkLensWindowIDNotIn applies the NotIn predicate on the "work_lens_window_id" field.
+func WorkLensWindowIDNotIn(vs ...int) predicate.MessageLensResult {
+	return predicate.MessageLensResult(sql.FieldNotIn(FieldWorkLensWindowID, vs...))
 }
 
 // MessageIDEQ applies the EQ predicate on the "message_id" field.
@@ -870,6 +895,29 @@ func HasLens() predicate.MessageLensResult {
 func HasLensWith(preds ...predicate.WorkLens) predicate.MessageLensResult {
 	return predicate.MessageLensResult(func(s *sql.Selector) {
 		step := newLensStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasWindow applies the HasEdge predicate on the "window" edge.
+func HasWindow() predicate.MessageLensResult {
+	return predicate.MessageLensResult(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, WindowColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, WindowTable, WindowColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWindowWith applies the HasEdge predicate on the "window" edge with a given conditions (other predicates).
+func HasWindowWith(preds ...predicate.WorkLensWindow) predicate.MessageLensResult {
+	return predicate.MessageLensResult(func(s *sql.Selector) {
+		step := newWindowStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

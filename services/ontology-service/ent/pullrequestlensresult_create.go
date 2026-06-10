@@ -8,6 +8,7 @@ import (
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/pullrequestlensresult"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"errors"
 	"fmt"
 	"time"
@@ -28,6 +29,12 @@ type PullRequestLensResultCreate struct {
 // SetWorkLensID sets the "work_lens_id" field.
 func (_c *PullRequestLensResultCreate) SetWorkLensID(v int) *PullRequestLensResultCreate {
 	_c.mutation.SetWorkLensID(v)
+	return _c
+}
+
+// SetWorkLensWindowID sets the "work_lens_window_id" field.
+func (_c *PullRequestLensResultCreate) SetWorkLensWindowID(v int) *PullRequestLensResultCreate {
+	_c.mutation.SetWorkLensWindowID(v)
 	return _c
 }
 
@@ -264,6 +271,17 @@ func (_c *PullRequestLensResultCreate) SetLens(v *WorkLens) *PullRequestLensResu
 	return _c.SetLensID(v.ID)
 }
 
+// SetWindowID sets the "window" edge to the WorkLensWindow entity by ID.
+func (_c *PullRequestLensResultCreate) SetWindowID(id int) *PullRequestLensResultCreate {
+	_c.mutation.SetWindowID(id)
+	return _c
+}
+
+// SetWindow sets the "window" edge to the WorkLensWindow entity.
+func (_c *PullRequestLensResultCreate) SetWindow(v *WorkLensWindow) *PullRequestLensResultCreate {
+	return _c.SetWindowID(v.ID)
+}
+
 // SetPullRequest sets the "pull_request" edge to the PullRequest entity.
 func (_c *PullRequestLensResultCreate) SetPullRequest(v *PullRequest) *PullRequestLensResultCreate {
 	return _c.SetPullRequestID(v.ID)
@@ -348,6 +366,9 @@ func (_c *PullRequestLensResultCreate) check() error {
 	if _, ok := _c.mutation.WorkLensID(); !ok {
 		return &ValidationError{Name: "work_lens_id", err: errors.New(`ent: missing required field "PullRequestLensResult.work_lens_id"`)}
 	}
+	if _, ok := _c.mutation.WorkLensWindowID(); !ok {
+		return &ValidationError{Name: "work_lens_window_id", err: errors.New(`ent: missing required field "PullRequestLensResult.work_lens_window_id"`)}
+	}
 	if _, ok := _c.mutation.PullRequestID(); !ok {
 		return &ValidationError{Name: "pull_request_id", err: errors.New(`ent: missing required field "PullRequestLensResult.pull_request_id"`)}
 	}
@@ -395,6 +416,9 @@ func (_c *PullRequestLensResultCreate) check() error {
 	}
 	if len(_c.mutation.LensIDs()) == 0 {
 		return &ValidationError{Name: "lens", err: errors.New(`ent: missing required edge "PullRequestLensResult.lens"`)}
+	}
+	if len(_c.mutation.WindowIDs()) == 0 {
+		return &ValidationError{Name: "window", err: errors.New(`ent: missing required edge "PullRequestLensResult.window"`)}
 	}
 	if len(_c.mutation.PullRequestIDs()) == 0 {
 		return &ValidationError{Name: "pull_request", err: errors.New(`ent: missing required edge "PullRequestLensResult.pull_request"`)}
@@ -497,6 +521,23 @@ func (_c *PullRequestLensResultCreate) createSpec() (*PullRequestLensResult, *sq
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.WorkLensID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.WindowIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   pullrequestlensresult.WindowTable,
+			Columns: []string{pullrequestlensresult.WindowColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(worklenswindow.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.WorkLensWindowID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.PullRequestIDs(); len(nodes) > 0 {
@@ -832,6 +873,9 @@ func (u *PullRequestLensResultUpsertOne) UpdateNewValues() *PullRequestLensResul
 	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(s *sql.UpdateSet) {
 		if _, exists := u.create.mutation.WorkLensID(); exists {
 			s.SetIgnore(pullrequestlensresult.FieldWorkLensID)
+		}
+		if _, exists := u.create.mutation.WorkLensWindowID(); exists {
+			s.SetIgnore(pullrequestlensresult.FieldWorkLensWindowID)
 		}
 		if _, exists := u.create.mutation.PullRequestID(); exists {
 			s.SetIgnore(pullrequestlensresult.FieldPullRequestID)
@@ -1301,6 +1345,9 @@ func (u *PullRequestLensResultUpsertBulk) UpdateNewValues() *PullRequestLensResu
 		for _, b := range u.create.builders {
 			if _, exists := b.mutation.WorkLensID(); exists {
 				s.SetIgnore(pullrequestlensresult.FieldWorkLensID)
+			}
+			if _, exists := b.mutation.WorkLensWindowID(); exists {
+				s.SetIgnore(pullrequestlensresult.FieldWorkLensWindowID)
 			}
 			if _, exists := b.mutation.PullRequestID(); exists {
 				s.SetIgnore(pullrequestlensresult.FieldPullRequestID)

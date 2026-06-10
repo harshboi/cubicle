@@ -15,6 +15,8 @@ const (
 	Label = "ticket_lens_result"
 	// FieldWorkLensID holds the string denoting the work_lens_id field in the database.
 	FieldWorkLensID = "work_lens_id"
+	// FieldWorkLensWindowID holds the string denoting the work_lens_window_id field in the database.
+	FieldWorkLensWindowID = "work_lens_window_id"
 	// FieldTicketID holds the string denoting the ticket_id field in the database.
 	FieldTicketID = "ticket_id"
 	// FieldRelationKind holds the string denoting the relation_kind field in the database.
@@ -51,12 +53,16 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeLens holds the string denoting the lens edge name in mutations.
 	EdgeLens = "lens"
+	// EdgeWindow holds the string denoting the window edge name in mutations.
+	EdgeWindow = "window"
 	// EdgeTicket holds the string denoting the ticket edge name in mutations.
 	EdgeTicket = "ticket"
 	// EdgeLatestEvidence holds the string denoting the latest_evidence edge name in mutations.
 	EdgeLatestEvidence = "latest_evidence"
 	// WorkLensFieldID holds the string denoting the ID field of the WorkLens.
 	WorkLensFieldID = "id"
+	// WorkLensWindowFieldID holds the string denoting the ID field of the WorkLensWindow.
+	WorkLensWindowFieldID = "id"
 	// TicketFieldID holds the string denoting the ID field of the Ticket.
 	TicketFieldID = "id"
 	// EvidenceFieldID holds the string denoting the ID field of the Evidence.
@@ -70,6 +76,13 @@ const (
 	LensInverseTable = "work_lenses"
 	// LensColumn is the table column denoting the lens relation/edge.
 	LensColumn = "work_lens_id"
+	// WindowTable is the table that holds the window relation/edge.
+	WindowTable = "ticket_lens_results"
+	// WindowInverseTable is the table name for the WorkLensWindow entity.
+	// It exists in this package in order to avoid circular dependency with the "worklenswindow" package.
+	WindowInverseTable = "work_lens_windows"
+	// WindowColumn is the table column denoting the window relation/edge.
+	WindowColumn = "work_lens_window_id"
 	// TicketTable is the table that holds the ticket relation/edge.
 	TicketTable = "ticket_lens_results"
 	// TicketInverseTable is the table name for the Ticket entity.
@@ -89,6 +102,7 @@ const (
 // Columns holds all SQL columns for ticketlensresult fields.
 var Columns = []string{
 	FieldWorkLensID,
+	FieldWorkLensWindowID,
 	FieldTicketID,
 	FieldRelationKind,
 	FieldLatestEvidenceID,
@@ -224,6 +238,11 @@ func ByWorkLensID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldWorkLensID, opts...).ToFunc()
 }
 
+// ByWorkLensWindowID orders the results by the work_lens_window_id field.
+func ByWorkLensWindowID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWorkLensWindowID, opts...).ToFunc()
+}
+
 // ByTicketID orders the results by the ticket_id field.
 func ByTicketID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTicketID, opts...).ToFunc()
@@ -316,6 +335,13 @@ func ByLensField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
+// ByWindowField orders the results by window field.
+func ByWindowField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWindowStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByTicketField orders the results by ticket field.
 func ByTicketField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -334,6 +360,13 @@ func newLensStep() *sqlgraph.Step {
 		sqlgraph.From(Table, LensColumn),
 		sqlgraph.To(LensInverseTable, WorkLensFieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, LensTable, LensColumn),
+	)
+}
+func newWindowStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, WindowColumn),
+		sqlgraph.To(WindowInverseTable, WorkLensWindowFieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, WindowTable, WindowColumn),
 	)
 }
 func newTicketStep() *sqlgraph.Step {

@@ -66,6 +66,8 @@ type WorkLens struct {
 type WorkLensEdges struct {
 	// Parent work area that owns this lens.
 	Area *WorkArea `json:"area,omitempty"`
+	// Bounded windows that partition this lens before result rows are loaded.
+	Windows []*WorkLensWindow `json:"windows,omitempty"`
 	// Documents ranked under this lens.
 	Documents []*Document `json:"documents,omitempty"`
 	// Pull requests ranked under this lens.
@@ -84,7 +86,7 @@ type WorkLensEdges struct {
 	MessageResults []*MessageLensResult `json:"message_results,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [9]bool
+	loadedTypes [10]bool
 }
 
 // AreaOrErr returns the Area value or an error if the edge
@@ -98,10 +100,19 @@ func (e WorkLensEdges) AreaOrErr() (*WorkArea, error) {
 	return nil, &NotLoadedError{edge: "area"}
 }
 
+// WindowsOrErr returns the Windows value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkLensEdges) WindowsOrErr() ([]*WorkLensWindow, error) {
+	if e.loadedTypes[1] {
+		return e.Windows, nil
+	}
+	return nil, &NotLoadedError{edge: "windows"}
+}
+
 // DocumentsOrErr returns the Documents value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) DocumentsOrErr() ([]*Document, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.Documents, nil
 	}
 	return nil, &NotLoadedError{edge: "documents"}
@@ -110,7 +121,7 @@ func (e WorkLensEdges) DocumentsOrErr() ([]*Document, error) {
 // PullRequestsOrErr returns the PullRequests value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) PullRequestsOrErr() ([]*PullRequest, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.PullRequests, nil
 	}
 	return nil, &NotLoadedError{edge: "pull_requests"}
@@ -119,7 +130,7 @@ func (e WorkLensEdges) PullRequestsOrErr() ([]*PullRequest, error) {
 // TicketsOrErr returns the Tickets value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) TicketsOrErr() ([]*Ticket, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.Tickets, nil
 	}
 	return nil, &NotLoadedError{edge: "tickets"}
@@ -128,7 +139,7 @@ func (e WorkLensEdges) TicketsOrErr() ([]*Ticket, error) {
 // MessagesOrErr returns the Messages value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) MessagesOrErr() ([]*Message, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[5] {
 		return e.Messages, nil
 	}
 	return nil, &NotLoadedError{edge: "messages"}
@@ -137,7 +148,7 @@ func (e WorkLensEdges) MessagesOrErr() ([]*Message, error) {
 // DocumentResultsOrErr returns the DocumentResults value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) DocumentResultsOrErr() ([]*DocumentLensResult, error) {
-	if e.loadedTypes[5] {
+	if e.loadedTypes[6] {
 		return e.DocumentResults, nil
 	}
 	return nil, &NotLoadedError{edge: "document_results"}
@@ -146,7 +157,7 @@ func (e WorkLensEdges) DocumentResultsOrErr() ([]*DocumentLensResult, error) {
 // PullRequestResultsOrErr returns the PullRequestResults value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) PullRequestResultsOrErr() ([]*PullRequestLensResult, error) {
-	if e.loadedTypes[6] {
+	if e.loadedTypes[7] {
 		return e.PullRequestResults, nil
 	}
 	return nil, &NotLoadedError{edge: "pull_request_results"}
@@ -155,7 +166,7 @@ func (e WorkLensEdges) PullRequestResultsOrErr() ([]*PullRequestLensResult, erro
 // TicketResultsOrErr returns the TicketResults value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) TicketResultsOrErr() ([]*TicketLensResult, error) {
-	if e.loadedTypes[7] {
+	if e.loadedTypes[8] {
 		return e.TicketResults, nil
 	}
 	return nil, &NotLoadedError{edge: "ticket_results"}
@@ -164,7 +175,7 @@ func (e WorkLensEdges) TicketResultsOrErr() ([]*TicketLensResult, error) {
 // MessageResultsOrErr returns the MessageResults value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkLensEdges) MessageResultsOrErr() ([]*MessageLensResult, error) {
-	if e.loadedTypes[8] {
+	if e.loadedTypes[9] {
 		return e.MessageResults, nil
 	}
 	return nil, &NotLoadedError{edge: "message_results"}
@@ -336,6 +347,11 @@ func (_m *WorkLens) Value(name string) (ent.Value, error) {
 // QueryArea queries the "area" edge of the WorkLens entity.
 func (_m *WorkLens) QueryArea() *WorkAreaQuery {
 	return NewWorkLensClient(_m.config).QueryArea(_m)
+}
+
+// QueryWindows queries the "windows" edge of the WorkLens entity.
+func (_m *WorkLens) QueryWindows() *WorkLensWindowQuery {
+	return NewWorkLensClient(_m.config).QueryWindows(_m)
 }
 
 // QueryDocuments queries the "documents" edge of the WorkLens entity.

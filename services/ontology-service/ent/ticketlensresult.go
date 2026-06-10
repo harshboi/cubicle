@@ -7,6 +7,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/ticketlensresult"
 	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
 	"fmt"
 	"strings"
 	"time"
@@ -20,6 +21,8 @@ type TicketLensResult struct {
 	config `json:"-"`
 	// Source WorkLens endpoint for this result.
 	WorkLensID int `json:"work_lens_id,omitempty"`
+	// Bounded WorkLensWindow this result is assigned to for paging and recrawl.
+	WorkLensWindowID int `json:"work_lens_window_id,omitempty"`
 	// Target Ticket endpoint for this result.
 	TicketID int `json:"ticket_id,omitempty"`
 	// Semantic relationship represented by this link row.
@@ -64,13 +67,15 @@ type TicketLensResult struct {
 type TicketLensResultEdges struct {
 	// Work lens that owns this ticket result.
 	Lens *WorkLens `json:"lens,omitempty"`
+	// Bounded lens window used to page this ticket result.
+	Window *WorkLensWindow `json:"window,omitempty"`
 	// Ticket target for this result.
 	Ticket *Ticket `json:"ticket,omitempty"`
 	// Most recent evidence supporting this result.
 	LatestEvidence *Evidence `json:"latest_evidence,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // LensOrErr returns the Lens value or an error if the edge
@@ -84,12 +89,23 @@ func (e TicketLensResultEdges) LensOrErr() (*WorkLens, error) {
 	return nil, &NotLoadedError{edge: "lens"}
 }
 
+// WindowOrErr returns the Window value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TicketLensResultEdges) WindowOrErr() (*WorkLensWindow, error) {
+	if e.Window != nil {
+		return e.Window, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: worklenswindow.Label}
+	}
+	return nil, &NotLoadedError{edge: "window"}
+}
+
 // TicketOrErr returns the Ticket value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e TicketLensResultEdges) TicketOrErr() (*Ticket, error) {
 	if e.Ticket != nil {
 		return e.Ticket, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[2] {
 		return nil, &NotFoundError{label: ticket.Label}
 	}
 	return nil, &NotLoadedError{edge: "ticket"}
@@ -100,7 +116,7 @@ func (e TicketLensResultEdges) TicketOrErr() (*Ticket, error) {
 func (e TicketLensResultEdges) LatestEvidenceOrErr() (*Evidence, error) {
 	if e.LatestEvidence != nil {
 		return e.LatestEvidence, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: evidence.Label}
 	}
 	return nil, &NotLoadedError{edge: "latest_evidence"}
@@ -113,7 +129,7 @@ func (*TicketLensResult) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case ticketlensresult.FieldRankScore, ticketlensresult.FieldConfidence:
 			values[i] = new(sql.NullFloat64)
-		case ticketlensresult.FieldWorkLensID, ticketlensresult.FieldTicketID, ticketlensresult.FieldLatestEvidenceID, ticketlensresult.FieldEvidenceCount, ticketlensresult.FieldEventCount:
+		case ticketlensresult.FieldWorkLensID, ticketlensresult.FieldWorkLensWindowID, ticketlensresult.FieldTicketID, ticketlensresult.FieldLatestEvidenceID, ticketlensresult.FieldEvidenceCount, ticketlensresult.FieldEventCount:
 			values[i] = new(sql.NullInt64)
 		case ticketlensresult.FieldRelationKind, ticketlensresult.FieldSource, ticketlensresult.FieldSourceInstance, ticketlensresult.FieldExternalID, ticketlensresult.FieldSourceURL, ticketlensresult.FieldFreshnessState, ticketlensresult.FieldVisibility:
 			values[i] = new(sql.NullString)
@@ -139,6 +155,12 @@ func (_m *TicketLensResult) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field work_lens_id", values[i])
 			} else if value.Valid {
 				_m.WorkLensID = int(value.Int64)
+			}
+		case ticketlensresult.FieldWorkLensWindowID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field work_lens_window_id", values[i])
+			} else if value.Valid {
+				_m.WorkLensWindowID = int(value.Int64)
 			}
 		case ticketlensresult.FieldTicketID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -260,6 +282,11 @@ func (_m *TicketLensResult) QueryLens() *WorkLensQuery {
 	return NewTicketLensResultClient(_m.config).QueryLens(_m)
 }
 
+// QueryWindow queries the "window" edge of the TicketLensResult entity.
+func (_m *TicketLensResult) QueryWindow() *WorkLensWindowQuery {
+	return NewTicketLensResultClient(_m.config).QueryWindow(_m)
+}
+
 // QueryTicket queries the "ticket" edge of the TicketLensResult entity.
 func (_m *TicketLensResult) QueryTicket() *TicketQuery {
 	return NewTicketLensResultClient(_m.config).QueryTicket(_m)
@@ -294,6 +321,9 @@ func (_m *TicketLensResult) String() string {
 	builder.WriteString("TicketLensResult(")
 	builder.WriteString("work_lens_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.WorkLensID))
+	builder.WriteString(", ")
+	builder.WriteString("work_lens_window_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.WorkLensWindowID))
 	builder.WriteString(", ")
 	builder.WriteString("ticket_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.TicketID))
