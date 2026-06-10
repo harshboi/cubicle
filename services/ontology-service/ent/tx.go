@@ -12,6 +12,10 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Document is the client for interacting with the Document builders.
+	Document *DocumentClient
+	// DocumentFragment is the client for interacting with the DocumentFragment builders.
+	DocumentFragment *DocumentFragmentClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
 	// Person is the client for interacting with the Person builders.
@@ -20,6 +24,8 @@ type Tx struct {
 	PullRequest *PullRequestClient
 	// Ticket is the client for interacting with the Ticket builders.
 	Ticket *TicketClient
+	// TicketDocumentFragment is the client for interacting with the TicketDocumentFragment builders.
+	TicketDocumentFragment *TicketDocumentFragmentClient
 	// TicketPullRequest is the client for interacting with the TicketPullRequest builders.
 	TicketPullRequest *TicketPullRequestClient
 	// Workstream is the client for interacting with the Workstream builders.
@@ -157,10 +163,13 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Document = NewDocumentClient(tx.config)
+	tx.DocumentFragment = NewDocumentFragmentClient(tx.config)
 	tx.Evidence = NewEvidenceClient(tx.config)
 	tx.Person = NewPersonClient(tx.config)
 	tx.PullRequest = NewPullRequestClient(tx.config)
 	tx.Ticket = NewTicketClient(tx.config)
+	tx.TicketDocumentFragment = NewTicketDocumentFragmentClient(tx.config)
 	tx.TicketPullRequest = NewTicketPullRequestClient(tx.config)
 	tx.Workstream = NewWorkstreamClient(tx.config)
 	tx.WorkstreamTicket = NewWorkstreamTicketClient(tx.config)
@@ -173,7 +182,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Evidence.QueryXXX(), the query will be executed
+// applies a query, for example: Document.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

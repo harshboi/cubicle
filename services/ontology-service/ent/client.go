@@ -11,10 +11,13 @@ import (
 
 	"cubicle/services/ontology-service/ent/migrate"
 
+	"cubicle/services/ontology-service/ent/document"
+	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
@@ -30,6 +33,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Document is the client for interacting with the Document builders.
+	Document *DocumentClient
+	// DocumentFragment is the client for interacting with the DocumentFragment builders.
+	DocumentFragment *DocumentFragmentClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
 	// Person is the client for interacting with the Person builders.
@@ -38,6 +45,8 @@ type Client struct {
 	PullRequest *PullRequestClient
 	// Ticket is the client for interacting with the Ticket builders.
 	Ticket *TicketClient
+	// TicketDocumentFragment is the client for interacting with the TicketDocumentFragment builders.
+	TicketDocumentFragment *TicketDocumentFragmentClient
 	// TicketPullRequest is the client for interacting with the TicketPullRequest builders.
 	TicketPullRequest *TicketPullRequestClient
 	// Workstream is the client for interacting with the Workstream builders.
@@ -55,10 +64,13 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Document = NewDocumentClient(c.config)
+	c.DocumentFragment = NewDocumentFragmentClient(c.config)
 	c.Evidence = NewEvidenceClient(c.config)
 	c.Person = NewPersonClient(c.config)
 	c.PullRequest = NewPullRequestClient(c.config)
 	c.Ticket = NewTicketClient(c.config)
+	c.TicketDocumentFragment = NewTicketDocumentFragmentClient(c.config)
 	c.TicketPullRequest = NewTicketPullRequestClient(c.config)
 	c.Workstream = NewWorkstreamClient(c.config)
 	c.WorkstreamTicket = NewWorkstreamTicketClient(c.config)
@@ -152,15 +164,18 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:               ctx,
-		config:            cfg,
-		Evidence:          NewEvidenceClient(cfg),
-		Person:            NewPersonClient(cfg),
-		PullRequest:       NewPullRequestClient(cfg),
-		Ticket:            NewTicketClient(cfg),
-		TicketPullRequest: NewTicketPullRequestClient(cfg),
-		Workstream:        NewWorkstreamClient(cfg),
-		WorkstreamTicket:  NewWorkstreamTicketClient(cfg),
+		ctx:                    ctx,
+		config:                 cfg,
+		Document:               NewDocumentClient(cfg),
+		DocumentFragment:       NewDocumentFragmentClient(cfg),
+		Evidence:               NewEvidenceClient(cfg),
+		Person:                 NewPersonClient(cfg),
+		PullRequest:            NewPullRequestClient(cfg),
+		Ticket:                 NewTicketClient(cfg),
+		TicketDocumentFragment: NewTicketDocumentFragmentClient(cfg),
+		TicketPullRequest:      NewTicketPullRequestClient(cfg),
+		Workstream:             NewWorkstreamClient(cfg),
+		WorkstreamTicket:       NewWorkstreamTicketClient(cfg),
 	}, nil
 }
 
@@ -178,22 +193,25 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:               ctx,
-		config:            cfg,
-		Evidence:          NewEvidenceClient(cfg),
-		Person:            NewPersonClient(cfg),
-		PullRequest:       NewPullRequestClient(cfg),
-		Ticket:            NewTicketClient(cfg),
-		TicketPullRequest: NewTicketPullRequestClient(cfg),
-		Workstream:        NewWorkstreamClient(cfg),
-		WorkstreamTicket:  NewWorkstreamTicketClient(cfg),
+		ctx:                    ctx,
+		config:                 cfg,
+		Document:               NewDocumentClient(cfg),
+		DocumentFragment:       NewDocumentFragmentClient(cfg),
+		Evidence:               NewEvidenceClient(cfg),
+		Person:                 NewPersonClient(cfg),
+		PullRequest:            NewPullRequestClient(cfg),
+		Ticket:                 NewTicketClient(cfg),
+		TicketDocumentFragment: NewTicketDocumentFragmentClient(cfg),
+		TicketPullRequest:      NewTicketPullRequestClient(cfg),
+		Workstream:             NewWorkstreamClient(cfg),
+		WorkstreamTicket:       NewWorkstreamTicketClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Evidence.
+//		Document.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -216,8 +234,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Evidence, c.Person, c.PullRequest, c.Ticket, c.TicketPullRequest,
-		c.Workstream, c.WorkstreamTicket,
+		c.Document, c.DocumentFragment, c.Evidence, c.Person, c.PullRequest, c.Ticket,
+		c.TicketDocumentFragment, c.TicketPullRequest, c.Workstream,
+		c.WorkstreamTicket,
 	} {
 		n.Use(hooks...)
 	}
@@ -227,8 +246,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Evidence, c.Person, c.PullRequest, c.Ticket, c.TicketPullRequest,
-		c.Workstream, c.WorkstreamTicket,
+		c.Document, c.DocumentFragment, c.Evidence, c.Person, c.PullRequest, c.Ticket,
+		c.TicketDocumentFragment, c.TicketPullRequest, c.Workstream,
+		c.WorkstreamTicket,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -237,6 +257,10 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *DocumentMutation:
+		return c.Document.mutate(ctx, m)
+	case *DocumentFragmentMutation:
+		return c.DocumentFragment.mutate(ctx, m)
 	case *EvidenceMutation:
 		return c.Evidence.mutate(ctx, m)
 	case *PersonMutation:
@@ -245,6 +269,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.PullRequest.mutate(ctx, m)
 	case *TicketMutation:
 		return c.Ticket.mutate(ctx, m)
+	case *TicketDocumentFragmentMutation:
+		return c.TicketDocumentFragment.mutate(ctx, m)
 	case *TicketPullRequestMutation:
 		return c.TicketPullRequest.mutate(ctx, m)
 	case *WorkstreamMutation:
@@ -253,6 +279,320 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.WorkstreamTicket.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// DocumentClient is a client for the Document schema.
+type DocumentClient struct {
+	config
+}
+
+// NewDocumentClient returns a client for the Document from the given config.
+func NewDocumentClient(c config) *DocumentClient {
+	return &DocumentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `document.Hooks(f(g(h())))`.
+func (c *DocumentClient) Use(hooks ...Hook) {
+	c.hooks.Document = append(c.hooks.Document, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `document.Intercept(f(g(h())))`.
+func (c *DocumentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Document = append(c.inters.Document, interceptors...)
+}
+
+// Create returns a builder for creating a Document entity.
+func (c *DocumentClient) Create() *DocumentCreate {
+	mutation := newDocumentMutation(c.config, OpCreate)
+	return &DocumentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Document entities.
+func (c *DocumentClient) CreateBulk(builders ...*DocumentCreate) *DocumentCreateBulk {
+	return &DocumentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DocumentClient) MapCreateBulk(slice any, setFunc func(*DocumentCreate, int)) *DocumentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DocumentCreateBulk{err: fmt.Errorf("calling to DocumentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DocumentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DocumentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Document.
+func (c *DocumentClient) Update() *DocumentUpdate {
+	mutation := newDocumentMutation(c.config, OpUpdate)
+	return &DocumentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DocumentClient) UpdateOne(_m *Document) *DocumentUpdateOne {
+	mutation := newDocumentMutation(c.config, OpUpdateOne, withDocument(_m))
+	return &DocumentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DocumentClient) UpdateOneID(id int) *DocumentUpdateOne {
+	mutation := newDocumentMutation(c.config, OpUpdateOne, withDocumentID(id))
+	return &DocumentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Document.
+func (c *DocumentClient) Delete() *DocumentDelete {
+	mutation := newDocumentMutation(c.config, OpDelete)
+	return &DocumentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DocumentClient) DeleteOne(_m *Document) *DocumentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DocumentClient) DeleteOneID(id int) *DocumentDeleteOne {
+	builder := c.Delete().Where(document.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DocumentDeleteOne{builder}
+}
+
+// Query returns a query builder for Document.
+func (c *DocumentClient) Query() *DocumentQuery {
+	return &DocumentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDocument},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Document entity by its id.
+func (c *DocumentClient) Get(ctx context.Context, id int) (*Document, error) {
+	return c.Query().Where(document.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DocumentClient) GetX(ctx context.Context, id int) *Document {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryFragments queries the fragments edge of a Document.
+func (c *DocumentClient) QueryFragments(_m *Document) *DocumentFragmentQuery {
+	query := (&DocumentFragmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(document.Table, document.FieldID, id),
+			sqlgraph.To(documentfragment.Table, documentfragment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, document.FragmentsTable, document.FragmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *DocumentClient) Hooks() []Hook {
+	return c.hooks.Document
+}
+
+// Interceptors returns the client interceptors.
+func (c *DocumentClient) Interceptors() []Interceptor {
+	return c.inters.Document
+}
+
+func (c *DocumentClient) mutate(ctx context.Context, m *DocumentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DocumentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DocumentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DocumentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DocumentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Document mutation op: %q", m.Op())
+	}
+}
+
+// DocumentFragmentClient is a client for the DocumentFragment schema.
+type DocumentFragmentClient struct {
+	config
+}
+
+// NewDocumentFragmentClient returns a client for the DocumentFragment from the given config.
+func NewDocumentFragmentClient(c config) *DocumentFragmentClient {
+	return &DocumentFragmentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `documentfragment.Hooks(f(g(h())))`.
+func (c *DocumentFragmentClient) Use(hooks ...Hook) {
+	c.hooks.DocumentFragment = append(c.hooks.DocumentFragment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `documentfragment.Intercept(f(g(h())))`.
+func (c *DocumentFragmentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.DocumentFragment = append(c.inters.DocumentFragment, interceptors...)
+}
+
+// Create returns a builder for creating a DocumentFragment entity.
+func (c *DocumentFragmentClient) Create() *DocumentFragmentCreate {
+	mutation := newDocumentFragmentMutation(c.config, OpCreate)
+	return &DocumentFragmentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DocumentFragment entities.
+func (c *DocumentFragmentClient) CreateBulk(builders ...*DocumentFragmentCreate) *DocumentFragmentCreateBulk {
+	return &DocumentFragmentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DocumentFragmentClient) MapCreateBulk(slice any, setFunc func(*DocumentFragmentCreate, int)) *DocumentFragmentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DocumentFragmentCreateBulk{err: fmt.Errorf("calling to DocumentFragmentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DocumentFragmentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DocumentFragmentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DocumentFragment.
+func (c *DocumentFragmentClient) Update() *DocumentFragmentUpdate {
+	mutation := newDocumentFragmentMutation(c.config, OpUpdate)
+	return &DocumentFragmentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DocumentFragmentClient) UpdateOne(_m *DocumentFragment) *DocumentFragmentUpdateOne {
+	mutation := newDocumentFragmentMutation(c.config, OpUpdateOne, withDocumentFragment(_m))
+	return &DocumentFragmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DocumentFragmentClient) UpdateOneID(id int) *DocumentFragmentUpdateOne {
+	mutation := newDocumentFragmentMutation(c.config, OpUpdateOne, withDocumentFragmentID(id))
+	return &DocumentFragmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DocumentFragment.
+func (c *DocumentFragmentClient) Delete() *DocumentFragmentDelete {
+	mutation := newDocumentFragmentMutation(c.config, OpDelete)
+	return &DocumentFragmentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DocumentFragmentClient) DeleteOne(_m *DocumentFragment) *DocumentFragmentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DocumentFragmentClient) DeleteOneID(id int) *DocumentFragmentDeleteOne {
+	builder := c.Delete().Where(documentfragment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DocumentFragmentDeleteOne{builder}
+}
+
+// Query returns a query builder for DocumentFragment.
+func (c *DocumentFragmentClient) Query() *DocumentFragmentQuery {
+	return &DocumentFragmentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDocumentFragment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a DocumentFragment entity by its id.
+func (c *DocumentFragmentClient) Get(ctx context.Context, id int) (*DocumentFragment, error) {
+	return c.Query().Where(documentfragment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DocumentFragmentClient) GetX(ctx context.Context, id int) *DocumentFragment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryDocument queries the document edge of a DocumentFragment.
+func (c *DocumentFragmentClient) QueryDocument(_m *DocumentFragment) *DocumentQuery {
+	query := (&DocumentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(documentfragment.Table, documentfragment.FieldID, id),
+			sqlgraph.To(document.Table, document.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, documentfragment.DocumentTable, documentfragment.DocumentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTickets queries the tickets edge of a DocumentFragment.
+func (c *DocumentFragmentClient) QueryTickets(_m *DocumentFragment) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(documentfragment.Table, documentfragment.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, documentfragment.TicketsTable, documentfragment.TicketsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *DocumentFragmentClient) Hooks() []Hook {
+	return c.hooks.DocumentFragment
+}
+
+// Interceptors returns the client interceptors.
+func (c *DocumentFragmentClient) Interceptors() []Interceptor {
+	return c.inters.DocumentFragment
+}
+
+func (c *DocumentFragmentClient) mutate(ctx context.Context, m *DocumentFragmentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DocumentFragmentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DocumentFragmentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DocumentFragmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DocumentFragmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown DocumentFragment mutation op: %q", m.Op())
 	}
 }
 
@@ -811,6 +1151,22 @@ func (c *TicketClient) QueryPullRequests(_m *Ticket) *PullRequestQuery {
 	return query
 }
 
+// QueryDocumentFragments queries the document_fragments edge of a Ticket.
+func (c *TicketClient) QueryDocumentFragments(_m *Ticket) *DocumentFragmentQuery {
+	query := (&DocumentFragmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(documentfragment.Table, documentfragment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, ticket.DocumentFragmentsTable, ticket.DocumentFragmentsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryTicketPullRequests queries the ticket_pull_requests edge of a Ticket.
 func (c *TicketClient) QueryTicketPullRequests(_m *Ticket) *TicketPullRequestQuery {
 	query := (&TicketPullRequestClient{config: c.config}).Query()
@@ -820,6 +1176,22 @@ func (c *TicketClient) QueryTicketPullRequests(_m *Ticket) *TicketPullRequestQue
 			sqlgraph.From(ticket.Table, ticket.FieldID, id),
 			sqlgraph.To(ticketpullrequest.Table, ticketpullrequest.TicketColumn),
 			sqlgraph.Edge(sqlgraph.O2M, true, ticket.TicketPullRequestsTable, ticket.TicketPullRequestsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicketDocumentFragments queries the ticket_document_fragments edge of a Ticket.
+func (c *TicketClient) QueryTicketDocumentFragments(_m *Ticket) *TicketDocumentFragmentQuery {
+	query := (&TicketDocumentFragmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(ticketdocumentfragment.Table, ticketdocumentfragment.TicketColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.TicketDocumentFragmentsTable, ticket.TicketDocumentFragmentsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -849,6 +1221,129 @@ func (c *TicketClient) mutate(ctx context.Context, m *TicketMutation) (Value, er
 		return (&TicketDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Ticket mutation op: %q", m.Op())
+	}
+}
+
+// TicketDocumentFragmentClient is a client for the TicketDocumentFragment schema.
+type TicketDocumentFragmentClient struct {
+	config
+}
+
+// NewTicketDocumentFragmentClient returns a client for the TicketDocumentFragment from the given config.
+func NewTicketDocumentFragmentClient(c config) *TicketDocumentFragmentClient {
+	return &TicketDocumentFragmentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ticketdocumentfragment.Hooks(f(g(h())))`.
+func (c *TicketDocumentFragmentClient) Use(hooks ...Hook) {
+	c.hooks.TicketDocumentFragment = append(c.hooks.TicketDocumentFragment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ticketdocumentfragment.Intercept(f(g(h())))`.
+func (c *TicketDocumentFragmentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TicketDocumentFragment = append(c.inters.TicketDocumentFragment, interceptors...)
+}
+
+// Create returns a builder for creating a TicketDocumentFragment entity.
+func (c *TicketDocumentFragmentClient) Create() *TicketDocumentFragmentCreate {
+	mutation := newTicketDocumentFragmentMutation(c.config, OpCreate)
+	return &TicketDocumentFragmentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TicketDocumentFragment entities.
+func (c *TicketDocumentFragmentClient) CreateBulk(builders ...*TicketDocumentFragmentCreate) *TicketDocumentFragmentCreateBulk {
+	return &TicketDocumentFragmentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TicketDocumentFragmentClient) MapCreateBulk(slice any, setFunc func(*TicketDocumentFragmentCreate, int)) *TicketDocumentFragmentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TicketDocumentFragmentCreateBulk{err: fmt.Errorf("calling to TicketDocumentFragmentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TicketDocumentFragmentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TicketDocumentFragmentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TicketDocumentFragment.
+func (c *TicketDocumentFragmentClient) Update() *TicketDocumentFragmentUpdate {
+	mutation := newTicketDocumentFragmentMutation(c.config, OpUpdate)
+	return &TicketDocumentFragmentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TicketDocumentFragmentClient) UpdateOne(_m *TicketDocumentFragment) *TicketDocumentFragmentUpdateOne {
+	mutation := newTicketDocumentFragmentMutation(c.config, OpUpdateOne)
+	mutation.ticket = &_m.TicketID
+	mutation.document_fragment = &_m.DocumentFragmentID
+	return &TicketDocumentFragmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TicketDocumentFragment.
+func (c *TicketDocumentFragmentClient) Delete() *TicketDocumentFragmentDelete {
+	mutation := newTicketDocumentFragmentMutation(c.config, OpDelete)
+	return &TicketDocumentFragmentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Query returns a query builder for TicketDocumentFragment.
+func (c *TicketDocumentFragmentClient) Query() *TicketDocumentFragmentQuery {
+	return &TicketDocumentFragmentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTicketDocumentFragment},
+		inters: c.Interceptors(),
+	}
+}
+
+// QueryTicket queries the ticket edge of a TicketDocumentFragment.
+func (c *TicketDocumentFragmentClient) QueryTicket(_m *TicketDocumentFragment) *TicketQuery {
+	return c.Query().
+		Where(ticketdocumentfragment.TicketID(_m.TicketID), ticketdocumentfragment.DocumentFragmentID(_m.DocumentFragmentID)).
+		QueryTicket()
+}
+
+// QueryDocumentFragment queries the document_fragment edge of a TicketDocumentFragment.
+func (c *TicketDocumentFragmentClient) QueryDocumentFragment(_m *TicketDocumentFragment) *DocumentFragmentQuery {
+	return c.Query().
+		Where(ticketdocumentfragment.TicketID(_m.TicketID), ticketdocumentfragment.DocumentFragmentID(_m.DocumentFragmentID)).
+		QueryDocumentFragment()
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a TicketDocumentFragment.
+func (c *TicketDocumentFragmentClient) QueryLatestEvidence(_m *TicketDocumentFragment) *EvidenceQuery {
+	return c.Query().
+		Where(ticketdocumentfragment.TicketID(_m.TicketID), ticketdocumentfragment.DocumentFragmentID(_m.DocumentFragmentID)).
+		QueryLatestEvidence()
+}
+
+// Hooks returns the client hooks.
+func (c *TicketDocumentFragmentClient) Hooks() []Hook {
+	return c.hooks.TicketDocumentFragment
+}
+
+// Interceptors returns the client interceptors.
+func (c *TicketDocumentFragmentClient) Interceptors() []Interceptor {
+	return c.inters.TicketDocumentFragment
+}
+
+func (c *TicketDocumentFragmentClient) mutate(ctx context.Context, m *TicketDocumentFragmentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TicketDocumentFragmentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TicketDocumentFragmentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TicketDocumentFragmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TicketDocumentFragmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TicketDocumentFragment mutation op: %q", m.Op())
 	}
 }
 
@@ -1266,11 +1761,13 @@ func (c *WorkstreamTicketClient) mutate(ctx context.Context, m *WorkstreamTicket
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Evidence, Person, PullRequest, Ticket, TicketPullRequest, Workstream,
+		Document, DocumentFragment, Evidence, Person, PullRequest, Ticket,
+		TicketDocumentFragment, TicketPullRequest, Workstream,
 		WorkstreamTicket []ent.Hook
 	}
 	inters struct {
-		Evidence, Person, PullRequest, Ticket, TicketPullRequest, Workstream,
+		Document, DocumentFragment, Evidence, Person, PullRequest, Ticket,
+		TicketDocumentFragment, TicketPullRequest, Workstream,
 		WorkstreamTicket []ent.Interceptor
 	}
 )

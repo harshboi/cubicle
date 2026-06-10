@@ -8,6 +8,30 @@ import (
 	"fmt"
 )
 
+// The DocumentFunc type is an adapter to allow the use of ordinary
+// function as Document mutator.
+type DocumentFunc func(context.Context, *ent.DocumentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DocumentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DocumentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DocumentMutation", m)
+}
+
+// The DocumentFragmentFunc type is an adapter to allow the use of ordinary
+// function as DocumentFragment mutator.
+type DocumentFragmentFunc func(context.Context, *ent.DocumentFragmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DocumentFragmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DocumentFragmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DocumentFragmentMutation", m)
+}
+
 // The EvidenceFunc type is an adapter to allow the use of ordinary
 // function as Evidence mutator.
 type EvidenceFunc func(context.Context, *ent.EvidenceMutation) (ent.Value, error)
@@ -54,6 +78,18 @@ func (f TicketFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketMutation", m)
+}
+
+// The TicketDocumentFragmentFunc type is an adapter to allow the use of ordinary
+// function as TicketDocumentFragment mutator.
+type TicketDocumentFragmentFunc func(context.Context, *ent.TicketDocumentFragmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TicketDocumentFragmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TicketDocumentFragmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TicketDocumentFragmentMutation", m)
 }
 
 // The TicketPullRequestFunc type is an adapter to allow the use of ordinary

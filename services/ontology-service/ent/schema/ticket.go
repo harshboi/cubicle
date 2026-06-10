@@ -54,6 +54,9 @@ func (Ticket) Edges() []ent.Edge {
 		edge.To("pull_requests", PullRequest.Type).
 			Through("ticket_pull_requests", TicketPullRequest.Type).
 			Comment("Pull requests that implement this ticket."),
+		edge.To("document_fragments", DocumentFragment.Type).
+			Through("ticket_document_fragments", TicketDocumentFragment.Type).
+			Comment("Document fragments that explain or support this ticket."),
 	}
 }
 

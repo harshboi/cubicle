@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
@@ -399,6 +400,21 @@ func (_u *TicketUpdate) AddPullRequests(v ...*PullRequest) *TicketUpdate {
 	return _u.AddPullRequestIDs(ids...)
 }
 
+// AddDocumentFragmentIDs adds the "document_fragments" edge to the DocumentFragment entity by IDs.
+func (_u *TicketUpdate) AddDocumentFragmentIDs(ids ...int) *TicketUpdate {
+	_u.mutation.AddDocumentFragmentIDs(ids...)
+	return _u
+}
+
+// AddDocumentFragments adds the "document_fragments" edges to the DocumentFragment entity.
+func (_u *TicketUpdate) AddDocumentFragments(v ...*DocumentFragment) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddDocumentFragmentIDs(ids...)
+}
+
 // Mutation returns the TicketMutation object of the builder.
 func (_u *TicketUpdate) Mutation() *TicketMutation {
 	return _u.mutation
@@ -444,6 +460,27 @@ func (_u *TicketUpdate) RemovePullRequests(v ...*PullRequest) *TicketUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemovePullRequestIDs(ids...)
+}
+
+// ClearDocumentFragments clears all "document_fragments" edges to the DocumentFragment entity.
+func (_u *TicketUpdate) ClearDocumentFragments() *TicketUpdate {
+	_u.mutation.ClearDocumentFragments()
+	return _u
+}
+
+// RemoveDocumentFragmentIDs removes the "document_fragments" edge to DocumentFragment entities by IDs.
+func (_u *TicketUpdate) RemoveDocumentFragmentIDs(ids ...int) *TicketUpdate {
+	_u.mutation.RemoveDocumentFragmentIDs(ids...)
+	return _u
+}
+
+// RemoveDocumentFragments removes "document_fragments" edges to DocumentFragment entities.
+func (_u *TicketUpdate) RemoveDocumentFragments(v ...*DocumentFragment) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveDocumentFragmentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -717,6 +754,63 @@ func (_u *TicketUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &TicketPullRequestCreate{config: _u.config, mutation: newTicketPullRequestMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.DocumentFragmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.DocumentFragmentsTable,
+			Columns: ticket.DocumentFragmentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
+			},
+		}
+		createE := &TicketDocumentFragmentCreate{config: _u.config, mutation: newTicketDocumentFragmentMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedDocumentFragmentsIDs(); len(nodes) > 0 && !_u.mutation.DocumentFragmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.DocumentFragmentsTable,
+			Columns: ticket.DocumentFragmentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketDocumentFragmentCreate{config: _u.config, mutation: newTicketDocumentFragmentMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DocumentFragmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.DocumentFragmentsTable,
+			Columns: ticket.DocumentFragmentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketDocumentFragmentCreate{config: _u.config, mutation: newTicketDocumentFragmentMutation(_u.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields
@@ -1111,6 +1205,21 @@ func (_u *TicketUpdateOne) AddPullRequests(v ...*PullRequest) *TicketUpdateOne {
 	return _u.AddPullRequestIDs(ids...)
 }
 
+// AddDocumentFragmentIDs adds the "document_fragments" edge to the DocumentFragment entity by IDs.
+func (_u *TicketUpdateOne) AddDocumentFragmentIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.AddDocumentFragmentIDs(ids...)
+	return _u
+}
+
+// AddDocumentFragments adds the "document_fragments" edges to the DocumentFragment entity.
+func (_u *TicketUpdateOne) AddDocumentFragments(v ...*DocumentFragment) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddDocumentFragmentIDs(ids...)
+}
+
 // Mutation returns the TicketMutation object of the builder.
 func (_u *TicketUpdateOne) Mutation() *TicketMutation {
 	return _u.mutation
@@ -1156,6 +1265,27 @@ func (_u *TicketUpdateOne) RemovePullRequests(v ...*PullRequest) *TicketUpdateOn
 		ids[i] = v[i].ID
 	}
 	return _u.RemovePullRequestIDs(ids...)
+}
+
+// ClearDocumentFragments clears all "document_fragments" edges to the DocumentFragment entity.
+func (_u *TicketUpdateOne) ClearDocumentFragments() *TicketUpdateOne {
+	_u.mutation.ClearDocumentFragments()
+	return _u
+}
+
+// RemoveDocumentFragmentIDs removes the "document_fragments" edge to DocumentFragment entities by IDs.
+func (_u *TicketUpdateOne) RemoveDocumentFragmentIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.RemoveDocumentFragmentIDs(ids...)
+	return _u
+}
+
+// RemoveDocumentFragments removes "document_fragments" edges to DocumentFragment entities.
+func (_u *TicketUpdateOne) RemoveDocumentFragments(v ...*DocumentFragment) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveDocumentFragmentIDs(ids...)
 }
 
 // Where appends a list predicates to the TicketUpdate builder.
@@ -1459,6 +1589,63 @@ func (_u *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err erro
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &TicketPullRequestCreate{config: _u.config, mutation: newTicketPullRequestMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.DocumentFragmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.DocumentFragmentsTable,
+			Columns: ticket.DocumentFragmentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
+			},
+		}
+		createE := &TicketDocumentFragmentCreate{config: _u.config, mutation: newTicketDocumentFragmentMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedDocumentFragmentsIDs(); len(nodes) > 0 && !_u.mutation.DocumentFragmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.DocumentFragmentsTable,
+			Columns: ticket.DocumentFragmentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketDocumentFragmentCreate{config: _u.config, mutation: newTicketDocumentFragmentMutation(_u.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DocumentFragmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.DocumentFragmentsTable,
+			Columns: ticket.DocumentFragmentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketDocumentFragmentCreate{config: _u.config, mutation: newTicketDocumentFragmentMutation(_u.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields

@@ -1276,6 +1276,29 @@ func HasPullRequestsWith(preds ...predicate.PullRequest) predicate.Ticket {
 	})
 }
 
+// HasDocumentFragments applies the HasEdge predicate on the "document_fragments" edge.
+func HasDocumentFragments() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, DocumentFragmentsTable, DocumentFragmentsPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDocumentFragmentsWith applies the HasEdge predicate on the "document_fragments" edge with a given conditions (other predicates).
+func HasDocumentFragmentsWith(preds ...predicate.DocumentFragment) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newDocumentFragmentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasTicketPullRequests applies the HasEdge predicate on the "ticket_pull_requests" edge.
 func HasTicketPullRequests() predicate.Ticket {
 	return predicate.Ticket(func(s *sql.Selector) {
@@ -1291,6 +1314,29 @@ func HasTicketPullRequests() predicate.Ticket {
 func HasTicketPullRequestsWith(preds ...predicate.TicketPullRequest) predicate.Ticket {
 	return predicate.Ticket(func(s *sql.Selector) {
 		step := newTicketPullRequestsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTicketDocumentFragments applies the HasEdge predicate on the "ticket_document_fragments" edge.
+func HasTicketDocumentFragments() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, TicketDocumentFragmentsTable, TicketDocumentFragmentsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTicketDocumentFragmentsWith applies the HasEdge predicate on the "ticket_document_fragments" edge with a given conditions (other predicates).
+func HasTicketDocumentFragmentsWith(preds ...predicate.TicketDocumentFragment) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newTicketDocumentFragmentsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -4,10 +4,13 @@ package ent
 
 import (
 	"context"
+	"cubicle/services/ontology-service/ent/document"
+	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
@@ -79,13 +82,16 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			evidence.Table:          evidence.ValidColumn,
-			person.Table:            person.ValidColumn,
-			pullrequest.Table:       pullrequest.ValidColumn,
-			ticket.Table:            ticket.ValidColumn,
-			ticketpullrequest.Table: ticketpullrequest.ValidColumn,
-			workstream.Table:        workstream.ValidColumn,
-			workstreamticket.Table:  workstreamticket.ValidColumn,
+			document.Table:               document.ValidColumn,
+			documentfragment.Table:       documentfragment.ValidColumn,
+			evidence.Table:               evidence.ValidColumn,
+			person.Table:                 person.ValidColumn,
+			pullrequest.Table:            pullrequest.ValidColumn,
+			ticket.Table:                 ticket.ValidColumn,
+			ticketdocumentfragment.Table: ticketdocumentfragment.ValidColumn,
+			ticketpullrequest.Table:      ticketpullrequest.ValidColumn,
+			workstream.Table:             workstream.ValidColumn,
+			workstreamticket.Table:       workstreamticket.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

@@ -4,9 +4,11 @@ package ent
 
 import (
 	"context"
+	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workstream"
 	"database/sql/driver"
@@ -22,13 +24,15 @@ import (
 // TicketQuery is the builder for querying Ticket entities.
 type TicketQuery struct {
 	config
-	ctx                    *QueryContext
-	order                  []ticket.OrderOption
-	inters                 []Interceptor
-	predicates             []predicate.Ticket
-	withWorkstreams        *WorkstreamQuery
-	withPullRequests       *PullRequestQuery
-	withTicketPullRequests *TicketPullRequestQuery
+	ctx                         *QueryContext
+	order                       []ticket.OrderOption
+	inters                      []Interceptor
+	predicates                  []predicate.Ticket
+	withWorkstreams             *WorkstreamQuery
+	withPullRequests            *PullRequestQuery
+	withDocumentFragments       *DocumentFragmentQuery
+	withTicketPullRequests      *TicketPullRequestQuery
+	withTicketDocumentFragments *TicketDocumentFragmentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -109,6 +113,28 @@ func (_q *TicketQuery) QueryPullRequests() *PullRequestQuery {
 	return query
 }
 
+// QueryDocumentFragments chains the current query on the "document_fragments" edge.
+func (_q *TicketQuery) QueryDocumentFragments() *DocumentFragmentQuery {
+	query := (&DocumentFragmentClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, selector),
+			sqlgraph.To(documentfragment.Table, documentfragment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, ticket.DocumentFragmentsTable, ticket.DocumentFragmentsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryTicketPullRequests chains the current query on the "ticket_pull_requests" edge.
 func (_q *TicketQuery) QueryTicketPullRequests() *TicketPullRequestQuery {
 	query := (&TicketPullRequestClient{config: _q.config}).Query()
@@ -124,6 +150,28 @@ func (_q *TicketQuery) QueryTicketPullRequests() *TicketPullRequestQuery {
 			sqlgraph.From(ticket.Table, ticket.FieldID, selector),
 			sqlgraph.To(ticketpullrequest.Table, ticketpullrequest.TicketColumn),
 			sqlgraph.Edge(sqlgraph.O2M, true, ticket.TicketPullRequestsTable, ticket.TicketPullRequestsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTicketDocumentFragments chains the current query on the "ticket_document_fragments" edge.
+func (_q *TicketQuery) QueryTicketDocumentFragments() *TicketDocumentFragmentQuery {
+	query := (&TicketDocumentFragmentClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, selector),
+			sqlgraph.To(ticketdocumentfragment.Table, ticketdocumentfragment.TicketColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.TicketDocumentFragmentsTable, ticket.TicketDocumentFragmentsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -318,14 +366,16 @@ func (_q *TicketQuery) Clone() *TicketQuery {
 		return nil
 	}
 	return &TicketQuery{
-		config:                 _q.config,
-		ctx:                    _q.ctx.Clone(),
-		order:                  append([]ticket.OrderOption{}, _q.order...),
-		inters:                 append([]Interceptor{}, _q.inters...),
-		predicates:             append([]predicate.Ticket{}, _q.predicates...),
-		withWorkstreams:        _q.withWorkstreams.Clone(),
-		withPullRequests:       _q.withPullRequests.Clone(),
-		withTicketPullRequests: _q.withTicketPullRequests.Clone(),
+		config:                      _q.config,
+		ctx:                         _q.ctx.Clone(),
+		order:                       append([]ticket.OrderOption{}, _q.order...),
+		inters:                      append([]Interceptor{}, _q.inters...),
+		predicates:                  append([]predicate.Ticket{}, _q.predicates...),
+		withWorkstreams:             _q.withWorkstreams.Clone(),
+		withPullRequests:            _q.withPullRequests.Clone(),
+		withDocumentFragments:       _q.withDocumentFragments.Clone(),
+		withTicketPullRequests:      _q.withTicketPullRequests.Clone(),
+		withTicketDocumentFragments: _q.withTicketDocumentFragments.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -354,6 +404,17 @@ func (_q *TicketQuery) WithPullRequests(opts ...func(*PullRequestQuery)) *Ticket
 	return _q
 }
 
+// WithDocumentFragments tells the query-builder to eager-load the nodes that are connected to
+// the "document_fragments" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TicketQuery) WithDocumentFragments(opts ...func(*DocumentFragmentQuery)) *TicketQuery {
+	query := (&DocumentFragmentClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withDocumentFragments = query
+	return _q
+}
+
 // WithTicketPullRequests tells the query-builder to eager-load the nodes that are connected to
 // the "ticket_pull_requests" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *TicketQuery) WithTicketPullRequests(opts ...func(*TicketPullRequestQuery)) *TicketQuery {
@@ -362,6 +423,17 @@ func (_q *TicketQuery) WithTicketPullRequests(opts ...func(*TicketPullRequestQue
 		opt(query)
 	}
 	_q.withTicketPullRequests = query
+	return _q
+}
+
+// WithTicketDocumentFragments tells the query-builder to eager-load the nodes that are connected to
+// the "ticket_document_fragments" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TicketQuery) WithTicketDocumentFragments(opts ...func(*TicketDocumentFragmentQuery)) *TicketQuery {
+	query := (&TicketDocumentFragmentClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTicketDocumentFragments = query
 	return _q
 }
 
@@ -443,10 +515,12 @@ func (_q *TicketQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ticke
 	var (
 		nodes       = []*Ticket{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [5]bool{
 			_q.withWorkstreams != nil,
 			_q.withPullRequests != nil,
+			_q.withDocumentFragments != nil,
 			_q.withTicketPullRequests != nil,
+			_q.withTicketDocumentFragments != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -481,11 +555,27 @@ func (_q *TicketQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ticke
 			return nil, err
 		}
 	}
+	if query := _q.withDocumentFragments; query != nil {
+		if err := _q.loadDocumentFragments(ctx, query, nodes,
+			func(n *Ticket) { n.Edges.DocumentFragments = []*DocumentFragment{} },
+			func(n *Ticket, e *DocumentFragment) { n.Edges.DocumentFragments = append(n.Edges.DocumentFragments, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := _q.withTicketPullRequests; query != nil {
 		if err := _q.loadTicketPullRequests(ctx, query, nodes,
 			func(n *Ticket) { n.Edges.TicketPullRequests = []*TicketPullRequest{} },
 			func(n *Ticket, e *TicketPullRequest) {
 				n.Edges.TicketPullRequests = append(n.Edges.TicketPullRequests, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTicketDocumentFragments; query != nil {
+		if err := _q.loadTicketDocumentFragments(ctx, query, nodes,
+			func(n *Ticket) { n.Edges.TicketDocumentFragments = []*TicketDocumentFragment{} },
+			func(n *Ticket, e *TicketDocumentFragment) {
+				n.Edges.TicketDocumentFragments = append(n.Edges.TicketDocumentFragments, e)
 			}); err != nil {
 			return nil, err
 		}
@@ -615,6 +705,67 @@ func (_q *TicketQuery) loadPullRequests(ctx context.Context, query *PullRequestQ
 	}
 	return nil
 }
+func (_q *TicketQuery) loadDocumentFragments(ctx context.Context, query *DocumentFragmentQuery, nodes []*Ticket, init func(*Ticket), assign func(*Ticket, *DocumentFragment)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Ticket)
+	nids := make(map[int]map[*Ticket]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(ticket.DocumentFragmentsTable)
+		s.Join(joinT).On(s.C(documentfragment.FieldID), joinT.C(ticket.DocumentFragmentsPrimaryKey[1]))
+		s.Where(sql.InValues(joinT.C(ticket.DocumentFragmentsPrimaryKey[0]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(ticket.DocumentFragmentsPrimaryKey[0]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Ticket]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*DocumentFragment](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "document_fragments" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
 func (_q *TicketQuery) loadTicketPullRequests(ctx context.Context, query *TicketPullRequestQuery, nodes []*Ticket, init func(*Ticket), assign func(*Ticket, *TicketPullRequest)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*Ticket)
@@ -630,6 +781,36 @@ func (_q *TicketQuery) loadTicketPullRequests(ctx context.Context, query *Ticket
 	}
 	query.Where(predicate.TicketPullRequest(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(ticket.TicketPullRequestsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TicketID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "ticket_id" returned %v for node %v`, fk, n)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *TicketQuery) loadTicketDocumentFragments(ctx context.Context, query *TicketDocumentFragmentQuery, nodes []*Ticket, init func(*Ticket), assign func(*Ticket, *TicketDocumentFragment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Ticket)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(ticketdocumentfragment.FieldTicketID)
+	}
+	query.Where(predicate.TicketDocumentFragment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(ticket.TicketDocumentFragmentsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

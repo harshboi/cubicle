@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workstream"
@@ -318,6 +319,21 @@ func (_c *TicketCreate) AddPullRequests(v ...*PullRequest) *TicketCreate {
 	return _c.AddPullRequestIDs(ids...)
 }
 
+// AddDocumentFragmentIDs adds the "document_fragments" edge to the DocumentFragment entity by IDs.
+func (_c *TicketCreate) AddDocumentFragmentIDs(ids ...int) *TicketCreate {
+	_c.mutation.AddDocumentFragmentIDs(ids...)
+	return _c
+}
+
+// AddDocumentFragments adds the "document_fragments" edges to the DocumentFragment entity.
+func (_c *TicketCreate) AddDocumentFragments(v ...*DocumentFragment) *TicketCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddDocumentFragmentIDs(ids...)
+}
+
 // Mutation returns the TicketMutation object of the builder.
 func (_c *TicketCreate) Mutation() *TicketMutation {
 	return _c.mutation
@@ -582,6 +598,26 @@ func (_c *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &TicketPullRequestCreate{config: _c.config, mutation: newTicketPullRequestMutation(_c.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.DocumentFragmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   ticket.DocumentFragmentsTable,
+			Columns: ticket.DocumentFragmentsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(documentfragment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &TicketDocumentFragmentCreate{config: _c.config, mutation: newTicketDocumentFragmentMutation(_c.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields

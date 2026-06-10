@@ -6,6 +6,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Document is the predicate function for document builders.
+type Document func(*sql.Selector)
+
+// DocumentFragment is the predicate function for documentfragment builders.
+type DocumentFragment func(*sql.Selector)
+
 // Evidence is the predicate function for evidence builders.
 type Evidence func(*sql.Selector)
 
@@ -17,6 +23,9 @@ type PullRequest func(*sql.Selector)
 
 // Ticket is the predicate function for ticket builders.
 type Ticket func(*sql.Selector)
+
+// TicketDocumentFragment is the predicate function for ticketdocumentfragment builders.
+type TicketDocumentFragment func(*sql.Selector)
 
 // TicketPullRequest is the predicate function for ticketpullrequest builders.
 type TicketPullRequest func(*sql.Selector)

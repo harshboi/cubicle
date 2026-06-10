@@ -4,11 +4,14 @@ package ent
 
 import (
 	"context"
+	"cubicle/services/ontology-service/ent/document"
+	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
@@ -30,14 +33,3329 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeEvidence          = "Evidence"
-	TypePerson            = "Person"
-	TypePullRequest       = "PullRequest"
-	TypeTicket            = "Ticket"
-	TypeTicketPullRequest = "TicketPullRequest"
-	TypeWorkstream        = "Workstream"
-	TypeWorkstreamTicket  = "WorkstreamTicket"
+	TypeDocument               = "Document"
+	TypeDocumentFragment       = "DocumentFragment"
+	TypeEvidence               = "Evidence"
+	TypePerson                 = "Person"
+	TypePullRequest            = "PullRequest"
+	TypeTicket                 = "Ticket"
+	TypeTicketDocumentFragment = "TicketDocumentFragment"
+	TypeTicketPullRequest      = "TicketPullRequest"
+	TypeWorkstream             = "Workstream"
+	TypeWorkstreamTicket       = "WorkstreamTicket"
 )
+
+// DocumentMutation represents an operation that mutates the Document nodes in the graph.
+type DocumentMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	key              *string
+	title            *string
+	document_kind    *document.DocumentKind
+	revision         *string
+	summary          *string
+	search_text      *string
+	source           *string
+	source_instance  *string
+	external_id      *string
+	source_url       *string
+	freshness_state  *document.FreshnessState
+	visibility       *document.Visibility
+	confidence       *float64
+	addconfidence    *float64
+	event_count      *int
+	addevent_count   *int
+	first_seen_at    *time.Time
+	last_activity_at *time.Time
+	rank_score       *float64
+	addrank_score    *float64
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	fragments        map[int]struct{}
+	removedfragments map[int]struct{}
+	clearedfragments bool
+	done             bool
+	oldValue         func(context.Context) (*Document, error)
+	predicates       []predicate.Document
+}
+
+var _ ent.Mutation = (*DocumentMutation)(nil)
+
+// documentOption allows management of the mutation configuration using functional options.
+type documentOption func(*DocumentMutation)
+
+// newDocumentMutation creates new mutation for the Document entity.
+func newDocumentMutation(c config, op Op, opts ...documentOption) *DocumentMutation {
+	m := &DocumentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeDocument,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withDocumentID sets the ID field of the mutation.
+func withDocumentID(id int) documentOption {
+	return func(m *DocumentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Document
+		)
+		m.oldValue = func(ctx context.Context) (*Document, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Document.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withDocument sets the old Document of the mutation.
+func withDocument(node *Document) documentOption {
+	return func(m *DocumentMutation) {
+		m.oldValue = func(context.Context) (*Document, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m DocumentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m DocumentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *DocumentMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *DocumentMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Document.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetKey sets the "key" field.
+func (m *DocumentMutation) SetKey(s string) {
+	m.key = &s
+}
+
+// Key returns the value of the "key" field in the mutation.
+func (m *DocumentMutation) Key() (r string, exists bool) {
+	v := m.key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKey returns the old "key" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKey: %w", err)
+	}
+	return oldValue.Key, nil
+}
+
+// ResetKey resets all changes to the "key" field.
+func (m *DocumentMutation) ResetKey() {
+	m.key = nil
+}
+
+// SetTitle sets the "title" field.
+func (m *DocumentMutation) SetTitle(s string) {
+	m.title = &s
+}
+
+// Title returns the value of the "title" field in the mutation.
+func (m *DocumentMutation) Title() (r string, exists bool) {
+	v := m.title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle returns the old "title" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle: %w", err)
+	}
+	return oldValue.Title, nil
+}
+
+// ResetTitle resets all changes to the "title" field.
+func (m *DocumentMutation) ResetTitle() {
+	m.title = nil
+}
+
+// SetDocumentKind sets the "document_kind" field.
+func (m *DocumentMutation) SetDocumentKind(dk document.DocumentKind) {
+	m.document_kind = &dk
+}
+
+// DocumentKind returns the value of the "document_kind" field in the mutation.
+func (m *DocumentMutation) DocumentKind() (r document.DocumentKind, exists bool) {
+	v := m.document_kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDocumentKind returns the old "document_kind" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldDocumentKind(ctx context.Context) (v document.DocumentKind, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDocumentKind is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDocumentKind requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDocumentKind: %w", err)
+	}
+	return oldValue.DocumentKind, nil
+}
+
+// ResetDocumentKind resets all changes to the "document_kind" field.
+func (m *DocumentMutation) ResetDocumentKind() {
+	m.document_kind = nil
+}
+
+// SetRevision sets the "revision" field.
+func (m *DocumentMutation) SetRevision(s string) {
+	m.revision = &s
+}
+
+// Revision returns the value of the "revision" field in the mutation.
+func (m *DocumentMutation) Revision() (r string, exists bool) {
+	v := m.revision
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRevision returns the old "revision" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldRevision(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRevision is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRevision requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRevision: %w", err)
+	}
+	return oldValue.Revision, nil
+}
+
+// ClearRevision clears the value of the "revision" field.
+func (m *DocumentMutation) ClearRevision() {
+	m.revision = nil
+	m.clearedFields[document.FieldRevision] = struct{}{}
+}
+
+// RevisionCleared returns if the "revision" field was cleared in this mutation.
+func (m *DocumentMutation) RevisionCleared() bool {
+	_, ok := m.clearedFields[document.FieldRevision]
+	return ok
+}
+
+// ResetRevision resets all changes to the "revision" field.
+func (m *DocumentMutation) ResetRevision() {
+	m.revision = nil
+	delete(m.clearedFields, document.FieldRevision)
+}
+
+// SetSummary sets the "summary" field.
+func (m *DocumentMutation) SetSummary(s string) {
+	m.summary = &s
+}
+
+// Summary returns the value of the "summary" field in the mutation.
+func (m *DocumentMutation) Summary() (r string, exists bool) {
+	v := m.summary
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSummary returns the old "summary" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldSummary(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSummary is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSummary requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSummary: %w", err)
+	}
+	return oldValue.Summary, nil
+}
+
+// ClearSummary clears the value of the "summary" field.
+func (m *DocumentMutation) ClearSummary() {
+	m.summary = nil
+	m.clearedFields[document.FieldSummary] = struct{}{}
+}
+
+// SummaryCleared returns if the "summary" field was cleared in this mutation.
+func (m *DocumentMutation) SummaryCleared() bool {
+	_, ok := m.clearedFields[document.FieldSummary]
+	return ok
+}
+
+// ResetSummary resets all changes to the "summary" field.
+func (m *DocumentMutation) ResetSummary() {
+	m.summary = nil
+	delete(m.clearedFields, document.FieldSummary)
+}
+
+// SetSearchText sets the "search_text" field.
+func (m *DocumentMutation) SetSearchText(s string) {
+	m.search_text = &s
+}
+
+// SearchText returns the value of the "search_text" field in the mutation.
+func (m *DocumentMutation) SearchText() (r string, exists bool) {
+	v := m.search_text
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSearchText returns the old "search_text" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldSearchText(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSearchText is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSearchText requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSearchText: %w", err)
+	}
+	return oldValue.SearchText, nil
+}
+
+// ClearSearchText clears the value of the "search_text" field.
+func (m *DocumentMutation) ClearSearchText() {
+	m.search_text = nil
+	m.clearedFields[document.FieldSearchText] = struct{}{}
+}
+
+// SearchTextCleared returns if the "search_text" field was cleared in this mutation.
+func (m *DocumentMutation) SearchTextCleared() bool {
+	_, ok := m.clearedFields[document.FieldSearchText]
+	return ok
+}
+
+// ResetSearchText resets all changes to the "search_text" field.
+func (m *DocumentMutation) ResetSearchText() {
+	m.search_text = nil
+	delete(m.clearedFields, document.FieldSearchText)
+}
+
+// SetSource sets the "source" field.
+func (m *DocumentMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *DocumentMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldSource(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ClearSource clears the value of the "source" field.
+func (m *DocumentMutation) ClearSource() {
+	m.source = nil
+	m.clearedFields[document.FieldSource] = struct{}{}
+}
+
+// SourceCleared returns if the "source" field was cleared in this mutation.
+func (m *DocumentMutation) SourceCleared() bool {
+	_, ok := m.clearedFields[document.FieldSource]
+	return ok
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *DocumentMutation) ResetSource() {
+	m.source = nil
+	delete(m.clearedFields, document.FieldSource)
+}
+
+// SetSourceInstance sets the "source_instance" field.
+func (m *DocumentMutation) SetSourceInstance(s string) {
+	m.source_instance = &s
+}
+
+// SourceInstance returns the value of the "source_instance" field in the mutation.
+func (m *DocumentMutation) SourceInstance() (r string, exists bool) {
+	v := m.source_instance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceInstance returns the old "source_instance" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldSourceInstance(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceInstance is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceInstance requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceInstance: %w", err)
+	}
+	return oldValue.SourceInstance, nil
+}
+
+// ClearSourceInstance clears the value of the "source_instance" field.
+func (m *DocumentMutation) ClearSourceInstance() {
+	m.source_instance = nil
+	m.clearedFields[document.FieldSourceInstance] = struct{}{}
+}
+
+// SourceInstanceCleared returns if the "source_instance" field was cleared in this mutation.
+func (m *DocumentMutation) SourceInstanceCleared() bool {
+	_, ok := m.clearedFields[document.FieldSourceInstance]
+	return ok
+}
+
+// ResetSourceInstance resets all changes to the "source_instance" field.
+func (m *DocumentMutation) ResetSourceInstance() {
+	m.source_instance = nil
+	delete(m.clearedFields, document.FieldSourceInstance)
+}
+
+// SetExternalID sets the "external_id" field.
+func (m *DocumentMutation) SetExternalID(s string) {
+	m.external_id = &s
+}
+
+// ExternalID returns the value of the "external_id" field in the mutation.
+func (m *DocumentMutation) ExternalID() (r string, exists bool) {
+	v := m.external_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExternalID returns the old "external_id" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldExternalID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExternalID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExternalID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExternalID: %w", err)
+	}
+	return oldValue.ExternalID, nil
+}
+
+// ClearExternalID clears the value of the "external_id" field.
+func (m *DocumentMutation) ClearExternalID() {
+	m.external_id = nil
+	m.clearedFields[document.FieldExternalID] = struct{}{}
+}
+
+// ExternalIDCleared returns if the "external_id" field was cleared in this mutation.
+func (m *DocumentMutation) ExternalIDCleared() bool {
+	_, ok := m.clearedFields[document.FieldExternalID]
+	return ok
+}
+
+// ResetExternalID resets all changes to the "external_id" field.
+func (m *DocumentMutation) ResetExternalID() {
+	m.external_id = nil
+	delete(m.clearedFields, document.FieldExternalID)
+}
+
+// SetSourceURL sets the "source_url" field.
+func (m *DocumentMutation) SetSourceURL(s string) {
+	m.source_url = &s
+}
+
+// SourceURL returns the value of the "source_url" field in the mutation.
+func (m *DocumentMutation) SourceURL() (r string, exists bool) {
+	v := m.source_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceURL returns the old "source_url" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldSourceURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceURL: %w", err)
+	}
+	return oldValue.SourceURL, nil
+}
+
+// ClearSourceURL clears the value of the "source_url" field.
+func (m *DocumentMutation) ClearSourceURL() {
+	m.source_url = nil
+	m.clearedFields[document.FieldSourceURL] = struct{}{}
+}
+
+// SourceURLCleared returns if the "source_url" field was cleared in this mutation.
+func (m *DocumentMutation) SourceURLCleared() bool {
+	_, ok := m.clearedFields[document.FieldSourceURL]
+	return ok
+}
+
+// ResetSourceURL resets all changes to the "source_url" field.
+func (m *DocumentMutation) ResetSourceURL() {
+	m.source_url = nil
+	delete(m.clearedFields, document.FieldSourceURL)
+}
+
+// SetFreshnessState sets the "freshness_state" field.
+func (m *DocumentMutation) SetFreshnessState(ds document.FreshnessState) {
+	m.freshness_state = &ds
+}
+
+// FreshnessState returns the value of the "freshness_state" field in the mutation.
+func (m *DocumentMutation) FreshnessState() (r document.FreshnessState, exists bool) {
+	v := m.freshness_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFreshnessState returns the old "freshness_state" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldFreshnessState(ctx context.Context) (v document.FreshnessState, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFreshnessState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFreshnessState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFreshnessState: %w", err)
+	}
+	return oldValue.FreshnessState, nil
+}
+
+// ResetFreshnessState resets all changes to the "freshness_state" field.
+func (m *DocumentMutation) ResetFreshnessState() {
+	m.freshness_state = nil
+}
+
+// SetVisibility sets the "visibility" field.
+func (m *DocumentMutation) SetVisibility(d document.Visibility) {
+	m.visibility = &d
+}
+
+// Visibility returns the value of the "visibility" field in the mutation.
+func (m *DocumentMutation) Visibility() (r document.Visibility, exists bool) {
+	v := m.visibility
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVisibility returns the old "visibility" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldVisibility(ctx context.Context) (v document.Visibility, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVisibility is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVisibility requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVisibility: %w", err)
+	}
+	return oldValue.Visibility, nil
+}
+
+// ResetVisibility resets all changes to the "visibility" field.
+func (m *DocumentMutation) ResetVisibility() {
+	m.visibility = nil
+}
+
+// SetConfidence sets the "confidence" field.
+func (m *DocumentMutation) SetConfidence(f float64) {
+	m.confidence = &f
+	m.addconfidence = nil
+}
+
+// Confidence returns the value of the "confidence" field in the mutation.
+func (m *DocumentMutation) Confidence() (r float64, exists bool) {
+	v := m.confidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfidence returns the old "confidence" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldConfidence(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfidence is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfidence requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfidence: %w", err)
+	}
+	return oldValue.Confidence, nil
+}
+
+// AddConfidence adds f to the "confidence" field.
+func (m *DocumentMutation) AddConfidence(f float64) {
+	if m.addconfidence != nil {
+		*m.addconfidence += f
+	} else {
+		m.addconfidence = &f
+	}
+}
+
+// AddedConfidence returns the value that was added to the "confidence" field in this mutation.
+func (m *DocumentMutation) AddedConfidence() (r float64, exists bool) {
+	v := m.addconfidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConfidence resets all changes to the "confidence" field.
+func (m *DocumentMutation) ResetConfidence() {
+	m.confidence = nil
+	m.addconfidence = nil
+}
+
+// SetEventCount sets the "event_count" field.
+func (m *DocumentMutation) SetEventCount(i int) {
+	m.event_count = &i
+	m.addevent_count = nil
+}
+
+// EventCount returns the value of the "event_count" field in the mutation.
+func (m *DocumentMutation) EventCount() (r int, exists bool) {
+	v := m.event_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEventCount returns the old "event_count" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldEventCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEventCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEventCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEventCount: %w", err)
+	}
+	return oldValue.EventCount, nil
+}
+
+// AddEventCount adds i to the "event_count" field.
+func (m *DocumentMutation) AddEventCount(i int) {
+	if m.addevent_count != nil {
+		*m.addevent_count += i
+	} else {
+		m.addevent_count = &i
+	}
+}
+
+// AddedEventCount returns the value that was added to the "event_count" field in this mutation.
+func (m *DocumentMutation) AddedEventCount() (r int, exists bool) {
+	v := m.addevent_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEventCount resets all changes to the "event_count" field.
+func (m *DocumentMutation) ResetEventCount() {
+	m.event_count = nil
+	m.addevent_count = nil
+}
+
+// SetFirstSeenAt sets the "first_seen_at" field.
+func (m *DocumentMutation) SetFirstSeenAt(t time.Time) {
+	m.first_seen_at = &t
+}
+
+// FirstSeenAt returns the value of the "first_seen_at" field in the mutation.
+func (m *DocumentMutation) FirstSeenAt() (r time.Time, exists bool) {
+	v := m.first_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstSeenAt returns the old "first_seen_at" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldFirstSeenAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstSeenAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstSeenAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstSeenAt: %w", err)
+	}
+	return oldValue.FirstSeenAt, nil
+}
+
+// ClearFirstSeenAt clears the value of the "first_seen_at" field.
+func (m *DocumentMutation) ClearFirstSeenAt() {
+	m.first_seen_at = nil
+	m.clearedFields[document.FieldFirstSeenAt] = struct{}{}
+}
+
+// FirstSeenAtCleared returns if the "first_seen_at" field was cleared in this mutation.
+func (m *DocumentMutation) FirstSeenAtCleared() bool {
+	_, ok := m.clearedFields[document.FieldFirstSeenAt]
+	return ok
+}
+
+// ResetFirstSeenAt resets all changes to the "first_seen_at" field.
+func (m *DocumentMutation) ResetFirstSeenAt() {
+	m.first_seen_at = nil
+	delete(m.clearedFields, document.FieldFirstSeenAt)
+}
+
+// SetLastActivityAt sets the "last_activity_at" field.
+func (m *DocumentMutation) SetLastActivityAt(t time.Time) {
+	m.last_activity_at = &t
+}
+
+// LastActivityAt returns the value of the "last_activity_at" field in the mutation.
+func (m *DocumentMutation) LastActivityAt() (r time.Time, exists bool) {
+	v := m.last_activity_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastActivityAt returns the old "last_activity_at" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldLastActivityAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastActivityAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastActivityAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastActivityAt: %w", err)
+	}
+	return oldValue.LastActivityAt, nil
+}
+
+// ClearLastActivityAt clears the value of the "last_activity_at" field.
+func (m *DocumentMutation) ClearLastActivityAt() {
+	m.last_activity_at = nil
+	m.clearedFields[document.FieldLastActivityAt] = struct{}{}
+}
+
+// LastActivityAtCleared returns if the "last_activity_at" field was cleared in this mutation.
+func (m *DocumentMutation) LastActivityAtCleared() bool {
+	_, ok := m.clearedFields[document.FieldLastActivityAt]
+	return ok
+}
+
+// ResetLastActivityAt resets all changes to the "last_activity_at" field.
+func (m *DocumentMutation) ResetLastActivityAt() {
+	m.last_activity_at = nil
+	delete(m.clearedFields, document.FieldLastActivityAt)
+}
+
+// SetRankScore sets the "rank_score" field.
+func (m *DocumentMutation) SetRankScore(f float64) {
+	m.rank_score = &f
+	m.addrank_score = nil
+}
+
+// RankScore returns the value of the "rank_score" field in the mutation.
+func (m *DocumentMutation) RankScore() (r float64, exists bool) {
+	v := m.rank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRankScore returns the old "rank_score" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldRankScore(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRankScore is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRankScore requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRankScore: %w", err)
+	}
+	return oldValue.RankScore, nil
+}
+
+// AddRankScore adds f to the "rank_score" field.
+func (m *DocumentMutation) AddRankScore(f float64) {
+	if m.addrank_score != nil {
+		*m.addrank_score += f
+	} else {
+		m.addrank_score = &f
+	}
+}
+
+// AddedRankScore returns the value that was added to the "rank_score" field in this mutation.
+func (m *DocumentMutation) AddedRankScore() (r float64, exists bool) {
+	v := m.addrank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRankScore resets all changes to the "rank_score" field.
+func (m *DocumentMutation) ResetRankScore() {
+	m.rank_score = nil
+	m.addrank_score = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *DocumentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *DocumentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *DocumentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *DocumentMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *DocumentMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Document entity.
+// If the Document object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *DocumentMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// AddFragmentIDs adds the "fragments" edge to the DocumentFragment entity by ids.
+func (m *DocumentMutation) AddFragmentIDs(ids ...int) {
+	if m.fragments == nil {
+		m.fragments = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.fragments[ids[i]] = struct{}{}
+	}
+}
+
+// ClearFragments clears the "fragments" edge to the DocumentFragment entity.
+func (m *DocumentMutation) ClearFragments() {
+	m.clearedfragments = true
+}
+
+// FragmentsCleared reports if the "fragments" edge to the DocumentFragment entity was cleared.
+func (m *DocumentMutation) FragmentsCleared() bool {
+	return m.clearedfragments
+}
+
+// RemoveFragmentIDs removes the "fragments" edge to the DocumentFragment entity by IDs.
+func (m *DocumentMutation) RemoveFragmentIDs(ids ...int) {
+	if m.removedfragments == nil {
+		m.removedfragments = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.fragments, ids[i])
+		m.removedfragments[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedFragments returns the removed IDs of the "fragments" edge to the DocumentFragment entity.
+func (m *DocumentMutation) RemovedFragmentsIDs() (ids []int) {
+	for id := range m.removedfragments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// FragmentsIDs returns the "fragments" edge IDs in the mutation.
+func (m *DocumentMutation) FragmentsIDs() (ids []int) {
+	for id := range m.fragments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetFragments resets all changes to the "fragments" edge.
+func (m *DocumentMutation) ResetFragments() {
+	m.fragments = nil
+	m.clearedfragments = false
+	m.removedfragments = nil
+}
+
+// Where appends a list predicates to the DocumentMutation builder.
+func (m *DocumentMutation) Where(ps ...predicate.Document) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the DocumentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *DocumentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Document, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *DocumentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *DocumentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Document).
+func (m *DocumentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *DocumentMutation) Fields() []string {
+	fields := make([]string, 0, 19)
+	if m.key != nil {
+		fields = append(fields, document.FieldKey)
+	}
+	if m.title != nil {
+		fields = append(fields, document.FieldTitle)
+	}
+	if m.document_kind != nil {
+		fields = append(fields, document.FieldDocumentKind)
+	}
+	if m.revision != nil {
+		fields = append(fields, document.FieldRevision)
+	}
+	if m.summary != nil {
+		fields = append(fields, document.FieldSummary)
+	}
+	if m.search_text != nil {
+		fields = append(fields, document.FieldSearchText)
+	}
+	if m.source != nil {
+		fields = append(fields, document.FieldSource)
+	}
+	if m.source_instance != nil {
+		fields = append(fields, document.FieldSourceInstance)
+	}
+	if m.external_id != nil {
+		fields = append(fields, document.FieldExternalID)
+	}
+	if m.source_url != nil {
+		fields = append(fields, document.FieldSourceURL)
+	}
+	if m.freshness_state != nil {
+		fields = append(fields, document.FieldFreshnessState)
+	}
+	if m.visibility != nil {
+		fields = append(fields, document.FieldVisibility)
+	}
+	if m.confidence != nil {
+		fields = append(fields, document.FieldConfidence)
+	}
+	if m.event_count != nil {
+		fields = append(fields, document.FieldEventCount)
+	}
+	if m.first_seen_at != nil {
+		fields = append(fields, document.FieldFirstSeenAt)
+	}
+	if m.last_activity_at != nil {
+		fields = append(fields, document.FieldLastActivityAt)
+	}
+	if m.rank_score != nil {
+		fields = append(fields, document.FieldRankScore)
+	}
+	if m.created_at != nil {
+		fields = append(fields, document.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, document.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *DocumentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case document.FieldKey:
+		return m.Key()
+	case document.FieldTitle:
+		return m.Title()
+	case document.FieldDocumentKind:
+		return m.DocumentKind()
+	case document.FieldRevision:
+		return m.Revision()
+	case document.FieldSummary:
+		return m.Summary()
+	case document.FieldSearchText:
+		return m.SearchText()
+	case document.FieldSource:
+		return m.Source()
+	case document.FieldSourceInstance:
+		return m.SourceInstance()
+	case document.FieldExternalID:
+		return m.ExternalID()
+	case document.FieldSourceURL:
+		return m.SourceURL()
+	case document.FieldFreshnessState:
+		return m.FreshnessState()
+	case document.FieldVisibility:
+		return m.Visibility()
+	case document.FieldConfidence:
+		return m.Confidence()
+	case document.FieldEventCount:
+		return m.EventCount()
+	case document.FieldFirstSeenAt:
+		return m.FirstSeenAt()
+	case document.FieldLastActivityAt:
+		return m.LastActivityAt()
+	case document.FieldRankScore:
+		return m.RankScore()
+	case document.FieldCreatedAt:
+		return m.CreatedAt()
+	case document.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *DocumentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case document.FieldKey:
+		return m.OldKey(ctx)
+	case document.FieldTitle:
+		return m.OldTitle(ctx)
+	case document.FieldDocumentKind:
+		return m.OldDocumentKind(ctx)
+	case document.FieldRevision:
+		return m.OldRevision(ctx)
+	case document.FieldSummary:
+		return m.OldSummary(ctx)
+	case document.FieldSearchText:
+		return m.OldSearchText(ctx)
+	case document.FieldSource:
+		return m.OldSource(ctx)
+	case document.FieldSourceInstance:
+		return m.OldSourceInstance(ctx)
+	case document.FieldExternalID:
+		return m.OldExternalID(ctx)
+	case document.FieldSourceURL:
+		return m.OldSourceURL(ctx)
+	case document.FieldFreshnessState:
+		return m.OldFreshnessState(ctx)
+	case document.FieldVisibility:
+		return m.OldVisibility(ctx)
+	case document.FieldConfidence:
+		return m.OldConfidence(ctx)
+	case document.FieldEventCount:
+		return m.OldEventCount(ctx)
+	case document.FieldFirstSeenAt:
+		return m.OldFirstSeenAt(ctx)
+	case document.FieldLastActivityAt:
+		return m.OldLastActivityAt(ctx)
+	case document.FieldRankScore:
+		return m.OldRankScore(ctx)
+	case document.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case document.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Document field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DocumentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case document.FieldKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKey(v)
+		return nil
+	case document.FieldTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle(v)
+		return nil
+	case document.FieldDocumentKind:
+		v, ok := value.(document.DocumentKind)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDocumentKind(v)
+		return nil
+	case document.FieldRevision:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRevision(v)
+		return nil
+	case document.FieldSummary:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSummary(v)
+		return nil
+	case document.FieldSearchText:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSearchText(v)
+		return nil
+	case document.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case document.FieldSourceInstance:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceInstance(v)
+		return nil
+	case document.FieldExternalID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExternalID(v)
+		return nil
+	case document.FieldSourceURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceURL(v)
+		return nil
+	case document.FieldFreshnessState:
+		v, ok := value.(document.FreshnessState)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFreshnessState(v)
+		return nil
+	case document.FieldVisibility:
+		v, ok := value.(document.Visibility)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisibility(v)
+		return nil
+	case document.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfidence(v)
+		return nil
+	case document.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventCount(v)
+		return nil
+	case document.FieldFirstSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstSeenAt(v)
+		return nil
+	case document.FieldLastActivityAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastActivityAt(v)
+		return nil
+	case document.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRankScore(v)
+		return nil
+	case document.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case document.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Document field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *DocumentMutation) AddedFields() []string {
+	var fields []string
+	if m.addconfidence != nil {
+		fields = append(fields, document.FieldConfidence)
+	}
+	if m.addevent_count != nil {
+		fields = append(fields, document.FieldEventCount)
+	}
+	if m.addrank_score != nil {
+		fields = append(fields, document.FieldRankScore)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *DocumentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case document.FieldConfidence:
+		return m.AddedConfidence()
+	case document.FieldEventCount:
+		return m.AddedEventCount()
+	case document.FieldRankScore:
+		return m.AddedRankScore()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DocumentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case document.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfidence(v)
+		return nil
+	case document.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEventCount(v)
+		return nil
+	case document.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRankScore(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Document numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *DocumentMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(document.FieldRevision) {
+		fields = append(fields, document.FieldRevision)
+	}
+	if m.FieldCleared(document.FieldSummary) {
+		fields = append(fields, document.FieldSummary)
+	}
+	if m.FieldCleared(document.FieldSearchText) {
+		fields = append(fields, document.FieldSearchText)
+	}
+	if m.FieldCleared(document.FieldSource) {
+		fields = append(fields, document.FieldSource)
+	}
+	if m.FieldCleared(document.FieldSourceInstance) {
+		fields = append(fields, document.FieldSourceInstance)
+	}
+	if m.FieldCleared(document.FieldExternalID) {
+		fields = append(fields, document.FieldExternalID)
+	}
+	if m.FieldCleared(document.FieldSourceURL) {
+		fields = append(fields, document.FieldSourceURL)
+	}
+	if m.FieldCleared(document.FieldFirstSeenAt) {
+		fields = append(fields, document.FieldFirstSeenAt)
+	}
+	if m.FieldCleared(document.FieldLastActivityAt) {
+		fields = append(fields, document.FieldLastActivityAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *DocumentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *DocumentMutation) ClearField(name string) error {
+	switch name {
+	case document.FieldRevision:
+		m.ClearRevision()
+		return nil
+	case document.FieldSummary:
+		m.ClearSummary()
+		return nil
+	case document.FieldSearchText:
+		m.ClearSearchText()
+		return nil
+	case document.FieldSource:
+		m.ClearSource()
+		return nil
+	case document.FieldSourceInstance:
+		m.ClearSourceInstance()
+		return nil
+	case document.FieldExternalID:
+		m.ClearExternalID()
+		return nil
+	case document.FieldSourceURL:
+		m.ClearSourceURL()
+		return nil
+	case document.FieldFirstSeenAt:
+		m.ClearFirstSeenAt()
+		return nil
+	case document.FieldLastActivityAt:
+		m.ClearLastActivityAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Document nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *DocumentMutation) ResetField(name string) error {
+	switch name {
+	case document.FieldKey:
+		m.ResetKey()
+		return nil
+	case document.FieldTitle:
+		m.ResetTitle()
+		return nil
+	case document.FieldDocumentKind:
+		m.ResetDocumentKind()
+		return nil
+	case document.FieldRevision:
+		m.ResetRevision()
+		return nil
+	case document.FieldSummary:
+		m.ResetSummary()
+		return nil
+	case document.FieldSearchText:
+		m.ResetSearchText()
+		return nil
+	case document.FieldSource:
+		m.ResetSource()
+		return nil
+	case document.FieldSourceInstance:
+		m.ResetSourceInstance()
+		return nil
+	case document.FieldExternalID:
+		m.ResetExternalID()
+		return nil
+	case document.FieldSourceURL:
+		m.ResetSourceURL()
+		return nil
+	case document.FieldFreshnessState:
+		m.ResetFreshnessState()
+		return nil
+	case document.FieldVisibility:
+		m.ResetVisibility()
+		return nil
+	case document.FieldConfidence:
+		m.ResetConfidence()
+		return nil
+	case document.FieldEventCount:
+		m.ResetEventCount()
+		return nil
+	case document.FieldFirstSeenAt:
+		m.ResetFirstSeenAt()
+		return nil
+	case document.FieldLastActivityAt:
+		m.ResetLastActivityAt()
+		return nil
+	case document.FieldRankScore:
+		m.ResetRankScore()
+		return nil
+	case document.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case document.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Document field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *DocumentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.fragments != nil {
+		edges = append(edges, document.EdgeFragments)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *DocumentMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case document.EdgeFragments:
+		ids := make([]ent.Value, 0, len(m.fragments))
+		for id := range m.fragments {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *DocumentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedfragments != nil {
+		edges = append(edges, document.EdgeFragments)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *DocumentMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case document.EdgeFragments:
+		ids := make([]ent.Value, 0, len(m.removedfragments))
+		for id := range m.removedfragments {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *DocumentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedfragments {
+		edges = append(edges, document.EdgeFragments)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *DocumentMutation) EdgeCleared(name string) bool {
+	switch name {
+	case document.EdgeFragments:
+		return m.clearedfragments
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *DocumentMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Document unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *DocumentMutation) ResetEdge(name string) error {
+	switch name {
+	case document.EdgeFragments:
+		m.ResetFragments()
+		return nil
+	}
+	return fmt.Errorf("unknown Document edge %s", name)
+}
+
+// DocumentFragmentMutation represents an operation that mutates the DocumentFragment nodes in the graph.
+type DocumentFragmentMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *int
+	key             *string
+	heading         *string
+	_path           *string
+	text            *string
+	ordinal         *int
+	addordinal      *int
+	text_hash       *string
+	summary         *string
+	search_text     *string
+	source          *string
+	source_instance *string
+	external_id     *string
+	source_url      *string
+	freshness_state *documentfragment.FreshnessState
+	visibility      *documentfragment.Visibility
+	confidence      *float64
+	addconfidence   *float64
+	created_at      *time.Time
+	updated_at      *time.Time
+	clearedFields   map[string]struct{}
+	document        *int
+	cleareddocument bool
+	tickets         map[int]struct{}
+	removedtickets  map[int]struct{}
+	clearedtickets  bool
+	done            bool
+	oldValue        func(context.Context) (*DocumentFragment, error)
+	predicates      []predicate.DocumentFragment
+}
+
+var _ ent.Mutation = (*DocumentFragmentMutation)(nil)
+
+// documentfragmentOption allows management of the mutation configuration using functional options.
+type documentfragmentOption func(*DocumentFragmentMutation)
+
+// newDocumentFragmentMutation creates new mutation for the DocumentFragment entity.
+func newDocumentFragmentMutation(c config, op Op, opts ...documentfragmentOption) *DocumentFragmentMutation {
+	m := &DocumentFragmentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeDocumentFragment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withDocumentFragmentID sets the ID field of the mutation.
+func withDocumentFragmentID(id int) documentfragmentOption {
+	return func(m *DocumentFragmentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *DocumentFragment
+		)
+		m.oldValue = func(ctx context.Context) (*DocumentFragment, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().DocumentFragment.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withDocumentFragment sets the old DocumentFragment of the mutation.
+func withDocumentFragment(node *DocumentFragment) documentfragmentOption {
+	return func(m *DocumentFragmentMutation) {
+		m.oldValue = func(context.Context) (*DocumentFragment, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m DocumentFragmentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m DocumentFragmentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *DocumentFragmentMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *DocumentFragmentMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().DocumentFragment.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetKey sets the "key" field.
+func (m *DocumentFragmentMutation) SetKey(s string) {
+	m.key = &s
+}
+
+// Key returns the value of the "key" field in the mutation.
+func (m *DocumentFragmentMutation) Key() (r string, exists bool) {
+	v := m.key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKey returns the old "key" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKey: %w", err)
+	}
+	return oldValue.Key, nil
+}
+
+// ResetKey resets all changes to the "key" field.
+func (m *DocumentFragmentMutation) ResetKey() {
+	m.key = nil
+}
+
+// SetDocumentID sets the "document_id" field.
+func (m *DocumentFragmentMutation) SetDocumentID(i int) {
+	m.document = &i
+}
+
+// DocumentID returns the value of the "document_id" field in the mutation.
+func (m *DocumentFragmentMutation) DocumentID() (r int, exists bool) {
+	v := m.document
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDocumentID returns the old "document_id" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldDocumentID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDocumentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDocumentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDocumentID: %w", err)
+	}
+	return oldValue.DocumentID, nil
+}
+
+// ResetDocumentID resets all changes to the "document_id" field.
+func (m *DocumentFragmentMutation) ResetDocumentID() {
+	m.document = nil
+}
+
+// SetHeading sets the "heading" field.
+func (m *DocumentFragmentMutation) SetHeading(s string) {
+	m.heading = &s
+}
+
+// Heading returns the value of the "heading" field in the mutation.
+func (m *DocumentFragmentMutation) Heading() (r string, exists bool) {
+	v := m.heading
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHeading returns the old "heading" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldHeading(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHeading is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHeading requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHeading: %w", err)
+	}
+	return oldValue.Heading, nil
+}
+
+// ClearHeading clears the value of the "heading" field.
+func (m *DocumentFragmentMutation) ClearHeading() {
+	m.heading = nil
+	m.clearedFields[documentfragment.FieldHeading] = struct{}{}
+}
+
+// HeadingCleared returns if the "heading" field was cleared in this mutation.
+func (m *DocumentFragmentMutation) HeadingCleared() bool {
+	_, ok := m.clearedFields[documentfragment.FieldHeading]
+	return ok
+}
+
+// ResetHeading resets all changes to the "heading" field.
+func (m *DocumentFragmentMutation) ResetHeading() {
+	m.heading = nil
+	delete(m.clearedFields, documentfragment.FieldHeading)
+}
+
+// SetPath sets the "path" field.
+func (m *DocumentFragmentMutation) SetPath(s string) {
+	m._path = &s
+}
+
+// Path returns the value of the "path" field in the mutation.
+func (m *DocumentFragmentMutation) Path() (r string, exists bool) {
+	v := m._path
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPath returns the old "path" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldPath(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPath is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPath requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPath: %w", err)
+	}
+	return oldValue.Path, nil
+}
+
+// ClearPath clears the value of the "path" field.
+func (m *DocumentFragmentMutation) ClearPath() {
+	m._path = nil
+	m.clearedFields[documentfragment.FieldPath] = struct{}{}
+}
+
+// PathCleared returns if the "path" field was cleared in this mutation.
+func (m *DocumentFragmentMutation) PathCleared() bool {
+	_, ok := m.clearedFields[documentfragment.FieldPath]
+	return ok
+}
+
+// ResetPath resets all changes to the "path" field.
+func (m *DocumentFragmentMutation) ResetPath() {
+	m._path = nil
+	delete(m.clearedFields, documentfragment.FieldPath)
+}
+
+// SetText sets the "text" field.
+func (m *DocumentFragmentMutation) SetText(s string) {
+	m.text = &s
+}
+
+// Text returns the value of the "text" field in the mutation.
+func (m *DocumentFragmentMutation) Text() (r string, exists bool) {
+	v := m.text
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldText returns the old "text" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldText(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldText is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldText requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldText: %w", err)
+	}
+	return oldValue.Text, nil
+}
+
+// ClearText clears the value of the "text" field.
+func (m *DocumentFragmentMutation) ClearText() {
+	m.text = nil
+	m.clearedFields[documentfragment.FieldText] = struct{}{}
+}
+
+// TextCleared returns if the "text" field was cleared in this mutation.
+func (m *DocumentFragmentMutation) TextCleared() bool {
+	_, ok := m.clearedFields[documentfragment.FieldText]
+	return ok
+}
+
+// ResetText resets all changes to the "text" field.
+func (m *DocumentFragmentMutation) ResetText() {
+	m.text = nil
+	delete(m.clearedFields, documentfragment.FieldText)
+}
+
+// SetOrdinal sets the "ordinal" field.
+func (m *DocumentFragmentMutation) SetOrdinal(i int) {
+	m.ordinal = &i
+	m.addordinal = nil
+}
+
+// Ordinal returns the value of the "ordinal" field in the mutation.
+func (m *DocumentFragmentMutation) Ordinal() (r int, exists bool) {
+	v := m.ordinal
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOrdinal returns the old "ordinal" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldOrdinal(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOrdinal is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOrdinal requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOrdinal: %w", err)
+	}
+	return oldValue.Ordinal, nil
+}
+
+// AddOrdinal adds i to the "ordinal" field.
+func (m *DocumentFragmentMutation) AddOrdinal(i int) {
+	if m.addordinal != nil {
+		*m.addordinal += i
+	} else {
+		m.addordinal = &i
+	}
+}
+
+// AddedOrdinal returns the value that was added to the "ordinal" field in this mutation.
+func (m *DocumentFragmentMutation) AddedOrdinal() (r int, exists bool) {
+	v := m.addordinal
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetOrdinal resets all changes to the "ordinal" field.
+func (m *DocumentFragmentMutation) ResetOrdinal() {
+	m.ordinal = nil
+	m.addordinal = nil
+}
+
+// SetTextHash sets the "text_hash" field.
+func (m *DocumentFragmentMutation) SetTextHash(s string) {
+	m.text_hash = &s
+}
+
+// TextHash returns the value of the "text_hash" field in the mutation.
+func (m *DocumentFragmentMutation) TextHash() (r string, exists bool) {
+	v := m.text_hash
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTextHash returns the old "text_hash" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldTextHash(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTextHash is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTextHash requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTextHash: %w", err)
+	}
+	return oldValue.TextHash, nil
+}
+
+// ClearTextHash clears the value of the "text_hash" field.
+func (m *DocumentFragmentMutation) ClearTextHash() {
+	m.text_hash = nil
+	m.clearedFields[documentfragment.FieldTextHash] = struct{}{}
+}
+
+// TextHashCleared returns if the "text_hash" field was cleared in this mutation.
+func (m *DocumentFragmentMutation) TextHashCleared() bool {
+	_, ok := m.clearedFields[documentfragment.FieldTextHash]
+	return ok
+}
+
+// ResetTextHash resets all changes to the "text_hash" field.
+func (m *DocumentFragmentMutation) ResetTextHash() {
+	m.text_hash = nil
+	delete(m.clearedFields, documentfragment.FieldTextHash)
+}
+
+// SetSummary sets the "summary" field.
+func (m *DocumentFragmentMutation) SetSummary(s string) {
+	m.summary = &s
+}
+
+// Summary returns the value of the "summary" field in the mutation.
+func (m *DocumentFragmentMutation) Summary() (r string, exists bool) {
+	v := m.summary
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSummary returns the old "summary" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldSummary(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSummary is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSummary requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSummary: %w", err)
+	}
+	return oldValue.Summary, nil
+}
+
+// ClearSummary clears the value of the "summary" field.
+func (m *DocumentFragmentMutation) ClearSummary() {
+	m.summary = nil
+	m.clearedFields[documentfragment.FieldSummary] = struct{}{}
+}
+
+// SummaryCleared returns if the "summary" field was cleared in this mutation.
+func (m *DocumentFragmentMutation) SummaryCleared() bool {
+	_, ok := m.clearedFields[documentfragment.FieldSummary]
+	return ok
+}
+
+// ResetSummary resets all changes to the "summary" field.
+func (m *DocumentFragmentMutation) ResetSummary() {
+	m.summary = nil
+	delete(m.clearedFields, documentfragment.FieldSummary)
+}
+
+// SetSearchText sets the "search_text" field.
+func (m *DocumentFragmentMutation) SetSearchText(s string) {
+	m.search_text = &s
+}
+
+// SearchText returns the value of the "search_text" field in the mutation.
+func (m *DocumentFragmentMutation) SearchText() (r string, exists bool) {
+	v := m.search_text
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSearchText returns the old "search_text" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldSearchText(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSearchText is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSearchText requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSearchText: %w", err)
+	}
+	return oldValue.SearchText, nil
+}
+
+// ClearSearchText clears the value of the "search_text" field.
+func (m *DocumentFragmentMutation) ClearSearchText() {
+	m.search_text = nil
+	m.clearedFields[documentfragment.FieldSearchText] = struct{}{}
+}
+
+// SearchTextCleared returns if the "search_text" field was cleared in this mutation.
+func (m *DocumentFragmentMutation) SearchTextCleared() bool {
+	_, ok := m.clearedFields[documentfragment.FieldSearchText]
+	return ok
+}
+
+// ResetSearchText resets all changes to the "search_text" field.
+func (m *DocumentFragmentMutation) ResetSearchText() {
+	m.search_text = nil
+	delete(m.clearedFields, documentfragment.FieldSearchText)
+}
+
+// SetSource sets the "source" field.
+func (m *DocumentFragmentMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *DocumentFragmentMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldSource(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ClearSource clears the value of the "source" field.
+func (m *DocumentFragmentMutation) ClearSource() {
+	m.source = nil
+	m.clearedFields[documentfragment.FieldSource] = struct{}{}
+}
+
+// SourceCleared returns if the "source" field was cleared in this mutation.
+func (m *DocumentFragmentMutation) SourceCleared() bool {
+	_, ok := m.clearedFields[documentfragment.FieldSource]
+	return ok
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *DocumentFragmentMutation) ResetSource() {
+	m.source = nil
+	delete(m.clearedFields, documentfragment.FieldSource)
+}
+
+// SetSourceInstance sets the "source_instance" field.
+func (m *DocumentFragmentMutation) SetSourceInstance(s string) {
+	m.source_instance = &s
+}
+
+// SourceInstance returns the value of the "source_instance" field in the mutation.
+func (m *DocumentFragmentMutation) SourceInstance() (r string, exists bool) {
+	v := m.source_instance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceInstance returns the old "source_instance" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldSourceInstance(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceInstance is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceInstance requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceInstance: %w", err)
+	}
+	return oldValue.SourceInstance, nil
+}
+
+// ClearSourceInstance clears the value of the "source_instance" field.
+func (m *DocumentFragmentMutation) ClearSourceInstance() {
+	m.source_instance = nil
+	m.clearedFields[documentfragment.FieldSourceInstance] = struct{}{}
+}
+
+// SourceInstanceCleared returns if the "source_instance" field was cleared in this mutation.
+func (m *DocumentFragmentMutation) SourceInstanceCleared() bool {
+	_, ok := m.clearedFields[documentfragment.FieldSourceInstance]
+	return ok
+}
+
+// ResetSourceInstance resets all changes to the "source_instance" field.
+func (m *DocumentFragmentMutation) ResetSourceInstance() {
+	m.source_instance = nil
+	delete(m.clearedFields, documentfragment.FieldSourceInstance)
+}
+
+// SetExternalID sets the "external_id" field.
+func (m *DocumentFragmentMutation) SetExternalID(s string) {
+	m.external_id = &s
+}
+
+// ExternalID returns the value of the "external_id" field in the mutation.
+func (m *DocumentFragmentMutation) ExternalID() (r string, exists bool) {
+	v := m.external_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExternalID returns the old "external_id" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldExternalID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExternalID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExternalID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExternalID: %w", err)
+	}
+	return oldValue.ExternalID, nil
+}
+
+// ClearExternalID clears the value of the "external_id" field.
+func (m *DocumentFragmentMutation) ClearExternalID() {
+	m.external_id = nil
+	m.clearedFields[documentfragment.FieldExternalID] = struct{}{}
+}
+
+// ExternalIDCleared returns if the "external_id" field was cleared in this mutation.
+func (m *DocumentFragmentMutation) ExternalIDCleared() bool {
+	_, ok := m.clearedFields[documentfragment.FieldExternalID]
+	return ok
+}
+
+// ResetExternalID resets all changes to the "external_id" field.
+func (m *DocumentFragmentMutation) ResetExternalID() {
+	m.external_id = nil
+	delete(m.clearedFields, documentfragment.FieldExternalID)
+}
+
+// SetSourceURL sets the "source_url" field.
+func (m *DocumentFragmentMutation) SetSourceURL(s string) {
+	m.source_url = &s
+}
+
+// SourceURL returns the value of the "source_url" field in the mutation.
+func (m *DocumentFragmentMutation) SourceURL() (r string, exists bool) {
+	v := m.source_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceURL returns the old "source_url" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldSourceURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceURL: %w", err)
+	}
+	return oldValue.SourceURL, nil
+}
+
+// ClearSourceURL clears the value of the "source_url" field.
+func (m *DocumentFragmentMutation) ClearSourceURL() {
+	m.source_url = nil
+	m.clearedFields[documentfragment.FieldSourceURL] = struct{}{}
+}
+
+// SourceURLCleared returns if the "source_url" field was cleared in this mutation.
+func (m *DocumentFragmentMutation) SourceURLCleared() bool {
+	_, ok := m.clearedFields[documentfragment.FieldSourceURL]
+	return ok
+}
+
+// ResetSourceURL resets all changes to the "source_url" field.
+func (m *DocumentFragmentMutation) ResetSourceURL() {
+	m.source_url = nil
+	delete(m.clearedFields, documentfragment.FieldSourceURL)
+}
+
+// SetFreshnessState sets the "freshness_state" field.
+func (m *DocumentFragmentMutation) SetFreshnessState(ds documentfragment.FreshnessState) {
+	m.freshness_state = &ds
+}
+
+// FreshnessState returns the value of the "freshness_state" field in the mutation.
+func (m *DocumentFragmentMutation) FreshnessState() (r documentfragment.FreshnessState, exists bool) {
+	v := m.freshness_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFreshnessState returns the old "freshness_state" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldFreshnessState(ctx context.Context) (v documentfragment.FreshnessState, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFreshnessState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFreshnessState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFreshnessState: %w", err)
+	}
+	return oldValue.FreshnessState, nil
+}
+
+// ResetFreshnessState resets all changes to the "freshness_state" field.
+func (m *DocumentFragmentMutation) ResetFreshnessState() {
+	m.freshness_state = nil
+}
+
+// SetVisibility sets the "visibility" field.
+func (m *DocumentFragmentMutation) SetVisibility(d documentfragment.Visibility) {
+	m.visibility = &d
+}
+
+// Visibility returns the value of the "visibility" field in the mutation.
+func (m *DocumentFragmentMutation) Visibility() (r documentfragment.Visibility, exists bool) {
+	v := m.visibility
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVisibility returns the old "visibility" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldVisibility(ctx context.Context) (v documentfragment.Visibility, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVisibility is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVisibility requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVisibility: %w", err)
+	}
+	return oldValue.Visibility, nil
+}
+
+// ResetVisibility resets all changes to the "visibility" field.
+func (m *DocumentFragmentMutation) ResetVisibility() {
+	m.visibility = nil
+}
+
+// SetConfidence sets the "confidence" field.
+func (m *DocumentFragmentMutation) SetConfidence(f float64) {
+	m.confidence = &f
+	m.addconfidence = nil
+}
+
+// Confidence returns the value of the "confidence" field in the mutation.
+func (m *DocumentFragmentMutation) Confidence() (r float64, exists bool) {
+	v := m.confidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfidence returns the old "confidence" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldConfidence(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfidence is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfidence requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfidence: %w", err)
+	}
+	return oldValue.Confidence, nil
+}
+
+// AddConfidence adds f to the "confidence" field.
+func (m *DocumentFragmentMutation) AddConfidence(f float64) {
+	if m.addconfidence != nil {
+		*m.addconfidence += f
+	} else {
+		m.addconfidence = &f
+	}
+}
+
+// AddedConfidence returns the value that was added to the "confidence" field in this mutation.
+func (m *DocumentFragmentMutation) AddedConfidence() (r float64, exists bool) {
+	v := m.addconfidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConfidence resets all changes to the "confidence" field.
+func (m *DocumentFragmentMutation) ResetConfidence() {
+	m.confidence = nil
+	m.addconfidence = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *DocumentFragmentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *DocumentFragmentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *DocumentFragmentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *DocumentFragmentMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *DocumentFragmentMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the DocumentFragment entity.
+// If the DocumentFragment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DocumentFragmentMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *DocumentFragmentMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearDocument clears the "document" edge to the Document entity.
+func (m *DocumentFragmentMutation) ClearDocument() {
+	m.cleareddocument = true
+	m.clearedFields[documentfragment.FieldDocumentID] = struct{}{}
+}
+
+// DocumentCleared reports if the "document" edge to the Document entity was cleared.
+func (m *DocumentFragmentMutation) DocumentCleared() bool {
+	return m.cleareddocument
+}
+
+// DocumentIDs returns the "document" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// DocumentID instead. It exists only for internal usage by the builders.
+func (m *DocumentFragmentMutation) DocumentIDs() (ids []int) {
+	if id := m.document; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetDocument resets all changes to the "document" edge.
+func (m *DocumentFragmentMutation) ResetDocument() {
+	m.document = nil
+	m.cleareddocument = false
+}
+
+// AddTicketIDs adds the "tickets" edge to the Ticket entity by ids.
+func (m *DocumentFragmentMutation) AddTicketIDs(ids ...int) {
+	if m.tickets == nil {
+		m.tickets = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.tickets[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTickets clears the "tickets" edge to the Ticket entity.
+func (m *DocumentFragmentMutation) ClearTickets() {
+	m.clearedtickets = true
+}
+
+// TicketsCleared reports if the "tickets" edge to the Ticket entity was cleared.
+func (m *DocumentFragmentMutation) TicketsCleared() bool {
+	return m.clearedtickets
+}
+
+// RemoveTicketIDs removes the "tickets" edge to the Ticket entity by IDs.
+func (m *DocumentFragmentMutation) RemoveTicketIDs(ids ...int) {
+	if m.removedtickets == nil {
+		m.removedtickets = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.tickets, ids[i])
+		m.removedtickets[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTickets returns the removed IDs of the "tickets" edge to the Ticket entity.
+func (m *DocumentFragmentMutation) RemovedTicketsIDs() (ids []int) {
+	for id := range m.removedtickets {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TicketsIDs returns the "tickets" edge IDs in the mutation.
+func (m *DocumentFragmentMutation) TicketsIDs() (ids []int) {
+	for id := range m.tickets {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTickets resets all changes to the "tickets" edge.
+func (m *DocumentFragmentMutation) ResetTickets() {
+	m.tickets = nil
+	m.clearedtickets = false
+	m.removedtickets = nil
+}
+
+// Where appends a list predicates to the DocumentFragmentMutation builder.
+func (m *DocumentFragmentMutation) Where(ps ...predicate.DocumentFragment) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the DocumentFragmentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *DocumentFragmentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.DocumentFragment, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *DocumentFragmentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *DocumentFragmentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (DocumentFragment).
+func (m *DocumentFragmentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *DocumentFragmentMutation) Fields() []string {
+	fields := make([]string, 0, 18)
+	if m.key != nil {
+		fields = append(fields, documentfragment.FieldKey)
+	}
+	if m.document != nil {
+		fields = append(fields, documentfragment.FieldDocumentID)
+	}
+	if m.heading != nil {
+		fields = append(fields, documentfragment.FieldHeading)
+	}
+	if m._path != nil {
+		fields = append(fields, documentfragment.FieldPath)
+	}
+	if m.text != nil {
+		fields = append(fields, documentfragment.FieldText)
+	}
+	if m.ordinal != nil {
+		fields = append(fields, documentfragment.FieldOrdinal)
+	}
+	if m.text_hash != nil {
+		fields = append(fields, documentfragment.FieldTextHash)
+	}
+	if m.summary != nil {
+		fields = append(fields, documentfragment.FieldSummary)
+	}
+	if m.search_text != nil {
+		fields = append(fields, documentfragment.FieldSearchText)
+	}
+	if m.source != nil {
+		fields = append(fields, documentfragment.FieldSource)
+	}
+	if m.source_instance != nil {
+		fields = append(fields, documentfragment.FieldSourceInstance)
+	}
+	if m.external_id != nil {
+		fields = append(fields, documentfragment.FieldExternalID)
+	}
+	if m.source_url != nil {
+		fields = append(fields, documentfragment.FieldSourceURL)
+	}
+	if m.freshness_state != nil {
+		fields = append(fields, documentfragment.FieldFreshnessState)
+	}
+	if m.visibility != nil {
+		fields = append(fields, documentfragment.FieldVisibility)
+	}
+	if m.confidence != nil {
+		fields = append(fields, documentfragment.FieldConfidence)
+	}
+	if m.created_at != nil {
+		fields = append(fields, documentfragment.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, documentfragment.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *DocumentFragmentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case documentfragment.FieldKey:
+		return m.Key()
+	case documentfragment.FieldDocumentID:
+		return m.DocumentID()
+	case documentfragment.FieldHeading:
+		return m.Heading()
+	case documentfragment.FieldPath:
+		return m.Path()
+	case documentfragment.FieldText:
+		return m.Text()
+	case documentfragment.FieldOrdinal:
+		return m.Ordinal()
+	case documentfragment.FieldTextHash:
+		return m.TextHash()
+	case documentfragment.FieldSummary:
+		return m.Summary()
+	case documentfragment.FieldSearchText:
+		return m.SearchText()
+	case documentfragment.FieldSource:
+		return m.Source()
+	case documentfragment.FieldSourceInstance:
+		return m.SourceInstance()
+	case documentfragment.FieldExternalID:
+		return m.ExternalID()
+	case documentfragment.FieldSourceURL:
+		return m.SourceURL()
+	case documentfragment.FieldFreshnessState:
+		return m.FreshnessState()
+	case documentfragment.FieldVisibility:
+		return m.Visibility()
+	case documentfragment.FieldConfidence:
+		return m.Confidence()
+	case documentfragment.FieldCreatedAt:
+		return m.CreatedAt()
+	case documentfragment.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *DocumentFragmentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case documentfragment.FieldKey:
+		return m.OldKey(ctx)
+	case documentfragment.FieldDocumentID:
+		return m.OldDocumentID(ctx)
+	case documentfragment.FieldHeading:
+		return m.OldHeading(ctx)
+	case documentfragment.FieldPath:
+		return m.OldPath(ctx)
+	case documentfragment.FieldText:
+		return m.OldText(ctx)
+	case documentfragment.FieldOrdinal:
+		return m.OldOrdinal(ctx)
+	case documentfragment.FieldTextHash:
+		return m.OldTextHash(ctx)
+	case documentfragment.FieldSummary:
+		return m.OldSummary(ctx)
+	case documentfragment.FieldSearchText:
+		return m.OldSearchText(ctx)
+	case documentfragment.FieldSource:
+		return m.OldSource(ctx)
+	case documentfragment.FieldSourceInstance:
+		return m.OldSourceInstance(ctx)
+	case documentfragment.FieldExternalID:
+		return m.OldExternalID(ctx)
+	case documentfragment.FieldSourceURL:
+		return m.OldSourceURL(ctx)
+	case documentfragment.FieldFreshnessState:
+		return m.OldFreshnessState(ctx)
+	case documentfragment.FieldVisibility:
+		return m.OldVisibility(ctx)
+	case documentfragment.FieldConfidence:
+		return m.OldConfidence(ctx)
+	case documentfragment.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case documentfragment.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown DocumentFragment field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DocumentFragmentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case documentfragment.FieldKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKey(v)
+		return nil
+	case documentfragment.FieldDocumentID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDocumentID(v)
+		return nil
+	case documentfragment.FieldHeading:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHeading(v)
+		return nil
+	case documentfragment.FieldPath:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPath(v)
+		return nil
+	case documentfragment.FieldText:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetText(v)
+		return nil
+	case documentfragment.FieldOrdinal:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOrdinal(v)
+		return nil
+	case documentfragment.FieldTextHash:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTextHash(v)
+		return nil
+	case documentfragment.FieldSummary:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSummary(v)
+		return nil
+	case documentfragment.FieldSearchText:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSearchText(v)
+		return nil
+	case documentfragment.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case documentfragment.FieldSourceInstance:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceInstance(v)
+		return nil
+	case documentfragment.FieldExternalID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExternalID(v)
+		return nil
+	case documentfragment.FieldSourceURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceURL(v)
+		return nil
+	case documentfragment.FieldFreshnessState:
+		v, ok := value.(documentfragment.FreshnessState)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFreshnessState(v)
+		return nil
+	case documentfragment.FieldVisibility:
+		v, ok := value.(documentfragment.Visibility)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisibility(v)
+		return nil
+	case documentfragment.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfidence(v)
+		return nil
+	case documentfragment.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case documentfragment.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DocumentFragment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *DocumentFragmentMutation) AddedFields() []string {
+	var fields []string
+	if m.addordinal != nil {
+		fields = append(fields, documentfragment.FieldOrdinal)
+	}
+	if m.addconfidence != nil {
+		fields = append(fields, documentfragment.FieldConfidence)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *DocumentFragmentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case documentfragment.FieldOrdinal:
+		return m.AddedOrdinal()
+	case documentfragment.FieldConfidence:
+		return m.AddedConfidence()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DocumentFragmentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case documentfragment.FieldOrdinal:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOrdinal(v)
+		return nil
+	case documentfragment.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfidence(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DocumentFragment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *DocumentFragmentMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(documentfragment.FieldHeading) {
+		fields = append(fields, documentfragment.FieldHeading)
+	}
+	if m.FieldCleared(documentfragment.FieldPath) {
+		fields = append(fields, documentfragment.FieldPath)
+	}
+	if m.FieldCleared(documentfragment.FieldText) {
+		fields = append(fields, documentfragment.FieldText)
+	}
+	if m.FieldCleared(documentfragment.FieldTextHash) {
+		fields = append(fields, documentfragment.FieldTextHash)
+	}
+	if m.FieldCleared(documentfragment.FieldSummary) {
+		fields = append(fields, documentfragment.FieldSummary)
+	}
+	if m.FieldCleared(documentfragment.FieldSearchText) {
+		fields = append(fields, documentfragment.FieldSearchText)
+	}
+	if m.FieldCleared(documentfragment.FieldSource) {
+		fields = append(fields, documentfragment.FieldSource)
+	}
+	if m.FieldCleared(documentfragment.FieldSourceInstance) {
+		fields = append(fields, documentfragment.FieldSourceInstance)
+	}
+	if m.FieldCleared(documentfragment.FieldExternalID) {
+		fields = append(fields, documentfragment.FieldExternalID)
+	}
+	if m.FieldCleared(documentfragment.FieldSourceURL) {
+		fields = append(fields, documentfragment.FieldSourceURL)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *DocumentFragmentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *DocumentFragmentMutation) ClearField(name string) error {
+	switch name {
+	case documentfragment.FieldHeading:
+		m.ClearHeading()
+		return nil
+	case documentfragment.FieldPath:
+		m.ClearPath()
+		return nil
+	case documentfragment.FieldText:
+		m.ClearText()
+		return nil
+	case documentfragment.FieldTextHash:
+		m.ClearTextHash()
+		return nil
+	case documentfragment.FieldSummary:
+		m.ClearSummary()
+		return nil
+	case documentfragment.FieldSearchText:
+		m.ClearSearchText()
+		return nil
+	case documentfragment.FieldSource:
+		m.ClearSource()
+		return nil
+	case documentfragment.FieldSourceInstance:
+		m.ClearSourceInstance()
+		return nil
+	case documentfragment.FieldExternalID:
+		m.ClearExternalID()
+		return nil
+	case documentfragment.FieldSourceURL:
+		m.ClearSourceURL()
+		return nil
+	}
+	return fmt.Errorf("unknown DocumentFragment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *DocumentFragmentMutation) ResetField(name string) error {
+	switch name {
+	case documentfragment.FieldKey:
+		m.ResetKey()
+		return nil
+	case documentfragment.FieldDocumentID:
+		m.ResetDocumentID()
+		return nil
+	case documentfragment.FieldHeading:
+		m.ResetHeading()
+		return nil
+	case documentfragment.FieldPath:
+		m.ResetPath()
+		return nil
+	case documentfragment.FieldText:
+		m.ResetText()
+		return nil
+	case documentfragment.FieldOrdinal:
+		m.ResetOrdinal()
+		return nil
+	case documentfragment.FieldTextHash:
+		m.ResetTextHash()
+		return nil
+	case documentfragment.FieldSummary:
+		m.ResetSummary()
+		return nil
+	case documentfragment.FieldSearchText:
+		m.ResetSearchText()
+		return nil
+	case documentfragment.FieldSource:
+		m.ResetSource()
+		return nil
+	case documentfragment.FieldSourceInstance:
+		m.ResetSourceInstance()
+		return nil
+	case documentfragment.FieldExternalID:
+		m.ResetExternalID()
+		return nil
+	case documentfragment.FieldSourceURL:
+		m.ResetSourceURL()
+		return nil
+	case documentfragment.FieldFreshnessState:
+		m.ResetFreshnessState()
+		return nil
+	case documentfragment.FieldVisibility:
+		m.ResetVisibility()
+		return nil
+	case documentfragment.FieldConfidence:
+		m.ResetConfidence()
+		return nil
+	case documentfragment.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case documentfragment.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown DocumentFragment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *DocumentFragmentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.document != nil {
+		edges = append(edges, documentfragment.EdgeDocument)
+	}
+	if m.tickets != nil {
+		edges = append(edges, documentfragment.EdgeTickets)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *DocumentFragmentMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case documentfragment.EdgeDocument:
+		if id := m.document; id != nil {
+			return []ent.Value{*id}
+		}
+	case documentfragment.EdgeTickets:
+		ids := make([]ent.Value, 0, len(m.tickets))
+		for id := range m.tickets {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *DocumentFragmentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedtickets != nil {
+		edges = append(edges, documentfragment.EdgeTickets)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *DocumentFragmentMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case documentfragment.EdgeTickets:
+		ids := make([]ent.Value, 0, len(m.removedtickets))
+		for id := range m.removedtickets {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *DocumentFragmentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.cleareddocument {
+		edges = append(edges, documentfragment.EdgeDocument)
+	}
+	if m.clearedtickets {
+		edges = append(edges, documentfragment.EdgeTickets)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *DocumentFragmentMutation) EdgeCleared(name string) bool {
+	switch name {
+	case documentfragment.EdgeDocument:
+		return m.cleareddocument
+	case documentfragment.EdgeTickets:
+		return m.clearedtickets
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *DocumentFragmentMutation) ClearEdge(name string) error {
+	switch name {
+	case documentfragment.EdgeDocument:
+		m.ClearDocument()
+		return nil
+	}
+	return fmt.Errorf("unknown DocumentFragment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *DocumentFragmentMutation) ResetEdge(name string) error {
+	switch name {
+	case documentfragment.EdgeDocument:
+		m.ResetDocument()
+		return nil
+	case documentfragment.EdgeTickets:
+		m.ResetTickets()
+		return nil
+	}
+	return fmt.Errorf("unknown DocumentFragment edge %s", name)
+}
 
 // EvidenceMutation represents an operation that mutates the Evidence nodes in the graph.
 type EvidenceMutation struct {
@@ -4673,42 +7991,45 @@ func (m *PullRequestMutation) ResetEdge(name string) error {
 // TicketMutation represents an operation that mutates the Ticket nodes in the graph.
 type TicketMutation struct {
 	config
-	op                   Op
-	typ                  string
-	id                   *int
-	key                  *string
-	title                *string
-	body                 *string
-	status               *ticket.Status
-	priority             *string
-	summary              *string
-	search_text          *string
-	source               *string
-	source_instance      *string
-	external_id          *string
-	source_url           *string
-	freshness_state      *ticket.FreshnessState
-	visibility           *ticket.Visibility
-	confidence           *float64
-	addconfidence        *float64
-	event_count          *int
-	addevent_count       *int
-	first_seen_at        *time.Time
-	last_activity_at     *time.Time
-	rank_score           *float64
-	addrank_score        *float64
-	created_at           *time.Time
-	updated_at           *time.Time
-	clearedFields        map[string]struct{}
-	workstreams          map[int]struct{}
-	removedworkstreams   map[int]struct{}
-	clearedworkstreams   bool
-	pull_requests        map[int]struct{}
-	removedpull_requests map[int]struct{}
-	clearedpull_requests bool
-	done                 bool
-	oldValue             func(context.Context) (*Ticket, error)
-	predicates           []predicate.Ticket
+	op                        Op
+	typ                       string
+	id                        *int
+	key                       *string
+	title                     *string
+	body                      *string
+	status                    *ticket.Status
+	priority                  *string
+	summary                   *string
+	search_text               *string
+	source                    *string
+	source_instance           *string
+	external_id               *string
+	source_url                *string
+	freshness_state           *ticket.FreshnessState
+	visibility                *ticket.Visibility
+	confidence                *float64
+	addconfidence             *float64
+	event_count               *int
+	addevent_count            *int
+	first_seen_at             *time.Time
+	last_activity_at          *time.Time
+	rank_score                *float64
+	addrank_score             *float64
+	created_at                *time.Time
+	updated_at                *time.Time
+	clearedFields             map[string]struct{}
+	workstreams               map[int]struct{}
+	removedworkstreams        map[int]struct{}
+	clearedworkstreams        bool
+	pull_requests             map[int]struct{}
+	removedpull_requests      map[int]struct{}
+	clearedpull_requests      bool
+	document_fragments        map[int]struct{}
+	removeddocument_fragments map[int]struct{}
+	cleareddocument_fragments bool
+	done                      bool
+	oldValue                  func(context.Context) (*Ticket, error)
+	predicates                []predicate.Ticket
 }
 
 var _ ent.Mutation = (*TicketMutation)(nil)
@@ -5827,6 +9148,60 @@ func (m *TicketMutation) ResetPullRequests() {
 	m.removedpull_requests = nil
 }
 
+// AddDocumentFragmentIDs adds the "document_fragments" edge to the DocumentFragment entity by ids.
+func (m *TicketMutation) AddDocumentFragmentIDs(ids ...int) {
+	if m.document_fragments == nil {
+		m.document_fragments = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.document_fragments[ids[i]] = struct{}{}
+	}
+}
+
+// ClearDocumentFragments clears the "document_fragments" edge to the DocumentFragment entity.
+func (m *TicketMutation) ClearDocumentFragments() {
+	m.cleareddocument_fragments = true
+}
+
+// DocumentFragmentsCleared reports if the "document_fragments" edge to the DocumentFragment entity was cleared.
+func (m *TicketMutation) DocumentFragmentsCleared() bool {
+	return m.cleareddocument_fragments
+}
+
+// RemoveDocumentFragmentIDs removes the "document_fragments" edge to the DocumentFragment entity by IDs.
+func (m *TicketMutation) RemoveDocumentFragmentIDs(ids ...int) {
+	if m.removeddocument_fragments == nil {
+		m.removeddocument_fragments = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.document_fragments, ids[i])
+		m.removeddocument_fragments[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedDocumentFragments returns the removed IDs of the "document_fragments" edge to the DocumentFragment entity.
+func (m *TicketMutation) RemovedDocumentFragmentsIDs() (ids []int) {
+	for id := range m.removeddocument_fragments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// DocumentFragmentsIDs returns the "document_fragments" edge IDs in the mutation.
+func (m *TicketMutation) DocumentFragmentsIDs() (ids []int) {
+	for id := range m.document_fragments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetDocumentFragments resets all changes to the "document_fragments" edge.
+func (m *TicketMutation) ResetDocumentFragments() {
+	m.document_fragments = nil
+	m.cleareddocument_fragments = false
+	m.removeddocument_fragments = nil
+}
+
 // Where appends a list predicates to the TicketMutation builder.
 func (m *TicketMutation) Where(ps ...predicate.Ticket) {
 	m.predicates = append(m.predicates, ps...)
@@ -6385,12 +9760,15 @@ func (m *TicketMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TicketMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.workstreams != nil {
 		edges = append(edges, ticket.EdgeWorkstreams)
 	}
 	if m.pull_requests != nil {
 		edges = append(edges, ticket.EdgePullRequests)
+	}
+	if m.document_fragments != nil {
+		edges = append(edges, ticket.EdgeDocumentFragments)
 	}
 	return edges
 }
@@ -6411,18 +9789,27 @@ func (m *TicketMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case ticket.EdgeDocumentFragments:
+		ids := make([]ent.Value, 0, len(m.document_fragments))
+		for id := range m.document_fragments {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TicketMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedworkstreams != nil {
 		edges = append(edges, ticket.EdgeWorkstreams)
 	}
 	if m.removedpull_requests != nil {
 		edges = append(edges, ticket.EdgePullRequests)
+	}
+	if m.removeddocument_fragments != nil {
+		edges = append(edges, ticket.EdgeDocumentFragments)
 	}
 	return edges
 }
@@ -6443,18 +9830,27 @@ func (m *TicketMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case ticket.EdgeDocumentFragments:
+		ids := make([]ent.Value, 0, len(m.removeddocument_fragments))
+		for id := range m.removeddocument_fragments {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TicketMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedworkstreams {
 		edges = append(edges, ticket.EdgeWorkstreams)
 	}
 	if m.clearedpull_requests {
 		edges = append(edges, ticket.EdgePullRequests)
+	}
+	if m.cleareddocument_fragments {
+		edges = append(edges, ticket.EdgeDocumentFragments)
 	}
 	return edges
 }
@@ -6467,6 +9863,8 @@ func (m *TicketMutation) EdgeCleared(name string) bool {
 		return m.clearedworkstreams
 	case ticket.EdgePullRequests:
 		return m.clearedpull_requests
+	case ticket.EdgeDocumentFragments:
+		return m.cleareddocument_fragments
 	}
 	return false
 }
@@ -6489,8 +9887,1267 @@ func (m *TicketMutation) ResetEdge(name string) error {
 	case ticket.EdgePullRequests:
 		m.ResetPullRequests()
 		return nil
+	case ticket.EdgeDocumentFragments:
+		m.ResetDocumentFragments()
+		return nil
 	}
 	return fmt.Errorf("unknown Ticket edge %s", name)
+}
+
+// TicketDocumentFragmentMutation represents an operation that mutates the TicketDocumentFragment nodes in the graph.
+type TicketDocumentFragmentMutation struct {
+	config
+	op                       Op
+	typ                      string
+	relation_kind            *ticketdocumentfragment.RelationKind
+	evidence_count           *int
+	addevidence_count        *int
+	event_count              *int
+	addevent_count           *int
+	first_seen_at            *time.Time
+	last_activity_at         *time.Time
+	rank_score               *float64
+	addrank_score            *float64
+	source                   *string
+	source_instance          *string
+	external_id              *string
+	source_url               *string
+	freshness_state          *ticketdocumentfragment.FreshnessState
+	visibility               *ticketdocumentfragment.Visibility
+	confidence               *float64
+	addconfidence            *float64
+	created_at               *time.Time
+	updated_at               *time.Time
+	clearedFields            map[string]struct{}
+	ticket                   *int
+	clearedticket            bool
+	document_fragment        *int
+	cleareddocument_fragment bool
+	latest_evidence          *int
+	clearedlatest_evidence   bool
+	done                     bool
+	oldValue                 func(context.Context) (*TicketDocumentFragment, error)
+	predicates               []predicate.TicketDocumentFragment
+}
+
+var _ ent.Mutation = (*TicketDocumentFragmentMutation)(nil)
+
+// ticketdocumentfragmentOption allows management of the mutation configuration using functional options.
+type ticketdocumentfragmentOption func(*TicketDocumentFragmentMutation)
+
+// newTicketDocumentFragmentMutation creates new mutation for the TicketDocumentFragment entity.
+func newTicketDocumentFragmentMutation(c config, op Op, opts ...ticketdocumentfragmentOption) *TicketDocumentFragmentMutation {
+	m := &TicketDocumentFragmentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTicketDocumentFragment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TicketDocumentFragmentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TicketDocumentFragmentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetTicketID sets the "ticket_id" field.
+func (m *TicketDocumentFragmentMutation) SetTicketID(i int) {
+	m.ticket = &i
+}
+
+// TicketID returns the value of the "ticket_id" field in the mutation.
+func (m *TicketDocumentFragmentMutation) TicketID() (r int, exists bool) {
+	v := m.ticket
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetTicketID resets all changes to the "ticket_id" field.
+func (m *TicketDocumentFragmentMutation) ResetTicketID() {
+	m.ticket = nil
+}
+
+// SetDocumentFragmentID sets the "document_fragment_id" field.
+func (m *TicketDocumentFragmentMutation) SetDocumentFragmentID(i int) {
+	m.document_fragment = &i
+}
+
+// DocumentFragmentID returns the value of the "document_fragment_id" field in the mutation.
+func (m *TicketDocumentFragmentMutation) DocumentFragmentID() (r int, exists bool) {
+	v := m.document_fragment
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDocumentFragmentID resets all changes to the "document_fragment_id" field.
+func (m *TicketDocumentFragmentMutation) ResetDocumentFragmentID() {
+	m.document_fragment = nil
+}
+
+// SetRelationKind sets the "relation_kind" field.
+func (m *TicketDocumentFragmentMutation) SetRelationKind(tk ticketdocumentfragment.RelationKind) {
+	m.relation_kind = &tk
+}
+
+// RelationKind returns the value of the "relation_kind" field in the mutation.
+func (m *TicketDocumentFragmentMutation) RelationKind() (r ticketdocumentfragment.RelationKind, exists bool) {
+	v := m.relation_kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRelationKind resets all changes to the "relation_kind" field.
+func (m *TicketDocumentFragmentMutation) ResetRelationKind() {
+	m.relation_kind = nil
+}
+
+// SetLatestEvidenceID sets the "latest_evidence_id" field.
+func (m *TicketDocumentFragmentMutation) SetLatestEvidenceID(i int) {
+	m.latest_evidence = &i
+}
+
+// LatestEvidenceID returns the value of the "latest_evidence_id" field in the mutation.
+func (m *TicketDocumentFragmentMutation) LatestEvidenceID() (r int, exists bool) {
+	v := m.latest_evidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLatestEvidenceID clears the value of the "latest_evidence_id" field.
+func (m *TicketDocumentFragmentMutation) ClearLatestEvidenceID() {
+	m.latest_evidence = nil
+	m.clearedFields[ticketdocumentfragment.FieldLatestEvidenceID] = struct{}{}
+}
+
+// LatestEvidenceIDCleared returns if the "latest_evidence_id" field was cleared in this mutation.
+func (m *TicketDocumentFragmentMutation) LatestEvidenceIDCleared() bool {
+	_, ok := m.clearedFields[ticketdocumentfragment.FieldLatestEvidenceID]
+	return ok
+}
+
+// ResetLatestEvidenceID resets all changes to the "latest_evidence_id" field.
+func (m *TicketDocumentFragmentMutation) ResetLatestEvidenceID() {
+	m.latest_evidence = nil
+	delete(m.clearedFields, ticketdocumentfragment.FieldLatestEvidenceID)
+}
+
+// SetEvidenceCount sets the "evidence_count" field.
+func (m *TicketDocumentFragmentMutation) SetEvidenceCount(i int) {
+	m.evidence_count = &i
+	m.addevidence_count = nil
+}
+
+// EvidenceCount returns the value of the "evidence_count" field in the mutation.
+func (m *TicketDocumentFragmentMutation) EvidenceCount() (r int, exists bool) {
+	v := m.evidence_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddEvidenceCount adds i to the "evidence_count" field.
+func (m *TicketDocumentFragmentMutation) AddEvidenceCount(i int) {
+	if m.addevidence_count != nil {
+		*m.addevidence_count += i
+	} else {
+		m.addevidence_count = &i
+	}
+}
+
+// AddedEvidenceCount returns the value that was added to the "evidence_count" field in this mutation.
+func (m *TicketDocumentFragmentMutation) AddedEvidenceCount() (r int, exists bool) {
+	v := m.addevidence_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEvidenceCount resets all changes to the "evidence_count" field.
+func (m *TicketDocumentFragmentMutation) ResetEvidenceCount() {
+	m.evidence_count = nil
+	m.addevidence_count = nil
+}
+
+// SetEventCount sets the "event_count" field.
+func (m *TicketDocumentFragmentMutation) SetEventCount(i int) {
+	m.event_count = &i
+	m.addevent_count = nil
+}
+
+// EventCount returns the value of the "event_count" field in the mutation.
+func (m *TicketDocumentFragmentMutation) EventCount() (r int, exists bool) {
+	v := m.event_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddEventCount adds i to the "event_count" field.
+func (m *TicketDocumentFragmentMutation) AddEventCount(i int) {
+	if m.addevent_count != nil {
+		*m.addevent_count += i
+	} else {
+		m.addevent_count = &i
+	}
+}
+
+// AddedEventCount returns the value that was added to the "event_count" field in this mutation.
+func (m *TicketDocumentFragmentMutation) AddedEventCount() (r int, exists bool) {
+	v := m.addevent_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEventCount resets all changes to the "event_count" field.
+func (m *TicketDocumentFragmentMutation) ResetEventCount() {
+	m.event_count = nil
+	m.addevent_count = nil
+}
+
+// SetFirstSeenAt sets the "first_seen_at" field.
+func (m *TicketDocumentFragmentMutation) SetFirstSeenAt(t time.Time) {
+	m.first_seen_at = &t
+}
+
+// FirstSeenAt returns the value of the "first_seen_at" field in the mutation.
+func (m *TicketDocumentFragmentMutation) FirstSeenAt() (r time.Time, exists bool) {
+	v := m.first_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearFirstSeenAt clears the value of the "first_seen_at" field.
+func (m *TicketDocumentFragmentMutation) ClearFirstSeenAt() {
+	m.first_seen_at = nil
+	m.clearedFields[ticketdocumentfragment.FieldFirstSeenAt] = struct{}{}
+}
+
+// FirstSeenAtCleared returns if the "first_seen_at" field was cleared in this mutation.
+func (m *TicketDocumentFragmentMutation) FirstSeenAtCleared() bool {
+	_, ok := m.clearedFields[ticketdocumentfragment.FieldFirstSeenAt]
+	return ok
+}
+
+// ResetFirstSeenAt resets all changes to the "first_seen_at" field.
+func (m *TicketDocumentFragmentMutation) ResetFirstSeenAt() {
+	m.first_seen_at = nil
+	delete(m.clearedFields, ticketdocumentfragment.FieldFirstSeenAt)
+}
+
+// SetLastActivityAt sets the "last_activity_at" field.
+func (m *TicketDocumentFragmentMutation) SetLastActivityAt(t time.Time) {
+	m.last_activity_at = &t
+}
+
+// LastActivityAt returns the value of the "last_activity_at" field in the mutation.
+func (m *TicketDocumentFragmentMutation) LastActivityAt() (r time.Time, exists bool) {
+	v := m.last_activity_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLastActivityAt clears the value of the "last_activity_at" field.
+func (m *TicketDocumentFragmentMutation) ClearLastActivityAt() {
+	m.last_activity_at = nil
+	m.clearedFields[ticketdocumentfragment.FieldLastActivityAt] = struct{}{}
+}
+
+// LastActivityAtCleared returns if the "last_activity_at" field was cleared in this mutation.
+func (m *TicketDocumentFragmentMutation) LastActivityAtCleared() bool {
+	_, ok := m.clearedFields[ticketdocumentfragment.FieldLastActivityAt]
+	return ok
+}
+
+// ResetLastActivityAt resets all changes to the "last_activity_at" field.
+func (m *TicketDocumentFragmentMutation) ResetLastActivityAt() {
+	m.last_activity_at = nil
+	delete(m.clearedFields, ticketdocumentfragment.FieldLastActivityAt)
+}
+
+// SetRankScore sets the "rank_score" field.
+func (m *TicketDocumentFragmentMutation) SetRankScore(f float64) {
+	m.rank_score = &f
+	m.addrank_score = nil
+}
+
+// RankScore returns the value of the "rank_score" field in the mutation.
+func (m *TicketDocumentFragmentMutation) RankScore() (r float64, exists bool) {
+	v := m.rank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddRankScore adds f to the "rank_score" field.
+func (m *TicketDocumentFragmentMutation) AddRankScore(f float64) {
+	if m.addrank_score != nil {
+		*m.addrank_score += f
+	} else {
+		m.addrank_score = &f
+	}
+}
+
+// AddedRankScore returns the value that was added to the "rank_score" field in this mutation.
+func (m *TicketDocumentFragmentMutation) AddedRankScore() (r float64, exists bool) {
+	v := m.addrank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRankScore resets all changes to the "rank_score" field.
+func (m *TicketDocumentFragmentMutation) ResetRankScore() {
+	m.rank_score = nil
+	m.addrank_score = nil
+}
+
+// SetSource sets the "source" field.
+func (m *TicketDocumentFragmentMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *TicketDocumentFragmentMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSource clears the value of the "source" field.
+func (m *TicketDocumentFragmentMutation) ClearSource() {
+	m.source = nil
+	m.clearedFields[ticketdocumentfragment.FieldSource] = struct{}{}
+}
+
+// SourceCleared returns if the "source" field was cleared in this mutation.
+func (m *TicketDocumentFragmentMutation) SourceCleared() bool {
+	_, ok := m.clearedFields[ticketdocumentfragment.FieldSource]
+	return ok
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *TicketDocumentFragmentMutation) ResetSource() {
+	m.source = nil
+	delete(m.clearedFields, ticketdocumentfragment.FieldSource)
+}
+
+// SetSourceInstance sets the "source_instance" field.
+func (m *TicketDocumentFragmentMutation) SetSourceInstance(s string) {
+	m.source_instance = &s
+}
+
+// SourceInstance returns the value of the "source_instance" field in the mutation.
+func (m *TicketDocumentFragmentMutation) SourceInstance() (r string, exists bool) {
+	v := m.source_instance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSourceInstance clears the value of the "source_instance" field.
+func (m *TicketDocumentFragmentMutation) ClearSourceInstance() {
+	m.source_instance = nil
+	m.clearedFields[ticketdocumentfragment.FieldSourceInstance] = struct{}{}
+}
+
+// SourceInstanceCleared returns if the "source_instance" field was cleared in this mutation.
+func (m *TicketDocumentFragmentMutation) SourceInstanceCleared() bool {
+	_, ok := m.clearedFields[ticketdocumentfragment.FieldSourceInstance]
+	return ok
+}
+
+// ResetSourceInstance resets all changes to the "source_instance" field.
+func (m *TicketDocumentFragmentMutation) ResetSourceInstance() {
+	m.source_instance = nil
+	delete(m.clearedFields, ticketdocumentfragment.FieldSourceInstance)
+}
+
+// SetExternalID sets the "external_id" field.
+func (m *TicketDocumentFragmentMutation) SetExternalID(s string) {
+	m.external_id = &s
+}
+
+// ExternalID returns the value of the "external_id" field in the mutation.
+func (m *TicketDocumentFragmentMutation) ExternalID() (r string, exists bool) {
+	v := m.external_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearExternalID clears the value of the "external_id" field.
+func (m *TicketDocumentFragmentMutation) ClearExternalID() {
+	m.external_id = nil
+	m.clearedFields[ticketdocumentfragment.FieldExternalID] = struct{}{}
+}
+
+// ExternalIDCleared returns if the "external_id" field was cleared in this mutation.
+func (m *TicketDocumentFragmentMutation) ExternalIDCleared() bool {
+	_, ok := m.clearedFields[ticketdocumentfragment.FieldExternalID]
+	return ok
+}
+
+// ResetExternalID resets all changes to the "external_id" field.
+func (m *TicketDocumentFragmentMutation) ResetExternalID() {
+	m.external_id = nil
+	delete(m.clearedFields, ticketdocumentfragment.FieldExternalID)
+}
+
+// SetSourceURL sets the "source_url" field.
+func (m *TicketDocumentFragmentMutation) SetSourceURL(s string) {
+	m.source_url = &s
+}
+
+// SourceURL returns the value of the "source_url" field in the mutation.
+func (m *TicketDocumentFragmentMutation) SourceURL() (r string, exists bool) {
+	v := m.source_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSourceURL clears the value of the "source_url" field.
+func (m *TicketDocumentFragmentMutation) ClearSourceURL() {
+	m.source_url = nil
+	m.clearedFields[ticketdocumentfragment.FieldSourceURL] = struct{}{}
+}
+
+// SourceURLCleared returns if the "source_url" field was cleared in this mutation.
+func (m *TicketDocumentFragmentMutation) SourceURLCleared() bool {
+	_, ok := m.clearedFields[ticketdocumentfragment.FieldSourceURL]
+	return ok
+}
+
+// ResetSourceURL resets all changes to the "source_url" field.
+func (m *TicketDocumentFragmentMutation) ResetSourceURL() {
+	m.source_url = nil
+	delete(m.clearedFields, ticketdocumentfragment.FieldSourceURL)
+}
+
+// SetFreshnessState sets the "freshness_state" field.
+func (m *TicketDocumentFragmentMutation) SetFreshnessState(ts ticketdocumentfragment.FreshnessState) {
+	m.freshness_state = &ts
+}
+
+// FreshnessState returns the value of the "freshness_state" field in the mutation.
+func (m *TicketDocumentFragmentMutation) FreshnessState() (r ticketdocumentfragment.FreshnessState, exists bool) {
+	v := m.freshness_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFreshnessState resets all changes to the "freshness_state" field.
+func (m *TicketDocumentFragmentMutation) ResetFreshnessState() {
+	m.freshness_state = nil
+}
+
+// SetVisibility sets the "visibility" field.
+func (m *TicketDocumentFragmentMutation) SetVisibility(t ticketdocumentfragment.Visibility) {
+	m.visibility = &t
+}
+
+// Visibility returns the value of the "visibility" field in the mutation.
+func (m *TicketDocumentFragmentMutation) Visibility() (r ticketdocumentfragment.Visibility, exists bool) {
+	v := m.visibility
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVisibility resets all changes to the "visibility" field.
+func (m *TicketDocumentFragmentMutation) ResetVisibility() {
+	m.visibility = nil
+}
+
+// SetConfidence sets the "confidence" field.
+func (m *TicketDocumentFragmentMutation) SetConfidence(f float64) {
+	m.confidence = &f
+	m.addconfidence = nil
+}
+
+// Confidence returns the value of the "confidence" field in the mutation.
+func (m *TicketDocumentFragmentMutation) Confidence() (r float64, exists bool) {
+	v := m.confidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddConfidence adds f to the "confidence" field.
+func (m *TicketDocumentFragmentMutation) AddConfidence(f float64) {
+	if m.addconfidence != nil {
+		*m.addconfidence += f
+	} else {
+		m.addconfidence = &f
+	}
+}
+
+// AddedConfidence returns the value that was added to the "confidence" field in this mutation.
+func (m *TicketDocumentFragmentMutation) AddedConfidence() (r float64, exists bool) {
+	v := m.addconfidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConfidence resets all changes to the "confidence" field.
+func (m *TicketDocumentFragmentMutation) ResetConfidence() {
+	m.confidence = nil
+	m.addconfidence = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *TicketDocumentFragmentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *TicketDocumentFragmentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *TicketDocumentFragmentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TicketDocumentFragmentMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TicketDocumentFragmentMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TicketDocumentFragmentMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearTicket clears the "ticket" edge to the Ticket entity.
+func (m *TicketDocumentFragmentMutation) ClearTicket() {
+	m.clearedticket = true
+	m.clearedFields[ticketdocumentfragment.FieldTicketID] = struct{}{}
+}
+
+// TicketCleared reports if the "ticket" edge to the Ticket entity was cleared.
+func (m *TicketDocumentFragmentMutation) TicketCleared() bool {
+	return m.clearedticket
+}
+
+// TicketIDs returns the "ticket" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TicketID instead. It exists only for internal usage by the builders.
+func (m *TicketDocumentFragmentMutation) TicketIDs() (ids []int) {
+	if id := m.ticket; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTicket resets all changes to the "ticket" edge.
+func (m *TicketDocumentFragmentMutation) ResetTicket() {
+	m.ticket = nil
+	m.clearedticket = false
+}
+
+// ClearDocumentFragment clears the "document_fragment" edge to the DocumentFragment entity.
+func (m *TicketDocumentFragmentMutation) ClearDocumentFragment() {
+	m.cleareddocument_fragment = true
+	m.clearedFields[ticketdocumentfragment.FieldDocumentFragmentID] = struct{}{}
+}
+
+// DocumentFragmentCleared reports if the "document_fragment" edge to the DocumentFragment entity was cleared.
+func (m *TicketDocumentFragmentMutation) DocumentFragmentCleared() bool {
+	return m.cleareddocument_fragment
+}
+
+// DocumentFragmentIDs returns the "document_fragment" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// DocumentFragmentID instead. It exists only for internal usage by the builders.
+func (m *TicketDocumentFragmentMutation) DocumentFragmentIDs() (ids []int) {
+	if id := m.document_fragment; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetDocumentFragment resets all changes to the "document_fragment" edge.
+func (m *TicketDocumentFragmentMutation) ResetDocumentFragment() {
+	m.document_fragment = nil
+	m.cleareddocument_fragment = false
+}
+
+// ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
+func (m *TicketDocumentFragmentMutation) ClearLatestEvidence() {
+	m.clearedlatest_evidence = true
+	m.clearedFields[ticketdocumentfragment.FieldLatestEvidenceID] = struct{}{}
+}
+
+// LatestEvidenceCleared reports if the "latest_evidence" edge to the Evidence entity was cleared.
+func (m *TicketDocumentFragmentMutation) LatestEvidenceCleared() bool {
+	return m.LatestEvidenceIDCleared() || m.clearedlatest_evidence
+}
+
+// LatestEvidenceIDs returns the "latest_evidence" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LatestEvidenceID instead. It exists only for internal usage by the builders.
+func (m *TicketDocumentFragmentMutation) LatestEvidenceIDs() (ids []int) {
+	if id := m.latest_evidence; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLatestEvidence resets all changes to the "latest_evidence" edge.
+func (m *TicketDocumentFragmentMutation) ResetLatestEvidence() {
+	m.latest_evidence = nil
+	m.clearedlatest_evidence = false
+}
+
+// Where appends a list predicates to the TicketDocumentFragmentMutation builder.
+func (m *TicketDocumentFragmentMutation) Where(ps ...predicate.TicketDocumentFragment) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TicketDocumentFragmentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TicketDocumentFragmentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TicketDocumentFragment, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TicketDocumentFragmentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TicketDocumentFragmentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TicketDocumentFragment).
+func (m *TicketDocumentFragmentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TicketDocumentFragmentMutation) Fields() []string {
+	fields := make([]string, 0, 18)
+	if m.ticket != nil {
+		fields = append(fields, ticketdocumentfragment.FieldTicketID)
+	}
+	if m.document_fragment != nil {
+		fields = append(fields, ticketdocumentfragment.FieldDocumentFragmentID)
+	}
+	if m.relation_kind != nil {
+		fields = append(fields, ticketdocumentfragment.FieldRelationKind)
+	}
+	if m.latest_evidence != nil {
+		fields = append(fields, ticketdocumentfragment.FieldLatestEvidenceID)
+	}
+	if m.evidence_count != nil {
+		fields = append(fields, ticketdocumentfragment.FieldEvidenceCount)
+	}
+	if m.event_count != nil {
+		fields = append(fields, ticketdocumentfragment.FieldEventCount)
+	}
+	if m.first_seen_at != nil {
+		fields = append(fields, ticketdocumentfragment.FieldFirstSeenAt)
+	}
+	if m.last_activity_at != nil {
+		fields = append(fields, ticketdocumentfragment.FieldLastActivityAt)
+	}
+	if m.rank_score != nil {
+		fields = append(fields, ticketdocumentfragment.FieldRankScore)
+	}
+	if m.source != nil {
+		fields = append(fields, ticketdocumentfragment.FieldSource)
+	}
+	if m.source_instance != nil {
+		fields = append(fields, ticketdocumentfragment.FieldSourceInstance)
+	}
+	if m.external_id != nil {
+		fields = append(fields, ticketdocumentfragment.FieldExternalID)
+	}
+	if m.source_url != nil {
+		fields = append(fields, ticketdocumentfragment.FieldSourceURL)
+	}
+	if m.freshness_state != nil {
+		fields = append(fields, ticketdocumentfragment.FieldFreshnessState)
+	}
+	if m.visibility != nil {
+		fields = append(fields, ticketdocumentfragment.FieldVisibility)
+	}
+	if m.confidence != nil {
+		fields = append(fields, ticketdocumentfragment.FieldConfidence)
+	}
+	if m.created_at != nil {
+		fields = append(fields, ticketdocumentfragment.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, ticketdocumentfragment.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TicketDocumentFragmentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case ticketdocumentfragment.FieldTicketID:
+		return m.TicketID()
+	case ticketdocumentfragment.FieldDocumentFragmentID:
+		return m.DocumentFragmentID()
+	case ticketdocumentfragment.FieldRelationKind:
+		return m.RelationKind()
+	case ticketdocumentfragment.FieldLatestEvidenceID:
+		return m.LatestEvidenceID()
+	case ticketdocumentfragment.FieldEvidenceCount:
+		return m.EvidenceCount()
+	case ticketdocumentfragment.FieldEventCount:
+		return m.EventCount()
+	case ticketdocumentfragment.FieldFirstSeenAt:
+		return m.FirstSeenAt()
+	case ticketdocumentfragment.FieldLastActivityAt:
+		return m.LastActivityAt()
+	case ticketdocumentfragment.FieldRankScore:
+		return m.RankScore()
+	case ticketdocumentfragment.FieldSource:
+		return m.Source()
+	case ticketdocumentfragment.FieldSourceInstance:
+		return m.SourceInstance()
+	case ticketdocumentfragment.FieldExternalID:
+		return m.ExternalID()
+	case ticketdocumentfragment.FieldSourceURL:
+		return m.SourceURL()
+	case ticketdocumentfragment.FieldFreshnessState:
+		return m.FreshnessState()
+	case ticketdocumentfragment.FieldVisibility:
+		return m.Visibility()
+	case ticketdocumentfragment.FieldConfidence:
+		return m.Confidence()
+	case ticketdocumentfragment.FieldCreatedAt:
+		return m.CreatedAt()
+	case ticketdocumentfragment.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TicketDocumentFragmentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	return nil, errors.New("edge schema TicketDocumentFragment does not support getting old values")
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TicketDocumentFragmentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case ticketdocumentfragment.FieldTicketID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTicketID(v)
+		return nil
+	case ticketdocumentfragment.FieldDocumentFragmentID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDocumentFragmentID(v)
+		return nil
+	case ticketdocumentfragment.FieldRelationKind:
+		v, ok := value.(ticketdocumentfragment.RelationKind)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRelationKind(v)
+		return nil
+	case ticketdocumentfragment.FieldLatestEvidenceID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLatestEvidenceID(v)
+		return nil
+	case ticketdocumentfragment.FieldEvidenceCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEvidenceCount(v)
+		return nil
+	case ticketdocumentfragment.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventCount(v)
+		return nil
+	case ticketdocumentfragment.FieldFirstSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstSeenAt(v)
+		return nil
+	case ticketdocumentfragment.FieldLastActivityAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastActivityAt(v)
+		return nil
+	case ticketdocumentfragment.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRankScore(v)
+		return nil
+	case ticketdocumentfragment.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case ticketdocumentfragment.FieldSourceInstance:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceInstance(v)
+		return nil
+	case ticketdocumentfragment.FieldExternalID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExternalID(v)
+		return nil
+	case ticketdocumentfragment.FieldSourceURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceURL(v)
+		return nil
+	case ticketdocumentfragment.FieldFreshnessState:
+		v, ok := value.(ticketdocumentfragment.FreshnessState)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFreshnessState(v)
+		return nil
+	case ticketdocumentfragment.FieldVisibility:
+		v, ok := value.(ticketdocumentfragment.Visibility)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisibility(v)
+		return nil
+	case ticketdocumentfragment.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfidence(v)
+		return nil
+	case ticketdocumentfragment.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case ticketdocumentfragment.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TicketDocumentFragment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TicketDocumentFragmentMutation) AddedFields() []string {
+	var fields []string
+	if m.addevidence_count != nil {
+		fields = append(fields, ticketdocumentfragment.FieldEvidenceCount)
+	}
+	if m.addevent_count != nil {
+		fields = append(fields, ticketdocumentfragment.FieldEventCount)
+	}
+	if m.addrank_score != nil {
+		fields = append(fields, ticketdocumentfragment.FieldRankScore)
+	}
+	if m.addconfidence != nil {
+		fields = append(fields, ticketdocumentfragment.FieldConfidence)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TicketDocumentFragmentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case ticketdocumentfragment.FieldEvidenceCount:
+		return m.AddedEvidenceCount()
+	case ticketdocumentfragment.FieldEventCount:
+		return m.AddedEventCount()
+	case ticketdocumentfragment.FieldRankScore:
+		return m.AddedRankScore()
+	case ticketdocumentfragment.FieldConfidence:
+		return m.AddedConfidence()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TicketDocumentFragmentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case ticketdocumentfragment.FieldEvidenceCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEvidenceCount(v)
+		return nil
+	case ticketdocumentfragment.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEventCount(v)
+		return nil
+	case ticketdocumentfragment.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRankScore(v)
+		return nil
+	case ticketdocumentfragment.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfidence(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TicketDocumentFragment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TicketDocumentFragmentMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(ticketdocumentfragment.FieldLatestEvidenceID) {
+		fields = append(fields, ticketdocumentfragment.FieldLatestEvidenceID)
+	}
+	if m.FieldCleared(ticketdocumentfragment.FieldFirstSeenAt) {
+		fields = append(fields, ticketdocumentfragment.FieldFirstSeenAt)
+	}
+	if m.FieldCleared(ticketdocumentfragment.FieldLastActivityAt) {
+		fields = append(fields, ticketdocumentfragment.FieldLastActivityAt)
+	}
+	if m.FieldCleared(ticketdocumentfragment.FieldSource) {
+		fields = append(fields, ticketdocumentfragment.FieldSource)
+	}
+	if m.FieldCleared(ticketdocumentfragment.FieldSourceInstance) {
+		fields = append(fields, ticketdocumentfragment.FieldSourceInstance)
+	}
+	if m.FieldCleared(ticketdocumentfragment.FieldExternalID) {
+		fields = append(fields, ticketdocumentfragment.FieldExternalID)
+	}
+	if m.FieldCleared(ticketdocumentfragment.FieldSourceURL) {
+		fields = append(fields, ticketdocumentfragment.FieldSourceURL)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TicketDocumentFragmentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TicketDocumentFragmentMutation) ClearField(name string) error {
+	switch name {
+	case ticketdocumentfragment.FieldLatestEvidenceID:
+		m.ClearLatestEvidenceID()
+		return nil
+	case ticketdocumentfragment.FieldFirstSeenAt:
+		m.ClearFirstSeenAt()
+		return nil
+	case ticketdocumentfragment.FieldLastActivityAt:
+		m.ClearLastActivityAt()
+		return nil
+	case ticketdocumentfragment.FieldSource:
+		m.ClearSource()
+		return nil
+	case ticketdocumentfragment.FieldSourceInstance:
+		m.ClearSourceInstance()
+		return nil
+	case ticketdocumentfragment.FieldExternalID:
+		m.ClearExternalID()
+		return nil
+	case ticketdocumentfragment.FieldSourceURL:
+		m.ClearSourceURL()
+		return nil
+	}
+	return fmt.Errorf("unknown TicketDocumentFragment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TicketDocumentFragmentMutation) ResetField(name string) error {
+	switch name {
+	case ticketdocumentfragment.FieldTicketID:
+		m.ResetTicketID()
+		return nil
+	case ticketdocumentfragment.FieldDocumentFragmentID:
+		m.ResetDocumentFragmentID()
+		return nil
+	case ticketdocumentfragment.FieldRelationKind:
+		m.ResetRelationKind()
+		return nil
+	case ticketdocumentfragment.FieldLatestEvidenceID:
+		m.ResetLatestEvidenceID()
+		return nil
+	case ticketdocumentfragment.FieldEvidenceCount:
+		m.ResetEvidenceCount()
+		return nil
+	case ticketdocumentfragment.FieldEventCount:
+		m.ResetEventCount()
+		return nil
+	case ticketdocumentfragment.FieldFirstSeenAt:
+		m.ResetFirstSeenAt()
+		return nil
+	case ticketdocumentfragment.FieldLastActivityAt:
+		m.ResetLastActivityAt()
+		return nil
+	case ticketdocumentfragment.FieldRankScore:
+		m.ResetRankScore()
+		return nil
+	case ticketdocumentfragment.FieldSource:
+		m.ResetSource()
+		return nil
+	case ticketdocumentfragment.FieldSourceInstance:
+		m.ResetSourceInstance()
+		return nil
+	case ticketdocumentfragment.FieldExternalID:
+		m.ResetExternalID()
+		return nil
+	case ticketdocumentfragment.FieldSourceURL:
+		m.ResetSourceURL()
+		return nil
+	case ticketdocumentfragment.FieldFreshnessState:
+		m.ResetFreshnessState()
+		return nil
+	case ticketdocumentfragment.FieldVisibility:
+		m.ResetVisibility()
+		return nil
+	case ticketdocumentfragment.FieldConfidence:
+		m.ResetConfidence()
+		return nil
+	case ticketdocumentfragment.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case ticketdocumentfragment.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown TicketDocumentFragment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TicketDocumentFragmentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.ticket != nil {
+		edges = append(edges, ticketdocumentfragment.EdgeTicket)
+	}
+	if m.document_fragment != nil {
+		edges = append(edges, ticketdocumentfragment.EdgeDocumentFragment)
+	}
+	if m.latest_evidence != nil {
+		edges = append(edges, ticketdocumentfragment.EdgeLatestEvidence)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TicketDocumentFragmentMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case ticketdocumentfragment.EdgeTicket:
+		if id := m.ticket; id != nil {
+			return []ent.Value{*id}
+		}
+	case ticketdocumentfragment.EdgeDocumentFragment:
+		if id := m.document_fragment; id != nil {
+			return []ent.Value{*id}
+		}
+	case ticketdocumentfragment.EdgeLatestEvidence:
+		if id := m.latest_evidence; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TicketDocumentFragmentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TicketDocumentFragmentMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TicketDocumentFragmentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedticket {
+		edges = append(edges, ticketdocumentfragment.EdgeTicket)
+	}
+	if m.cleareddocument_fragment {
+		edges = append(edges, ticketdocumentfragment.EdgeDocumentFragment)
+	}
+	if m.clearedlatest_evidence {
+		edges = append(edges, ticketdocumentfragment.EdgeLatestEvidence)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TicketDocumentFragmentMutation) EdgeCleared(name string) bool {
+	switch name {
+	case ticketdocumentfragment.EdgeTicket:
+		return m.clearedticket
+	case ticketdocumentfragment.EdgeDocumentFragment:
+		return m.cleareddocument_fragment
+	case ticketdocumentfragment.EdgeLatestEvidence:
+		return m.clearedlatest_evidence
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TicketDocumentFragmentMutation) ClearEdge(name string) error {
+	switch name {
+	case ticketdocumentfragment.EdgeTicket:
+		m.ClearTicket()
+		return nil
+	case ticketdocumentfragment.EdgeDocumentFragment:
+		m.ClearDocumentFragment()
+		return nil
+	case ticketdocumentfragment.EdgeLatestEvidence:
+		m.ClearLatestEvidence()
+		return nil
+	}
+	return fmt.Errorf("unknown TicketDocumentFragment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TicketDocumentFragmentMutation) ResetEdge(name string) error {
+	switch name {
+	case ticketdocumentfragment.EdgeTicket:
+		m.ResetTicket()
+		return nil
+	case ticketdocumentfragment.EdgeDocumentFragment:
+		m.ResetDocumentFragment()
+		return nil
+	case ticketdocumentfragment.EdgeLatestEvidence:
+		m.ResetLatestEvidence()
+		return nil
+	}
+	return fmt.Errorf("unknown TicketDocumentFragment edge %s", name)
 }
 
 // TicketPullRequestMutation represents an operation that mutates the TicketPullRequest nodes in the graph.

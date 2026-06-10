@@ -3,11 +3,14 @@
 package ent
 
 import (
+	"cubicle/services/ontology-service/ent/document"
+	"cubicle/services/ontology-service/ent/documentfragment"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/schema"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/ticketdocumentfragment"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workstream"
 	"cubicle/services/ontology-service/ent/workstreamticket"
@@ -18,6 +21,62 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	documentFields := schema.Document{}.Fields()
+	_ = documentFields
+	// documentDescKey is the schema descriptor for key field.
+	documentDescKey := documentFields[0].Descriptor()
+	// document.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	document.KeyValidator = documentDescKey.Validators[0].(func(string) error)
+	// documentDescTitle is the schema descriptor for title field.
+	documentDescTitle := documentFields[1].Descriptor()
+	// document.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	document.TitleValidator = documentDescTitle.Validators[0].(func(string) error)
+	// documentDescConfidence is the schema descriptor for confidence field.
+	documentDescConfidence := documentFields[12].Descriptor()
+	// document.DefaultConfidence holds the default value on creation for the confidence field.
+	document.DefaultConfidence = documentDescConfidence.Default.(float64)
+	// documentDescEventCount is the schema descriptor for event_count field.
+	documentDescEventCount := documentFields[13].Descriptor()
+	// document.DefaultEventCount holds the default value on creation for the event_count field.
+	document.DefaultEventCount = documentDescEventCount.Default.(int)
+	// documentDescRankScore is the schema descriptor for rank_score field.
+	documentDescRankScore := documentFields[16].Descriptor()
+	// document.DefaultRankScore holds the default value on creation for the rank_score field.
+	document.DefaultRankScore = documentDescRankScore.Default.(float64)
+	// documentDescCreatedAt is the schema descriptor for created_at field.
+	documentDescCreatedAt := documentFields[17].Descriptor()
+	// document.DefaultCreatedAt holds the default value on creation for the created_at field.
+	document.DefaultCreatedAt = documentDescCreatedAt.Default.(func() time.Time)
+	// documentDescUpdatedAt is the schema descriptor for updated_at field.
+	documentDescUpdatedAt := documentFields[18].Descriptor()
+	// document.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	document.DefaultUpdatedAt = documentDescUpdatedAt.Default.(func() time.Time)
+	// document.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	document.UpdateDefaultUpdatedAt = documentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	documentfragmentFields := schema.DocumentFragment{}.Fields()
+	_ = documentfragmentFields
+	// documentfragmentDescKey is the schema descriptor for key field.
+	documentfragmentDescKey := documentfragmentFields[0].Descriptor()
+	// documentfragment.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	documentfragment.KeyValidator = documentfragmentDescKey.Validators[0].(func(string) error)
+	// documentfragmentDescOrdinal is the schema descriptor for ordinal field.
+	documentfragmentDescOrdinal := documentfragmentFields[5].Descriptor()
+	// documentfragment.DefaultOrdinal holds the default value on creation for the ordinal field.
+	documentfragment.DefaultOrdinal = documentfragmentDescOrdinal.Default.(int)
+	// documentfragmentDescConfidence is the schema descriptor for confidence field.
+	documentfragmentDescConfidence := documentfragmentFields[15].Descriptor()
+	// documentfragment.DefaultConfidence holds the default value on creation for the confidence field.
+	documentfragment.DefaultConfidence = documentfragmentDescConfidence.Default.(float64)
+	// documentfragmentDescCreatedAt is the schema descriptor for created_at field.
+	documentfragmentDescCreatedAt := documentfragmentFields[16].Descriptor()
+	// documentfragment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	documentfragment.DefaultCreatedAt = documentfragmentDescCreatedAt.Default.(func() time.Time)
+	// documentfragmentDescUpdatedAt is the schema descriptor for updated_at field.
+	documentfragmentDescUpdatedAt := documentfragmentFields[17].Descriptor()
+	// documentfragment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	documentfragment.DefaultUpdatedAt = documentfragmentDescUpdatedAt.Default.(func() time.Time)
+	// documentfragment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	documentfragment.UpdateDefaultUpdatedAt = documentfragmentDescUpdatedAt.UpdateDefault.(func() time.Time)
 	evidenceFields := schema.Evidence{}.Fields()
 	_ = evidenceFields
 	// evidenceDescKey is the schema descriptor for key field.
@@ -126,6 +185,34 @@ func init() {
 	ticket.DefaultUpdatedAt = ticketDescUpdatedAt.Default.(func() time.Time)
 	// ticket.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	ticket.UpdateDefaultUpdatedAt = ticketDescUpdatedAt.UpdateDefault.(func() time.Time)
+	ticketdocumentfragmentFields := schema.TicketDocumentFragment{}.Fields()
+	_ = ticketdocumentfragmentFields
+	// ticketdocumentfragmentDescEvidenceCount is the schema descriptor for evidence_count field.
+	ticketdocumentfragmentDescEvidenceCount := ticketdocumentfragmentFields[4].Descriptor()
+	// ticketdocumentfragment.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
+	ticketdocumentfragment.DefaultEvidenceCount = ticketdocumentfragmentDescEvidenceCount.Default.(int)
+	// ticketdocumentfragmentDescEventCount is the schema descriptor for event_count field.
+	ticketdocumentfragmentDescEventCount := ticketdocumentfragmentFields[5].Descriptor()
+	// ticketdocumentfragment.DefaultEventCount holds the default value on creation for the event_count field.
+	ticketdocumentfragment.DefaultEventCount = ticketdocumentfragmentDescEventCount.Default.(int)
+	// ticketdocumentfragmentDescRankScore is the schema descriptor for rank_score field.
+	ticketdocumentfragmentDescRankScore := ticketdocumentfragmentFields[8].Descriptor()
+	// ticketdocumentfragment.DefaultRankScore holds the default value on creation for the rank_score field.
+	ticketdocumentfragment.DefaultRankScore = ticketdocumentfragmentDescRankScore.Default.(float64)
+	// ticketdocumentfragmentDescConfidence is the schema descriptor for confidence field.
+	ticketdocumentfragmentDescConfidence := ticketdocumentfragmentFields[15].Descriptor()
+	// ticketdocumentfragment.DefaultConfidence holds the default value on creation for the confidence field.
+	ticketdocumentfragment.DefaultConfidence = ticketdocumentfragmentDescConfidence.Default.(float64)
+	// ticketdocumentfragmentDescCreatedAt is the schema descriptor for created_at field.
+	ticketdocumentfragmentDescCreatedAt := ticketdocumentfragmentFields[16].Descriptor()
+	// ticketdocumentfragment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	ticketdocumentfragment.DefaultCreatedAt = ticketdocumentfragmentDescCreatedAt.Default.(func() time.Time)
+	// ticketdocumentfragmentDescUpdatedAt is the schema descriptor for updated_at field.
+	ticketdocumentfragmentDescUpdatedAt := ticketdocumentfragmentFields[17].Descriptor()
+	// ticketdocumentfragment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	ticketdocumentfragment.DefaultUpdatedAt = ticketdocumentfragmentDescUpdatedAt.Default.(func() time.Time)
+	// ticketdocumentfragment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	ticketdocumentfragment.UpdateDefaultUpdatedAt = ticketdocumentfragmentDescUpdatedAt.UpdateDefault.(func() time.Time)
 	ticketpullrequestFields := schema.TicketPullRequest{}.Fields()
 	_ = ticketpullrequestFields
 	// ticketpullrequestDescEvidenceCount is the schema descriptor for evidence_count field.
