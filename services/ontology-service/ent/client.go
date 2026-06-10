@@ -13,11 +13,14 @@ import (
 
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
+	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workstream"
+	"cubicle/services/ontology-service/ent/workstreamticket"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -29,8 +32,12 @@ type Client struct {
 	Evidence *EvidenceClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
+	// Ticket is the client for interacting with the Ticket builders.
+	Ticket *TicketClient
 	// Workstream is the client for interacting with the Workstream builders.
 	Workstream *WorkstreamClient
+	// WorkstreamTicket is the client for interacting with the WorkstreamTicket builders.
+	WorkstreamTicket *WorkstreamTicketClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -44,7 +51,9 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Evidence = NewEvidenceClient(c.config)
 	c.Person = NewPersonClient(c.config)
+	c.Ticket = NewTicketClient(c.config)
 	c.Workstream = NewWorkstreamClient(c.config)
+	c.WorkstreamTicket = NewWorkstreamTicketClient(c.config)
 }
 
 type (
@@ -135,11 +144,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:        ctx,
-		config:     cfg,
-		Evidence:   NewEvidenceClient(cfg),
-		Person:     NewPersonClient(cfg),
-		Workstream: NewWorkstreamClient(cfg),
+		ctx:              ctx,
+		config:           cfg,
+		Evidence:         NewEvidenceClient(cfg),
+		Person:           NewPersonClient(cfg),
+		Ticket:           NewTicketClient(cfg),
+		Workstream:       NewWorkstreamClient(cfg),
+		WorkstreamTicket: NewWorkstreamTicketClient(cfg),
 	}, nil
 }
 
@@ -157,11 +168,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:        ctx,
-		config:     cfg,
-		Evidence:   NewEvidenceClient(cfg),
-		Person:     NewPersonClient(cfg),
-		Workstream: NewWorkstreamClient(cfg),
+		ctx:              ctx,
+		config:           cfg,
+		Evidence:         NewEvidenceClient(cfg),
+		Person:           NewPersonClient(cfg),
+		Ticket:           NewTicketClient(cfg),
+		Workstream:       NewWorkstreamClient(cfg),
+		WorkstreamTicket: NewWorkstreamTicketClient(cfg),
 	}, nil
 }
 
@@ -192,7 +205,9 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.Evidence.Use(hooks...)
 	c.Person.Use(hooks...)
+	c.Ticket.Use(hooks...)
 	c.Workstream.Use(hooks...)
+	c.WorkstreamTicket.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
@@ -200,7 +215,9 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Evidence.Intercept(interceptors...)
 	c.Person.Intercept(interceptors...)
+	c.Ticket.Intercept(interceptors...)
 	c.Workstream.Intercept(interceptors...)
+	c.WorkstreamTicket.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -210,8 +227,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Evidence.mutate(ctx, m)
 	case *PersonMutation:
 		return c.Person.mutate(ctx, m)
+	case *TicketMutation:
+		return c.Ticket.mutate(ctx, m)
 	case *WorkstreamMutation:
 		return c.Workstream.mutate(ctx, m)
+	case *WorkstreamTicketMutation:
+		return c.WorkstreamTicket.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -483,6 +504,155 @@ func (c *PersonClient) mutate(ctx context.Context, m *PersonMutation) (Value, er
 	}
 }
 
+// TicketClient is a client for the Ticket schema.
+type TicketClient struct {
+	config
+}
+
+// NewTicketClient returns a client for the Ticket from the given config.
+func NewTicketClient(c config) *TicketClient {
+	return &TicketClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `ticket.Hooks(f(g(h())))`.
+func (c *TicketClient) Use(hooks ...Hook) {
+	c.hooks.Ticket = append(c.hooks.Ticket, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `ticket.Intercept(f(g(h())))`.
+func (c *TicketClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Ticket = append(c.inters.Ticket, interceptors...)
+}
+
+// Create returns a builder for creating a Ticket entity.
+func (c *TicketClient) Create() *TicketCreate {
+	mutation := newTicketMutation(c.config, OpCreate)
+	return &TicketCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Ticket entities.
+func (c *TicketClient) CreateBulk(builders ...*TicketCreate) *TicketCreateBulk {
+	return &TicketCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TicketClient) MapCreateBulk(slice any, setFunc func(*TicketCreate, int)) *TicketCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TicketCreateBulk{err: fmt.Errorf("calling to TicketClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TicketCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TicketCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Ticket.
+func (c *TicketClient) Update() *TicketUpdate {
+	mutation := newTicketMutation(c.config, OpUpdate)
+	return &TicketUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TicketClient) UpdateOne(_m *Ticket) *TicketUpdateOne {
+	mutation := newTicketMutation(c.config, OpUpdateOne, withTicket(_m))
+	return &TicketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TicketClient) UpdateOneID(id int) *TicketUpdateOne {
+	mutation := newTicketMutation(c.config, OpUpdateOne, withTicketID(id))
+	return &TicketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Ticket.
+func (c *TicketClient) Delete() *TicketDelete {
+	mutation := newTicketMutation(c.config, OpDelete)
+	return &TicketDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TicketClient) DeleteOne(_m *Ticket) *TicketDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TicketClient) DeleteOneID(id int) *TicketDeleteOne {
+	builder := c.Delete().Where(ticket.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TicketDeleteOne{builder}
+}
+
+// Query returns a query builder for Ticket.
+func (c *TicketClient) Query() *TicketQuery {
+	return &TicketQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTicket},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Ticket entity by its id.
+func (c *TicketClient) Get(ctx context.Context, id int) (*Ticket, error) {
+	return c.Query().Where(ticket.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TicketClient) GetX(ctx context.Context, id int) *Ticket {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstreams queries the workstreams edge of a Ticket.
+func (c *TicketClient) QueryWorkstreams(_m *Ticket) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, ticket.WorkstreamsTable, ticket.WorkstreamsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TicketClient) Hooks() []Hook {
+	return c.hooks.Ticket
+}
+
+// Interceptors returns the client interceptors.
+func (c *TicketClient) Interceptors() []Interceptor {
+	return c.inters.Ticket
+}
+
+func (c *TicketClient) mutate(ctx context.Context, m *TicketMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TicketCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TicketUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TicketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TicketDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Ticket mutation op: %q", m.Op())
+	}
+}
+
 // WorkstreamClient is a client for the Workstream schema.
 type WorkstreamClient struct {
 	config
@@ -591,6 +761,38 @@ func (c *WorkstreamClient) GetX(ctx context.Context, id int) *Workstream {
 	return obj
 }
 
+// QueryTickets queries the tickets edge of a Workstream.
+func (c *WorkstreamClient) QueryTickets(_m *Workstream) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workstream.Table, workstream.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, workstream.TicketsTable, workstream.TicketsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkstreamTickets queries the workstream_tickets edge of a Workstream.
+func (c *WorkstreamClient) QueryWorkstreamTickets(_m *Workstream) *WorkstreamTicketQuery {
+	query := (&WorkstreamTicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workstream.Table, workstream.FieldID, id),
+			sqlgraph.To(workstreamticket.Table, workstreamticket.WorkstreamColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, workstream.WorkstreamTicketsTable, workstream.WorkstreamTicketsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *WorkstreamClient) Hooks() []Hook {
 	return c.hooks.Workstream
@@ -616,12 +818,135 @@ func (c *WorkstreamClient) mutate(ctx context.Context, m *WorkstreamMutation) (V
 	}
 }
 
+// WorkstreamTicketClient is a client for the WorkstreamTicket schema.
+type WorkstreamTicketClient struct {
+	config
+}
+
+// NewWorkstreamTicketClient returns a client for the WorkstreamTicket from the given config.
+func NewWorkstreamTicketClient(c config) *WorkstreamTicketClient {
+	return &WorkstreamTicketClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workstreamticket.Hooks(f(g(h())))`.
+func (c *WorkstreamTicketClient) Use(hooks ...Hook) {
+	c.hooks.WorkstreamTicket = append(c.hooks.WorkstreamTicket, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workstreamticket.Intercept(f(g(h())))`.
+func (c *WorkstreamTicketClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkstreamTicket = append(c.inters.WorkstreamTicket, interceptors...)
+}
+
+// Create returns a builder for creating a WorkstreamTicket entity.
+func (c *WorkstreamTicketClient) Create() *WorkstreamTicketCreate {
+	mutation := newWorkstreamTicketMutation(c.config, OpCreate)
+	return &WorkstreamTicketCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkstreamTicket entities.
+func (c *WorkstreamTicketClient) CreateBulk(builders ...*WorkstreamTicketCreate) *WorkstreamTicketCreateBulk {
+	return &WorkstreamTicketCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkstreamTicketClient) MapCreateBulk(slice any, setFunc func(*WorkstreamTicketCreate, int)) *WorkstreamTicketCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkstreamTicketCreateBulk{err: fmt.Errorf("calling to WorkstreamTicketClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkstreamTicketCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkstreamTicketCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkstreamTicket.
+func (c *WorkstreamTicketClient) Update() *WorkstreamTicketUpdate {
+	mutation := newWorkstreamTicketMutation(c.config, OpUpdate)
+	return &WorkstreamTicketUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkstreamTicketClient) UpdateOne(_m *WorkstreamTicket) *WorkstreamTicketUpdateOne {
+	mutation := newWorkstreamTicketMutation(c.config, OpUpdateOne)
+	mutation.workstream = &_m.WorkstreamID
+	mutation.ticket = &_m.TicketID
+	return &WorkstreamTicketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkstreamTicket.
+func (c *WorkstreamTicketClient) Delete() *WorkstreamTicketDelete {
+	mutation := newWorkstreamTicketMutation(c.config, OpDelete)
+	return &WorkstreamTicketDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Query returns a query builder for WorkstreamTicket.
+func (c *WorkstreamTicketClient) Query() *WorkstreamTicketQuery {
+	return &WorkstreamTicketQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkstreamTicket},
+		inters: c.Interceptors(),
+	}
+}
+
+// QueryWorkstream queries the workstream edge of a WorkstreamTicket.
+func (c *WorkstreamTicketClient) QueryWorkstream(_m *WorkstreamTicket) *WorkstreamQuery {
+	return c.Query().
+		Where(workstreamticket.WorkstreamID(_m.WorkstreamID), workstreamticket.TicketID(_m.TicketID)).
+		QueryWorkstream()
+}
+
+// QueryTicket queries the ticket edge of a WorkstreamTicket.
+func (c *WorkstreamTicketClient) QueryTicket(_m *WorkstreamTicket) *TicketQuery {
+	return c.Query().
+		Where(workstreamticket.WorkstreamID(_m.WorkstreamID), workstreamticket.TicketID(_m.TicketID)).
+		QueryTicket()
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkstreamTicket.
+func (c *WorkstreamTicketClient) QueryLatestEvidence(_m *WorkstreamTicket) *EvidenceQuery {
+	return c.Query().
+		Where(workstreamticket.WorkstreamID(_m.WorkstreamID), workstreamticket.TicketID(_m.TicketID)).
+		QueryLatestEvidence()
+}
+
+// Hooks returns the client hooks.
+func (c *WorkstreamTicketClient) Hooks() []Hook {
+	return c.hooks.WorkstreamTicket
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkstreamTicketClient) Interceptors() []Interceptor {
+	return c.inters.WorkstreamTicket
+}
+
+func (c *WorkstreamTicketClient) mutate(ctx context.Context, m *WorkstreamTicketMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkstreamTicketCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkstreamTicketUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkstreamTicketUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkstreamTicketDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkstreamTicket mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Evidence, Person, Workstream []ent.Hook
+		Evidence, Person, Ticket, Workstream, WorkstreamTicket []ent.Hook
 	}
 	inters struct {
-		Evidence, Person, Workstream []ent.Interceptor
+		Evidence, Person, Ticket, Workstream, WorkstreamTicket []ent.Interceptor
 	}
 )

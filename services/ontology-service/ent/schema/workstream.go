@@ -3,6 +3,7 @@ package schema
 import (
 	"entgo.io/ent"
 	entschema "entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -37,6 +38,15 @@ func (Workstream) Fields() []ent.Field {
 		activityFields(),
 		timestampFields(),
 	)
+}
+
+// Edges exposes the bounded ticket association list for this workstream.
+func (Workstream) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.To("tickets", Ticket.Type).
+			Through("workstream_tickets", WorkstreamTicket.Type).
+			Comment("Tickets that belong to this workstream."),
+	}
 }
 
 // Indexes supports filtering by status and recency.

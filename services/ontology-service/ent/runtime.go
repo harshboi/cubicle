@@ -6,7 +6,9 @@ import (
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/schema"
+	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workstream"
+	"cubicle/services/ontology-service/ent/workstreamticket"
 	"time"
 )
 
@@ -58,6 +60,38 @@ func init() {
 	person.DefaultUpdatedAt = personDescUpdatedAt.Default.(func() time.Time)
 	// person.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	person.UpdateDefaultUpdatedAt = personDescUpdatedAt.UpdateDefault.(func() time.Time)
+	ticketFields := schema.Ticket{}.Fields()
+	_ = ticketFields
+	// ticketDescKey is the schema descriptor for key field.
+	ticketDescKey := ticketFields[0].Descriptor()
+	// ticket.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	ticket.KeyValidator = ticketDescKey.Validators[0].(func(string) error)
+	// ticketDescTitle is the schema descriptor for title field.
+	ticketDescTitle := ticketFields[1].Descriptor()
+	// ticket.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	ticket.TitleValidator = ticketDescTitle.Validators[0].(func(string) error)
+	// ticketDescConfidence is the schema descriptor for confidence field.
+	ticketDescConfidence := ticketFields[13].Descriptor()
+	// ticket.DefaultConfidence holds the default value on creation for the confidence field.
+	ticket.DefaultConfidence = ticketDescConfidence.Default.(float64)
+	// ticketDescEventCount is the schema descriptor for event_count field.
+	ticketDescEventCount := ticketFields[14].Descriptor()
+	// ticket.DefaultEventCount holds the default value on creation for the event_count field.
+	ticket.DefaultEventCount = ticketDescEventCount.Default.(int)
+	// ticketDescRankScore is the schema descriptor for rank_score field.
+	ticketDescRankScore := ticketFields[17].Descriptor()
+	// ticket.DefaultRankScore holds the default value on creation for the rank_score field.
+	ticket.DefaultRankScore = ticketDescRankScore.Default.(float64)
+	// ticketDescCreatedAt is the schema descriptor for created_at field.
+	ticketDescCreatedAt := ticketFields[18].Descriptor()
+	// ticket.DefaultCreatedAt holds the default value on creation for the created_at field.
+	ticket.DefaultCreatedAt = ticketDescCreatedAt.Default.(func() time.Time)
+	// ticketDescUpdatedAt is the schema descriptor for updated_at field.
+	ticketDescUpdatedAt := ticketFields[19].Descriptor()
+	// ticket.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	ticket.DefaultUpdatedAt = ticketDescUpdatedAt.Default.(func() time.Time)
+	// ticket.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	ticket.UpdateDefaultUpdatedAt = ticketDescUpdatedAt.UpdateDefault.(func() time.Time)
 	workstreamFields := schema.Workstream{}.Fields()
 	_ = workstreamFields
 	// workstreamDescKey is the schema descriptor for key field.
@@ -90,4 +124,32 @@ func init() {
 	workstream.DefaultUpdatedAt = workstreamDescUpdatedAt.Default.(func() time.Time)
 	// workstream.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	workstream.UpdateDefaultUpdatedAt = workstreamDescUpdatedAt.UpdateDefault.(func() time.Time)
+	workstreamticketFields := schema.WorkstreamTicket{}.Fields()
+	_ = workstreamticketFields
+	// workstreamticketDescEvidenceCount is the schema descriptor for evidence_count field.
+	workstreamticketDescEvidenceCount := workstreamticketFields[4].Descriptor()
+	// workstreamticket.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
+	workstreamticket.DefaultEvidenceCount = workstreamticketDescEvidenceCount.Default.(int)
+	// workstreamticketDescEventCount is the schema descriptor for event_count field.
+	workstreamticketDescEventCount := workstreamticketFields[5].Descriptor()
+	// workstreamticket.DefaultEventCount holds the default value on creation for the event_count field.
+	workstreamticket.DefaultEventCount = workstreamticketDescEventCount.Default.(int)
+	// workstreamticketDescRankScore is the schema descriptor for rank_score field.
+	workstreamticketDescRankScore := workstreamticketFields[8].Descriptor()
+	// workstreamticket.DefaultRankScore holds the default value on creation for the rank_score field.
+	workstreamticket.DefaultRankScore = workstreamticketDescRankScore.Default.(float64)
+	// workstreamticketDescConfidence is the schema descriptor for confidence field.
+	workstreamticketDescConfidence := workstreamticketFields[15].Descriptor()
+	// workstreamticket.DefaultConfidence holds the default value on creation for the confidence field.
+	workstreamticket.DefaultConfidence = workstreamticketDescConfidence.Default.(float64)
+	// workstreamticketDescCreatedAt is the schema descriptor for created_at field.
+	workstreamticketDescCreatedAt := workstreamticketFields[16].Descriptor()
+	// workstreamticket.DefaultCreatedAt holds the default value on creation for the created_at field.
+	workstreamticket.DefaultCreatedAt = workstreamticketDescCreatedAt.Default.(func() time.Time)
+	// workstreamticketDescUpdatedAt is the schema descriptor for updated_at field.
+	workstreamticketDescUpdatedAt := workstreamticketFields[17].Descriptor()
+	// workstreamticket.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	workstreamticket.DefaultUpdatedAt = workstreamticketDescUpdatedAt.Default.(func() time.Time)
+	// workstreamticket.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	workstreamticket.UpdateDefaultUpdatedAt = workstreamticketDescUpdatedAt.UpdateDefault.(func() time.Time)
 }

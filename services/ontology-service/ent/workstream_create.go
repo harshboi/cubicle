@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workstream"
 	"errors"
 	"fmt"
@@ -258,6 +259,21 @@ func (_c *WorkstreamCreate) SetNillableUpdatedAt(v *time.Time) *WorkstreamCreate
 	return _c
 }
 
+// AddTicketIDs adds the "tickets" edge to the Ticket entity by IDs.
+func (_c *WorkstreamCreate) AddTicketIDs(ids ...int) *WorkstreamCreate {
+	_c.mutation.AddTicketIDs(ids...)
+	return _c
+}
+
+// AddTickets adds the "tickets" edges to the Ticket entity.
+func (_c *WorkstreamCreate) AddTickets(v ...*Ticket) *WorkstreamCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddTicketIDs(ids...)
+}
+
 // Mutation returns the WorkstreamMutation object of the builder.
 func (_c *WorkstreamCreate) Mutation() *WorkstreamMutation {
 	return _c.mutation
@@ -482,6 +498,26 @@ func (_c *WorkstreamCreate) createSpec() (*Workstream, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(workstream.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.TicketsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   workstream.TicketsTable,
+			Columns: workstream.TicketsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		createE := &WorkstreamTicketCreate{config: _c.config, mutation: newWorkstreamTicketMutation(_c.config, OpCreate)}
+		createE.defaults()
+		_, specE := createE.createSpec()
+		edge.Target.Fields = specE.Fields
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

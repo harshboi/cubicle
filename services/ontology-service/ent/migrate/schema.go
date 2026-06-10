@@ -100,6 +100,48 @@ var (
 			},
 		},
 	}
+	// TicketsColumns holds the columns for the "tickets" table.
+	TicketsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "title", Type: field.TypeString},
+		{Name: "body", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"unknown", "open", "closed"}, Default: "unknown"},
+		{Name: "priority", Type: field.TypeString, Nullable: true},
+		{Name: "summary", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "search_text", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// TicketsTable holds the schema information for the "tickets" table.
+	TicketsTable = &schema.Table{
+		Name:       "tickets",
+		Columns:    TicketsColumns,
+		PrimaryKey: []*schema.Column{TicketsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "ticket_status_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[4], TicketsColumns[17]},
+			},
+			{
+				Name:    "ticket_priority",
+				Unique:  false,
+				Columns: []*schema.Column{TicketsColumns[5]},
+			},
+		},
+	}
 	// WorkstreamsColumns holds the columns for the "workstreams" table.
 	WorkstreamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -135,13 +177,77 @@ var (
 			},
 		},
 	}
+	// WorkstreamTicketsColumns holds the columns for the "workstream_tickets" table.
+	WorkstreamTicketsColumns = []*schema.Column{
+		{Name: "relation_kind", Type: field.TypeEnum, Enums: []string{"contains"}},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "source", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt},
+		{Name: "ticket_id", Type: field.TypeInt},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkstreamTicketsTable holds the schema information for the "workstream_tickets" table.
+	WorkstreamTicketsTable = &schema.Table{
+		Name:       "workstream_tickets",
+		Columns:    WorkstreamTicketsColumns,
+		PrimaryKey: []*schema.Column{WorkstreamTicketsColumns[15], WorkstreamTicketsColumns[16]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "workstream_tickets_workstreams_workstream",
+				Columns:    []*schema.Column{WorkstreamTicketsColumns[15]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "workstream_tickets_tickets_ticket",
+				Columns:    []*schema.Column{WorkstreamTicketsColumns[16]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "workstream_tickets_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkstreamTicketsColumns[17]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workstreamticket_workstream_id_freshness_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamTicketsColumns[15], WorkstreamTicketsColumns[10], WorkstreamTicketsColumns[5], WorkstreamTicketsColumns[4]},
+			},
+			{
+				Name:    "workstreamticket_ticket_id",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamTicketsColumns[16]},
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		EvidencesTable,
 		PersonsTable,
+		TicketsTable,
 		WorkstreamsTable,
+		WorkstreamTicketsTable,
 	}
 )
 
 func init() {
+	WorkstreamTicketsTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkstreamTicketsTable.ForeignKeys[1].RefTable = TicketsTable
+	WorkstreamTicketsTable.ForeignKeys[2].RefTable = EvidencesTable
 }

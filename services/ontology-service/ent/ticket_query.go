@@ -7,7 +7,6 @@ import (
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workstream"
-	"cubicle/services/ontology-service/ent/workstreamticket"
 	"database/sql/driver"
 	"fmt"
 	"math"
@@ -18,54 +17,53 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// WorkstreamQuery is the builder for querying Workstream entities.
-type WorkstreamQuery struct {
+// TicketQuery is the builder for querying Ticket entities.
+type TicketQuery struct {
 	config
-	ctx                   *QueryContext
-	order                 []workstream.OrderOption
-	inters                []Interceptor
-	predicates            []predicate.Workstream
-	withTickets           *TicketQuery
-	withWorkstreamTickets *WorkstreamTicketQuery
+	ctx             *QueryContext
+	order           []ticket.OrderOption
+	inters          []Interceptor
+	predicates      []predicate.Ticket
+	withWorkstreams *WorkstreamQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the WorkstreamQuery builder.
-func (_q *WorkstreamQuery) Where(ps ...predicate.Workstream) *WorkstreamQuery {
+// Where adds a new predicate for the TicketQuery builder.
+func (_q *TicketQuery) Where(ps ...predicate.Ticket) *TicketQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *WorkstreamQuery) Limit(limit int) *WorkstreamQuery {
+func (_q *TicketQuery) Limit(limit int) *TicketQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *WorkstreamQuery) Offset(offset int) *WorkstreamQuery {
+func (_q *TicketQuery) Offset(offset int) *TicketQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *WorkstreamQuery) Unique(unique bool) *WorkstreamQuery {
+func (_q *TicketQuery) Unique(unique bool) *TicketQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *WorkstreamQuery) Order(o ...workstream.OrderOption) *WorkstreamQuery {
+func (_q *TicketQuery) Order(o ...ticket.OrderOption) *TicketQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryTickets chains the current query on the "tickets" edge.
-func (_q *WorkstreamQuery) QueryTickets() *TicketQuery {
-	query := (&TicketClient{config: _q.config}).Query()
+// QueryWorkstreams chains the current query on the "workstreams" edge.
+func (_q *TicketQuery) QueryWorkstreams() *WorkstreamQuery {
+	query := (&WorkstreamClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -75,9 +73,9 @@ func (_q *WorkstreamQuery) QueryTickets() *TicketQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(workstream.Table, workstream.FieldID, selector),
-			sqlgraph.To(ticket.Table, ticket.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, workstream.TicketsTable, workstream.TicketsPrimaryKey...),
+			sqlgraph.From(ticket.Table, ticket.FieldID, selector),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, ticket.WorkstreamsTable, ticket.WorkstreamsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -85,43 +83,21 @@ func (_q *WorkstreamQuery) QueryTickets() *TicketQuery {
 	return query
 }
 
-// QueryWorkstreamTickets chains the current query on the "workstream_tickets" edge.
-func (_q *WorkstreamQuery) QueryWorkstreamTickets() *WorkstreamTicketQuery {
-	query := (&WorkstreamTicketClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(workstream.Table, workstream.FieldID, selector),
-			sqlgraph.To(workstreamticket.Table, workstreamticket.WorkstreamColumn),
-			sqlgraph.Edge(sqlgraph.O2M, true, workstream.WorkstreamTicketsTable, workstream.WorkstreamTicketsColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// First returns the first Workstream entity from the query.
-// Returns a *NotFoundError when no Workstream was found.
-func (_q *WorkstreamQuery) First(ctx context.Context) (*Workstream, error) {
+// First returns the first Ticket entity from the query.
+// Returns a *NotFoundError when no Ticket was found.
+func (_q *TicketQuery) First(ctx context.Context) (*Ticket, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{workstream.Label}
+		return nil, &NotFoundError{ticket.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *WorkstreamQuery) FirstX(ctx context.Context) *Workstream {
+func (_q *TicketQuery) FirstX(ctx context.Context) *Ticket {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -129,22 +105,22 @@ func (_q *WorkstreamQuery) FirstX(ctx context.Context) *Workstream {
 	return node
 }
 
-// FirstID returns the first Workstream ID from the query.
-// Returns a *NotFoundError when no Workstream ID was found.
-func (_q *WorkstreamQuery) FirstID(ctx context.Context) (id int, err error) {
+// FirstID returns the first Ticket ID from the query.
+// Returns a *NotFoundError when no Ticket ID was found.
+func (_q *TicketQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{workstream.Label}
+		err = &NotFoundError{ticket.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *WorkstreamQuery) FirstIDX(ctx context.Context) int {
+func (_q *TicketQuery) FirstIDX(ctx context.Context) int {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -152,10 +128,10 @@ func (_q *WorkstreamQuery) FirstIDX(ctx context.Context) int {
 	return id
 }
 
-// Only returns a single Workstream entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Workstream entity is found.
-// Returns a *NotFoundError when no Workstream entities are found.
-func (_q *WorkstreamQuery) Only(ctx context.Context) (*Workstream, error) {
+// Only returns a single Ticket entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Ticket entity is found.
+// Returns a *NotFoundError when no Ticket entities are found.
+func (_q *TicketQuery) Only(ctx context.Context) (*Ticket, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -164,14 +140,14 @@ func (_q *WorkstreamQuery) Only(ctx context.Context) (*Workstream, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{workstream.Label}
+		return nil, &NotFoundError{ticket.Label}
 	default:
-		return nil, &NotSingularError{workstream.Label}
+		return nil, &NotSingularError{ticket.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *WorkstreamQuery) OnlyX(ctx context.Context) *Workstream {
+func (_q *TicketQuery) OnlyX(ctx context.Context) *Ticket {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -179,10 +155,10 @@ func (_q *WorkstreamQuery) OnlyX(ctx context.Context) *Workstream {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Workstream ID in the query.
-// Returns a *NotSingularError when more than one Workstream ID is found.
+// OnlyID is like Only, but returns the only Ticket ID in the query.
+// Returns a *NotSingularError when more than one Ticket ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *WorkstreamQuery) OnlyID(ctx context.Context) (id int, err error) {
+func (_q *TicketQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -191,15 +167,15 @@ func (_q *WorkstreamQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{workstream.Label}
+		err = &NotFoundError{ticket.Label}
 	default:
-		err = &NotSingularError{workstream.Label}
+		err = &NotSingularError{ticket.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *WorkstreamQuery) OnlyIDX(ctx context.Context) int {
+func (_q *TicketQuery) OnlyIDX(ctx context.Context) int {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -207,18 +183,18 @@ func (_q *WorkstreamQuery) OnlyIDX(ctx context.Context) int {
 	return id
 }
 
-// All executes the query and returns a list of Workstreams.
-func (_q *WorkstreamQuery) All(ctx context.Context) ([]*Workstream, error) {
+// All executes the query and returns a list of Tickets.
+func (_q *TicketQuery) All(ctx context.Context) ([]*Ticket, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Workstream, *WorkstreamQuery]()
-	return withInterceptors[[]*Workstream](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Ticket, *TicketQuery]()
+	return withInterceptors[[]*Ticket](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *WorkstreamQuery) AllX(ctx context.Context) []*Workstream {
+func (_q *TicketQuery) AllX(ctx context.Context) []*Ticket {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -226,20 +202,20 @@ func (_q *WorkstreamQuery) AllX(ctx context.Context) []*Workstream {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Workstream IDs.
-func (_q *WorkstreamQuery) IDs(ctx context.Context) (ids []int, err error) {
+// IDs executes the query and returns a list of Ticket IDs.
+func (_q *TicketQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(workstream.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(ticket.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *WorkstreamQuery) IDsX(ctx context.Context) []int {
+func (_q *TicketQuery) IDsX(ctx context.Context) []int {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -248,16 +224,16 @@ func (_q *WorkstreamQuery) IDsX(ctx context.Context) []int {
 }
 
 // Count returns the count of the given query.
-func (_q *WorkstreamQuery) Count(ctx context.Context) (int, error) {
+func (_q *TicketQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*WorkstreamQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*TicketQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *WorkstreamQuery) CountX(ctx context.Context) int {
+func (_q *TicketQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -266,7 +242,7 @@ func (_q *WorkstreamQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *WorkstreamQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *TicketQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -279,7 +255,7 @@ func (_q *WorkstreamQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *WorkstreamQuery) ExistX(ctx context.Context) bool {
+func (_q *TicketQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -287,45 +263,33 @@ func (_q *WorkstreamQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the WorkstreamQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the TicketQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *WorkstreamQuery) Clone() *WorkstreamQuery {
+func (_q *TicketQuery) Clone() *TicketQuery {
 	if _q == nil {
 		return nil
 	}
-	return &WorkstreamQuery{
-		config:                _q.config,
-		ctx:                   _q.ctx.Clone(),
-		order:                 append([]workstream.OrderOption{}, _q.order...),
-		inters:                append([]Interceptor{}, _q.inters...),
-		predicates:            append([]predicate.Workstream{}, _q.predicates...),
-		withTickets:           _q.withTickets.Clone(),
-		withWorkstreamTickets: _q.withWorkstreamTickets.Clone(),
+	return &TicketQuery{
+		config:          _q.config,
+		ctx:             _q.ctx.Clone(),
+		order:           append([]ticket.OrderOption{}, _q.order...),
+		inters:          append([]Interceptor{}, _q.inters...),
+		predicates:      append([]predicate.Ticket{}, _q.predicates...),
+		withWorkstreams: _q.withWorkstreams.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithTickets tells the query-builder to eager-load the nodes that are connected to
-// the "tickets" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *WorkstreamQuery) WithTickets(opts ...func(*TicketQuery)) *WorkstreamQuery {
-	query := (&TicketClient{config: _q.config}).Query()
+// WithWorkstreams tells the query-builder to eager-load the nodes that are connected to
+// the "workstreams" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TicketQuery) WithWorkstreams(opts ...func(*WorkstreamQuery)) *TicketQuery {
+	query := (&WorkstreamClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withTickets = query
-	return _q
-}
-
-// WithWorkstreamTickets tells the query-builder to eager-load the nodes that are connected to
-// the "workstream_tickets" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *WorkstreamQuery) WithWorkstreamTickets(opts ...func(*WorkstreamTicketQuery)) *WorkstreamQuery {
-	query := (&WorkstreamTicketClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withWorkstreamTickets = query
+	_q.withWorkstreams = query
 	return _q
 }
 
@@ -339,15 +303,15 @@ func (_q *WorkstreamQuery) WithWorkstreamTickets(opts ...func(*WorkstreamTicketQ
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Workstream.Query().
-//		GroupBy(workstream.FieldKey).
+//	client.Ticket.Query().
+//		GroupBy(ticket.FieldKey).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *WorkstreamQuery) GroupBy(field string, fields ...string) *WorkstreamGroupBy {
+func (_q *TicketQuery) GroupBy(field string, fields ...string) *TicketGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &WorkstreamGroupBy{build: _q}
+	grbuild := &TicketGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = workstream.Label
+	grbuild.label = ticket.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -361,23 +325,23 @@ func (_q *WorkstreamQuery) GroupBy(field string, fields ...string) *WorkstreamGr
 //		Key string `json:"key,omitempty"`
 //	}
 //
-//	client.Workstream.Query().
-//		Select(workstream.FieldKey).
+//	client.Ticket.Query().
+//		Select(ticket.FieldKey).
 //		Scan(ctx, &v)
-func (_q *WorkstreamQuery) Select(fields ...string) *WorkstreamSelect {
+func (_q *TicketQuery) Select(fields ...string) *TicketSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &WorkstreamSelect{WorkstreamQuery: _q}
-	sbuild.label = workstream.Label
+	sbuild := &TicketSelect{TicketQuery: _q}
+	sbuild.label = ticket.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a WorkstreamSelect configured with the given aggregations.
-func (_q *WorkstreamQuery) Aggregate(fns ...AggregateFunc) *WorkstreamSelect {
+// Aggregate returns a TicketSelect configured with the given aggregations.
+func (_q *TicketQuery) Aggregate(fns ...AggregateFunc) *TicketSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *WorkstreamQuery) prepareQuery(ctx context.Context) error {
+func (_q *TicketQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -389,7 +353,7 @@ func (_q *WorkstreamQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !workstream.ValidColumn(f) {
+		if !ticket.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -403,20 +367,19 @@ func (_q *WorkstreamQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *WorkstreamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Workstream, error) {
+func (_q *TicketQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ticket, error) {
 	var (
-		nodes       = []*Workstream{}
+		nodes       = []*Ticket{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
-			_q.withTickets != nil,
-			_q.withWorkstreamTickets != nil,
+		loadedTypes = [1]bool{
+			_q.withWorkstreams != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Workstream).scanValues(nil, columns)
+		return (*Ticket).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Workstream{config: _q.config}
+		node := &Ticket{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -430,29 +393,20 @@ func (_q *WorkstreamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*W
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withTickets; query != nil {
-		if err := _q.loadTickets(ctx, query, nodes,
-			func(n *Workstream) { n.Edges.Tickets = []*Ticket{} },
-			func(n *Workstream, e *Ticket) { n.Edges.Tickets = append(n.Edges.Tickets, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := _q.withWorkstreamTickets; query != nil {
-		if err := _q.loadWorkstreamTickets(ctx, query, nodes,
-			func(n *Workstream) { n.Edges.WorkstreamTickets = []*WorkstreamTicket{} },
-			func(n *Workstream, e *WorkstreamTicket) {
-				n.Edges.WorkstreamTickets = append(n.Edges.WorkstreamTickets, e)
-			}); err != nil {
+	if query := _q.withWorkstreams; query != nil {
+		if err := _q.loadWorkstreams(ctx, query, nodes,
+			func(n *Ticket) { n.Edges.Workstreams = []*Workstream{} },
+			func(n *Ticket, e *Workstream) { n.Edges.Workstreams = append(n.Edges.Workstreams, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *WorkstreamQuery) loadTickets(ctx context.Context, query *TicketQuery, nodes []*Workstream, init func(*Workstream), assign func(*Workstream, *Ticket)) error {
+func (_q *TicketQuery) loadWorkstreams(ctx context.Context, query *WorkstreamQuery, nodes []*Ticket, init func(*Ticket), assign func(*Ticket, *Workstream)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Workstream)
-	nids := make(map[int]map[*Workstream]struct{})
+	byID := make(map[int]*Ticket)
+	nids := make(map[int]map[*Ticket]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -461,11 +415,11 @@ func (_q *WorkstreamQuery) loadTickets(ctx context.Context, query *TicketQuery, 
 		}
 	}
 	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(workstream.TicketsTable)
-		s.Join(joinT).On(s.C(ticket.FieldID), joinT.C(workstream.TicketsPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(workstream.TicketsPrimaryKey[0]), edgeIDs...))
+		joinT := sql.Table(ticket.WorkstreamsTable)
+		s.Join(joinT).On(s.C(workstream.FieldID), joinT.C(ticket.WorkstreamsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(ticket.WorkstreamsPrimaryKey[1]), edgeIDs...))
 		columns := s.SelectedColumns()
-		s.Select(joinT.C(workstream.TicketsPrimaryKey[0]))
+		s.Select(joinT.C(ticket.WorkstreamsPrimaryKey[1]))
 		s.AppendSelect(columns...)
 		s.SetDistinct(false)
 	})
@@ -487,7 +441,7 @@ func (_q *WorkstreamQuery) loadTickets(ctx context.Context, query *TicketQuery, 
 				outValue := int(values[0].(*sql.NullInt64).Int64)
 				inValue := int(values[1].(*sql.NullInt64).Int64)
 				if nids[inValue] == nil {
-					nids[inValue] = map[*Workstream]struct{}{byID[outValue]: {}}
+					nids[inValue] = map[*Ticket]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
 				}
 				nids[inValue][byID[outValue]] = struct{}{}
@@ -495,14 +449,14 @@ func (_q *WorkstreamQuery) loadTickets(ctx context.Context, query *TicketQuery, 
 			}
 		})
 	})
-	neighbors, err := withInterceptors[[]*Ticket](ctx, query, qr, query.inters)
+	neighbors, err := withInterceptors[[]*Workstream](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
 		nodes, ok := nids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected "tickets" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected "workstreams" node returned %v`, n.ID)
 		}
 		for kn := range nodes {
 			assign(kn, n)
@@ -510,38 +464,8 @@ func (_q *WorkstreamQuery) loadTickets(ctx context.Context, query *TicketQuery, 
 	}
 	return nil
 }
-func (_q *WorkstreamQuery) loadWorkstreamTickets(ctx context.Context, query *WorkstreamTicketQuery, nodes []*Workstream, init func(*Workstream), assign func(*Workstream, *WorkstreamTicket)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Workstream)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(workstreamticket.FieldWorkstreamID)
-	}
-	query.Where(predicate.WorkstreamTicket(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(workstream.WorkstreamTicketsColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.WorkstreamID
-		node, ok := nodeids[fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "workstream_id" returned %v for node %v`, fk, n)
-		}
-		assign(node, n)
-	}
-	return nil
-}
 
-func (_q *WorkstreamQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *TicketQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -550,8 +474,8 @@ func (_q *WorkstreamQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *WorkstreamQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(workstream.Table, workstream.Columns, sqlgraph.NewFieldSpec(workstream.FieldID, field.TypeInt))
+func (_q *TicketQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(ticket.Table, ticket.Columns, sqlgraph.NewFieldSpec(ticket.FieldID, field.TypeInt))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -560,9 +484,9 @@ func (_q *WorkstreamQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, workstream.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, ticket.FieldID)
 		for i := range fields {
-			if fields[i] != workstream.FieldID {
+			if fields[i] != ticket.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -590,12 +514,12 @@ func (_q *WorkstreamQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *WorkstreamQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *TicketQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(workstream.Table)
+	t1 := builder.Table(ticket.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = workstream.Columns
+		columns = ticket.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -622,28 +546,28 @@ func (_q *WorkstreamQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// WorkstreamGroupBy is the group-by builder for Workstream entities.
-type WorkstreamGroupBy struct {
+// TicketGroupBy is the group-by builder for Ticket entities.
+type TicketGroupBy struct {
 	selector
-	build *WorkstreamQuery
+	build *TicketQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *WorkstreamGroupBy) Aggregate(fns ...AggregateFunc) *WorkstreamGroupBy {
+func (_g *TicketGroupBy) Aggregate(fns ...AggregateFunc) *TicketGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *WorkstreamGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *TicketGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*WorkstreamQuery, *WorkstreamGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*TicketQuery, *TicketGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *WorkstreamGroupBy) sqlScan(ctx context.Context, root *WorkstreamQuery, v any) error {
+func (_g *TicketGroupBy) sqlScan(ctx context.Context, root *TicketQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -670,28 +594,28 @@ func (_g *WorkstreamGroupBy) sqlScan(ctx context.Context, root *WorkstreamQuery,
 	return sql.ScanSlice(rows, v)
 }
 
-// WorkstreamSelect is the builder for selecting fields of Workstream entities.
-type WorkstreamSelect struct {
-	*WorkstreamQuery
+// TicketSelect is the builder for selecting fields of Ticket entities.
+type TicketSelect struct {
+	*TicketQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *WorkstreamSelect) Aggregate(fns ...AggregateFunc) *WorkstreamSelect {
+func (_s *TicketSelect) Aggregate(fns ...AggregateFunc) *TicketSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *WorkstreamSelect) Scan(ctx context.Context, v any) error {
+func (_s *TicketSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*WorkstreamQuery, *WorkstreamSelect](ctx, _s.WorkstreamQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*TicketQuery, *TicketSelect](ctx, _s.TicketQuery, _s, _s.inters, v)
 }
 
-func (_s *WorkstreamSelect) sqlScan(ctx context.Context, root *WorkstreamQuery, v any) error {
+func (_s *TicketSelect) sqlScan(ctx context.Context, root *TicketQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

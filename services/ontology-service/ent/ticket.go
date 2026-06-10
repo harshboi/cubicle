@@ -3,7 +3,7 @@
 package ent
 
 import (
-	"cubicle/services/ontology-service/ent/workstream"
+	"cubicle/services/ontology-service/ent/ticket"
 	"fmt"
 	"strings"
 	"time"
@@ -12,17 +12,21 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// Workstream is the model entity for the Workstream schema.
-type Workstream struct {
+// Ticket is the model entity for the Ticket schema.
+type Ticket struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Stable source-neutral key used outside SQLite and Ent internals.
 	Key string `json:"key,omitempty"`
-	// Human-readable workstream title.
+	// Human-readable ticket title.
 	Title string `json:"title,omitempty"`
-	// Operational state of the workstream.
-	Status workstream.Status `json:"status,omitempty"`
+	// Ticket description or source body text.
+	Body string `json:"body,omitempty"`
+	// Normalized ticket lifecycle status.
+	Status ticket.Status `json:"status,omitempty"`
+	// Source priority label when available.
+	Priority string `json:"priority,omitempty"`
 	// Short object summary for UI, search snippets, and future LLM context.
 	Summary string `json:"summary,omitempty"`
 	// Normalized text used by V0 Ent-filter search before FTS/vector indexes exist.
@@ -36,9 +40,9 @@ type Workstream struct {
 	// Human-readable source URL when the source provides one.
 	SourceURL string `json:"source_url,omitempty"`
 	// Freshness state for filtering stale or partial graph facts.
-	FreshnessState workstream.FreshnessState `json:"freshness_state,omitempty"`
+	FreshnessState ticket.FreshnessState `json:"freshness_state,omitempty"`
 	// Visibility class used by future permission-aware query filtering.
-	Visibility workstream.Visibility `json:"visibility,omitempty"`
+	Visibility ticket.Visibility `json:"visibility,omitempty"`
 	// Confidence score for source-backed or inferred facts.
 	Confidence float64 `json:"confidence,omitempty"`
 	// Number of source events collapsed into this graph object or link.
@@ -54,52 +58,41 @@ type Workstream struct {
 	// Time this row was last updated in Cubicle storage.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the WorkstreamQuery when eager-loading is set.
-	Edges        WorkstreamEdges `json:"edges"`
+	// The values are being populated by the TicketQuery when eager-loading is set.
+	Edges        TicketEdges `json:"edges"`
 	selectValues sql.SelectValues
 }
 
-// WorkstreamEdges holds the relations/edges for other nodes in the graph.
-type WorkstreamEdges struct {
-	// Tickets that belong to this workstream.
-	Tickets []*Ticket `json:"tickets,omitempty"`
-	// WorkstreamTickets holds the value of the workstream_tickets edge.
-	WorkstreamTickets []*WorkstreamTicket `json:"workstream_tickets,omitempty"`
+// TicketEdges holds the relations/edges for other nodes in the graph.
+type TicketEdges struct {
+	// Workstreams that include this ticket.
+	Workstreams []*Workstream `json:"workstreams,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [1]bool
 }
 
-// TicketsOrErr returns the Tickets value or an error if the edge
+// WorkstreamsOrErr returns the Workstreams value or an error if the edge
 // was not loaded in eager-loading.
-func (e WorkstreamEdges) TicketsOrErr() ([]*Ticket, error) {
+func (e TicketEdges) WorkstreamsOrErr() ([]*Workstream, error) {
 	if e.loadedTypes[0] {
-		return e.Tickets, nil
+		return e.Workstreams, nil
 	}
-	return nil, &NotLoadedError{edge: "tickets"}
-}
-
-// WorkstreamTicketsOrErr returns the WorkstreamTickets value or an error if the edge
-// was not loaded in eager-loading.
-func (e WorkstreamEdges) WorkstreamTicketsOrErr() ([]*WorkstreamTicket, error) {
-	if e.loadedTypes[1] {
-		return e.WorkstreamTickets, nil
-	}
-	return nil, &NotLoadedError{edge: "workstream_tickets"}
+	return nil, &NotLoadedError{edge: "workstreams"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Workstream) scanValues(columns []string) ([]any, error) {
+func (*Ticket) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case workstream.FieldConfidence, workstream.FieldRankScore:
+		case ticket.FieldConfidence, ticket.FieldRankScore:
 			values[i] = new(sql.NullFloat64)
-		case workstream.FieldID, workstream.FieldEventCount:
+		case ticket.FieldID, ticket.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workstream.FieldKey, workstream.FieldTitle, workstream.FieldStatus, workstream.FieldSummary, workstream.FieldSearchText, workstream.FieldSource, workstream.FieldSourceInstance, workstream.FieldExternalID, workstream.FieldSourceURL, workstream.FieldFreshnessState, workstream.FieldVisibility:
+		case ticket.FieldKey, ticket.FieldTitle, ticket.FieldBody, ticket.FieldStatus, ticket.FieldPriority, ticket.FieldSummary, ticket.FieldSearchText, ticket.FieldSource, ticket.FieldSourceInstance, ticket.FieldExternalID, ticket.FieldSourceURL, ticket.FieldFreshnessState, ticket.FieldVisibility:
 			values[i] = new(sql.NullString)
-		case workstream.FieldFirstSeenAt, workstream.FieldLastActivityAt, workstream.FieldCreatedAt, workstream.FieldUpdatedAt:
+		case ticket.FieldFirstSeenAt, ticket.FieldLastActivityAt, ticket.FieldCreatedAt, ticket.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -109,122 +102,134 @@ func (*Workstream) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the Workstream fields.
-func (_m *Workstream) assignValues(columns []string, values []any) error {
+// to the Ticket fields.
+func (_m *Ticket) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case workstream.FieldID:
+		case ticket.FieldID:
 			value, ok := values[i].(*sql.NullInt64)
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = int(value.Int64)
-		case workstream.FieldKey:
+		case ticket.FieldKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field key", values[i])
 			} else if value.Valid {
 				_m.Key = value.String
 			}
-		case workstream.FieldTitle:
+		case ticket.FieldTitle:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field title", values[i])
 			} else if value.Valid {
 				_m.Title = value.String
 			}
-		case workstream.FieldStatus:
+		case ticket.FieldBody:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field body", values[i])
+			} else if value.Valid {
+				_m.Body = value.String
+			}
+		case ticket.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				_m.Status = workstream.Status(value.String)
+				_m.Status = ticket.Status(value.String)
 			}
-		case workstream.FieldSummary:
+		case ticket.FieldPriority:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field priority", values[i])
+			} else if value.Valid {
+				_m.Priority = value.String
+			}
+		case ticket.FieldSummary:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field summary", values[i])
 			} else if value.Valid {
 				_m.Summary = value.String
 			}
-		case workstream.FieldSearchText:
+		case ticket.FieldSearchText:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field search_text", values[i])
 			} else if value.Valid {
 				_m.SearchText = value.String
 			}
-		case workstream.FieldSource:
+		case ticket.FieldSource:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field source", values[i])
 			} else if value.Valid {
 				_m.Source = value.String
 			}
-		case workstream.FieldSourceInstance:
+		case ticket.FieldSourceInstance:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field source_instance", values[i])
 			} else if value.Valid {
 				_m.SourceInstance = value.String
 			}
-		case workstream.FieldExternalID:
+		case ticket.FieldExternalID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field external_id", values[i])
 			} else if value.Valid {
 				_m.ExternalID = value.String
 			}
-		case workstream.FieldSourceURL:
+		case ticket.FieldSourceURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field source_url", values[i])
 			} else if value.Valid {
 				_m.SourceURL = value.String
 			}
-		case workstream.FieldFreshnessState:
+		case ticket.FieldFreshnessState:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field freshness_state", values[i])
 			} else if value.Valid {
-				_m.FreshnessState = workstream.FreshnessState(value.String)
+				_m.FreshnessState = ticket.FreshnessState(value.String)
 			}
-		case workstream.FieldVisibility:
+		case ticket.FieldVisibility:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field visibility", values[i])
 			} else if value.Valid {
-				_m.Visibility = workstream.Visibility(value.String)
+				_m.Visibility = ticket.Visibility(value.String)
 			}
-		case workstream.FieldConfidence:
+		case ticket.FieldConfidence:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field confidence", values[i])
 			} else if value.Valid {
 				_m.Confidence = value.Float64
 			}
-		case workstream.FieldEventCount:
+		case ticket.FieldEventCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field event_count", values[i])
 			} else if value.Valid {
 				_m.EventCount = int(value.Int64)
 			}
-		case workstream.FieldFirstSeenAt:
+		case ticket.FieldFirstSeenAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field first_seen_at", values[i])
 			} else if value.Valid {
 				_m.FirstSeenAt = value.Time
 			}
-		case workstream.FieldLastActivityAt:
+		case ticket.FieldLastActivityAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field last_activity_at", values[i])
 			} else if value.Valid {
 				_m.LastActivityAt = value.Time
 			}
-		case workstream.FieldRankScore:
+		case ticket.FieldRankScore:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field rank_score", values[i])
 			} else if value.Valid {
 				_m.RankScore = value.Float64
 			}
-		case workstream.FieldCreatedAt:
+		case ticket.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case workstream.FieldUpdatedAt:
+		case ticket.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
@@ -237,44 +242,39 @@ func (_m *Workstream) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the Workstream.
+// Value returns the ent.Value that was dynamically selected and assigned to the Ticket.
 // This includes values selected through modifiers, order, etc.
-func (_m *Workstream) Value(name string) (ent.Value, error) {
+func (_m *Ticket) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryTickets queries the "tickets" edge of the Workstream entity.
-func (_m *Workstream) QueryTickets() *TicketQuery {
-	return NewWorkstreamClient(_m.config).QueryTickets(_m)
+// QueryWorkstreams queries the "workstreams" edge of the Ticket entity.
+func (_m *Ticket) QueryWorkstreams() *WorkstreamQuery {
+	return NewTicketClient(_m.config).QueryWorkstreams(_m)
 }
 
-// QueryWorkstreamTickets queries the "workstream_tickets" edge of the Workstream entity.
-func (_m *Workstream) QueryWorkstreamTickets() *WorkstreamTicketQuery {
-	return NewWorkstreamClient(_m.config).QueryWorkstreamTickets(_m)
-}
-
-// Update returns a builder for updating this Workstream.
-// Note that you need to call Workstream.Unwrap() before calling this method if this Workstream
+// Update returns a builder for updating this Ticket.
+// Note that you need to call Ticket.Unwrap() before calling this method if this Ticket
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *Workstream) Update() *WorkstreamUpdateOne {
-	return NewWorkstreamClient(_m.config).UpdateOne(_m)
+func (_m *Ticket) Update() *TicketUpdateOne {
+	return NewTicketClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the Workstream entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the Ticket entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *Workstream) Unwrap() *Workstream {
+func (_m *Ticket) Unwrap() *Ticket {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: Workstream is not a transactional entity")
+		panic("ent: Ticket is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *Workstream) String() string {
+func (_m *Ticket) String() string {
 	var builder strings.Builder
-	builder.WriteString("Workstream(")
+	builder.WriteString("Ticket(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("key=")
 	builder.WriteString(_m.Key)
@@ -282,8 +282,14 @@ func (_m *Workstream) String() string {
 	builder.WriteString("title=")
 	builder.WriteString(_m.Title)
 	builder.WriteString(", ")
+	builder.WriteString("body=")
+	builder.WriteString(_m.Body)
+	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
+	builder.WriteString(", ")
+	builder.WriteString("priority=")
+	builder.WriteString(_m.Priority)
 	builder.WriteString(", ")
 	builder.WriteString("summary=")
 	builder.WriteString(_m.Summary)
@@ -333,5 +339,5 @@ func (_m *Workstream) String() string {
 	return builder.String()
 }
 
-// Workstreams is a parsable slice of Workstream.
-type Workstreams []*Workstream
+// Tickets is a parsable slice of Ticket.
+type Tickets []*Ticket

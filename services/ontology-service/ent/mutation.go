@@ -7,7 +7,9 @@ import (
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/predicate"
+	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workstream"
+	"cubicle/services/ontology-service/ent/workstreamticket"
 	"errors"
 	"fmt"
 	"sync"
@@ -26,9 +28,11 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeEvidence   = "Evidence"
-	TypePerson     = "Person"
-	TypeWorkstream = "Workstream"
+	TypeEvidence         = "Evidence"
+	TypePerson           = "Person"
+	TypeTicket           = "Ticket"
+	TypeWorkstream       = "Workstream"
+	TypeWorkstreamTicket = "WorkstreamTicket"
 )
 
 // EvidenceMutation represents an operation that mutates the Evidence nodes in the graph.
@@ -2815,6 +2819,1746 @@ func (m *PersonMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Person edge %s", name)
 }
 
+// TicketMutation represents an operation that mutates the Ticket nodes in the graph.
+type TicketMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *int
+	key                *string
+	title              *string
+	body               *string
+	status             *ticket.Status
+	priority           *string
+	summary            *string
+	search_text        *string
+	source             *string
+	source_instance    *string
+	external_id        *string
+	source_url         *string
+	freshness_state    *ticket.FreshnessState
+	visibility         *ticket.Visibility
+	confidence         *float64
+	addconfidence      *float64
+	event_count        *int
+	addevent_count     *int
+	first_seen_at      *time.Time
+	last_activity_at   *time.Time
+	rank_score         *float64
+	addrank_score      *float64
+	created_at         *time.Time
+	updated_at         *time.Time
+	clearedFields      map[string]struct{}
+	workstreams        map[int]struct{}
+	removedworkstreams map[int]struct{}
+	clearedworkstreams bool
+	done               bool
+	oldValue           func(context.Context) (*Ticket, error)
+	predicates         []predicate.Ticket
+}
+
+var _ ent.Mutation = (*TicketMutation)(nil)
+
+// ticketOption allows management of the mutation configuration using functional options.
+type ticketOption func(*TicketMutation)
+
+// newTicketMutation creates new mutation for the Ticket entity.
+func newTicketMutation(c config, op Op, opts ...ticketOption) *TicketMutation {
+	m := &TicketMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTicket,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTicketID sets the ID field of the mutation.
+func withTicketID(id int) ticketOption {
+	return func(m *TicketMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Ticket
+		)
+		m.oldValue = func(ctx context.Context) (*Ticket, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Ticket.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTicket sets the old Ticket of the mutation.
+func withTicket(node *Ticket) ticketOption {
+	return func(m *TicketMutation) {
+		m.oldValue = func(context.Context) (*Ticket, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TicketMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TicketMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TicketMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TicketMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Ticket.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetKey sets the "key" field.
+func (m *TicketMutation) SetKey(s string) {
+	m.key = &s
+}
+
+// Key returns the value of the "key" field in the mutation.
+func (m *TicketMutation) Key() (r string, exists bool) {
+	v := m.key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldKey returns the old "key" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldKey: %w", err)
+	}
+	return oldValue.Key, nil
+}
+
+// ResetKey resets all changes to the "key" field.
+func (m *TicketMutation) ResetKey() {
+	m.key = nil
+}
+
+// SetTitle sets the "title" field.
+func (m *TicketMutation) SetTitle(s string) {
+	m.title = &s
+}
+
+// Title returns the value of the "title" field in the mutation.
+func (m *TicketMutation) Title() (r string, exists bool) {
+	v := m.title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle returns the old "title" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle: %w", err)
+	}
+	return oldValue.Title, nil
+}
+
+// ResetTitle resets all changes to the "title" field.
+func (m *TicketMutation) ResetTitle() {
+	m.title = nil
+}
+
+// SetBody sets the "body" field.
+func (m *TicketMutation) SetBody(s string) {
+	m.body = &s
+}
+
+// Body returns the value of the "body" field in the mutation.
+func (m *TicketMutation) Body() (r string, exists bool) {
+	v := m.body
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBody returns the old "body" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldBody(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBody is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBody requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBody: %w", err)
+	}
+	return oldValue.Body, nil
+}
+
+// ClearBody clears the value of the "body" field.
+func (m *TicketMutation) ClearBody() {
+	m.body = nil
+	m.clearedFields[ticket.FieldBody] = struct{}{}
+}
+
+// BodyCleared returns if the "body" field was cleared in this mutation.
+func (m *TicketMutation) BodyCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldBody]
+	return ok
+}
+
+// ResetBody resets all changes to the "body" field.
+func (m *TicketMutation) ResetBody() {
+	m.body = nil
+	delete(m.clearedFields, ticket.FieldBody)
+}
+
+// SetStatus sets the "status" field.
+func (m *TicketMutation) SetStatus(t ticket.Status) {
+	m.status = &t
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *TicketMutation) Status() (r ticket.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldStatus(ctx context.Context) (v ticket.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *TicketMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetPriority sets the "priority" field.
+func (m *TicketMutation) SetPriority(s string) {
+	m.priority = &s
+}
+
+// Priority returns the value of the "priority" field in the mutation.
+func (m *TicketMutation) Priority() (r string, exists bool) {
+	v := m.priority
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPriority returns the old "priority" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldPriority(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPriority is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPriority requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPriority: %w", err)
+	}
+	return oldValue.Priority, nil
+}
+
+// ClearPriority clears the value of the "priority" field.
+func (m *TicketMutation) ClearPriority() {
+	m.priority = nil
+	m.clearedFields[ticket.FieldPriority] = struct{}{}
+}
+
+// PriorityCleared returns if the "priority" field was cleared in this mutation.
+func (m *TicketMutation) PriorityCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldPriority]
+	return ok
+}
+
+// ResetPriority resets all changes to the "priority" field.
+func (m *TicketMutation) ResetPriority() {
+	m.priority = nil
+	delete(m.clearedFields, ticket.FieldPriority)
+}
+
+// SetSummary sets the "summary" field.
+func (m *TicketMutation) SetSummary(s string) {
+	m.summary = &s
+}
+
+// Summary returns the value of the "summary" field in the mutation.
+func (m *TicketMutation) Summary() (r string, exists bool) {
+	v := m.summary
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSummary returns the old "summary" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldSummary(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSummary is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSummary requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSummary: %w", err)
+	}
+	return oldValue.Summary, nil
+}
+
+// ClearSummary clears the value of the "summary" field.
+func (m *TicketMutation) ClearSummary() {
+	m.summary = nil
+	m.clearedFields[ticket.FieldSummary] = struct{}{}
+}
+
+// SummaryCleared returns if the "summary" field was cleared in this mutation.
+func (m *TicketMutation) SummaryCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldSummary]
+	return ok
+}
+
+// ResetSummary resets all changes to the "summary" field.
+func (m *TicketMutation) ResetSummary() {
+	m.summary = nil
+	delete(m.clearedFields, ticket.FieldSummary)
+}
+
+// SetSearchText sets the "search_text" field.
+func (m *TicketMutation) SetSearchText(s string) {
+	m.search_text = &s
+}
+
+// SearchText returns the value of the "search_text" field in the mutation.
+func (m *TicketMutation) SearchText() (r string, exists bool) {
+	v := m.search_text
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSearchText returns the old "search_text" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldSearchText(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSearchText is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSearchText requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSearchText: %w", err)
+	}
+	return oldValue.SearchText, nil
+}
+
+// ClearSearchText clears the value of the "search_text" field.
+func (m *TicketMutation) ClearSearchText() {
+	m.search_text = nil
+	m.clearedFields[ticket.FieldSearchText] = struct{}{}
+}
+
+// SearchTextCleared returns if the "search_text" field was cleared in this mutation.
+func (m *TicketMutation) SearchTextCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldSearchText]
+	return ok
+}
+
+// ResetSearchText resets all changes to the "search_text" field.
+func (m *TicketMutation) ResetSearchText() {
+	m.search_text = nil
+	delete(m.clearedFields, ticket.FieldSearchText)
+}
+
+// SetSource sets the "source" field.
+func (m *TicketMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *TicketMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldSource(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ClearSource clears the value of the "source" field.
+func (m *TicketMutation) ClearSource() {
+	m.source = nil
+	m.clearedFields[ticket.FieldSource] = struct{}{}
+}
+
+// SourceCleared returns if the "source" field was cleared in this mutation.
+func (m *TicketMutation) SourceCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldSource]
+	return ok
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *TicketMutation) ResetSource() {
+	m.source = nil
+	delete(m.clearedFields, ticket.FieldSource)
+}
+
+// SetSourceInstance sets the "source_instance" field.
+func (m *TicketMutation) SetSourceInstance(s string) {
+	m.source_instance = &s
+}
+
+// SourceInstance returns the value of the "source_instance" field in the mutation.
+func (m *TicketMutation) SourceInstance() (r string, exists bool) {
+	v := m.source_instance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceInstance returns the old "source_instance" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldSourceInstance(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceInstance is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceInstance requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceInstance: %w", err)
+	}
+	return oldValue.SourceInstance, nil
+}
+
+// ClearSourceInstance clears the value of the "source_instance" field.
+func (m *TicketMutation) ClearSourceInstance() {
+	m.source_instance = nil
+	m.clearedFields[ticket.FieldSourceInstance] = struct{}{}
+}
+
+// SourceInstanceCleared returns if the "source_instance" field was cleared in this mutation.
+func (m *TicketMutation) SourceInstanceCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldSourceInstance]
+	return ok
+}
+
+// ResetSourceInstance resets all changes to the "source_instance" field.
+func (m *TicketMutation) ResetSourceInstance() {
+	m.source_instance = nil
+	delete(m.clearedFields, ticket.FieldSourceInstance)
+}
+
+// SetExternalID sets the "external_id" field.
+func (m *TicketMutation) SetExternalID(s string) {
+	m.external_id = &s
+}
+
+// ExternalID returns the value of the "external_id" field in the mutation.
+func (m *TicketMutation) ExternalID() (r string, exists bool) {
+	v := m.external_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExternalID returns the old "external_id" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldExternalID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExternalID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExternalID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExternalID: %w", err)
+	}
+	return oldValue.ExternalID, nil
+}
+
+// ClearExternalID clears the value of the "external_id" field.
+func (m *TicketMutation) ClearExternalID() {
+	m.external_id = nil
+	m.clearedFields[ticket.FieldExternalID] = struct{}{}
+}
+
+// ExternalIDCleared returns if the "external_id" field was cleared in this mutation.
+func (m *TicketMutation) ExternalIDCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldExternalID]
+	return ok
+}
+
+// ResetExternalID resets all changes to the "external_id" field.
+func (m *TicketMutation) ResetExternalID() {
+	m.external_id = nil
+	delete(m.clearedFields, ticket.FieldExternalID)
+}
+
+// SetSourceURL sets the "source_url" field.
+func (m *TicketMutation) SetSourceURL(s string) {
+	m.source_url = &s
+}
+
+// SourceURL returns the value of the "source_url" field in the mutation.
+func (m *TicketMutation) SourceURL() (r string, exists bool) {
+	v := m.source_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSourceURL returns the old "source_url" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldSourceURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSourceURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSourceURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSourceURL: %w", err)
+	}
+	return oldValue.SourceURL, nil
+}
+
+// ClearSourceURL clears the value of the "source_url" field.
+func (m *TicketMutation) ClearSourceURL() {
+	m.source_url = nil
+	m.clearedFields[ticket.FieldSourceURL] = struct{}{}
+}
+
+// SourceURLCleared returns if the "source_url" field was cleared in this mutation.
+func (m *TicketMutation) SourceURLCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldSourceURL]
+	return ok
+}
+
+// ResetSourceURL resets all changes to the "source_url" field.
+func (m *TicketMutation) ResetSourceURL() {
+	m.source_url = nil
+	delete(m.clearedFields, ticket.FieldSourceURL)
+}
+
+// SetFreshnessState sets the "freshness_state" field.
+func (m *TicketMutation) SetFreshnessState(ts ticket.FreshnessState) {
+	m.freshness_state = &ts
+}
+
+// FreshnessState returns the value of the "freshness_state" field in the mutation.
+func (m *TicketMutation) FreshnessState() (r ticket.FreshnessState, exists bool) {
+	v := m.freshness_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFreshnessState returns the old "freshness_state" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldFreshnessState(ctx context.Context) (v ticket.FreshnessState, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFreshnessState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFreshnessState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFreshnessState: %w", err)
+	}
+	return oldValue.FreshnessState, nil
+}
+
+// ResetFreshnessState resets all changes to the "freshness_state" field.
+func (m *TicketMutation) ResetFreshnessState() {
+	m.freshness_state = nil
+}
+
+// SetVisibility sets the "visibility" field.
+func (m *TicketMutation) SetVisibility(t ticket.Visibility) {
+	m.visibility = &t
+}
+
+// Visibility returns the value of the "visibility" field in the mutation.
+func (m *TicketMutation) Visibility() (r ticket.Visibility, exists bool) {
+	v := m.visibility
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVisibility returns the old "visibility" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldVisibility(ctx context.Context) (v ticket.Visibility, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVisibility is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVisibility requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVisibility: %w", err)
+	}
+	return oldValue.Visibility, nil
+}
+
+// ResetVisibility resets all changes to the "visibility" field.
+func (m *TicketMutation) ResetVisibility() {
+	m.visibility = nil
+}
+
+// SetConfidence sets the "confidence" field.
+func (m *TicketMutation) SetConfidence(f float64) {
+	m.confidence = &f
+	m.addconfidence = nil
+}
+
+// Confidence returns the value of the "confidence" field in the mutation.
+func (m *TicketMutation) Confidence() (r float64, exists bool) {
+	v := m.confidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfidence returns the old "confidence" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldConfidence(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfidence is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfidence requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfidence: %w", err)
+	}
+	return oldValue.Confidence, nil
+}
+
+// AddConfidence adds f to the "confidence" field.
+func (m *TicketMutation) AddConfidence(f float64) {
+	if m.addconfidence != nil {
+		*m.addconfidence += f
+	} else {
+		m.addconfidence = &f
+	}
+}
+
+// AddedConfidence returns the value that was added to the "confidence" field in this mutation.
+func (m *TicketMutation) AddedConfidence() (r float64, exists bool) {
+	v := m.addconfidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConfidence resets all changes to the "confidence" field.
+func (m *TicketMutation) ResetConfidence() {
+	m.confidence = nil
+	m.addconfidence = nil
+}
+
+// SetEventCount sets the "event_count" field.
+func (m *TicketMutation) SetEventCount(i int) {
+	m.event_count = &i
+	m.addevent_count = nil
+}
+
+// EventCount returns the value of the "event_count" field in the mutation.
+func (m *TicketMutation) EventCount() (r int, exists bool) {
+	v := m.event_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEventCount returns the old "event_count" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldEventCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEventCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEventCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEventCount: %w", err)
+	}
+	return oldValue.EventCount, nil
+}
+
+// AddEventCount adds i to the "event_count" field.
+func (m *TicketMutation) AddEventCount(i int) {
+	if m.addevent_count != nil {
+		*m.addevent_count += i
+	} else {
+		m.addevent_count = &i
+	}
+}
+
+// AddedEventCount returns the value that was added to the "event_count" field in this mutation.
+func (m *TicketMutation) AddedEventCount() (r int, exists bool) {
+	v := m.addevent_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEventCount resets all changes to the "event_count" field.
+func (m *TicketMutation) ResetEventCount() {
+	m.event_count = nil
+	m.addevent_count = nil
+}
+
+// SetFirstSeenAt sets the "first_seen_at" field.
+func (m *TicketMutation) SetFirstSeenAt(t time.Time) {
+	m.first_seen_at = &t
+}
+
+// FirstSeenAt returns the value of the "first_seen_at" field in the mutation.
+func (m *TicketMutation) FirstSeenAt() (r time.Time, exists bool) {
+	v := m.first_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFirstSeenAt returns the old "first_seen_at" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldFirstSeenAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFirstSeenAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFirstSeenAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFirstSeenAt: %w", err)
+	}
+	return oldValue.FirstSeenAt, nil
+}
+
+// ClearFirstSeenAt clears the value of the "first_seen_at" field.
+func (m *TicketMutation) ClearFirstSeenAt() {
+	m.first_seen_at = nil
+	m.clearedFields[ticket.FieldFirstSeenAt] = struct{}{}
+}
+
+// FirstSeenAtCleared returns if the "first_seen_at" field was cleared in this mutation.
+func (m *TicketMutation) FirstSeenAtCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldFirstSeenAt]
+	return ok
+}
+
+// ResetFirstSeenAt resets all changes to the "first_seen_at" field.
+func (m *TicketMutation) ResetFirstSeenAt() {
+	m.first_seen_at = nil
+	delete(m.clearedFields, ticket.FieldFirstSeenAt)
+}
+
+// SetLastActivityAt sets the "last_activity_at" field.
+func (m *TicketMutation) SetLastActivityAt(t time.Time) {
+	m.last_activity_at = &t
+}
+
+// LastActivityAt returns the value of the "last_activity_at" field in the mutation.
+func (m *TicketMutation) LastActivityAt() (r time.Time, exists bool) {
+	v := m.last_activity_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastActivityAt returns the old "last_activity_at" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldLastActivityAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastActivityAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastActivityAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastActivityAt: %w", err)
+	}
+	return oldValue.LastActivityAt, nil
+}
+
+// ClearLastActivityAt clears the value of the "last_activity_at" field.
+func (m *TicketMutation) ClearLastActivityAt() {
+	m.last_activity_at = nil
+	m.clearedFields[ticket.FieldLastActivityAt] = struct{}{}
+}
+
+// LastActivityAtCleared returns if the "last_activity_at" field was cleared in this mutation.
+func (m *TicketMutation) LastActivityAtCleared() bool {
+	_, ok := m.clearedFields[ticket.FieldLastActivityAt]
+	return ok
+}
+
+// ResetLastActivityAt resets all changes to the "last_activity_at" field.
+func (m *TicketMutation) ResetLastActivityAt() {
+	m.last_activity_at = nil
+	delete(m.clearedFields, ticket.FieldLastActivityAt)
+}
+
+// SetRankScore sets the "rank_score" field.
+func (m *TicketMutation) SetRankScore(f float64) {
+	m.rank_score = &f
+	m.addrank_score = nil
+}
+
+// RankScore returns the value of the "rank_score" field in the mutation.
+func (m *TicketMutation) RankScore() (r float64, exists bool) {
+	v := m.rank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRankScore returns the old "rank_score" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldRankScore(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRankScore is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRankScore requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRankScore: %w", err)
+	}
+	return oldValue.RankScore, nil
+}
+
+// AddRankScore adds f to the "rank_score" field.
+func (m *TicketMutation) AddRankScore(f float64) {
+	if m.addrank_score != nil {
+		*m.addrank_score += f
+	} else {
+		m.addrank_score = &f
+	}
+}
+
+// AddedRankScore returns the value that was added to the "rank_score" field in this mutation.
+func (m *TicketMutation) AddedRankScore() (r float64, exists bool) {
+	v := m.addrank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRankScore resets all changes to the "rank_score" field.
+func (m *TicketMutation) ResetRankScore() {
+	m.rank_score = nil
+	m.addrank_score = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *TicketMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *TicketMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *TicketMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TicketMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TicketMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Ticket entity.
+// If the Ticket object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TicketMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TicketMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// AddWorkstreamIDs adds the "workstreams" edge to the Workstream entity by ids.
+func (m *TicketMutation) AddWorkstreamIDs(ids ...int) {
+	if m.workstreams == nil {
+		m.workstreams = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.workstreams[ids[i]] = struct{}{}
+	}
+}
+
+// ClearWorkstreams clears the "workstreams" edge to the Workstream entity.
+func (m *TicketMutation) ClearWorkstreams() {
+	m.clearedworkstreams = true
+}
+
+// WorkstreamsCleared reports if the "workstreams" edge to the Workstream entity was cleared.
+func (m *TicketMutation) WorkstreamsCleared() bool {
+	return m.clearedworkstreams
+}
+
+// RemoveWorkstreamIDs removes the "workstreams" edge to the Workstream entity by IDs.
+func (m *TicketMutation) RemoveWorkstreamIDs(ids ...int) {
+	if m.removedworkstreams == nil {
+		m.removedworkstreams = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.workstreams, ids[i])
+		m.removedworkstreams[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedWorkstreams returns the removed IDs of the "workstreams" edge to the Workstream entity.
+func (m *TicketMutation) RemovedWorkstreamsIDs() (ids []int) {
+	for id := range m.removedworkstreams {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// WorkstreamsIDs returns the "workstreams" edge IDs in the mutation.
+func (m *TicketMutation) WorkstreamsIDs() (ids []int) {
+	for id := range m.workstreams {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetWorkstreams resets all changes to the "workstreams" edge.
+func (m *TicketMutation) ResetWorkstreams() {
+	m.workstreams = nil
+	m.clearedworkstreams = false
+	m.removedworkstreams = nil
+}
+
+// Where appends a list predicates to the TicketMutation builder.
+func (m *TicketMutation) Where(ps ...predicate.Ticket) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TicketMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TicketMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Ticket, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TicketMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TicketMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Ticket).
+func (m *TicketMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TicketMutation) Fields() []string {
+	fields := make([]string, 0, 20)
+	if m.key != nil {
+		fields = append(fields, ticket.FieldKey)
+	}
+	if m.title != nil {
+		fields = append(fields, ticket.FieldTitle)
+	}
+	if m.body != nil {
+		fields = append(fields, ticket.FieldBody)
+	}
+	if m.status != nil {
+		fields = append(fields, ticket.FieldStatus)
+	}
+	if m.priority != nil {
+		fields = append(fields, ticket.FieldPriority)
+	}
+	if m.summary != nil {
+		fields = append(fields, ticket.FieldSummary)
+	}
+	if m.search_text != nil {
+		fields = append(fields, ticket.FieldSearchText)
+	}
+	if m.source != nil {
+		fields = append(fields, ticket.FieldSource)
+	}
+	if m.source_instance != nil {
+		fields = append(fields, ticket.FieldSourceInstance)
+	}
+	if m.external_id != nil {
+		fields = append(fields, ticket.FieldExternalID)
+	}
+	if m.source_url != nil {
+		fields = append(fields, ticket.FieldSourceURL)
+	}
+	if m.freshness_state != nil {
+		fields = append(fields, ticket.FieldFreshnessState)
+	}
+	if m.visibility != nil {
+		fields = append(fields, ticket.FieldVisibility)
+	}
+	if m.confidence != nil {
+		fields = append(fields, ticket.FieldConfidence)
+	}
+	if m.event_count != nil {
+		fields = append(fields, ticket.FieldEventCount)
+	}
+	if m.first_seen_at != nil {
+		fields = append(fields, ticket.FieldFirstSeenAt)
+	}
+	if m.last_activity_at != nil {
+		fields = append(fields, ticket.FieldLastActivityAt)
+	}
+	if m.rank_score != nil {
+		fields = append(fields, ticket.FieldRankScore)
+	}
+	if m.created_at != nil {
+		fields = append(fields, ticket.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, ticket.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TicketMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case ticket.FieldKey:
+		return m.Key()
+	case ticket.FieldTitle:
+		return m.Title()
+	case ticket.FieldBody:
+		return m.Body()
+	case ticket.FieldStatus:
+		return m.Status()
+	case ticket.FieldPriority:
+		return m.Priority()
+	case ticket.FieldSummary:
+		return m.Summary()
+	case ticket.FieldSearchText:
+		return m.SearchText()
+	case ticket.FieldSource:
+		return m.Source()
+	case ticket.FieldSourceInstance:
+		return m.SourceInstance()
+	case ticket.FieldExternalID:
+		return m.ExternalID()
+	case ticket.FieldSourceURL:
+		return m.SourceURL()
+	case ticket.FieldFreshnessState:
+		return m.FreshnessState()
+	case ticket.FieldVisibility:
+		return m.Visibility()
+	case ticket.FieldConfidence:
+		return m.Confidence()
+	case ticket.FieldEventCount:
+		return m.EventCount()
+	case ticket.FieldFirstSeenAt:
+		return m.FirstSeenAt()
+	case ticket.FieldLastActivityAt:
+		return m.LastActivityAt()
+	case ticket.FieldRankScore:
+		return m.RankScore()
+	case ticket.FieldCreatedAt:
+		return m.CreatedAt()
+	case ticket.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TicketMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case ticket.FieldKey:
+		return m.OldKey(ctx)
+	case ticket.FieldTitle:
+		return m.OldTitle(ctx)
+	case ticket.FieldBody:
+		return m.OldBody(ctx)
+	case ticket.FieldStatus:
+		return m.OldStatus(ctx)
+	case ticket.FieldPriority:
+		return m.OldPriority(ctx)
+	case ticket.FieldSummary:
+		return m.OldSummary(ctx)
+	case ticket.FieldSearchText:
+		return m.OldSearchText(ctx)
+	case ticket.FieldSource:
+		return m.OldSource(ctx)
+	case ticket.FieldSourceInstance:
+		return m.OldSourceInstance(ctx)
+	case ticket.FieldExternalID:
+		return m.OldExternalID(ctx)
+	case ticket.FieldSourceURL:
+		return m.OldSourceURL(ctx)
+	case ticket.FieldFreshnessState:
+		return m.OldFreshnessState(ctx)
+	case ticket.FieldVisibility:
+		return m.OldVisibility(ctx)
+	case ticket.FieldConfidence:
+		return m.OldConfidence(ctx)
+	case ticket.FieldEventCount:
+		return m.OldEventCount(ctx)
+	case ticket.FieldFirstSeenAt:
+		return m.OldFirstSeenAt(ctx)
+	case ticket.FieldLastActivityAt:
+		return m.OldLastActivityAt(ctx)
+	case ticket.FieldRankScore:
+		return m.OldRankScore(ctx)
+	case ticket.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case ticket.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Ticket field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TicketMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case ticket.FieldKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetKey(v)
+		return nil
+	case ticket.FieldTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle(v)
+		return nil
+	case ticket.FieldBody:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBody(v)
+		return nil
+	case ticket.FieldStatus:
+		v, ok := value.(ticket.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case ticket.FieldPriority:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPriority(v)
+		return nil
+	case ticket.FieldSummary:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSummary(v)
+		return nil
+	case ticket.FieldSearchText:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSearchText(v)
+		return nil
+	case ticket.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case ticket.FieldSourceInstance:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceInstance(v)
+		return nil
+	case ticket.FieldExternalID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExternalID(v)
+		return nil
+	case ticket.FieldSourceURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceURL(v)
+		return nil
+	case ticket.FieldFreshnessState:
+		v, ok := value.(ticket.FreshnessState)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFreshnessState(v)
+		return nil
+	case ticket.FieldVisibility:
+		v, ok := value.(ticket.Visibility)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisibility(v)
+		return nil
+	case ticket.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfidence(v)
+		return nil
+	case ticket.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventCount(v)
+		return nil
+	case ticket.FieldFirstSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstSeenAt(v)
+		return nil
+	case ticket.FieldLastActivityAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastActivityAt(v)
+		return nil
+	case ticket.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRankScore(v)
+		return nil
+	case ticket.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case ticket.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Ticket field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TicketMutation) AddedFields() []string {
+	var fields []string
+	if m.addconfidence != nil {
+		fields = append(fields, ticket.FieldConfidence)
+	}
+	if m.addevent_count != nil {
+		fields = append(fields, ticket.FieldEventCount)
+	}
+	if m.addrank_score != nil {
+		fields = append(fields, ticket.FieldRankScore)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TicketMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case ticket.FieldConfidence:
+		return m.AddedConfidence()
+	case ticket.FieldEventCount:
+		return m.AddedEventCount()
+	case ticket.FieldRankScore:
+		return m.AddedRankScore()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TicketMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case ticket.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfidence(v)
+		return nil
+	case ticket.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEventCount(v)
+		return nil
+	case ticket.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRankScore(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Ticket numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TicketMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(ticket.FieldBody) {
+		fields = append(fields, ticket.FieldBody)
+	}
+	if m.FieldCleared(ticket.FieldPriority) {
+		fields = append(fields, ticket.FieldPriority)
+	}
+	if m.FieldCleared(ticket.FieldSummary) {
+		fields = append(fields, ticket.FieldSummary)
+	}
+	if m.FieldCleared(ticket.FieldSearchText) {
+		fields = append(fields, ticket.FieldSearchText)
+	}
+	if m.FieldCleared(ticket.FieldSource) {
+		fields = append(fields, ticket.FieldSource)
+	}
+	if m.FieldCleared(ticket.FieldSourceInstance) {
+		fields = append(fields, ticket.FieldSourceInstance)
+	}
+	if m.FieldCleared(ticket.FieldExternalID) {
+		fields = append(fields, ticket.FieldExternalID)
+	}
+	if m.FieldCleared(ticket.FieldSourceURL) {
+		fields = append(fields, ticket.FieldSourceURL)
+	}
+	if m.FieldCleared(ticket.FieldFirstSeenAt) {
+		fields = append(fields, ticket.FieldFirstSeenAt)
+	}
+	if m.FieldCleared(ticket.FieldLastActivityAt) {
+		fields = append(fields, ticket.FieldLastActivityAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TicketMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TicketMutation) ClearField(name string) error {
+	switch name {
+	case ticket.FieldBody:
+		m.ClearBody()
+		return nil
+	case ticket.FieldPriority:
+		m.ClearPriority()
+		return nil
+	case ticket.FieldSummary:
+		m.ClearSummary()
+		return nil
+	case ticket.FieldSearchText:
+		m.ClearSearchText()
+		return nil
+	case ticket.FieldSource:
+		m.ClearSource()
+		return nil
+	case ticket.FieldSourceInstance:
+		m.ClearSourceInstance()
+		return nil
+	case ticket.FieldExternalID:
+		m.ClearExternalID()
+		return nil
+	case ticket.FieldSourceURL:
+		m.ClearSourceURL()
+		return nil
+	case ticket.FieldFirstSeenAt:
+		m.ClearFirstSeenAt()
+		return nil
+	case ticket.FieldLastActivityAt:
+		m.ClearLastActivityAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Ticket nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TicketMutation) ResetField(name string) error {
+	switch name {
+	case ticket.FieldKey:
+		m.ResetKey()
+		return nil
+	case ticket.FieldTitle:
+		m.ResetTitle()
+		return nil
+	case ticket.FieldBody:
+		m.ResetBody()
+		return nil
+	case ticket.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case ticket.FieldPriority:
+		m.ResetPriority()
+		return nil
+	case ticket.FieldSummary:
+		m.ResetSummary()
+		return nil
+	case ticket.FieldSearchText:
+		m.ResetSearchText()
+		return nil
+	case ticket.FieldSource:
+		m.ResetSource()
+		return nil
+	case ticket.FieldSourceInstance:
+		m.ResetSourceInstance()
+		return nil
+	case ticket.FieldExternalID:
+		m.ResetExternalID()
+		return nil
+	case ticket.FieldSourceURL:
+		m.ResetSourceURL()
+		return nil
+	case ticket.FieldFreshnessState:
+		m.ResetFreshnessState()
+		return nil
+	case ticket.FieldVisibility:
+		m.ResetVisibility()
+		return nil
+	case ticket.FieldConfidence:
+		m.ResetConfidence()
+		return nil
+	case ticket.FieldEventCount:
+		m.ResetEventCount()
+		return nil
+	case ticket.FieldFirstSeenAt:
+		m.ResetFirstSeenAt()
+		return nil
+	case ticket.FieldLastActivityAt:
+		m.ResetLastActivityAt()
+		return nil
+	case ticket.FieldRankScore:
+		m.ResetRankScore()
+		return nil
+	case ticket.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case ticket.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Ticket field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TicketMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.workstreams != nil {
+		edges = append(edges, ticket.EdgeWorkstreams)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TicketMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case ticket.EdgeWorkstreams:
+		ids := make([]ent.Value, 0, len(m.workstreams))
+		for id := range m.workstreams {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TicketMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.removedworkstreams != nil {
+		edges = append(edges, ticket.EdgeWorkstreams)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TicketMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case ticket.EdgeWorkstreams:
+		ids := make([]ent.Value, 0, len(m.removedworkstreams))
+		for id := range m.removedworkstreams {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TicketMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedworkstreams {
+		edges = append(edges, ticket.EdgeWorkstreams)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TicketMutation) EdgeCleared(name string) bool {
+	switch name {
+	case ticket.EdgeWorkstreams:
+		return m.clearedworkstreams
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TicketMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Ticket unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TicketMutation) ResetEdge(name string) error {
+	switch name {
+	case ticket.EdgeWorkstreams:
+		m.ResetWorkstreams()
+		return nil
+	}
+	return fmt.Errorf("unknown Ticket edge %s", name)
+}
+
 // WorkstreamMutation represents an operation that mutates the Workstream nodes in the graph.
 type WorkstreamMutation struct {
 	config
@@ -2843,6 +4587,9 @@ type WorkstreamMutation struct {
 	created_at       *time.Time
 	updated_at       *time.Time
 	clearedFields    map[string]struct{}
+	tickets          map[int]struct{}
+	removedtickets   map[int]struct{}
+	clearedtickets   bool
 	done             bool
 	oldValue         func(context.Context) (*Workstream, error)
 	predicates       []predicate.Workstream
@@ -3758,6 +5505,60 @@ func (m *WorkstreamMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// AddTicketIDs adds the "tickets" edge to the Ticket entity by ids.
+func (m *WorkstreamMutation) AddTicketIDs(ids ...int) {
+	if m.tickets == nil {
+		m.tickets = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.tickets[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTickets clears the "tickets" edge to the Ticket entity.
+func (m *WorkstreamMutation) ClearTickets() {
+	m.clearedtickets = true
+}
+
+// TicketsCleared reports if the "tickets" edge to the Ticket entity was cleared.
+func (m *WorkstreamMutation) TicketsCleared() bool {
+	return m.clearedtickets
+}
+
+// RemoveTicketIDs removes the "tickets" edge to the Ticket entity by IDs.
+func (m *WorkstreamMutation) RemoveTicketIDs(ids ...int) {
+	if m.removedtickets == nil {
+		m.removedtickets = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.tickets, ids[i])
+		m.removedtickets[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTickets returns the removed IDs of the "tickets" edge to the Ticket entity.
+func (m *WorkstreamMutation) RemovedTicketsIDs() (ids []int) {
+	for id := range m.removedtickets {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TicketsIDs returns the "tickets" edge IDs in the mutation.
+func (m *WorkstreamMutation) TicketsIDs() (ids []int) {
+	for id := range m.tickets {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTickets resets all changes to the "tickets" edge.
+func (m *WorkstreamMutation) ResetTickets() {
+	m.tickets = nil
+	m.clearedtickets = false
+	m.removedtickets = nil
+}
+
 // Where appends a list predicates to the WorkstreamMutation builder.
 func (m *WorkstreamMutation) Where(ps ...predicate.Workstream) {
 	m.predicates = append(m.predicates, ps...)
@@ -4270,48 +6071,1340 @@ func (m *WorkstreamMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *WorkstreamMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.tickets != nil {
+		edges = append(edges, workstream.EdgeTickets)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *WorkstreamMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case workstream.EdgeTickets:
+		ids := make([]ent.Value, 0, len(m.tickets))
+		for id := range m.tickets {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *WorkstreamMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedtickets != nil {
+		edges = append(edges, workstream.EdgeTickets)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *WorkstreamMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case workstream.EdgeTickets:
+		ids := make([]ent.Value, 0, len(m.removedtickets))
+		for id := range m.removedtickets {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *WorkstreamMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedtickets {
+		edges = append(edges, workstream.EdgeTickets)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *WorkstreamMutation) EdgeCleared(name string) bool {
+	switch name {
+	case workstream.EdgeTickets:
+		return m.clearedtickets
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *WorkstreamMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Workstream unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *WorkstreamMutation) ResetEdge(name string) error {
+	switch name {
+	case workstream.EdgeTickets:
+		m.ResetTickets()
+		return nil
+	}
 	return fmt.Errorf("unknown Workstream edge %s", name)
+}
+
+// WorkstreamTicketMutation represents an operation that mutates the WorkstreamTicket nodes in the graph.
+type WorkstreamTicketMutation struct {
+	config
+	op                     Op
+	typ                    string
+	relation_kind          *workstreamticket.RelationKind
+	evidence_count         *int
+	addevidence_count      *int
+	event_count            *int
+	addevent_count         *int
+	first_seen_at          *time.Time
+	last_activity_at       *time.Time
+	rank_score             *float64
+	addrank_score          *float64
+	source                 *string
+	source_instance        *string
+	external_id            *string
+	source_url             *string
+	freshness_state        *workstreamticket.FreshnessState
+	visibility             *workstreamticket.Visibility
+	confidence             *float64
+	addconfidence          *float64
+	created_at             *time.Time
+	updated_at             *time.Time
+	clearedFields          map[string]struct{}
+	workstream             *int
+	clearedworkstream      bool
+	ticket                 *int
+	clearedticket          bool
+	latest_evidence        *int
+	clearedlatest_evidence bool
+	done                   bool
+	oldValue               func(context.Context) (*WorkstreamTicket, error)
+	predicates             []predicate.WorkstreamTicket
+}
+
+var _ ent.Mutation = (*WorkstreamTicketMutation)(nil)
+
+// workstreamticketOption allows management of the mutation configuration using functional options.
+type workstreamticketOption func(*WorkstreamTicketMutation)
+
+// newWorkstreamTicketMutation creates new mutation for the WorkstreamTicket entity.
+func newWorkstreamTicketMutation(c config, op Op, opts ...workstreamticketOption) *WorkstreamTicketMutation {
+	m := &WorkstreamTicketMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeWorkstreamTicket,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m WorkstreamTicketMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m WorkstreamTicketMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetWorkstreamID sets the "workstream_id" field.
+func (m *WorkstreamTicketMutation) SetWorkstreamID(i int) {
+	m.workstream = &i
+}
+
+// WorkstreamID returns the value of the "workstream_id" field in the mutation.
+func (m *WorkstreamTicketMutation) WorkstreamID() (r int, exists bool) {
+	v := m.workstream
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetWorkstreamID resets all changes to the "workstream_id" field.
+func (m *WorkstreamTicketMutation) ResetWorkstreamID() {
+	m.workstream = nil
+}
+
+// SetTicketID sets the "ticket_id" field.
+func (m *WorkstreamTicketMutation) SetTicketID(i int) {
+	m.ticket = &i
+}
+
+// TicketID returns the value of the "ticket_id" field in the mutation.
+func (m *WorkstreamTicketMutation) TicketID() (r int, exists bool) {
+	v := m.ticket
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetTicketID resets all changes to the "ticket_id" field.
+func (m *WorkstreamTicketMutation) ResetTicketID() {
+	m.ticket = nil
+}
+
+// SetRelationKind sets the "relation_kind" field.
+func (m *WorkstreamTicketMutation) SetRelationKind(wk workstreamticket.RelationKind) {
+	m.relation_kind = &wk
+}
+
+// RelationKind returns the value of the "relation_kind" field in the mutation.
+func (m *WorkstreamTicketMutation) RelationKind() (r workstreamticket.RelationKind, exists bool) {
+	v := m.relation_kind
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRelationKind resets all changes to the "relation_kind" field.
+func (m *WorkstreamTicketMutation) ResetRelationKind() {
+	m.relation_kind = nil
+}
+
+// SetLatestEvidenceID sets the "latest_evidence_id" field.
+func (m *WorkstreamTicketMutation) SetLatestEvidenceID(i int) {
+	m.latest_evidence = &i
+}
+
+// LatestEvidenceID returns the value of the "latest_evidence_id" field in the mutation.
+func (m *WorkstreamTicketMutation) LatestEvidenceID() (r int, exists bool) {
+	v := m.latest_evidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLatestEvidenceID clears the value of the "latest_evidence_id" field.
+func (m *WorkstreamTicketMutation) ClearLatestEvidenceID() {
+	m.latest_evidence = nil
+	m.clearedFields[workstreamticket.FieldLatestEvidenceID] = struct{}{}
+}
+
+// LatestEvidenceIDCleared returns if the "latest_evidence_id" field was cleared in this mutation.
+func (m *WorkstreamTicketMutation) LatestEvidenceIDCleared() bool {
+	_, ok := m.clearedFields[workstreamticket.FieldLatestEvidenceID]
+	return ok
+}
+
+// ResetLatestEvidenceID resets all changes to the "latest_evidence_id" field.
+func (m *WorkstreamTicketMutation) ResetLatestEvidenceID() {
+	m.latest_evidence = nil
+	delete(m.clearedFields, workstreamticket.FieldLatestEvidenceID)
+}
+
+// SetEvidenceCount sets the "evidence_count" field.
+func (m *WorkstreamTicketMutation) SetEvidenceCount(i int) {
+	m.evidence_count = &i
+	m.addevidence_count = nil
+}
+
+// EvidenceCount returns the value of the "evidence_count" field in the mutation.
+func (m *WorkstreamTicketMutation) EvidenceCount() (r int, exists bool) {
+	v := m.evidence_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddEvidenceCount adds i to the "evidence_count" field.
+func (m *WorkstreamTicketMutation) AddEvidenceCount(i int) {
+	if m.addevidence_count != nil {
+		*m.addevidence_count += i
+	} else {
+		m.addevidence_count = &i
+	}
+}
+
+// AddedEvidenceCount returns the value that was added to the "evidence_count" field in this mutation.
+func (m *WorkstreamTicketMutation) AddedEvidenceCount() (r int, exists bool) {
+	v := m.addevidence_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEvidenceCount resets all changes to the "evidence_count" field.
+func (m *WorkstreamTicketMutation) ResetEvidenceCount() {
+	m.evidence_count = nil
+	m.addevidence_count = nil
+}
+
+// SetEventCount sets the "event_count" field.
+func (m *WorkstreamTicketMutation) SetEventCount(i int) {
+	m.event_count = &i
+	m.addevent_count = nil
+}
+
+// EventCount returns the value of the "event_count" field in the mutation.
+func (m *WorkstreamTicketMutation) EventCount() (r int, exists bool) {
+	v := m.event_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddEventCount adds i to the "event_count" field.
+func (m *WorkstreamTicketMutation) AddEventCount(i int) {
+	if m.addevent_count != nil {
+		*m.addevent_count += i
+	} else {
+		m.addevent_count = &i
+	}
+}
+
+// AddedEventCount returns the value that was added to the "event_count" field in this mutation.
+func (m *WorkstreamTicketMutation) AddedEventCount() (r int, exists bool) {
+	v := m.addevent_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetEventCount resets all changes to the "event_count" field.
+func (m *WorkstreamTicketMutation) ResetEventCount() {
+	m.event_count = nil
+	m.addevent_count = nil
+}
+
+// SetFirstSeenAt sets the "first_seen_at" field.
+func (m *WorkstreamTicketMutation) SetFirstSeenAt(t time.Time) {
+	m.first_seen_at = &t
+}
+
+// FirstSeenAt returns the value of the "first_seen_at" field in the mutation.
+func (m *WorkstreamTicketMutation) FirstSeenAt() (r time.Time, exists bool) {
+	v := m.first_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearFirstSeenAt clears the value of the "first_seen_at" field.
+func (m *WorkstreamTicketMutation) ClearFirstSeenAt() {
+	m.first_seen_at = nil
+	m.clearedFields[workstreamticket.FieldFirstSeenAt] = struct{}{}
+}
+
+// FirstSeenAtCleared returns if the "first_seen_at" field was cleared in this mutation.
+func (m *WorkstreamTicketMutation) FirstSeenAtCleared() bool {
+	_, ok := m.clearedFields[workstreamticket.FieldFirstSeenAt]
+	return ok
+}
+
+// ResetFirstSeenAt resets all changes to the "first_seen_at" field.
+func (m *WorkstreamTicketMutation) ResetFirstSeenAt() {
+	m.first_seen_at = nil
+	delete(m.clearedFields, workstreamticket.FieldFirstSeenAt)
+}
+
+// SetLastActivityAt sets the "last_activity_at" field.
+func (m *WorkstreamTicketMutation) SetLastActivityAt(t time.Time) {
+	m.last_activity_at = &t
+}
+
+// LastActivityAt returns the value of the "last_activity_at" field in the mutation.
+func (m *WorkstreamTicketMutation) LastActivityAt() (r time.Time, exists bool) {
+	v := m.last_activity_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLastActivityAt clears the value of the "last_activity_at" field.
+func (m *WorkstreamTicketMutation) ClearLastActivityAt() {
+	m.last_activity_at = nil
+	m.clearedFields[workstreamticket.FieldLastActivityAt] = struct{}{}
+}
+
+// LastActivityAtCleared returns if the "last_activity_at" field was cleared in this mutation.
+func (m *WorkstreamTicketMutation) LastActivityAtCleared() bool {
+	_, ok := m.clearedFields[workstreamticket.FieldLastActivityAt]
+	return ok
+}
+
+// ResetLastActivityAt resets all changes to the "last_activity_at" field.
+func (m *WorkstreamTicketMutation) ResetLastActivityAt() {
+	m.last_activity_at = nil
+	delete(m.clearedFields, workstreamticket.FieldLastActivityAt)
+}
+
+// SetRankScore sets the "rank_score" field.
+func (m *WorkstreamTicketMutation) SetRankScore(f float64) {
+	m.rank_score = &f
+	m.addrank_score = nil
+}
+
+// RankScore returns the value of the "rank_score" field in the mutation.
+func (m *WorkstreamTicketMutation) RankScore() (r float64, exists bool) {
+	v := m.rank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddRankScore adds f to the "rank_score" field.
+func (m *WorkstreamTicketMutation) AddRankScore(f float64) {
+	if m.addrank_score != nil {
+		*m.addrank_score += f
+	} else {
+		m.addrank_score = &f
+	}
+}
+
+// AddedRankScore returns the value that was added to the "rank_score" field in this mutation.
+func (m *WorkstreamTicketMutation) AddedRankScore() (r float64, exists bool) {
+	v := m.addrank_score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRankScore resets all changes to the "rank_score" field.
+func (m *WorkstreamTicketMutation) ResetRankScore() {
+	m.rank_score = nil
+	m.addrank_score = nil
+}
+
+// SetSource sets the "source" field.
+func (m *WorkstreamTicketMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *WorkstreamTicketMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSource clears the value of the "source" field.
+func (m *WorkstreamTicketMutation) ClearSource() {
+	m.source = nil
+	m.clearedFields[workstreamticket.FieldSource] = struct{}{}
+}
+
+// SourceCleared returns if the "source" field was cleared in this mutation.
+func (m *WorkstreamTicketMutation) SourceCleared() bool {
+	_, ok := m.clearedFields[workstreamticket.FieldSource]
+	return ok
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *WorkstreamTicketMutation) ResetSource() {
+	m.source = nil
+	delete(m.clearedFields, workstreamticket.FieldSource)
+}
+
+// SetSourceInstance sets the "source_instance" field.
+func (m *WorkstreamTicketMutation) SetSourceInstance(s string) {
+	m.source_instance = &s
+}
+
+// SourceInstance returns the value of the "source_instance" field in the mutation.
+func (m *WorkstreamTicketMutation) SourceInstance() (r string, exists bool) {
+	v := m.source_instance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSourceInstance clears the value of the "source_instance" field.
+func (m *WorkstreamTicketMutation) ClearSourceInstance() {
+	m.source_instance = nil
+	m.clearedFields[workstreamticket.FieldSourceInstance] = struct{}{}
+}
+
+// SourceInstanceCleared returns if the "source_instance" field was cleared in this mutation.
+func (m *WorkstreamTicketMutation) SourceInstanceCleared() bool {
+	_, ok := m.clearedFields[workstreamticket.FieldSourceInstance]
+	return ok
+}
+
+// ResetSourceInstance resets all changes to the "source_instance" field.
+func (m *WorkstreamTicketMutation) ResetSourceInstance() {
+	m.source_instance = nil
+	delete(m.clearedFields, workstreamticket.FieldSourceInstance)
+}
+
+// SetExternalID sets the "external_id" field.
+func (m *WorkstreamTicketMutation) SetExternalID(s string) {
+	m.external_id = &s
+}
+
+// ExternalID returns the value of the "external_id" field in the mutation.
+func (m *WorkstreamTicketMutation) ExternalID() (r string, exists bool) {
+	v := m.external_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearExternalID clears the value of the "external_id" field.
+func (m *WorkstreamTicketMutation) ClearExternalID() {
+	m.external_id = nil
+	m.clearedFields[workstreamticket.FieldExternalID] = struct{}{}
+}
+
+// ExternalIDCleared returns if the "external_id" field was cleared in this mutation.
+func (m *WorkstreamTicketMutation) ExternalIDCleared() bool {
+	_, ok := m.clearedFields[workstreamticket.FieldExternalID]
+	return ok
+}
+
+// ResetExternalID resets all changes to the "external_id" field.
+func (m *WorkstreamTicketMutation) ResetExternalID() {
+	m.external_id = nil
+	delete(m.clearedFields, workstreamticket.FieldExternalID)
+}
+
+// SetSourceURL sets the "source_url" field.
+func (m *WorkstreamTicketMutation) SetSourceURL(s string) {
+	m.source_url = &s
+}
+
+// SourceURL returns the value of the "source_url" field in the mutation.
+func (m *WorkstreamTicketMutation) SourceURL() (r string, exists bool) {
+	v := m.source_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSourceURL clears the value of the "source_url" field.
+func (m *WorkstreamTicketMutation) ClearSourceURL() {
+	m.source_url = nil
+	m.clearedFields[workstreamticket.FieldSourceURL] = struct{}{}
+}
+
+// SourceURLCleared returns if the "source_url" field was cleared in this mutation.
+func (m *WorkstreamTicketMutation) SourceURLCleared() bool {
+	_, ok := m.clearedFields[workstreamticket.FieldSourceURL]
+	return ok
+}
+
+// ResetSourceURL resets all changes to the "source_url" field.
+func (m *WorkstreamTicketMutation) ResetSourceURL() {
+	m.source_url = nil
+	delete(m.clearedFields, workstreamticket.FieldSourceURL)
+}
+
+// SetFreshnessState sets the "freshness_state" field.
+func (m *WorkstreamTicketMutation) SetFreshnessState(ws workstreamticket.FreshnessState) {
+	m.freshness_state = &ws
+}
+
+// FreshnessState returns the value of the "freshness_state" field in the mutation.
+func (m *WorkstreamTicketMutation) FreshnessState() (r workstreamticket.FreshnessState, exists bool) {
+	v := m.freshness_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFreshnessState resets all changes to the "freshness_state" field.
+func (m *WorkstreamTicketMutation) ResetFreshnessState() {
+	m.freshness_state = nil
+}
+
+// SetVisibility sets the "visibility" field.
+func (m *WorkstreamTicketMutation) SetVisibility(w workstreamticket.Visibility) {
+	m.visibility = &w
+}
+
+// Visibility returns the value of the "visibility" field in the mutation.
+func (m *WorkstreamTicketMutation) Visibility() (r workstreamticket.Visibility, exists bool) {
+	v := m.visibility
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVisibility resets all changes to the "visibility" field.
+func (m *WorkstreamTicketMutation) ResetVisibility() {
+	m.visibility = nil
+}
+
+// SetConfidence sets the "confidence" field.
+func (m *WorkstreamTicketMutation) SetConfidence(f float64) {
+	m.confidence = &f
+	m.addconfidence = nil
+}
+
+// Confidence returns the value of the "confidence" field in the mutation.
+func (m *WorkstreamTicketMutation) Confidence() (r float64, exists bool) {
+	v := m.confidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// AddConfidence adds f to the "confidence" field.
+func (m *WorkstreamTicketMutation) AddConfidence(f float64) {
+	if m.addconfidence != nil {
+		*m.addconfidence += f
+	} else {
+		m.addconfidence = &f
+	}
+}
+
+// AddedConfidence returns the value that was added to the "confidence" field in this mutation.
+func (m *WorkstreamTicketMutation) AddedConfidence() (r float64, exists bool) {
+	v := m.addconfidence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetConfidence resets all changes to the "confidence" field.
+func (m *WorkstreamTicketMutation) ResetConfidence() {
+	m.confidence = nil
+	m.addconfidence = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *WorkstreamTicketMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *WorkstreamTicketMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *WorkstreamTicketMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *WorkstreamTicketMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *WorkstreamTicketMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *WorkstreamTicketMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearWorkstream clears the "workstream" edge to the Workstream entity.
+func (m *WorkstreamTicketMutation) ClearWorkstream() {
+	m.clearedworkstream = true
+	m.clearedFields[workstreamticket.FieldWorkstreamID] = struct{}{}
+}
+
+// WorkstreamCleared reports if the "workstream" edge to the Workstream entity was cleared.
+func (m *WorkstreamTicketMutation) WorkstreamCleared() bool {
+	return m.clearedworkstream
+}
+
+// WorkstreamIDs returns the "workstream" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// WorkstreamID instead. It exists only for internal usage by the builders.
+func (m *WorkstreamTicketMutation) WorkstreamIDs() (ids []int) {
+	if id := m.workstream; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetWorkstream resets all changes to the "workstream" edge.
+func (m *WorkstreamTicketMutation) ResetWorkstream() {
+	m.workstream = nil
+	m.clearedworkstream = false
+}
+
+// ClearTicket clears the "ticket" edge to the Ticket entity.
+func (m *WorkstreamTicketMutation) ClearTicket() {
+	m.clearedticket = true
+	m.clearedFields[workstreamticket.FieldTicketID] = struct{}{}
+}
+
+// TicketCleared reports if the "ticket" edge to the Ticket entity was cleared.
+func (m *WorkstreamTicketMutation) TicketCleared() bool {
+	return m.clearedticket
+}
+
+// TicketIDs returns the "ticket" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TicketID instead. It exists only for internal usage by the builders.
+func (m *WorkstreamTicketMutation) TicketIDs() (ids []int) {
+	if id := m.ticket; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTicket resets all changes to the "ticket" edge.
+func (m *WorkstreamTicketMutation) ResetTicket() {
+	m.ticket = nil
+	m.clearedticket = false
+}
+
+// ClearLatestEvidence clears the "latest_evidence" edge to the Evidence entity.
+func (m *WorkstreamTicketMutation) ClearLatestEvidence() {
+	m.clearedlatest_evidence = true
+	m.clearedFields[workstreamticket.FieldLatestEvidenceID] = struct{}{}
+}
+
+// LatestEvidenceCleared reports if the "latest_evidence" edge to the Evidence entity was cleared.
+func (m *WorkstreamTicketMutation) LatestEvidenceCleared() bool {
+	return m.LatestEvidenceIDCleared() || m.clearedlatest_evidence
+}
+
+// LatestEvidenceIDs returns the "latest_evidence" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LatestEvidenceID instead. It exists only for internal usage by the builders.
+func (m *WorkstreamTicketMutation) LatestEvidenceIDs() (ids []int) {
+	if id := m.latest_evidence; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLatestEvidence resets all changes to the "latest_evidence" edge.
+func (m *WorkstreamTicketMutation) ResetLatestEvidence() {
+	m.latest_evidence = nil
+	m.clearedlatest_evidence = false
+}
+
+// Where appends a list predicates to the WorkstreamTicketMutation builder.
+func (m *WorkstreamTicketMutation) Where(ps ...predicate.WorkstreamTicket) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the WorkstreamTicketMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *WorkstreamTicketMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.WorkstreamTicket, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *WorkstreamTicketMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *WorkstreamTicketMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (WorkstreamTicket).
+func (m *WorkstreamTicketMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *WorkstreamTicketMutation) Fields() []string {
+	fields := make([]string, 0, 18)
+	if m.workstream != nil {
+		fields = append(fields, workstreamticket.FieldWorkstreamID)
+	}
+	if m.ticket != nil {
+		fields = append(fields, workstreamticket.FieldTicketID)
+	}
+	if m.relation_kind != nil {
+		fields = append(fields, workstreamticket.FieldRelationKind)
+	}
+	if m.latest_evidence != nil {
+		fields = append(fields, workstreamticket.FieldLatestEvidenceID)
+	}
+	if m.evidence_count != nil {
+		fields = append(fields, workstreamticket.FieldEvidenceCount)
+	}
+	if m.event_count != nil {
+		fields = append(fields, workstreamticket.FieldEventCount)
+	}
+	if m.first_seen_at != nil {
+		fields = append(fields, workstreamticket.FieldFirstSeenAt)
+	}
+	if m.last_activity_at != nil {
+		fields = append(fields, workstreamticket.FieldLastActivityAt)
+	}
+	if m.rank_score != nil {
+		fields = append(fields, workstreamticket.FieldRankScore)
+	}
+	if m.source != nil {
+		fields = append(fields, workstreamticket.FieldSource)
+	}
+	if m.source_instance != nil {
+		fields = append(fields, workstreamticket.FieldSourceInstance)
+	}
+	if m.external_id != nil {
+		fields = append(fields, workstreamticket.FieldExternalID)
+	}
+	if m.source_url != nil {
+		fields = append(fields, workstreamticket.FieldSourceURL)
+	}
+	if m.freshness_state != nil {
+		fields = append(fields, workstreamticket.FieldFreshnessState)
+	}
+	if m.visibility != nil {
+		fields = append(fields, workstreamticket.FieldVisibility)
+	}
+	if m.confidence != nil {
+		fields = append(fields, workstreamticket.FieldConfidence)
+	}
+	if m.created_at != nil {
+		fields = append(fields, workstreamticket.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, workstreamticket.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *WorkstreamTicketMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case workstreamticket.FieldWorkstreamID:
+		return m.WorkstreamID()
+	case workstreamticket.FieldTicketID:
+		return m.TicketID()
+	case workstreamticket.FieldRelationKind:
+		return m.RelationKind()
+	case workstreamticket.FieldLatestEvidenceID:
+		return m.LatestEvidenceID()
+	case workstreamticket.FieldEvidenceCount:
+		return m.EvidenceCount()
+	case workstreamticket.FieldEventCount:
+		return m.EventCount()
+	case workstreamticket.FieldFirstSeenAt:
+		return m.FirstSeenAt()
+	case workstreamticket.FieldLastActivityAt:
+		return m.LastActivityAt()
+	case workstreamticket.FieldRankScore:
+		return m.RankScore()
+	case workstreamticket.FieldSource:
+		return m.Source()
+	case workstreamticket.FieldSourceInstance:
+		return m.SourceInstance()
+	case workstreamticket.FieldExternalID:
+		return m.ExternalID()
+	case workstreamticket.FieldSourceURL:
+		return m.SourceURL()
+	case workstreamticket.FieldFreshnessState:
+		return m.FreshnessState()
+	case workstreamticket.FieldVisibility:
+		return m.Visibility()
+	case workstreamticket.FieldConfidence:
+		return m.Confidence()
+	case workstreamticket.FieldCreatedAt:
+		return m.CreatedAt()
+	case workstreamticket.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *WorkstreamTicketMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	return nil, errors.New("edge schema WorkstreamTicket does not support getting old values")
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkstreamTicketMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case workstreamticket.FieldWorkstreamID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWorkstreamID(v)
+		return nil
+	case workstreamticket.FieldTicketID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTicketID(v)
+		return nil
+	case workstreamticket.FieldRelationKind:
+		v, ok := value.(workstreamticket.RelationKind)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRelationKind(v)
+		return nil
+	case workstreamticket.FieldLatestEvidenceID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLatestEvidenceID(v)
+		return nil
+	case workstreamticket.FieldEvidenceCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEvidenceCount(v)
+		return nil
+	case workstreamticket.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEventCount(v)
+		return nil
+	case workstreamticket.FieldFirstSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFirstSeenAt(v)
+		return nil
+	case workstreamticket.FieldLastActivityAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastActivityAt(v)
+		return nil
+	case workstreamticket.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRankScore(v)
+		return nil
+	case workstreamticket.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case workstreamticket.FieldSourceInstance:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceInstance(v)
+		return nil
+	case workstreamticket.FieldExternalID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExternalID(v)
+		return nil
+	case workstreamticket.FieldSourceURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSourceURL(v)
+		return nil
+	case workstreamticket.FieldFreshnessState:
+		v, ok := value.(workstreamticket.FreshnessState)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFreshnessState(v)
+		return nil
+	case workstreamticket.FieldVisibility:
+		v, ok := value.(workstreamticket.Visibility)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVisibility(v)
+		return nil
+	case workstreamticket.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfidence(v)
+		return nil
+	case workstreamticket.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case workstreamticket.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WorkstreamTicket field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *WorkstreamTicketMutation) AddedFields() []string {
+	var fields []string
+	if m.addevidence_count != nil {
+		fields = append(fields, workstreamticket.FieldEvidenceCount)
+	}
+	if m.addevent_count != nil {
+		fields = append(fields, workstreamticket.FieldEventCount)
+	}
+	if m.addrank_score != nil {
+		fields = append(fields, workstreamticket.FieldRankScore)
+	}
+	if m.addconfidence != nil {
+		fields = append(fields, workstreamticket.FieldConfidence)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *WorkstreamTicketMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case workstreamticket.FieldEvidenceCount:
+		return m.AddedEvidenceCount()
+	case workstreamticket.FieldEventCount:
+		return m.AddedEventCount()
+	case workstreamticket.FieldRankScore:
+		return m.AddedRankScore()
+	case workstreamticket.FieldConfidence:
+		return m.AddedConfidence()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *WorkstreamTicketMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case workstreamticket.FieldEvidenceCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEvidenceCount(v)
+		return nil
+	case workstreamticket.FieldEventCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEventCount(v)
+		return nil
+	case workstreamticket.FieldRankScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRankScore(v)
+		return nil
+	case workstreamticket.FieldConfidence:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddConfidence(v)
+		return nil
+	}
+	return fmt.Errorf("unknown WorkstreamTicket numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *WorkstreamTicketMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(workstreamticket.FieldLatestEvidenceID) {
+		fields = append(fields, workstreamticket.FieldLatestEvidenceID)
+	}
+	if m.FieldCleared(workstreamticket.FieldFirstSeenAt) {
+		fields = append(fields, workstreamticket.FieldFirstSeenAt)
+	}
+	if m.FieldCleared(workstreamticket.FieldLastActivityAt) {
+		fields = append(fields, workstreamticket.FieldLastActivityAt)
+	}
+	if m.FieldCleared(workstreamticket.FieldSource) {
+		fields = append(fields, workstreamticket.FieldSource)
+	}
+	if m.FieldCleared(workstreamticket.FieldSourceInstance) {
+		fields = append(fields, workstreamticket.FieldSourceInstance)
+	}
+	if m.FieldCleared(workstreamticket.FieldExternalID) {
+		fields = append(fields, workstreamticket.FieldExternalID)
+	}
+	if m.FieldCleared(workstreamticket.FieldSourceURL) {
+		fields = append(fields, workstreamticket.FieldSourceURL)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *WorkstreamTicketMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *WorkstreamTicketMutation) ClearField(name string) error {
+	switch name {
+	case workstreamticket.FieldLatestEvidenceID:
+		m.ClearLatestEvidenceID()
+		return nil
+	case workstreamticket.FieldFirstSeenAt:
+		m.ClearFirstSeenAt()
+		return nil
+	case workstreamticket.FieldLastActivityAt:
+		m.ClearLastActivityAt()
+		return nil
+	case workstreamticket.FieldSource:
+		m.ClearSource()
+		return nil
+	case workstreamticket.FieldSourceInstance:
+		m.ClearSourceInstance()
+		return nil
+	case workstreamticket.FieldExternalID:
+		m.ClearExternalID()
+		return nil
+	case workstreamticket.FieldSourceURL:
+		m.ClearSourceURL()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkstreamTicket nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *WorkstreamTicketMutation) ResetField(name string) error {
+	switch name {
+	case workstreamticket.FieldWorkstreamID:
+		m.ResetWorkstreamID()
+		return nil
+	case workstreamticket.FieldTicketID:
+		m.ResetTicketID()
+		return nil
+	case workstreamticket.FieldRelationKind:
+		m.ResetRelationKind()
+		return nil
+	case workstreamticket.FieldLatestEvidenceID:
+		m.ResetLatestEvidenceID()
+		return nil
+	case workstreamticket.FieldEvidenceCount:
+		m.ResetEvidenceCount()
+		return nil
+	case workstreamticket.FieldEventCount:
+		m.ResetEventCount()
+		return nil
+	case workstreamticket.FieldFirstSeenAt:
+		m.ResetFirstSeenAt()
+		return nil
+	case workstreamticket.FieldLastActivityAt:
+		m.ResetLastActivityAt()
+		return nil
+	case workstreamticket.FieldRankScore:
+		m.ResetRankScore()
+		return nil
+	case workstreamticket.FieldSource:
+		m.ResetSource()
+		return nil
+	case workstreamticket.FieldSourceInstance:
+		m.ResetSourceInstance()
+		return nil
+	case workstreamticket.FieldExternalID:
+		m.ResetExternalID()
+		return nil
+	case workstreamticket.FieldSourceURL:
+		m.ResetSourceURL()
+		return nil
+	case workstreamticket.FieldFreshnessState:
+		m.ResetFreshnessState()
+		return nil
+	case workstreamticket.FieldVisibility:
+		m.ResetVisibility()
+		return nil
+	case workstreamticket.FieldConfidence:
+		m.ResetConfidence()
+		return nil
+	case workstreamticket.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case workstreamticket.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkstreamTicket field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *WorkstreamTicketMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.workstream != nil {
+		edges = append(edges, workstreamticket.EdgeWorkstream)
+	}
+	if m.ticket != nil {
+		edges = append(edges, workstreamticket.EdgeTicket)
+	}
+	if m.latest_evidence != nil {
+		edges = append(edges, workstreamticket.EdgeLatestEvidence)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *WorkstreamTicketMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case workstreamticket.EdgeWorkstream:
+		if id := m.workstream; id != nil {
+			return []ent.Value{*id}
+		}
+	case workstreamticket.EdgeTicket:
+		if id := m.ticket; id != nil {
+			return []ent.Value{*id}
+		}
+	case workstreamticket.EdgeLatestEvidence:
+		if id := m.latest_evidence; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *WorkstreamTicketMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *WorkstreamTicketMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *WorkstreamTicketMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedworkstream {
+		edges = append(edges, workstreamticket.EdgeWorkstream)
+	}
+	if m.clearedticket {
+		edges = append(edges, workstreamticket.EdgeTicket)
+	}
+	if m.clearedlatest_evidence {
+		edges = append(edges, workstreamticket.EdgeLatestEvidence)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *WorkstreamTicketMutation) EdgeCleared(name string) bool {
+	switch name {
+	case workstreamticket.EdgeWorkstream:
+		return m.clearedworkstream
+	case workstreamticket.EdgeTicket:
+		return m.clearedticket
+	case workstreamticket.EdgeLatestEvidence:
+		return m.clearedlatest_evidence
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *WorkstreamTicketMutation) ClearEdge(name string) error {
+	switch name {
+	case workstreamticket.EdgeWorkstream:
+		m.ClearWorkstream()
+		return nil
+	case workstreamticket.EdgeTicket:
+		m.ClearTicket()
+		return nil
+	case workstreamticket.EdgeLatestEvidence:
+		m.ClearLatestEvidence()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkstreamTicket unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *WorkstreamTicketMutation) ResetEdge(name string) error {
+	switch name {
+	case workstreamticket.EdgeWorkstream:
+		m.ResetWorkstream()
+		return nil
+	case workstreamticket.EdgeTicket:
+		m.ResetTicket()
+		return nil
+	case workstreamticket.EdgeLatestEvidence:
+		m.ResetLatestEvidence()
+		return nil
+	}
+	return fmt.Errorf("unknown WorkstreamTicket edge %s", name)
 }
