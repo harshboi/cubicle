@@ -1,8 +1,8 @@
 # Ontology Service
 
-`ontology-service` is the Go backend shell for Cubicle's future ontology graph.
-The Day-0 service proves the local server and GraphQL codegen shape without
-choosing typed ontology schemas yet.
+`ontology-service` is Cubicle's local Go backend for the typed workplace graph.
+The service currently has a Gin localhost shell, gqlgen endpoint, SQLite
+storage, HOCON configuration, and the first Ent ontology schemas.
 
 ```text
 Cubicle client
@@ -17,32 +17,40 @@ Gin localhost server
  |     -> gqlgen product API contract
  |
  +-- GET /playground
-       -> local GraphQL playground
+ |     -> local GraphQL playground
+ |
+ v
+Ent typed ontology
+ |
+ +-- Person -> WorkArea -> WorkLens -> *LensResult -> target
+ |
+ v
+SQLite local POC database
 ```
 
 ## Current Scope
-
-This slice intentionally does **not** add durable ontology tables.
 
 ```text
 included now
  |
  +-- Gin routing, recovery, logging
  +-- gqlgen schema/codegen wiring
- +-- minimal health query
- +-- SQLite storage foundation from the previous PR
+ +-- minimal GraphQL health query
+ +-- SQLite storage foundation
  +-- HOCON/env/flag runtime configuration
+ +-- typed Ent schemas for the cardinality-safe ontology
 
 deferred
  |
- +-- typed Ent schemas
- +-- Ent edge schemas
- +-- tickets/docs/people/workstream GraphQL model
  +-- crawler ingestion API
+ +-- source-specific writers
+ +-- public entgql object queries
+ +-- Swift graph explorer screens
 ```
 
-The important direction is that GraphQL is the product query contract. REST is
-kept only for health and server mechanics.
+GraphQL is the product query contract. REST stays limited to health and local
+server mechanics until there is a concrete process endpoint that does not fit
+GraphQL.
 
 ## Requirements
 
@@ -72,15 +80,17 @@ From the Cubicle repo root:
 cd services/ontology-service
 go mod download
 go generate ./graph
+go generate ./ent
 go test ./...
 ```
 
-Framework dependencies in this slice:
+Framework dependencies:
 
 ```text
 Gin     -> server shell: routing, recovery, request logging
 gqlgen  -> GraphQL schema, generated execution code, typed resolvers
-SQLite  -> local persistence foundation for later ontology storage
+Ent     -> typed ontology schemas and generated query builders
+SQLite  -> local persistence foundation for POC ontology storage
 HOCON   -> local runtime configuration files
 ```
 
@@ -168,6 +178,95 @@ http://127.0.0.1:48080/playground
 Set `graphql.playground_enabled = false` or pass
 `--graphql-playground=false` when you want only `/healthz` and `/graphql`.
 
+## Ontology Graph
+
+Current Architecture              Better Architecture
+ |                                |
+ +-- Person -> every doc/PR       +-- Person -> WorkArea
+ |   -> unbounded fanout          |   -> few stable domains
+ |                                |
+ +-- one edge per raw activity    +-- WorkArea -> WorkLens
+ |   -> hard to page/reason       |   -> saved bounded view
+ |                                |
+ +-- target loaded directly       +-- WorkLens -> *LensResult
+     -> timeout risk                  -> page/rank/filter first
+
+The implemented topology is:
+
+```text
+Person
+ |
+ +-- WorkArea(kind: documents)
+ |    |
+ |    +-- WorkLens(kind: documents_commented_on, target: document)
+ |         |
+ |         +-- DocumentLensResult
+ |              |
+ |              +-- Document
+ |
+ +-- WorkArea(kind: code)
+ |    |
+ |    +-- WorkLens(kind: pull_requests_reviewed, target: pull_request)
+ |         |
+ |         +-- PullRequestLensResult
+ |              |
+ |              +-- PullRequest
+ |
+ +-- WorkArea(kind: tickets)
+ |    |
+ |    +-- WorkLens(kind: tickets_owned, target: ticket)
+ |         |
+ |         +-- TicketLensResult
+ |              |
+ |              +-- Ticket
+ |
+ +-- WorkArea(kind: communications)
+      |
+      +-- WorkLens(kind: messages_authored, target: message)
+           |
+           +-- MessageLensResult
+                |
+                +-- Message
+```
+
+The schema has 18 ontology tables.
+
+```text
+core objects
+ |
+ +-- persons
+ +-- workstreams
+ +-- tickets
+ +-- pull_requests
+ +-- documents
+ +-- document_fragments
+ +-- messages
+ +-- evidences
+
+bounded person graph
+ |
+ +-- work_areas
+ +-- work_lenses
+
+execution links
+ |
+ +-- workstream_tickets
+ +-- ticket_pull_requests
+ +-- ticket_document_fragments
+ +-- ticket_messages
+
+lens result links
+ |
+ +-- document_lens_results
+ +-- pull_request_lens_results
+ +-- ticket_lens_results
+ +-- message_lens_results
+```
+
+Each `*LensResult` row stores relation metadata, freshness, rank score,
+activity timestamps, source identity, visibility, confidence, and evidence
+counts. Query code should page and rank result rows before loading targets.
+
 ## Current Packages
 
 ```text
@@ -178,6 +277,27 @@ graph
  |
  +-- generate.go
        -> gqlgen codegen entrypoint
+
+ent/schema
+ |
+ +-- work_area.go
+ |     -> bounded person-owned work domain
+ |
+ +-- work_lens.go
+ |     -> bounded saved view under a work area
+ |
+ +-- *_lens_result.go
+       -> metadata-bearing Through edges to targets
+
+internal/ontology
+ |
+ +-- lens_model.go
+       -> canonical WorkArea/WorkLens/WorkRelation vocabulary
+
+internal/ontologyhooks
+ |
+ +-- lens_hooks.go
+       -> cross-row invariant checks for WorkLens and results
 
 internal/graphql
  |
@@ -222,24 +342,42 @@ cmd/ontology-service
 
 ## Design Rules
 
-- GraphQL is the product API contract from Day 0.
-- Keep REST limited to health and local server mechanics.
-- Do not introduce generic durable `Object` / `Association` Ent tables.
-- Do not introduce typed ontology Ent schemas until the ontology model is
-  designed explicitly.
-- Keep generated code committed because gqlgen generation is part of the build.
+- Use typed Ent schemas, not durable generic `Object` / `Association` tables.
+- Keep high-cardinality activity behind `WorkLens -> *LensResult`.
+- Keep result table endpoint and relation identity immutable.
+- Install `ontologyhooks.Register(client)` on every Ent client used for writes.
+- Expose product queries through GraphQL; keep REST for health and mechanics.
+- Keep generated gqlgen and Ent code committed because generation is part of
+  review and build verification.
 
-## Next PRs
+## Review Stack
 
 ```text
-PR 5: GraphQL service foundation
+Person ontology foundation
  |
- v
-PR 6: GraphQL config/runtime settings
+ +-- Evidence
  |
- v
-PR 7: typed ontology schema design with Ent
+ +-- Workstream
  |
- v
-PR 8: source ingestion once schema targets are explicit
+ +-- Ticket
+ |
+ +-- PullRequest
+ |
+ +-- Document
+ |
+ +-- Message
+ |
+ +-- WorkArea
+ |
+ +-- WorkLens
+ |
+ +-- DocumentLensResult
+ |
+ +-- PullRequestLensResult
+ |
+ +-- TicketLensResult
+ |
+ +-- MessageLensResult
+ |
+ +-- Cardinality docs
 ```
