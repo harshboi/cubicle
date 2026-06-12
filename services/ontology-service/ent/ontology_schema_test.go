@@ -76,6 +76,18 @@ func TestTicketLensResultCarriesPagingIndex(t *testing.T) {
 	assertColumn(t, table, "evidence_count")
 }
 
+// TestMessageLensResultCarriesPagingIndex proves the result layer can be
+// ranked and paged by window before loading high-cardinality message targets.
+func TestMessageLensResultCarriesPagingIndex(t *testing.T) {
+	table := findTable(t, "message_lens_results")
+	assertColumn(t, table, "work_lens_window_id")
+	assertIndexColumns(t, table, []string{"work_lens_window_id", "freshness_state", "rank_score", "last_activity_at"})
+	assertIndexColumns(t, table, []string{"work_lens_id", "freshness_state", "rank_score", "last_activity_at"})
+	assertColumn(t, table, "relation_kind")
+	assertColumn(t, table, "latest_evidence_id")
+	assertColumn(t, table, "evidence_count")
+}
+
 // TestPersonServingGraphAvoidsDirectHighCardinalityEdges proves person pages
 // must cross bounded serving parents before loading work items.
 func TestPersonServingGraphAvoidsDirectHighCardinalityEdges(t *testing.T) {
