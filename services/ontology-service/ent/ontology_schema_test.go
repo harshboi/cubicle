@@ -26,6 +26,32 @@ func TestWorkLensDeclaresCardinalityBoundary(t *testing.T) {
 	assertColumn(t, table, "last_indexed_at")
 }
 
+// TestWorkLensWindowDeclaresTraversalBoundary documents the partition between
+// a broad lens and high-volume result rows.
+func TestWorkLensWindowDeclaresTraversalBoundary(t *testing.T) {
+	table := findTable(t, "work_lens_windows")
+	assertColumn(t, table, "work_lens_id")
+	assertColumn(t, table, "lens_window_kind")
+	assertColumn(t, table, "window_start_at")
+	assertColumn(t, table, "window_end_at")
+	assertColumn(t, table, "rank_start")
+	assertColumn(t, table, "rank_end")
+	assertColumn(t, table, "checkpoint")
+	assertIndexColumns(t, table, []string{"work_lens_id", "lens_window_kind", "last_activity_at"})
+}
+
+// TestDocumentLensResultCarriesPagingIndex proves the result layer can be
+// ranked and paged by window before loading high-cardinality document targets.
+func TestDocumentLensResultCarriesPagingIndex(t *testing.T) {
+	table := findTable(t, "document_lens_results")
+	assertColumn(t, table, "work_lens_window_id")
+	assertIndexColumns(t, table, []string{"work_lens_window_id", "freshness_state", "rank_score", "last_activity_at"})
+	assertIndexColumns(t, table, []string{"work_lens_id", "freshness_state", "rank_score", "last_activity_at"})
+	assertColumn(t, table, "relation_kind")
+	assertColumn(t, table, "latest_evidence_id")
+	assertColumn(t, table, "evidence_count")
+}
+
 // TestPersonServingGraphAvoidsDirectHighCardinalityEdges proves person pages
 // must cross bounded serving parents before loading work items.
 func TestPersonServingGraphAvoidsDirectHighCardinalityEdges(t *testing.T) {
@@ -35,7 +61,7 @@ func TestPersonServingGraphAvoidsDirectHighCardinalityEdges(t *testing.T) {
 // TestWorkLensServingGraphHasNoTargetFanout proves a WorkLens cannot directly
 // expose target work rows.
 func TestWorkLensServingGraphHasNoTargetFanout(t *testing.T) {
-	assertSchemaEdges(t, ontologyschema.WorkLens{}.Edges(), []string{"area"})
+	assertSchemaEdges(t, ontologyschema.WorkLens{}.Edges(), []string{"area", "windows"})
 }
 
 // TestWorkLensRejectsMismatchedTargetKind proves lens kind is semantic truth.
@@ -102,6 +128,27 @@ func assertColumn(t *testing.T, table *entsqlschema.Table, name string) {
 		}
 	}
 	t.Fatalf("table %q missing column %q", table.Name, name)
+}
+
+// assertIndexColumns fails if table does not contain an index over names.
+func assertIndexColumns(t *testing.T, table *entsqlschema.Table, names []string) {
+	t.Helper()
+	for _, idx := range table.Indexes {
+		if len(idx.Columns) != len(names) {
+			continue
+		}
+		matches := true
+		for i, column := range idx.Columns {
+			if column.Name != names[i] {
+				matches = false
+				break
+			}
+		}
+		if matches {
+			return
+		}
+	}
+	t.Fatalf("table %q missing index over columns %#v", table.Name, names)
 }
 
 // assertSchemaEdges fails if a handwritten schema exposes unexpected edge names.
