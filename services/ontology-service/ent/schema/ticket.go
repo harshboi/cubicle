@@ -55,6 +55,9 @@ func (Ticket) Edges() []ent.Edge {
 		edge.To("pull_requests", PullRequest.Type).
 			Through("ticket_pull_requests", TicketPullRequest.Type).
 			Comment("Pull requests that implement this ticket."),
+		edge.To("documents", Document.Type).
+			Through("ticket_documents", TicketDocument.Type).
+			Comment("Documents that explain or support this ticket."),
 		edge.To("latest_evidence", Evidence.Type).
 			Unique().
 			Field("latest_evidence_id").
