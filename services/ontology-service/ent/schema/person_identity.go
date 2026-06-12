@@ -54,7 +54,7 @@ func (PersonIdentity) Fields() []ent.Field {
 	)
 }
 
-// Edges connects identity rows to Person and optional replacement identity rows.
+// Edges connects identity rows to Person and optional replacement/evidence.
 func (PersonIdentity) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("person", Person.Type).
@@ -71,6 +71,10 @@ func (PersonIdentity) Edges() []ent.Edge {
 		edge.From("replaced_identities", PersonIdentity.Type).
 			Ref("replaced_by_identity").
 			Comment("Older identity rows replaced by this identity."),
+		edge.To("latest_evidence", Evidence.Type).
+			Unique().
+			Field("latest_evidence_id").
+			Comment("Latest proof supporting this identity mapping."),
 	}
 }
 
