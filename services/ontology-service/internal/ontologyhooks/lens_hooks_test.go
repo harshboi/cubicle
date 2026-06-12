@@ -64,7 +64,7 @@ func TestRegisterRejectsMessageResultWithWrongRelation(t *testing.T) {
 	}
 }
 
-// TestRegisterRejectsMessageResultForDocumentLens proves target-table validation.
+// TestRegisterRejectsMessageResultForDocumentLens proves target validation.
 func TestRegisterRejectsMessageResultForDocumentLens(t *testing.T) {
 	ctx := context.Background()
 	client := openHookedClient(t, "ontology-hooks-message-result-target")
@@ -82,6 +82,29 @@ func TestRegisterRejectsMessageResultForDocumentLens(t *testing.T) {
 		SetRelationKind(messagelensresult.RelationKindAuthored).
 		Save(ctx); err == nil {
 		t.Fatal("expected message result table to reject document-target lens")
+	}
+}
+
+// TestRegisterRejectsResultWithWrongWindow proves result rows cannot cross windows.
+func TestRegisterRejectsResultWithWrongWindow(t *testing.T) {
+	ctx := context.Background()
+	client := openHookedClient(t, "ontology-hooks-result-window")
+	defer client.Close()
+
+	communicationsArea := createHookTestArea(t, ctx, client, "area:person:hooks:messages-window", workarea.WorkAreaKindCommunications)
+	messageLens := createHookTestLens(t, ctx, client, communicationsArea.ID, worklens.WorkLensKindMessagesAuthored, worklens.LensTargetKindMessage)
+	documentsArea := createHookTestArea(t, ctx, client, "area:person:hooks:docs-window", workarea.WorkAreaKindDocuments)
+	documentLens := createHookTestLens(t, ctx, client, documentsArea.ID, worklens.WorkLensKindDocumentsCreated, worklens.LensTargetKindDocument)
+	documentWindow := createHookTestWindow(t, ctx, client, documentLens.ID, "docs-window")
+	message := createHookTestMessage(t, ctx, client, "message:hooks:wrong-window")
+
+	if _, err := client.MessageLensResult.Create().
+		SetWorkLensID(messageLens.ID).
+		SetWorkLensWindowID(documentWindow.ID).
+		SetMessageID(message.ID).
+		SetRelationKind(messagelensresult.RelationKindAuthored).
+		Save(ctx); err == nil {
+		t.Fatal("expected message result to reject a window owned by another lens")
 	}
 }
 
@@ -115,7 +138,7 @@ func TestRegisterRejectsTicketResultWithWrongRelation(t *testing.T) {
 	}
 }
 
-// TestRegisterRejectsTicketResultForDocumentLens proves target-table validation.
+// TestRegisterRejectsTicketResultForDocumentLens proves target validation.
 func TestRegisterRejectsTicketResultForDocumentLens(t *testing.T) {
 	ctx := context.Background()
 	client := openHookedClient(t, "ontology-hooks-ticket-result-target")
@@ -238,28 +261,6 @@ func TestRegisterRejectsDocumentResultForTicketLens(t *testing.T) {
 	}
 }
 
-// TestRegisterRejectsDocumentResultWithWrongWindow proves result rows cannot cross windows.
-func TestRegisterRejectsDocumentResultWithWrongWindow(t *testing.T) {
-	ctx := context.Background()
-	client := openHookedClient(t, "ontology-hooks-document-result-window")
-	defer client.Close()
-
-	documentsArea := createHookTestArea(t, ctx, client, "area:person:hooks:docs-window", workarea.WorkAreaKindDocuments)
-	createdLens := createHookTestLens(t, ctx, client, documentsArea.ID, worklens.WorkLensKindDocumentsCreated, worklens.LensTargetKindDocument)
-	editedLens := createHookTestLens(t, ctx, client, documentsArea.ID, worklens.WorkLensKindDocumentsEdited, worklens.LensTargetKindDocument)
-	editedWindow := createHookTestWindow(t, ctx, client, editedLens.ID, "documents-edited")
-	document := createHookTestDocument(t, ctx, client, "document:hooks:wrong-window")
-
-	if _, err := client.DocumentLensResult.Create().
-		SetWorkLensID(createdLens.ID).
-		SetWorkLensWindowID(editedWindow.ID).
-		SetDocumentID(document.ID).
-		SetRelationKind(documentlensresult.RelationKindCreated).
-		Save(ctx); err == nil {
-		t.Fatal("expected document result to reject a window owned by another lens")
-	}
-}
-
 // openHookedClient opens an in-memory Ent client with ontology hooks installed.
 func openHookedClient(t *testing.T, databaseName string) *genent.Client {
 	t.Helper()
@@ -336,6 +337,6 @@ func createHookTestMessage(t *testing.T, ctx context.Context, client *genent.Cli
 	t.Helper()
 	return client.Message.Create().
 		SetKey(key).
-		SetBody("Hook Test Message").
+		SetBody("Hook test message").
 		SaveX(ctx)
 }

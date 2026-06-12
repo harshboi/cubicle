@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"cubicle/services/ontology-service/internal/config"
+	"cubicle/services/ontology-service/internal/entstore"
 	"cubicle/services/ontology-service/internal/httpapi"
-	"cubicle/services/ontology-service/internal/storage"
 )
 
 type serveConfig struct {
@@ -154,14 +154,15 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 		"graphql_playground_enabled", cfg.GraphQLPlaygroundEnabled,
 	)
 
-	store, err := storage.Open(context.Background(), storage.Config{
+	graphStore, err := entstore.Open(context.Background(), entstore.Config{
 		DatabasePath: cfg.DatabasePath,
 		BusyTimeout:  cfg.SQLiteBusyTimeout,
 	})
 	if err != nil {
 		return err
 	}
-	defer store.Close()
+	defer graphStore.Close()
+	logger.Info("ontology_ent_ready")
 
 	router := httpapi.NewRouterWithOptions(logger, httpapi.RouterOptions{
 		GraphQLPlaygroundEnabled: cfg.GraphQLPlaygroundEnabled,

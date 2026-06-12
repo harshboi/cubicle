@@ -56,18 +56,17 @@ This mirrors the useful part of Meta TAO-style association lists: keep a stable
 object graph, then page and rank bounded association lists before expanding the
 target objects. `WorkLensWindow` adds one more cardinality boundary so a single
 long-lived lens does not become a hot parent for years of messages or document
-activity. Source crawl monitoring lives in connector/scope/run tables, not in
-serving windows or per-object run snapshots.
+activity.
 
 ## Table Model
 
-The schema has 34 product, relationship, proof, lens, and sync-support tables.
+The schema has 19 tables.
 
 | Group | Tables | Purpose |
 |---|---|---|
-| Source-backed product objects | `persons`, `workstreams`, `tickets`, `pull_requests`, `documents`, `messages` | Real workplace things. Source-native identity, URL, ACL state, deletion state, content hash, and freshness live on these rows when the row is source-backed. |
-| Cardinality control | `work_areas`, `work_lenses`, `work_lens_windows` | Bounded person graph nodes that organize high-cardinality activity and serving materialization. |
-| Typed relationship links | `ticket_assignments`, `document_authorships`, `message_authorships`, `pull_request_authorships`, `pull_request_reviews`, `message_mentions`, `ticket_mentions`, `workstream_tickets`, `ticket_pull_requests`, `ticket_documents`, `ticket_messages`, `document_links` | Concrete Ent edge schemas with relationship-specific kind columns, evidence counts, confidence, freshness, source state, and activity metadata. |
+| Core objects | `persons`, `workstreams`, `tickets`, `pull_requests`, `documents`, `document_fragments`, `messages`, `evidences` | Real workplace things and citations. |
+| Cardinality control | `work_areas`, `work_lenses`, `work_lens_windows` | Bounded person graph nodes that organize high-cardinality activity and crawler checkpoints. |
+| Execution links | `workstream_tickets`, `ticket_pull_requests`, `ticket_document_fragments`, `ticket_messages` | Typed Through edges for operational context. |
 | Lens result links | `document_lens_results`, `pull_request_lens_results`, `ticket_lens_results`, `message_lens_results` | Typed Through edges from lenses to target objects. |
 | Proof and resolution support | `evidences`, `person_identities`, `source_aliases`, `unresolved_references` | Locator-grade proof, focused identity resolution, source aliases, and references that are not yet materialized as typed product relationships. |
 | Sync monitoring support | `source_connections`, `source_scopes`, `source_scope_states`, `source_sync_runs`, `source_sync_issues` | Connector configuration, bounded scope state, run coverage, cursors, failures, and rate-limit diagnostics. These rows are operational support, not normal product graph traversal. |
@@ -111,12 +110,11 @@ typed, but `WorkLens` itself does not expose direct target edges.
 ```text
 WorkLens
  |
- +-- windows -> WorkLensWindow
-       |
-       +-- DocumentLensResult      -> Document
-       +-- PullRequestLensResult   -> PullRequest
-       +-- TicketLensResult        -> Ticket
-       +-- MessageLensResult       -> Message
+ +-- windows        -> WorkLensWindow
+ +-- documents      -> Document       through DocumentLensResult
+ +-- pull_requests  -> PullRequest    through PullRequestLensResult
+ +-- tickets        -> Ticket         through TicketLensResult
+ +-- messages       -> Message        through MessageLensResult
 ```
 
 Invalid and valid shapes:
