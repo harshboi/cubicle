@@ -52,7 +52,7 @@ func (WorkArea) Fields() []ent.Field {
 	)
 }
 
-// Edges connects a work area to its owning person.
+// Edges connects a work area to its owning person and bounded lenses.
 func (WorkArea) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("person", Person.Type).
@@ -62,6 +62,8 @@ func (WorkArea) Edges() []ent.Edge {
 			Immutable().
 			Field("person_id").
 			Comment("Person who owns this bounded work area."),
+		edge.To("lenses", WorkLens.Type).
+			Comment("Bounded work lenses available under this work area."),
 	}
 }
 
