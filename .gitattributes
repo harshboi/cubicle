@@ -1,0 +1,5 @@
+services/ontology-service/ent/* linguist-generated=true
+services/ontology-service/ent/*/* linguist-generated=true
+services/ontology-service/ent/schema/** linguist-generated=false
+services/ontology-service/ent/generate.go linguist-generated=false
+services/ontology-service/ent/ontology_schema_test.go linguist-generated=false
