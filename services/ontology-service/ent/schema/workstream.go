@@ -41,9 +41,12 @@ func (Workstream) Fields() []ent.Field {
 	)
 }
 
-// Edges connects this source-backed product row to its latest proof.
+// Edges exposes the bounded ticket association list for this workstream.
 func (Workstream) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.To("tickets", Ticket.Type).
+			Through("workstream_tickets", WorkstreamTicket.Type).
+			Comment("Tickets that belong to this workstream."),
 		edge.To("latest_evidence", Evidence.Type).
 			Unique().
 			Field("latest_evidence_id").
