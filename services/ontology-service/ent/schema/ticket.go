@@ -58,6 +58,9 @@ func (Ticket) Edges() []ent.Edge {
 		edge.To("documents", Document.Type).
 			Through("ticket_documents", TicketDocument.Type).
 			Comment("Documents that explain or support this ticket."),
+		edge.To("messages", Message.Type).
+			Through("ticket_messages", TicketMessage.Type).
+			Comment("Messages that discuss this ticket."),
 		edge.To("latest_evidence", Evidence.Type).
 			Unique().
 			Field("latest_evidence_id").
