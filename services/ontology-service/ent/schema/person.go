@@ -51,12 +51,14 @@ func (Person) Fields() []ent.Field {
 	)
 }
 
-// Edges connects Person only to low-cardinality identity rows at this layer.
+// Edges connects Person only to low-cardinality identity and serving parents.
 //
 // Person/work facts are introduced later as typed relationship rows and bounded
 // serving parents, never as direct Person fanout to high-cardinality work.
 func (Person) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.To("work_areas", WorkArea.Type).
+			Comment("Bounded Cubicle work areas owned by this person."),
 		edge.To("identities", PersonIdentity.Type).
 			Comment("Source-native identities and handles that resolve to this person."),
 	}
