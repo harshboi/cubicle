@@ -31,12 +31,6 @@ Ent typed ontology
  |
  +-- Person -> WorkArea -> WorkLens -> WorkLensWindow -> *LensResult -> target
  |
- +-- source-backed Ticket / Document / Message / PullRequest / Workstream rows -> latest Evidence
- |
- +-- typed relationship rows -> latest Evidence
- |
- +-- SourceConnection -> SourceScope -> SourceSyncRun / SourceSyncIssue
- |
 v
 SQLite local POC database
 ```
@@ -252,7 +246,7 @@ Person
                      +-- Message
 ```
 
-The schema has 34 ontology tables.
+The schema has 19 ontology tables.
 
 ```text
 source-backed product objects
@@ -306,86 +300,9 @@ proof and sync support
 ```
 
 Each `*LensResult` row stores relation metadata, freshness, rank score,
-activity timestamps, visibility hints, confidence, and evidence counts.
-Person-centered query code must select bounded `WorkLensWindow` rows first,
-then page and rank result rows before loading targets. `Person` and `WorkLens`
-do not expose direct high-cardinality target edges.
-
-Source identity, ACL state, deletion state, content hash, and source URL live
-on the product object or typed relationship row they describe. Cubicle does not
-maintain a second canonical source-object table for the same ticket, document,
-message, PR, or workstream.
-
-## Northstar Graph
-
-```text
-SourceConnection
- |
- +-- SourceScope
- |     -> SourceScopeState
- |     -> SourceSyncRun
- |          -> SourceSyncIssue
- |
- +-- source-backed product rows
-       |
-       +-- Person -> PersonIdentity
-       |
-       +-- Ticket
-       |     <- TicketAssignment -> Person
-       |     <- TicketMention -> Person
-       |     -> TicketDocument -> Document
-       |     -> TicketMessage -> Message
-       |     -> TicketPullRequest -> PullRequest
-       |
-       +-- Document
-       |     <- DocumentAuthorship -> Person
-       |     -> DocumentLink -> Document
-       |
-       +-- Message
-       |     <- MessageAuthorship -> Person
-       |     <- MessageMention -> Person
-       |
-       +-- PullRequest
-       |     <- PullRequestAuthorship -> Person
-       |     <- PullRequestReview -> Person
-       |
-       +-- Workstream
-             -> WorkstreamTicket -> Ticket
-```
-
-Proof is attached to the row it supports without becoming the normal graph
-traversal path:
-
-```text
-Product object or typed relationship
- |
- +-- latest_evidence_id
- +-- evidence_count
- |
- +-- Evidence
-       -> claim_target_kind / claim_target_id
-       -> relationship_kind / relationship_id
-       -> locator_kind / locator / source_span_key
-       -> excerpt / text_hash / proof_state
-```
-
-Search, RAG, and UI proof cards can load Evidence directly by claim or locator.
-Normal graph crawling starts from product rows and typed relationship rows.
-`SourceSyncRun` remains an operational object for connector execution and
-coverage explanation, not an entry point for product retrieval.
-
-## GraphQL Query Surface
-
-```text
-POST /graphql
- |
- +-- health
-       -> process-level service check
-```
-
-The current public GraphQL surface is intentionally back to health-only while
-the northstar Ent model lands. Product read APIs should expose bounded product
-queries, not source-sync internals.
+activity timestamps, source identity, visibility, confidence, and evidence
+counts. Query code should select bounded `WorkLensWindow` rows first, then page
+and rank result rows before loading targets.
 
 ## Current Packages
 
@@ -407,22 +324,7 @@ ent/schema
  |     -> bounded saved view under a work area
  |
  +-- work_lens_window.go
- |     -> bounded partition for paging and serving materialization
- |
- +-- ticket.go / document.go / message.go / pull_request.go / workstream.go
- |     -> source-backed product objects with source identity and state fields
- |
- +-- *_authorship.go / *_mention.go / *_review.go / *_assignment.go / *_link.go
- |     -> typed relationship rows with relation-specific kind columns and latest evidence
- |
- +-- evidence.go
- |     -> locator-grade proof rows for product-object and relationship claims
- |
- +-- source_connection.go / source_scope.go / source_scope_state.go / source_sync_run.go / source_sync_issue.go
- |     -> connector configuration, bounded sync state, and operational coverage/failure metadata
- |
- +-- person_identity.go / source_alias.go / unresolved_reference.go
- |     -> focused support rows for identity resolution, aliases, and references not yet materialized
+ |     -> bounded partition for paging and crawler checkpoints
  |
  +-- *_lens_result.go
        -> metadata-bearing Through edges to targets
@@ -487,15 +389,7 @@ cmd/ontology-service
 
 - Use typed Ent schemas, not durable generic `Object` / `Association` tables.
 - Keep high-cardinality activity behind `WorkLens -> WorkLensWindow -> *LensResult`.
-- Use `WorkLensWindow` for source/time/rank bounded reads and serving materialization.
-- Put source identity, source URL, deletion state, ACL state, content hash, and
-  freshness on the source-backed product or typed relationship row they describe.
-- Use `Evidence` for locator-grade proof; do not make proof spans the normal
-  graph traversal path.
-- Use `PersonIdentity`, `SourceAlias`, and `UnresolvedReference` as focused
-  support rows, not as generic associations.
-- Use `SourceConnection`, `SourceScope`, `SourceScopeState`, `SourceSyncRun`,
-  and `SourceSyncIssue` for connector monitoring and coverage only.
+- Use `WorkLensWindow` for source/time/rank bounded reads and crawler checkpoints.
 - Keep result table endpoint and relation identity immutable.
 - Build runtime writers through `internal/entstore.Open`, which migrates schema
   and installs `ontologyhooks.Register(client)`.
@@ -535,10 +429,4 @@ Person ontology foundation
  +-- Cardinality docs
  |
  +-- Ent runtime + WorkLensWindow cardinality hardening
- |
- +-- Graph foundation handoff docs and skill
- |
- +-- Northstar source-backed product graph
- |
- +-- Typed relationship and proof model
 ```
