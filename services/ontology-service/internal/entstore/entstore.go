@@ -1,3 +1,10 @@
+// Association:
+//
+//	storage.Store -> Ent driver -> generated Ent client -> ontology hooks
+//	ontology hooks -> WorkLensWindow -> typed lens result rows
+//
+// Store owns the bridge between SQLite and Ent so graph writes always pass
+// through the generated client with ontology hooks registered.
 package entstore
 
 import (

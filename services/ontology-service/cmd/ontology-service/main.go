@@ -1,3 +1,10 @@
+// Association:
+//
+//	ontology-service serve -> entstore.Open -> Ent client -> ontology hooks
+//	ontology hooks -> WorkLensWindow -> typed lens result rows
+//
+// The command wires the runtime path that makes Ent schema and hook invariants
+// active before HTTP traffic reaches the ontology graph.
 package main
 
 import (
