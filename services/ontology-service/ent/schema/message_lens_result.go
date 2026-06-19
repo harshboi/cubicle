@@ -8,7 +8,14 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// MessageLensResult is the ranked association from a work lens to a message.
+// MessageLensResult is the ranked association from a work lens window to a message.
+//
+// Association:
+//
+//	WorkArea -> WorkLens -> WorkLensWindow -> MessageLensResult -> Message
+//
+// The window parent keeps message results pageable without a direct WorkLens
+// to Message fanout.
 type MessageLensResult struct {
 	ent.Schema
 }
