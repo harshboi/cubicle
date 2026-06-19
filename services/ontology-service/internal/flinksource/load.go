@@ -1,3 +1,11 @@
+// Association:
+//
+//	SnapshotRecord -> LoadFixture -> SourceConnection -> SourceScope -> SourceSyncRun
+//	LoadFixture -> Ticket -> TicketPullRequest -> PullRequest
+//	LoadFixture -> Evidence; non-200 snapshots -> SourceSyncIssue only
+//
+// Fixture replay separates product truth from source coverage so failed fetches
+// never become empty product rows.
 package flinksource
 
 import (

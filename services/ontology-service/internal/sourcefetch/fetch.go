@@ -1,3 +1,10 @@
+// Association:
+//
+//	Request -> Fetcher -> SnapshotRecord -> replay manifest -> loader
+//	HTTP 403/429 -> SnapshotRecord + RateLimitError -> SourceSyncIssue later
+//
+// The fetcher captures source bytes and provenance only; ontology materializing
+// stays in the loader.
 package sourcefetch
 
 import (

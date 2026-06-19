@@ -1,3 +1,10 @@
+// Association:
+//
+//	SnapshotRecord -> Manifest -> body file -> ReadManifest -> SnapshotRecord
+//	capture manifest -> ReadCaptureManifest -> replay SnapshotRecord
+//
+// Manifest replay keeps source bytes hash-checked before they reach Ent
+// materializers.
 package sourcefetch
 
 import (
