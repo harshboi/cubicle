@@ -1,3 +1,10 @@
+<!--
+Association:
+Person -> WorkArea -> WorkLens -> WorkLensWindow -> typed LensResult -> product row.
+Evidence proves product rows and typed relationships; SourceSync* tables report
+coverage and connector health without becoming product adjacency.
+-->
+
 # Cardinality-Safe Ent Ontology
 
 ## Goal

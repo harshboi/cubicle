@@ -1,3 +1,10 @@
+<!--
+Association:
+ontology-service -> Ent runtime -> Person -> WorkArea -> WorkLens ->
+WorkLensWindow -> typed LensResult -> target row, with Evidence as proof and
+SourceSync* rows as coverage diagnostics.
+-->
+
 # Ontology Service
 
 `ontology-service` is Cubicle's local Go backend for the typed workplace graph.
