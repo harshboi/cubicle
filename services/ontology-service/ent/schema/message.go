@@ -9,6 +9,13 @@ import (
 )
 
 // Message is a source communication item such as a Slack, chat, email, or thread message.
+//
+// Association:
+//
+//	Person -> MessageAuthorship/MessageMention -> Message
+//	Ticket -> TicketMessage -> Message
+//
+// Message relationships stay typed so authored, mentioned, and discussed-in are distinct.
 type Message struct {
 	ent.Schema
 }

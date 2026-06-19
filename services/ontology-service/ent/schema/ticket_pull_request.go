@@ -9,6 +9,13 @@ import (
 )
 
 // TicketPullRequest is the metadata-bearing association from a ticket to a pull request.
+//
+// Association:
+//
+//	Ticket -> TicketPullRequest -> PullRequest
+//	TicketPullRequest -> Evidence
+//
+// Implementation links are product adjacency; Evidence only proves them.
 type TicketPullRequest struct {
 	ent.Schema
 }

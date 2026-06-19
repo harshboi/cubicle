@@ -10,6 +10,13 @@ import (
 
 // MessageMention is the typed relationship from a person to a message that
 // mentions, references, or replies to them.
+//
+// Association:
+//
+//	Person -> MessageMention -> Message
+//	MessageMention -> Evidence
+//
+// Mention rows preserve weak references without turning them into ownership.
 type MessageMention struct {
 	ent.Schema
 }

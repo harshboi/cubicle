@@ -9,6 +9,13 @@ import (
 )
 
 // TicketMessage is the metadata-bearing association from a ticket to a message.
+//
+// Association:
+//
+//	Ticket -> TicketMessage -> Message
+//	TicketMessage -> Evidence
+//
+// Discussion links stay separate from message authorship and mentions.
 type TicketMessage struct {
 	ent.Schema
 }

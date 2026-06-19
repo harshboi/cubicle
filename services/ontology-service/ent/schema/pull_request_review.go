@@ -10,6 +10,13 @@ import (
 
 // PullRequestReview is the typed relationship from a person to a pull request
 // for review, approval, reviewer request, and review-comment facts.
+//
+// Association:
+//
+//	Person -> PullRequestReview -> PullRequest
+//	PullRequestReview -> Evidence
+//
+// Review rows keep review kind separate from authorship and implementation.
 type PullRequestReview struct {
 	ent.Schema
 }

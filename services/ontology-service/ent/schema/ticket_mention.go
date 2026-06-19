@@ -10,6 +10,13 @@ import (
 
 // TicketMention is the typed relationship from a person to a ticket that
 // mentions or references them.
+//
+// Association:
+//
+//	Person -> TicketMention -> Ticket
+//	TicketMention -> Evidence
+//
+// Mention rows preserve weak source references without making them assignment.
 type TicketMention struct {
 	ent.Schema
 }

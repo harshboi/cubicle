@@ -9,6 +9,13 @@ import (
 )
 
 // TicketDocument is the metadata-bearing association from a ticket to a document.
+//
+// Association:
+//
+//	Ticket -> TicketDocument -> Document
+//	TicketDocument -> Evidence
+//
+// Documentation links remain typed product relationships with proof.
 type TicketDocument struct {
 	ent.Schema
 }
