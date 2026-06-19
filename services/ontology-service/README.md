@@ -1,8 +1,15 @@
+<!--
+Association:
+ontology-service -> Ent runtime -> Person -> WorkArea -> WorkLens ->
+WorkLensWindow -> typed LensResult -> target row, with Evidence as proof and
+SourceSync* rows as coverage diagnostics.
+-->
+
 # Ontology Service
 
-`ontology-service` is the Go backend shell for Cubicle's future ontology graph.
-The Day-0 service proves the local server and GraphQL codegen shape without
-choosing typed ontology schemas yet.
+`ontology-service` is Cubicle's local Go backend for the typed workplace graph.
+The service currently has a Gin localhost shell, gqlgen endpoint, SQLite
+storage, HOCON configuration, and the first Ent ontology schemas.
 
 ```text
 Cubicle client
@@ -17,32 +24,48 @@ Gin localhost server
  |     -> gqlgen product API contract
  |
  +-- GET /playground
-       -> local GraphQL playground
+ |     -> local GraphQL playground
+ |
+ v
+Ent typed ontology
+ |
+ +-- Person -> WorkArea -> WorkLens -> WorkLensWindow -> *LensResult -> target
+ |
+ +-- source-backed Ticket / Document / Message / PullRequest / Workstream rows -> latest Evidence
+ |
+ +-- typed relationship rows -> latest Evidence
+ |
+ +-- SourceConnection -> SourceScope -> SourceSyncRun / SourceSyncIssue
+ |
+v
+SQLite local POC database
 ```
 
 ## Current Scope
-
-This slice intentionally does **not** add durable ontology tables.
 
 ```text
 included now
  |
  +-- Gin routing, recovery, logging
  +-- gqlgen schema/codegen wiring
- +-- minimal health query
- +-- SQLite storage foundation from the previous PR
+ +-- minimal GraphQL health query
+ +-- SQLite storage foundation
+ +-- Ent runtime startup, migration, and ontology hook registration
  +-- HOCON/env/flag runtime configuration
+ +-- typed Ent schemas for the northstar product graph
+ +-- source-backed product rows, typed relationship rows, locator-grade evidence, and isolated source sync metadata
 
 deferred
  |
- +-- typed Ent schemas
- +-- Ent edge schemas
- +-- tickets/docs/people/workstream GraphQL model
  +-- crawler ingestion API
+ +-- source-specific writers
+ +-- public entgql object queries
+ +-- Swift graph explorer screens
 ```
 
-The important direction is that GraphQL is the product query contract. REST is
-kept only for health and server mechanics.
+GraphQL is the product query contract. REST stays limited to health and local
+server mechanics until there is a concrete process endpoint that does not fit
+GraphQL.
 
 ## Requirements
 
@@ -72,15 +95,17 @@ From the Cubicle repo root:
 cd services/ontology-service
 go mod download
 go generate ./graph
+go generate ./ent
 go test ./...
 ```
 
-Framework dependencies in this slice:
+Framework dependencies:
 
 ```text
 Gin     -> server shell: routing, recovery, request logging
 gqlgen  -> GraphQL schema, generated execution code, typed resolvers
-SQLite  -> local persistence foundation for later ontology storage
+Ent     -> typed ontology schemas and generated query builders
+SQLite  -> local persistence foundation for POC ontology storage
 HOCON   -> local runtime configuration files
 ```
 
@@ -168,24 +193,262 @@ http://127.0.0.1:48080/playground
 Set `graphql.playground_enabled = false` or pass
 `--graphql-playground=false` when you want only `/healthz` and `/graphql`.
 
+## Ontology Graph
+
+Current Architecture              Better Architecture
+ |                                |
+ +-- Person -> every doc/PR       +-- Person -> WorkArea
+ |   -> unbounded fanout          |   -> few stable domains
+ |                                |
+ +-- one edge per raw activity    +-- WorkArea -> WorkLens
+ |   -> hard to page/reason       |   -> saved bounded view
+ |                                |
+ +-- target loaded directly       +-- WorkLens -> WorkLensWindow -> *LensResult
+     -> timeout risk                  -> bound, page, rank, then load targets
+
+The implemented topology is:
+
+```text
+Person
+ |
+ +-- WorkArea(kind: documents)
+ |    |
+ |    +-- WorkLens(kind: documents_commented_on, target: document)
+ |         |
+ |         +-- WorkLensWindow(kind: recent/time_bucket/source)
+ |              |
+ |              +-- DocumentLensResult
+ |                   |
+ |                   +-- Document
+ |
+ +-- WorkArea(kind: code)
+ |    |
+ |    +-- WorkLens(kind: pull_requests_reviewed, target: pull_request)
+ |         |
+ |         +-- WorkLensWindow(kind: recent/time_bucket/source)
+ |              |
+ |              +-- PullRequestLensResult
+ |                   |
+ |                   +-- PullRequest
+ |
+ +-- WorkArea(kind: tickets)
+ |    |
+ |    +-- WorkLens(kind: tickets_owned, target: ticket)
+ |         |
+ |         +-- WorkLensWindow(kind: recent/time_bucket/source)
+ |              |
+ |              +-- TicketLensResult
+ |                   |
+ |                   +-- Ticket
+ |
+ +-- WorkArea(kind: communications)
+      |
+      +-- WorkLens(kind: messages_authored, target: message)
+           |
+           +-- WorkLensWindow(kind: recent/time_bucket/source)
+                |
+                +-- MessageLensResult
+                     |
+                     +-- Message
+```
+
+The schema has 34 ontology tables.
+
+```text
+source-backed product objects
+ |
+ +-- persons
+ +-- workstreams
+ +-- tickets
+ +-- pull_requests
+ +-- documents
+ +-- messages
+
+bounded person graph
+ |
+ +-- work_areas
+ +-- work_lenses
+ +-- work_lens_windows
+
+typed relationship links
+ |
+ +-- ticket_assignments
+ +-- document_authorships
+ +-- message_authorships
+ +-- pull_request_authorships
+ +-- pull_request_reviews
+ +-- message_mentions
+ +-- ticket_mentions
+ +-- workstream_tickets
+ +-- ticket_pull_requests
+ +-- ticket_documents
+ +-- ticket_messages
+ +-- document_links
+
+lens result links
+ |
+ +-- document_lens_results
+ +-- pull_request_lens_results
+ +-- ticket_lens_results
+ +-- message_lens_results
+
+proof and sync support
+ |
+ +-- evidences
+ +-- person_identities
+ +-- source_aliases
+ +-- unresolved_references
+ +-- source_connections
+ +-- source_scopes
+ +-- source_scope_states
+ +-- source_sync_runs
+ +-- source_sync_issues
+```
+
+Each `*LensResult` row stores relation metadata, freshness, rank score,
+activity timestamps, visibility hints, confidence, and evidence counts.
+Person-centered query code must select bounded `WorkLensWindow` rows first,
+then page and rank result rows before loading targets. `Person` and `WorkLens`
+do not expose direct high-cardinality target edges.
+
+Source identity, ACL state, deletion state, content hash, and source URL live
+on the product object or typed relationship row they describe. Cubicle does not
+maintain a second canonical source-object table for the same ticket, document,
+message, PR, or workstream.
+
+## Northstar Graph
+
+```text
+SourceConnection
+ |
+ +-- SourceScope
+ |     -> SourceScopeState
+ |     -> SourceSyncRun
+ |          -> SourceSyncIssue
+ |
+ +-- source-backed product rows
+       |
+       +-- Person -> PersonIdentity
+       |
+       +-- Ticket
+       |     <- TicketAssignment -> Person
+       |     <- TicketMention -> Person
+       |     -> TicketDocument -> Document
+       |     -> TicketMessage -> Message
+       |     -> TicketPullRequest -> PullRequest
+       |
+       +-- Document
+       |     <- DocumentAuthorship -> Person
+       |     -> DocumentLink -> Document
+       |
+       +-- Message
+       |     <- MessageAuthorship -> Person
+       |     <- MessageMention -> Person
+       |
+       +-- PullRequest
+       |     <- PullRequestAuthorship -> Person
+       |     <- PullRequestReview -> Person
+       |
+       +-- Workstream
+             -> WorkstreamTicket -> Ticket
+```
+
+Proof is attached to the row it supports without becoming the normal graph
+traversal path:
+
+```text
+Product object or typed relationship
+ |
+ +-- latest_evidence_id
+ +-- evidence_count
+ |
+ +-- Evidence
+       -> claim_target_kind / claim_target_id
+       -> relationship_kind / relationship_id
+       -> locator_kind / locator / source_span_key
+       -> excerpt / text_hash / proof_state
+```
+
+Search, RAG, and UI proof cards can load Evidence directly by claim or locator.
+Normal graph crawling starts from product rows and typed relationship rows.
+`SourceSyncRun` remains an operational object for connector execution and
+coverage explanation, not an entry point for product retrieval.
+
+## GraphQL Query Surface
+
+```text
+POST /graphql
+ |
+ +-- health
+       -> process-level service check
+```
+
+The current public GraphQL surface is intentionally back to health-only while
+the northstar Ent model lands. Product read APIs should expose bounded product
+queries, not source-sync internals.
+
 ## Current Packages
 
 ```text
 graph
  |
  +-- schema.graphqls
- |     -> minimal GraphQL schema
+ |     -> GraphQL health schema
  |
  +-- generate.go
        -> gqlgen codegen entrypoint
 
+ent/schema
+ |
+ +-- work_area.go
+ |     -> bounded person-owned work domain
+ |
+ +-- work_lens.go
+ |     -> bounded saved view under a work area
+ |
+ +-- work_lens_window.go
+ |     -> bounded partition for paging and serving materialization
+ |
+ +-- ticket.go / document.go / message.go / pull_request.go / workstream.go
+ |     -> source-backed product objects with source identity and state fields
+ |
+ +-- *_authorship.go / *_mention.go / *_review.go / *_assignment.go / *_link.go
+ |     -> typed relationship rows with relation-specific kind columns and latest evidence
+ |
+ +-- evidence.go
+ |     -> locator-grade proof rows for product-object and relationship claims
+ |
+ +-- source_connection.go / source_scope.go / source_scope_state.go / source_sync_run.go / source_sync_issue.go
+ |     -> connector configuration, bounded sync state, and operational coverage/failure metadata
+ |
+ +-- person_identity.go / source_alias.go / unresolved_reference.go
+ |     -> focused support rows for identity resolution, aliases, and references not yet materialized
+ |
+ +-- *_lens_result.go
+       -> metadata-bearing Through edges to targets
+
+internal/ontology
+ |
+ +-- lens_model.go
+       -> canonical WorkArea/WorkLens/WorkRelation vocabulary
+
+internal/ontologyhooks
+ |
+ +-- lens_hooks.go
+       -> cross-row invariant checks for WorkLens and results
+
+internal/entstore
+ |
+ +-- entstore.go
+      -> SQLite-backed Ent startup, migration, and hook registration
+
 internal/graphql
  |
  +-- resolver.go
- |     -> gqlgen dependency root
+ |     -> gqlgen dependency root with Ent client
  |
  +-- schema.resolvers.go
- |     -> health query resolver
+ |     -> health resolver
  |
  +-- generated/
  |     -> gqlgen generated execution package
@@ -207,7 +470,7 @@ internal/httpapi
 internal/storage
  |
  +-- storage.go
-       -> SQLite open, PRAGMAs, transaction helper
+      -> SQLite open, PRAGMAs, transaction helper used under Ent
 
 internal/config
  |
@@ -217,29 +480,65 @@ internal/config
 cmd/ontology-service
  |
  +-- main.go
-       -> serve command, config parsing, SQLite startup, localhost bind guard
+      -> serve command, config parsing, Ent startup, localhost bind guard
 ```
 
 ## Design Rules
 
-- GraphQL is the product API contract from Day 0.
-- Keep REST limited to health and local server mechanics.
-- Do not introduce generic durable `Object` / `Association` Ent tables.
-- Do not introduce typed ontology Ent schemas until the ontology model is
-  designed explicitly.
-- Keep generated code committed because gqlgen generation is part of the build.
+- Use typed Ent schemas, not durable generic `Object` / `Association` tables.
+- Keep high-cardinality activity behind `WorkLens -> WorkLensWindow -> *LensResult`.
+- Use `WorkLensWindow` for source/time/rank bounded reads and serving materialization.
+- Put source identity, source URL, deletion state, ACL state, content hash, and
+  freshness on the source-backed product or typed relationship row they describe.
+- Use `Evidence` for locator-grade proof; do not make proof spans the normal
+  graph traversal path.
+- Use `PersonIdentity`, `SourceAlias`, and `UnresolvedReference` as focused
+  support rows, not as generic associations.
+- Use `SourceConnection`, `SourceScope`, `SourceScopeState`, `SourceSyncRun`,
+  and `SourceSyncIssue` for connector monitoring and coverage only.
+- Keep result table endpoint and relation identity immutable.
+- Build runtime writers through `internal/entstore.Open`, which migrates schema
+  and installs `ontologyhooks.Register(client)`.
+- Expose product queries through GraphQL; keep REST for health and mechanics.
+- Keep generated gqlgen and Ent code committed because generation is part of
+  review and build verification.
 
-## Next PRs
+## Review Stack
 
 ```text
-PR 5: GraphQL service foundation
+Person ontology foundation
  |
- v
-PR 6: GraphQL config/runtime settings
+ +-- Evidence
  |
- v
-PR 7: typed ontology schema design with Ent
+ +-- Workstream
  |
- v
-PR 8: source ingestion once schema targets are explicit
+ +-- Ticket
+ |
+ +-- PullRequest
+ |
+ +-- Document
+ |
+ +-- Message
+ |
+ +-- WorkArea
+ |
+ +-- WorkLens
+ |
+ +-- DocumentLensResult
+ |
+ +-- PullRequestLensResult
+ |
+ +-- TicketLensResult
+ |
+ +-- MessageLensResult
+ |
+ +-- Cardinality docs
+ |
+ +-- Ent runtime + WorkLensWindow cardinality hardening
+ |
+ +-- Graph foundation handoff docs and skill
+ |
+ +-- Northstar source-backed product graph
+ |
+ +-- Typed relationship and proof model
 ```
