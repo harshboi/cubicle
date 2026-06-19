@@ -1,3 +1,9 @@
+<!--
+Association:
+.codex/HANDOFF.md -> fresh Codex session -> memory.md + visual skill ->
+Cubicle PR stack context.
+-->
+
 # Cubicle Codex Handoff
 
 Use this file when setting up a new laptop or a fresh Codex session for Cubicle.

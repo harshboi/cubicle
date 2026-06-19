@@ -1,3 +1,9 @@
+<!--
+Association:
+cubicle-explain-visually skill -> diagram-first explanation ->
+side-by-side graph comparison -> Cubicle architecture review.
+-->
+
 ---
 name: cubicle-explain-visually
 description: Explain Cubicle architecture and code visually. Use when the user asks to understand Cubicle components, AppModel, local services, call flow, data flow, PR structure, or "what/why/how" explanations and prefers DAGs, side-by-side diagrams, starred important files, and fewer words.

@@ -1,3 +1,9 @@
+<!--
+Association:
+memory.md -> future Codex session -> product direction + working style ->
+Cubicle ontology and PR review decisions.
+-->
+
 # Codex Working Memory
 
 This file captures user preferences and repo-working context for future Codex sessions.
