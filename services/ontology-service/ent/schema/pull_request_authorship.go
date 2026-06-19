@@ -9,6 +9,13 @@ import (
 )
 
 // PullRequestAuthorship is the typed relationship from a person to a pull request.
+//
+// Association:
+//
+//	Person -> PullRequestAuthorship -> PullRequest
+//	PullRequestAuthorship -> Evidence
+//
+// Authorship stays distinct from review participation and ticket implementation.
 type PullRequestAuthorship struct {
 	ent.Schema
 }

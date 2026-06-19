@@ -10,6 +10,13 @@ import (
 
 // PersonIdentity maps one source-native identity or handle to a canonical
 // Person. It keeps source-native people identity out of a generic association table.
+//
+// Association:
+//
+//	source identity -> PersonIdentity -> Person
+//	PersonIdentity -> Evidence
+//
+// Identity evidence stays separate from product work relationships.
 type PersonIdentity struct {
 	ent.Schema
 }

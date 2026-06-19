@@ -10,6 +10,13 @@ import (
 
 // TicketAssignment is the typed relationship from a person to a ticket for
 // assignee/reporter/owner facts.
+//
+// Association:
+//
+//	Person -> TicketAssignment -> Ticket
+//	TicketAssignment -> Evidence
+//
+// Assignments stay typed so person-to-work traversal can be filtered by role.
 type TicketAssignment struct {
 	ent.Schema
 }

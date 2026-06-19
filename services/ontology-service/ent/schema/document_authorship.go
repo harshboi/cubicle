@@ -9,6 +9,13 @@ import (
 )
 
 // DocumentAuthorship is the typed relationship from a person to a document.
+//
+// Association:
+//
+//	Person -> DocumentAuthorship -> Document
+//	DocumentAuthorship -> Evidence
+//
+// The relationship row carries authorship kind, freshness, and proof.
 type DocumentAuthorship struct {
 	ent.Schema
 }

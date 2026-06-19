@@ -9,6 +9,15 @@ import (
 )
 
 // Ticket is an issue-tracker work item such as a Jira ticket or GitHub issue.
+//
+// Association:
+//
+//	Workstream -> WorkstreamTicket -> Ticket
+//	Ticket -> TicketPullRequest -> PullRequest
+//	Ticket -> TicketDocument -> Document
+//	Ticket -> TicketMessage -> Message
+//
+// Ticket acts as a work parent while evidence remains attached as proof.
 type Ticket struct {
 	ent.Schema
 }

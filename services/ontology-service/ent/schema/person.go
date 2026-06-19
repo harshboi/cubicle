@@ -9,6 +9,13 @@ import (
 )
 
 // Person is a human identity observed across source systems.
+//
+// Association:
+//
+//	Person -> PersonIdentity
+//	Person -> WorkArea -> WorkLens
+//
+// Work fanout starts below WorkArea so Person stays a low-cardinality root.
 type Person struct {
 	ent.Schema
 }

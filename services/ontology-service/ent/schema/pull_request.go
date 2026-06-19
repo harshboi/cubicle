@@ -9,6 +9,13 @@ import (
 )
 
 // PullRequest is a code change or review object from a source such as GitHub.
+//
+// Association:
+//
+//	Ticket -> TicketPullRequest -> PullRequest
+//	Person -> PullRequestAuthorship/PullRequestReview -> PullRequest
+//
+// Pull-request people links stay typed so authorship and review do not blur.
 type PullRequest struct {
 	ent.Schema
 }

@@ -9,6 +9,13 @@ import (
 )
 
 // MessageAuthorship is the typed relationship from a person to a message.
+//
+// Association:
+//
+//	Person -> MessageAuthorship -> Message
+//	MessageAuthorship -> Evidence
+//
+// The relationship row keeps sender/author role and proof attached to the message link.
 type MessageAuthorship struct {
 	ent.Schema
 }

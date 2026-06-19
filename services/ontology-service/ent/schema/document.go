@@ -9,6 +9,14 @@ import (
 )
 
 // Document is a durable source document such as a Google Doc, spec, or README.
+//
+// Association:
+//
+//	Person -> DocumentAuthorship -> Document
+//	Ticket -> TicketDocument -> Document
+//	Document -> DocumentLink -> Document
+//
+// Document relationships are typed so proof and relation kind stay reviewable.
 type Document struct {
 	ent.Schema
 }
