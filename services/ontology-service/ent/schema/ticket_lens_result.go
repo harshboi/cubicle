@@ -8,7 +8,14 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// TicketLensResult is the ranked association from a work lens to a ticket.
+// TicketLensResult is the ranked association from a work lens window to a ticket.
+//
+// Association:
+//
+//	WorkArea -> WorkLens -> WorkLensWindow -> TicketLensResult -> Ticket
+//
+// The window parent keeps ticket results pageable without a direct WorkLens to
+// Ticket fanout.
 type TicketLensResult struct {
 	ent.Schema
 }
