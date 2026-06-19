@@ -9,6 +9,13 @@ import (
 )
 
 // Workstream is a project, initiative, launch, or body of related engineering work.
+//
+// Association:
+//
+//	Workstream -> WorkstreamTicket -> Ticket
+//	Workstream -> Evidence
+//
+// Workstream membership is a typed relationship row so it can carry proof and freshness.
 type Workstream struct {
 	ent.Schema
 }

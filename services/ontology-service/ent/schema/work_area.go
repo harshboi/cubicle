@@ -12,6 +12,12 @@ import (
 //
 // A person should have only a few work areas, such as documents, code, tickets,
 // and communications. High-cardinality target edges live below lenses, not here.
+//
+// Association:
+//
+//	Person -> WorkArea -> WorkLens
+//
+// WorkArea is the first cardinality boundary below Person.
 type WorkArea struct {
 	ent.Schema
 }

@@ -9,6 +9,13 @@ import (
 )
 
 // Evidence is a citation/provenance row that explains why Cubicle believes a fact.
+//
+// Association:
+//
+//	Evidence -. proves .-> product row
+//	Evidence -. proves .-> typed relationship row
+//
+// Evidence is proof and addressing metadata, not graph adjacency.
 type Evidence struct {
 	ent.Schema
 }

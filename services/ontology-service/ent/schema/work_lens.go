@@ -23,6 +23,12 @@ const (
 // A lens is the cardinality-control node between a broad person work area and
 // high-volume target activity. Result tables are added in later PRs so each
 // target association can be reviewed independently.
+//
+// Association:
+//
+//	WorkArea -> WorkLens -> WorkLensWindow -> typed lens result rows
+//
+// WorkLens declares the view; later window/result rows carry target membership.
 type WorkLens struct {
 	ent.Schema
 }

@@ -9,6 +9,13 @@ import (
 )
 
 // WorkstreamTicket is the metadata-bearing association from a workstream to a ticket.
+//
+// Association:
+//
+//	Workstream -> WorkstreamTicket -> Ticket
+//	WorkstreamTicket -> Evidence
+//
+// Workstream membership remains a typed relationship with proof and freshness.
 type WorkstreamTicket struct {
 	ent.Schema
 }

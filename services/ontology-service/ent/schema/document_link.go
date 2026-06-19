@@ -10,6 +10,13 @@ import (
 
 // DocumentLink is the typed relationship from one document to another document
 // it references.
+//
+// Association:
+//
+//	Document -> DocumentLink -> Document
+//	DocumentLink -> Evidence
+//
+// The relationship row keeps link kind and proof separate from document state.
 type DocumentLink struct {
 	ent.Schema
 }
