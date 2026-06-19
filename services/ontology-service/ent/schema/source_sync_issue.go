@@ -10,6 +10,14 @@ import (
 
 // SourceSyncIssue records connector warnings/errors at run or scope level. It
 // is an ops table, not an edge in the product graph.
+//
+// Association:
+//
+//	SourceScope -> SourceSyncIssue
+//	SourceSyncRun -> SourceSyncIssue
+//	SourceSyncIssue -. diagnostics only .-> source object address
+//
+// Issues preserve coverage failures without implying missing product rows.
 type SourceSyncIssue struct {
 	ent.Schema
 }

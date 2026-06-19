@@ -11,6 +11,13 @@ import (
 // SourceScopeState is the current coverage/freshness state for a bounded source
 // scope. Product objects point to this by ID only when they need a coverage
 // explanation; product graph traversals should not enter here.
+//
+// Association:
+//
+//	SourceScope -> SourceScopeState -> latest successful SourceSyncRun
+//	product rows -. optional coverage explanation .-> SourceScopeState
+//
+// This row explains source coverage without becoming normal product adjacency.
 type SourceScopeState struct {
 	ent.Schema
 }

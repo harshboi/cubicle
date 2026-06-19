@@ -10,6 +10,14 @@ import (
 
 // SourceScope is a bounded crawl/read scope inside one source connection, such
 // as a Jira project, Slack channel, GitHub repository, or Drive folder.
+//
+// Association:
+//
+//	SourceConnection -> SourceScope -> SourceScopeState
+//	SourceScope -> SourceSyncRun -> SourceSyncIssue
+//
+// The scope bounds coverage and sync history so product rows do not carry
+// per-run crawl fanout.
 type SourceScope struct {
 	ent.Schema
 }

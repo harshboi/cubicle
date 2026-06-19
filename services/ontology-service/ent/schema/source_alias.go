@@ -10,6 +10,14 @@ import (
 
 // SourceAlias maps moved/renamed source-native object identifiers to a stable
 // product key. It is a lookup table, not a product graph relationship.
+//
+// Association:
+//
+//	source address -> SourceAlias -> product key
+//	SourceAlias -> replaced SourceAlias
+//
+// Aliases resolve identity drift while keeping product graph edges typed in the
+// product schemas.
 type SourceAlias struct {
 	ent.Schema
 }

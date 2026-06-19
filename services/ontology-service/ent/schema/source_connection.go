@@ -10,6 +10,14 @@ import (
 
 // SourceConnection is one configured workplace source instance, such as a Jira
 // tenant, Slack workspace, GitHub installation, or Google Workspace.
+//
+// Association:
+//
+//	SourceConnection -> SourceScope -> SourceScopeState
+//	SourceConnection -> SourceScope -> SourceSyncRun -> SourceSyncIssue
+//
+// The connection is the operational root for source diagnostics, not a product
+// graph parent.
 type SourceConnection struct {
 	ent.Schema
 }

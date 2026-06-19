@@ -11,6 +11,14 @@ import (
 // UnresolvedReference stores source references that did not become typed
 // product graph relationships. Resolved references should materialize a typed
 // edge such as TicketPullRequest or TicketMessage instead of living here.
+//
+// Association:
+//
+//	product row -> UnresolvedReference -> Evidence
+//	resolved reference -> typed relationship row
+//
+// The unresolved row is a resolver queue entry, not a substitute for product
+// graph adjacency.
 type UnresolvedReference struct {
 	ent.Schema
 }

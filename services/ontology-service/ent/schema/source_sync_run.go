@@ -10,6 +10,14 @@ import (
 
 // SourceSyncRun is one connector execution against a bounded SourceScope. It
 // records run coverage and failures without creating edges to every source item.
+//
+// Association:
+//
+//	SourceScope -> SourceSyncRun -> SourceSyncIssue
+//	SourceSyncRun -> aggregate product/evidence counters
+//
+// Aggregate counters summarize writer effects so readers do not traverse run
+// history as product truth.
 type SourceSyncRun struct {
 	ent.Schema
 }
