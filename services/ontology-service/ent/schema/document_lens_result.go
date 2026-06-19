@@ -8,7 +8,14 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// DocumentLensResult is the ranked association from a work lens to a document.
+// DocumentLensResult is the ranked association from a work lens window to a document.
+//
+// Association:
+//
+//	WorkArea -> WorkLens -> WorkLensWindow -> DocumentLensResult -> Document
+//
+// The window parent keeps document results pageable without a direct WorkLens
+// to Document fanout.
 type DocumentLensResult struct {
 	ent.Schema
 }

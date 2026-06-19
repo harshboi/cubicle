@@ -15,6 +15,10 @@ const (
 
 // WorkLensWindow is a bounded partition of one WorkLens result set.
 //
+// Association:
+//
+//	WorkArea -> WorkLens -> WorkLensWindow -> {Document, PullRequest, Ticket, Message}LensResult
+//
 // Windows prevent a lens such as messages_authored from becoming the only
 // parent for every message a person ever wrote. Writers and GraphQL resolvers
 // can page by window first, then load ranked result rows inside that window.
