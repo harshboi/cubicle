@@ -76,7 +76,7 @@ func (WorkLensWindow) Fields() []ent.Field {
 	)
 }
 
-// Edges connects the window to its owning lens and document result rows.
+// Edges connects the window to its owning lens and target-specific result rows.
 func (WorkLensWindow) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("lens", WorkLens.Type).
@@ -88,6 +88,8 @@ func (WorkLensWindow) Edges() []ent.Edge {
 			Comment("Work lens whose results this window bounds."),
 		edge.To("document_results", DocumentLensResult.Type).
 			Comment("Document results assigned to this bounded window."),
+		edge.To("pull_request_results", PullRequestLensResult.Type).
+			Comment("Pull request results assigned to this bounded window."),
 	}
 }
 
