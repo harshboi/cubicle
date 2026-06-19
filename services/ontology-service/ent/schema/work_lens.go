@@ -63,7 +63,7 @@ func (WorkLens) Fields() []ent.Field {
 				Comment("Number of source systems that contributed to this lens."),
 			field.Bool("is_complete").
 				Default(false).
-				Comment("Whether all configured sources for this lens have been crawled."),
+				Comment("Whether this lens's serving rollups have been fully rebuilt for the current materialization window."),
 			field.Time("last_indexed_at").
 				Optional().
 				Comment("Time this lens's rollups were last rebuilt or updated."),
@@ -99,7 +99,11 @@ func validateWorkLensTargetKind() ent.Hook {
 	}
 }
 
-// Edges connects a lens to its parent work area.
+// Edges connects a lens to its parent work area and bounded windows.
+//
+// Target rows are intentionally reachable through WorkLensWindow result edges,
+// not direct WorkLens -> target edges, so lens reads cannot bypass the serving
+// cardinality boundary.
 func (WorkLens) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("area", WorkArea.Type).
@@ -109,6 +113,8 @@ func (WorkLens) Edges() []ent.Edge {
 			Immutable().
 			Field("work_area_id").
 			Comment("Parent work area that owns this lens."),
+		edge.To("windows", WorkLensWindow.Type).
+			Comment("Bounded windows that partition this lens before result rows are loaded."),
 	}
 }
 
