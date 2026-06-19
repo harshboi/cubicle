@@ -92,6 +92,8 @@ func (WorkLensWindow) Edges() []ent.Edge {
 			Comment("Pull request results assigned to this bounded window."),
 		edge.To("ticket_results", TicketLensResult.Type).
 			Comment("Ticket results assigned to this bounded window."),
+		edge.To("message_results", MessageLensResult.Type).
+			Comment("Message results assigned to this bounded window."),
 	}
 }
 
