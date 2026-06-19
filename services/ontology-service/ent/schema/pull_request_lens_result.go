@@ -8,7 +8,14 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// PullRequestLensResult is the ranked association from a work lens to a pull request.
+// PullRequestLensResult is the ranked association from a work lens window to a pull request.
+//
+// Association:
+//
+//	WorkArea -> WorkLens -> WorkLensWindow -> PullRequestLensResult -> PullRequest
+//
+// The window parent keeps pull-request results pageable without a direct
+// WorkLens to PullRequest fanout.
 type PullRequestLensResult struct {
 	ent.Schema
 }
