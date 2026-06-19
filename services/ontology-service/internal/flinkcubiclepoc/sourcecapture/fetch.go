@@ -1,11 +1,11 @@
 // Association:
 //
-//	Request -> Fetcher -> SnapshotRecord -> replay manifest -> loader
-//	HTTP 403/429 -> SnapshotRecord + RateLimitError -> SourceSyncIssue later
+//	Request -> Fetcher -> Record -> replay manifest -> loader
+//	HTTP 403/429 -> Record + RateLimitError -> SourceSyncIssue later
 //
 // The fetcher captures source bytes and provenance only; ontology materializing
 // stays in the loader.
-package sourcefetch
+package sourcecapture
 
 import (
 	"bytes"
@@ -21,9 +21,9 @@ import (
 	"time"
 )
 
-const defaultUserAgent = "cubicle-ontology-sourcefetch/0.1"
+const defaultUserAgent = "cubicle-ontology-source-capture/0.1"
 
-var ErrBudgetExceeded = errors.New("source fetch budget exceeded")
+var ErrBudgetExceeded = errors.New("source capture budget exceeded")
 
 // Request describes one source-neutral HTTP request that should become a replayable snapshot.
 type Request struct {
@@ -40,8 +40,8 @@ type Request struct {
 	ExpectedSHA256   string            `json:"expected_sha256,omitempty"` // ExpectedSHA256 optionally pins a known body hash.
 }
 
-// SnapshotRecord is the raw fetched payload plus enough metadata to replay or normalize it later.
-type SnapshotRecord struct {
+// Record is the raw fetched payload plus enough metadata to replay or normalize it later.
+type Record struct {
 	SnapshotKey      string           `json:"snapshot_key"`
 	SourceKey        string           `json:"source_key"`
 	SourceInstance   string           `json:"source_instance"`
@@ -105,6 +105,7 @@ type RateLimitError struct {
 	ResponseBytes int64
 }
 
+// Error reports the source throttle with retry hints but no secret headers.
 func (e RateLimitError) Error() string {
 	parts := []string{fmt.Sprintf("source rate limited for snapshot %s: status %d", e.SnapshotKey, e.StatusCode)}
 	if !e.RetryAfter.IsZero() {
@@ -117,7 +118,7 @@ func (e RateLimitError) Error() string {
 }
 
 // FetchAll fetches requests in order and returns snapshots for completed requests only.
-func (f Fetcher) FetchAll(ctx context.Context, requests []Request) ([]SnapshotRecord, Usage, error) {
+func (f Fetcher) FetchAll(ctx context.Context, requests []Request) ([]Record, Usage, error) {
 	client := f.Client
 	if client == nil {
 		client = http.DefaultClient
@@ -131,7 +132,7 @@ func (f Fetcher) FetchAll(ctx context.Context, requests []Request) ([]SnapshotRe
 		userAgent = defaultUserAgent
 	}
 
-	records := make([]SnapshotRecord, 0, len(requests))
+	records := make([]Record, 0, len(requests))
 	var usage Usage
 	for _, request := range requests {
 		if err := request.Validate(); err != nil {
@@ -212,12 +213,13 @@ func (r Request) HTTPRequest(ctx context.Context) (*http.Request, error) {
 	return req, nil
 }
 
-func snapshotFromResponse(request Request, response *http.Response, body []byte, fetchedAt time.Time) (SnapshotRecord, error) {
+// snapshotFromResponse freezes response bytes and metadata into a replay row.
+func snapshotFromResponse(request Request, response *http.Response, body []byte, fetchedAt time.Time) (Record, error) {
 	bodySHA256 := HashBody(body)
 	if request.ExpectedSHA256 != "" && request.ExpectedSHA256 != bodySHA256 {
-		return SnapshotRecord{}, fmt.Errorf("snapshot %s: body hash mismatch: got %s want %s", request.SnapshotKey, bodySHA256, request.ExpectedSHA256)
+		return Record{}, fmt.Errorf("snapshot %s: body hash mismatch: got %s want %s", request.SnapshotKey, bodySHA256, request.ExpectedSHA256)
 	}
-	return SnapshotRecord{
+	return Record{
 		SnapshotKey:      request.SnapshotKey,
 		SourceKey:        request.SourceKey,
 		SourceInstance:   request.SourceInstance,
@@ -240,6 +242,7 @@ func snapshotFromResponse(request Request, response *http.Response, body []byte,
 	}, nil
 }
 
+// readBudgetedBody enforces byte coverage limits before snapshots reach disk.
 func readBudgetedBody(reader io.Reader, budget Budget, usage *Usage) ([]byte, error) {
 	if budget.MaxBytes <= 0 {
 		body, err := io.ReadAll(reader)
@@ -270,6 +273,7 @@ func HashBody(body []byte) string {
 	return "sha256:" + hex.EncodeToString(sum[:])
 }
 
+// optionalHashString records request-body hashes only when a request body exists.
 func optionalHashString(body string) string {
 	if body == "" {
 		return ""
@@ -277,6 +281,7 @@ func optionalHashString(body string) string {
 	return HashBody([]byte(body))
 }
 
+// methodOrDefault keeps replay metadata explicit even for GET defaults.
 func methodOrDefault(method string) string {
 	if method == "" {
 		return http.MethodGet
@@ -284,6 +289,7 @@ func methodOrDefault(method string) string {
 	return method
 }
 
+// isRateLimited recognizes both direct 429s and GitHub's exhausted 403 shape.
 func isRateLimited(response *http.Response) bool {
 	if response.StatusCode == http.StatusTooManyRequests {
 		return true
@@ -295,6 +301,7 @@ func isRateLimited(response *http.Response) bool {
 	return remaining == "0"
 }
 
+// retryAfterTime turns Retry-After into an absolute retry timestamp when possible.
 func retryAfterTime(header http.Header, now time.Time) time.Time {
 	value := header.Get("retry-after")
 	if value == "" {
@@ -309,6 +316,7 @@ func retryAfterTime(header http.Header, now time.Time) time.Time {
 	return time.Time{}
 }
 
+// unixHeaderTime parses GitHub reset headers into UTC timestamps.
 func unixHeaderTime(value string) time.Time {
 	if value == "" {
 		return time.Time{}
@@ -320,6 +328,7 @@ func unixHeaderTime(value string) time.Time {
 	return time.Unix(seconds, 0).UTC()
 }
 
+// safeRequestHeaders keeps replay-useful request headers and drops secrets.
 func safeRequestHeaders(headers map[string]string) map[string]string {
 	if len(headers) == 0 {
 		return nil
@@ -339,6 +348,7 @@ func safeRequestHeaders(headers map[string]string) map[string]string {
 	return filtered
 }
 
+// replayResponseHeaders keeps provenance and pagination headers needed after capture.
 func replayResponseHeaders(headers http.Header) map[string]string {
 	keep := map[string]struct{}{
 		"content-length":        {},
@@ -373,12 +383,14 @@ func NewStaticClient(statusCode int, headers map[string]string, body []byte) HTT
 	return staticClient{statusCode: statusCode, headers: headers, body: body}
 }
 
+// staticClient gives tests a deterministic HTTP boundary for snapshot capture.
 type staticClient struct {
 	statusCode int
 	headers    map[string]string
 	body       []byte
 }
 
+// Do returns the configured static response without touching the network.
 func (c staticClient) Do(req *http.Request) (*http.Response, error) {
 	header := make(http.Header)
 	for key, value := range c.headers {

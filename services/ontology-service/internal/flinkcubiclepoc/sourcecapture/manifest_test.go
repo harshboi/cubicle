@@ -1,4 +1,10 @@
-package sourcefetch
+// Association:
+//
+//	Record -> manifest.json + body file -> Record
+//	capture manifest row -> replay Record
+//
+// These tests keep replay fixtures hash-checked and source-identifiable.
+package sourcecapture
 
 import (
 	"os"
@@ -8,10 +14,11 @@ import (
 	"time"
 )
 
+// TestWriteReadManifestSortsAndValidatesBodies checks deterministic dump and replay.
 func TestWriteReadManifestSortsAndValidatesBodies(t *testing.T) {
 	dir := t.TempDir()
 	generatedAt := time.Date(2026, 6, 11, 12, 0, 0, 0, time.UTC)
-	records := []SnapshotRecord{
+	records := []Record{
 		manifestRecord("snapshot:z", "github", "github_pull_request", "apache/flink#2", []byte(`{"number":2}`)),
 		manifestRecord("snapshot:a", "jira", "jira_issue", "FLINK-1", []byte(`{"key":"FLINK-1"}`)),
 	}
@@ -44,10 +51,11 @@ func TestWriteReadManifestSortsAndValidatesBodies(t *testing.T) {
 	}
 }
 
+// TestReadManifestRejectsHashMismatch rejects replay when bytes no longer match metadata.
 func TestReadManifestRejectsHashMismatch(t *testing.T) {
 	dir := t.TempDir()
 	record := manifestRecord("snapshot:a", "jira", "jira_issue", "FLINK-1", []byte("good"))
-	if err := WriteManifest(dir, []SnapshotRecord{record}, DumpOptions{}); err != nil {
+	if err := WriteManifest(dir, []Record{record}, DumpOptions{}); err != nil {
 		t.Fatalf("WriteManifest returned error: %v", err)
 	}
 	loadedManifest, err := ReadManifest(dir)
@@ -63,6 +71,7 @@ func TestReadManifestRejectsHashMismatch(t *testing.T) {
 	}
 }
 
+// TestReadCaptureManifestConvertsNDJSONRows checks raw capture rows become replay snapshots.
 func TestReadCaptureManifestConvertsNDJSONRows(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(dir, "github"), 0o755); err != nil {
@@ -102,6 +111,7 @@ func TestReadCaptureManifestConvertsNDJSONRows(t *testing.T) {
 	}
 }
 
+// TestReadCaptureManifestRejectsHashMismatch blocks corrupted captured source bodies.
 func TestReadCaptureManifestRejectsHashMismatch(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(dir, "jira"), 0o755); err != nil {
@@ -120,8 +130,9 @@ func TestReadCaptureManifestRejectsHashMismatch(t *testing.T) {
 	}
 }
 
-func manifestRecord(snapshotKey string, sourceKey string, objectType string, objectID string, body []byte) SnapshotRecord {
-	return SnapshotRecord{
+// manifestRecord builds a replay snapshot used by manifest round-trip tests.
+func manifestRecord(snapshotKey string, sourceKey string, objectType string, objectID string, body []byte) Record {
+	return Record{
 		SnapshotKey:      snapshotKey,
 		SourceKey:        sourceKey,
 		SourceInstance:   "test-instance",

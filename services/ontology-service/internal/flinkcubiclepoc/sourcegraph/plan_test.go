@@ -1,4 +1,11 @@
-package flinksource
+// Association:
+//
+//	Plan* tests -> sourcecapture.Request identity
+//	extractor tests -> Record body -> stable keys / PR refs
+//
+// These tests keep the Flink crawl plan deterministic before any live fetch
+// or ontology materialization happens.
+package sourcegraph
 
 import (
 	"net/url"
@@ -8,9 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"cubicle/services/ontology-service/internal/sourcefetch"
+	"cubicle/services/ontology-service/internal/flinkcubiclepoc/sourcecapture"
 )
 
+// TestPlanSeedRequests checks the first crawl fan-out: Jira, GitHub, docs.
 func TestPlanSeedRequests(t *testing.T) {
 	cfg := DefaultConfig(time.Date(2026, 6, 11, 12, 0, 0, 0, time.UTC))
 	requests, err := PlanSeedRequests(cfg)
@@ -44,6 +52,7 @@ func TestPlanSeedRequests(t *testing.T) {
 	}
 }
 
+// TestPlanGitHubPRBundleSeparatesDetailEndpoints protects the complete-PR coverage contract.
 func TestPlanGitHubPRBundleSeparatesDetailEndpoints(t *testing.T) {
 	cfg := DefaultConfig(time.Date(2026, 6, 11, 12, 0, 0, 0, time.UTC))
 	requests, err := PlanGitHubPRBundle(cfg, PullRequestRef{Repo: "apache/flink-kubernetes-operator", Number: 1127})
@@ -71,8 +80,9 @@ func TestPlanGitHubPRBundleSeparatesDetailEndpoints(t *testing.T) {
 	}
 }
 
+// TestExtractors checks snapshot records become keys and PR refs, not product rows.
 func TestExtractors(t *testing.T) {
-	jiraSearch := sourcefetch.SnapshotRecord{
+	jiraSearch := sourcecapture.Record{
 		SnapshotKey: "snapshot:jira",
 		Body: []byte(`{
 		  "issues": [
@@ -90,7 +100,7 @@ func TestExtractors(t *testing.T) {
 		t.Fatalf("keys = %#v", keys)
 	}
 
-	remoteLinks := sourcefetch.SnapshotRecord{
+	remoteLinks := sourcecapture.Record{
 		SnapshotKey: "snapshot:remote-links",
 		Body: []byte(`[
 		  {"object": {"url": "https://github.com/apache/flink-kubernetes-operator/pull/1127"}},
@@ -105,7 +115,7 @@ func TestExtractors(t *testing.T) {
 		t.Fatalf("prURLs = %#v", prURLs)
 	}
 
-	search := sourcefetch.SnapshotRecord{
+	search := sourcecapture.Record{
 		SnapshotKey: "snapshot:github-search",
 		Body: []byte(`{
 		  "items": [
@@ -123,13 +133,14 @@ func TestExtractors(t *testing.T) {
 	}
 }
 
+// TestMarkdownDocsFromTree keeps docs discovery scoped to markdown docs content.
 func TestMarkdownDocsFromTree(t *testing.T) {
-	record := sourcefetch.SnapshotRecord{
+	record := sourcecapture.Record{
 		SnapshotKey: "snapshot:docs-tree",
 		Body: []byte(`{
 		  "tree": [
-		    {"path": "docs/content/docs/custom-resource/autoscaler.md", "type": "blob"},
-		    {"path": "docs/content/docs/custom-resource/autoscaler.png", "type": "blob"},
+		    {"path": "docs/content/docs/custom-resource/sourcegraph.md", "type": "blob"},
+		    {"path": "docs/content/docs/custom-resource/sourcegraph.png", "type": "blob"},
 		    {"path": "README.md", "type": "blob"}
 		  ]
 		}`),
@@ -138,11 +149,12 @@ func TestMarkdownDocsFromTree(t *testing.T) {
 	if err != nil {
 		t.Fatalf("MarkdownDocsFromTree returned error: %v", err)
 	}
-	if len(paths) != 1 || paths[0] != "docs/content/docs/custom-resource/autoscaler.md" {
+	if len(paths) != 1 || paths[0] != "docs/content/docs/custom-resource/sourcegraph.md" {
 		t.Fatalf("paths = %#v", paths)
 	}
 }
 
+// TestExtractIssueKeys keeps free-text FLINK references stable and deduped.
 func TestExtractIssueKeys(t *testing.T) {
 	keys := ExtractIssueKeys("[FLINK-39743] commit message links FLINK-30574 and flink-39743")
 	if strings.Join(keys, ",") != "FLINK-30574,FLINK-39743" {
@@ -150,17 +162,18 @@ func TestExtractIssueKeys(t *testing.T) {
 	}
 }
 
+// TestReadFixtureManifestMapsSourceInstances checks capture source names map into Cubicle scopes.
 func TestReadFixtureManifestMapsSourceInstances(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(dir, "docs"), 0o755); err != nil {
 		t.Fatalf("create fixture dir: %v", err)
 	}
 	body := []byte("# autoscaler")
-	bodyHash := sourcefetch.HashBody(body)
-	if err := os.WriteFile(filepath.Join(dir, "docs", "autoscaler.md"), body, 0o644); err != nil {
+	bodyHash := sourcecapture.HashBody(body)
+	if err := os.WriteFile(filepath.Join(dir, "docs", "sourcegraph.md"), body, 0o644); err != nil {
 		t.Fatalf("write fixture body: %v", err)
 	}
-	manifest := `{"path":"docs/autoscaler.md","source":"github_docs","source_object_type":"github_markdown_doc","source_object_id":"apache/flink-kubernetes-operator:docs/content/docs/custom-resource/autoscaler.md","url":"https://raw.githubusercontent.test/apache/flink-kubernetes-operator/main/docs/content/docs/custom-resource/autoscaler.md","status_code":200,"body_sha256":"` + bodyHash + `","bytes":12}` + "\n"
+	manifest := `{"path":"docs/sourcegraph.md","source":"github_docs","source_object_type":"github_markdown_doc","source_object_id":"apache/flink-kubernetes-operator:docs/content/docs/custom-resource/sourcegraph.md","url":"https://raw.githubusercontent.test/apache/flink-kubernetes-operator/main/docs/content/docs/custom-resource/sourcegraph.md","status_code":200,"body_sha256":"` + bodyHash + `","bytes":12}` + "\n"
 	if err := os.WriteFile(filepath.Join(dir, "manifest.ndjson"), []byte(manifest), 0o644); err != nil {
 		t.Fatalf("write fixture manifest: %v", err)
 	}

@@ -25,11 +25,12 @@ import (
 
 	"cubicle/services/ontology-service/internal/config"
 	"cubicle/services/ontology-service/internal/entstore"
-	"cubicle/services/ontology-service/internal/flinksource"
+	"cubicle/services/ontology-service/internal/flinkcubiclepoc/sourcecapture"
+	"cubicle/services/ontology-service/internal/flinkcubiclepoc/sourcegraph"
 	"cubicle/services/ontology-service/internal/httpapi"
-	"cubicle/services/ontology-service/internal/sourcefetch"
 )
 
+// serveConfig is the runtime path: config/env/flags -> Ent store -> HTTP API.
 type serveConfig struct {
 	ConfigPath               string        // ConfigPath is the optional HOCON file path used to load runtime defaults.
 	Listen                   string        // Listen is the host:port address the local HTTP server binds to.
@@ -39,10 +40,12 @@ type serveConfig struct {
 	GraphQLPlaygroundEnabled bool          // GraphQLPlaygroundEnabled controls whether GET /playground is mounted.
 }
 
+// flinkFixtureSummaryConfig points at a source-capture fixture for coverage counts.
 type flinkFixtureSummaryConfig struct {
 	Dir string // Dir is a Flink source-capture fixture directory.
 }
 
+// flinkFixtureLoadConfig points at a fixture and database for graph materialization.
 type flinkFixtureLoadConfig struct {
 	Dir               string        // Dir is a Flink source-capture fixture directory.
 	DatabasePath      string        // DatabasePath is the SQLite graph database to materialize into.
@@ -51,12 +54,14 @@ type flinkFixtureLoadConfig struct {
 	RunKey            string        // RunKey overrides the generated source sync run key.
 }
 
+// fixtureSummary reports replay coverage before product rows are written.
 type fixtureSummary struct {
 	Total    int             `json:"total"`
 	Sources  []summaryBucket `json:"sources"`
 	Statuses []summaryBucket `json:"statuses"`
 }
 
+// summaryBucket is one source or status count in a fixture summary.
 type summaryBucket struct {
 	Key   string `json:"key"`
 	Count int    `json:"count"`
@@ -76,6 +81,7 @@ const (
 	serverIdleTimeout = 60 * time.Second
 )
 
+// main routes CLI failures through structured logs and process exit.
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	if err := run(os.Args[1:], logger); err != nil {
@@ -84,6 +90,7 @@ func main() {
 	}
 }
 
+// run chooses the command path: serve, summarize fixture, or load fixture.
 func run(args []string, logger *slog.Logger) error {
 	if len(args) == 0 {
 		return errors.New("expected command: serve")
@@ -113,10 +120,12 @@ func run(args []string, logger *slog.Logger) error {
 	}
 }
 
+// parseServeConfig loads serve config using the real process environment.
 func parseServeConfig(args []string) (serveConfig, error) {
 	return parseServeConfigWithEnv(args, os.Getenv)
 }
 
+// parseServeConfigWithEnv merges config file, env, and flags for the HTTP runtime.
 func parseServeConfigWithEnv(args []string, getenv func(string) string) (serveConfig, error) {
 	configPath, err := configPathFromArgs(args)
 	if err != nil {
@@ -156,6 +165,7 @@ func parseServeConfigWithEnv(args []string, getenv func(string) string) (serveCo
 	return cfg, nil
 }
 
+// configPathFromArgs finds --config before loading env-backed defaults.
 func configPathFromArgs(args []string) (string, error) {
 	for i := 1; i < len(args); i++ {
 		arg := args[i]
@@ -175,6 +185,7 @@ func configPathFromArgs(args []string) (string, error) {
 	return "", nil
 }
 
+// parseFlinkFixtureSummaryConfig validates the fixture summary command inputs.
 func parseFlinkFixtureSummaryConfig(args []string) (flinkFixtureSummaryConfig, error) {
 	flags := flag.NewFlagSet("flink-fixture-summary", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
@@ -189,6 +200,7 @@ func parseFlinkFixtureSummaryConfig(args []string) (flinkFixtureSummaryConfig, e
 	return cfg, nil
 }
 
+// parseFlinkFixtureLoadConfig validates the fixture load command inputs.
 func parseFlinkFixtureLoadConfig(args []string) (flinkFixtureLoadConfig, error) {
 	flags := flag.NewFlagSet("flink-fixture-load", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
@@ -212,8 +224,9 @@ func parseFlinkFixtureLoadConfig(args []string) (flinkFixtureLoadConfig, error) 
 	return cfg, nil
 }
 
+// summarizeFlinkFixture counts replay coverage without touching the product graph.
 func summarizeFlinkFixture(cfg flinkFixtureSummaryConfig, writer io.Writer) error {
-	records, err := flinksource.ReadFixtureManifest(cfg.Dir)
+	records, err := sourcegraph.ReadFixtureManifest(cfg.Dir)
 	if err != nil {
 		return err
 	}
@@ -231,8 +244,9 @@ func summarizeFlinkFixture(cfg flinkFixtureSummaryConfig, writer io.Writer) erro
 	return encoder.Encode(summary)
 }
 
+// loadFlinkFixture replays captured source bytes into typed ontology rows.
 func loadFlinkFixture(ctx context.Context, cfg flinkFixtureLoadConfig, writer io.Writer) error {
-	records, err := flinksource.ReadFixtureManifest(cfg.Dir)
+	records, err := sourcegraph.ReadFixtureManifest(cfg.Dir)
 	if err != nil {
 		return err
 	}
@@ -245,7 +259,7 @@ func loadFlinkFixture(ctx context.Context, cfg flinkFixtureLoadConfig, writer io
 	}
 	defer graphStore.Close()
 
-	result, err := flinksource.LoadFixture(ctx, graphStore.Client(), records, flinksource.LoadOptions{
+	result, err := sourcegraph.LoadFixture(ctx, graphStore.Client(), records, sourcegraph.LoadOptions{
 		StreamKey: cfg.StreamKey,
 		RunKey:    cfg.RunKey,
 	})
@@ -257,12 +271,14 @@ func loadFlinkFixture(ctx context.Context, cfg flinkFixtureLoadConfig, writer io
 	return encoder.Encode(result)
 }
 
+// recordStatusKey is the source/status tuple used by fixture coverage buckets.
 type recordStatusKey struct {
 	source string
 	status int
 }
 
-func countBuckets(records []sourcefetch.SnapshotRecord, keyFunc func(recordStatusKey) string) []summaryBucket {
+// countBuckets turns replay records into stable summary buckets.
+func countBuckets(records []sourcecapture.Record, keyFunc func(recordStatusKey) string) []summaryBucket {
 	counts := make(map[string]int)
 	for _, record := range records {
 		key := keyFunc(recordStatusKey{source: record.SourceKey, status: record.Response.StatusCode})
@@ -281,6 +297,7 @@ func countBuckets(records []sourcefetch.SnapshotRecord, keyFunc func(recordStatu
 	return buckets
 }
 
+// validateListenAddress keeps the local service private unless the caller opts out.
 func validateListenAddress(listen string, allowPublicBind bool) error {
 	host, _, err := net.SplitHostPort(listen)
 	if err != nil {
@@ -295,6 +312,7 @@ func validateListenAddress(listen string, allowPublicBind bool) error {
 	return nil
 }
 
+// serve opens Ent, registers runtime invariants, and starts the HTTP API.
 func serve(cfg serveConfig, logger *slog.Logger) error {
 	if logger == nil {
 		logger = slog.Default()
@@ -327,6 +345,7 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 	return server.ListenAndServe()
 }
 
+// newHTTPServer applies fixed HTTP timeouts around the ontology API.
 func newHTTPServer(cfg serveConfig, router http.Handler) *http.Server {
 	return &http.Server{
 		Addr:              cfg.Listen,

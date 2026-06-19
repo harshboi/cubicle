@@ -1,3 +1,11 @@
+// Association:
+//
+//	CLI args/env/config -> command config
+//	fixture manifest -> summary/load command -> JSON output
+//	serve config -> HTTP server timeouts
+//
+// These tests keep the command layer honest before it reaches source replay or
+// the local ontology service.
 package main
 
 import (
@@ -11,9 +19,10 @@ import (
 	"testing"
 	"time"
 
-	"cubicle/services/ontology-service/internal/sourcefetch"
+	"cubicle/services/ontology-service/internal/flinkcubiclepoc/sourcecapture"
 )
 
+// TestParseServeConfigDefaultsToLocalhost keeps the default service bind local.
 func TestParseServeConfigDefaultsToLocalhost(t *testing.T) {
 	cfg, err := parseServeConfigWithEnv([]string{"serve"}, func(string) string { return "" })
 	if err != nil {
@@ -33,6 +42,7 @@ func TestParseServeConfigDefaultsToLocalhost(t *testing.T) {
 	}
 }
 
+// TestSummarizeFlinkFixtureReportsSourceAndStatusCounts checks fixture coverage before loading.
 func TestSummarizeFlinkFixtureReportsSourceAndStatusCounts(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(dir, "github"), 0o755); err != nil {
@@ -47,8 +57,8 @@ func TestSummarizeFlinkFixtureReportsSourceAndStatusCounts(t *testing.T) {
 		t.Fatalf("write limited body: %v", err)
 	}
 	manifest := strings.Join([]string{
-		`{"path":"github/ok.json","source":"github","source_object_type":"github_pull_request","source_object_id":"apache/flink-kubernetes-operator#1078","url":"https://api.github.test/pulls/1078","status_code":200,"body_sha256":"` + sourcefetch.HashBody(okBody) + `","bytes":11}`,
-		`{"path":"github/limited.json","source":"github","source_object_type":"github_pull_request","source_object_id":"apache/flink-kubernetes-operator#1127","url":"https://api.github.test/pulls/1127","status_code":429,"body_sha256":"` + sourcefetch.HashBody(limitedBody) + `","bytes":21}`,
+		`{"path":"github/ok.json","source":"github","source_object_type":"github_pull_request","source_object_id":"apache/flink-kubernetes-operator#1078","url":"https://api.github.test/pulls/1078","status_code":200,"body_sha256":"` + sourcecapture.HashBody(okBody) + `","bytes":11}`,
+		`{"path":"github/limited.json","source":"github","source_object_type":"github_pull_request","source_object_id":"apache/flink-kubernetes-operator#1127","url":"https://api.github.test/pulls/1127","status_code":429,"body_sha256":"` + sourcecapture.HashBody(limitedBody) + `","bytes":21}`,
 		"",
 	}, "\n")
 	if err := os.WriteFile(filepath.Join(dir, "manifest.ndjson"), []byte(manifest), 0o644); err != nil {
@@ -67,6 +77,7 @@ func TestSummarizeFlinkFixtureReportsSourceAndStatusCounts(t *testing.T) {
 	}
 }
 
+// TestLoadFlinkFixtureReportsMaterializedCounts checks the load command's graph counters.
 func TestLoadFlinkFixtureReportsMaterializedCounts(t *testing.T) {
 	dir := t.TempDir()
 	records := []testFixtureRecord{
@@ -167,6 +178,7 @@ func TestLoadFlinkFixtureReportsMaterializedCounts(t *testing.T) {
 	}
 }
 
+// TestParseServeConfigUsesEnvironmentDefaults checks env vars feed the serve runtime.
 func TestParseServeConfigUsesEnvironmentDefaults(t *testing.T) {
 	env := map[string]string{
 		"CUBICLE_ONTOLOGY_LISTEN_ADDR":                "127.0.0.1:49090",
@@ -194,6 +206,7 @@ func TestParseServeConfigUsesEnvironmentDefaults(t *testing.T) {
 	}
 }
 
+// TestParseServeConfigLoadsHOCONFile checks file-backed runtime defaults.
 func TestParseServeConfigLoadsHOCONFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "ontology-service.conf")
 	if err := os.WriteFile(path, []byte(`
@@ -223,6 +236,7 @@ graphql.playground_enabled = false
 	}
 }
 
+// TestParseServeConfigLoadsHOCONPathFromEnv checks env can select the config file.
 func TestParseServeConfigLoadsHOCONPathFromEnv(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "ontology-service.conf")
 	if err := os.WriteFile(path, []byte(`
@@ -251,6 +265,7 @@ storage.database_path = "/tmp/cubicle-config-env-file.db"
 	}
 }
 
+// TestParseServeConfigFlagsOverrideHOCONFile keeps explicit CLI flags highest priority.
 func TestParseServeConfigFlagsOverrideHOCONFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "ontology-service.conf")
 	if err := os.WriteFile(path, []byte(`
@@ -287,6 +302,7 @@ graphql.playground_enabled = true
 	}
 }
 
+// TestParseServeConfigRejectsPublicBindWithoutFlag protects local-only default serving.
 func TestParseServeConfigRejectsPublicBindWithoutFlag(t *testing.T) {
 	_, err := parseServeConfigWithEnv([]string{"serve", "--listen", "0.0.0.0:48080"}, func(string) string { return "" })
 	if err == nil {
@@ -294,6 +310,7 @@ func TestParseServeConfigRejectsPublicBindWithoutFlag(t *testing.T) {
 	}
 }
 
+// TestParseServeConfigAllowsPublicBindWithFlag keeps public bind opt-in and explicit.
 func TestParseServeConfigAllowsPublicBindWithFlag(t *testing.T) {
 	cfg, err := parseServeConfigWithEnv([]string{"serve", "--listen", "0.0.0.0:48080", "--allow-public-bind"}, func(string) string { return "" })
 	if err != nil {
@@ -304,6 +321,7 @@ func TestParseServeConfigAllowsPublicBindWithFlag(t *testing.T) {
 	}
 }
 
+// TestHTTPServerUsesTimeouts checks the service has fixed HTTP timeout bounds.
 func TestHTTPServerUsesTimeouts(t *testing.T) {
 	handler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
 	server := newHTTPServer(serveConfig{Listen: "127.0.0.1:48080"}, handler)
@@ -322,6 +340,7 @@ func TestHTTPServerUsesTimeouts(t *testing.T) {
 	}
 }
 
+// testFixtureRecord is one raw capture row plus body bytes for CLI fixture tests.
 type testFixtureRecord struct {
 	Path       string
 	Source     string
@@ -331,6 +350,7 @@ type testFixtureRecord struct {
 	Body       []byte
 }
 
+// writeTestFixture writes body files and manifest rows for command-level replay tests.
 func writeTestFixture(t *testing.T, dir string, records []testFixtureRecord) {
 	t.Helper()
 	lines := make([]string, 0, len(records)+1)
@@ -350,7 +370,7 @@ func writeTestFixture(t *testing.T, dir string, records []testFixtureRecord) {
 			record.ObjectID,
 			"https://example.test/"+record.ObjectType+"/"+record.ObjectID,
 			record.Status,
-			sourcefetch.HashBody(record.Body),
+			sourcecapture.HashBody(record.Body),
 			len(record.Body),
 		))
 	}

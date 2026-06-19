@@ -1,4 +1,10 @@
-package flinksource
+// Association:
+//
+//	fixture snapshots -> LoadFixture -> typed rows + Evidence + SourceSyncIssue
+//	failed PR bundle -> SourceSyncIssue, not fake PullRequest truth
+//
+// These tests protect the split between product graph facts and source coverage.
+package sourcegraph
 
 import (
 	"context"
@@ -9,18 +15,19 @@ import (
 	genent "cubicle/services/ontology-service/ent"
 	"cubicle/services/ontology-service/ent/enttest"
 	"cubicle/services/ontology-service/ent/pullrequest"
-	"cubicle/services/ontology-service/internal/sourcefetch"
+	"cubicle/services/ontology-service/internal/flinkcubiclepoc/sourcecapture"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// TestLoadFixtureMaterializesTypedGraphAndCoverage proves product truth and coverage rows split correctly.
 func TestLoadFixtureMaterializesTypedGraphAndCoverage(t *testing.T) {
 	ctx := context.Background()
 	client := enttest.Open(t, "sqlite3", "file:flink-fixture-load?mode=memory&cache=shared&_fk=1")
 	defer client.Close()
 
 	now := time.Date(2026, 6, 11, 12, 0, 0, 0, time.UTC)
-	records := []sourcefetch.SnapshotRecord{
+	records := []sourcecapture.Record{
 		testSnapshot(200, SourceJira, SourceInstanceJira, "jira_issue", "FLINK-1", []byte(`{
 		  "key":"FLINK-1",
 		  "fields":{
@@ -110,9 +117,10 @@ func TestLoadFixtureMaterializesTypedGraphAndCoverage(t *testing.T) {
 	}
 }
 
-func completePRBundleRecords(number int) []sourcefetch.SnapshotRecord {
+// completePRBundleRecords creates the six successful snapshots required for full PR trust.
+func completePRBundleRecords(number int) []sourcecapture.Record {
 	objectID := "apache/flink-kubernetes-operator#" + strconv.Itoa(number)
-	return []sourcefetch.SnapshotRecord{
+	return []sourcecapture.Record{
 		testSnapshot(200, SourceGitHub, SourceInstanceGitHub, "github_pull_request", objectID, []byte(`{
 		  "html_url":"https://github.com/apache/flink-kubernetes-operator/pull/10",
 		  "title":"[FLINK-1] Fix autoscaler target utilization",
@@ -130,31 +138,33 @@ func completePRBundleRecords(number int) []sourcefetch.SnapshotRecord {
 	}
 }
 
-func failedPRBundleRecords(number int, status int) []sourcefetch.SnapshotRecord {
+// failedPRBundleRecords creates non-200 PR snapshots that should become sync issues only.
+func failedPRBundleRecords(number int, status int) []sourcecapture.Record {
 	objectID := "apache/flink-kubernetes-operator#" + strconv.Itoa(number)
 	body := []byte(`{"message":"rate limited"}`)
-	records := make([]sourcefetch.SnapshotRecord, 0, len(requiredPRBundleTypes))
+	records := make([]sourcecapture.Record, 0, len(requiredPRBundleTypes))
 	for _, objectType := range requiredPRBundleTypes {
 		records = append(records, testSnapshot(status, SourceGitHub, SourceInstanceGitHub, objectType, objectID, body))
 	}
 	return records
 }
 
-func testSnapshot(status int, sourceKey string, sourceInstance string, objectType string, objectID string, body []byte) sourcefetch.SnapshotRecord {
+// testSnapshot builds a replay record with source identity and body hash.
+func testSnapshot(status int, sourceKey string, sourceInstance string, objectType string, objectID string, body []byte) sourcecapture.Record {
 	sourceURL := "https://example.test/" + objectType + "/" + objectID
-	return sourcefetch.SnapshotRecord{
+	return sourcecapture.Record{
 		SnapshotKey:      "snapshot:" + objectType + ":" + objectID + ":" + strconv.Itoa(status),
 		SourceKey:        sourceKey,
 		SourceInstance:   sourceInstance,
 		SourceObjectType: objectType,
 		SourceObjectID:   objectID,
 		SourceURL:        sourceURL,
-		BodySHA256:       sourcefetch.HashBody(body),
-		Request: sourcefetch.RequestMetadata{
+		BodySHA256:       sourcecapture.HashBody(body),
+		Request: sourcecapture.RequestMetadata{
 			Method: "GET",
 			URL:    sourceURL,
 		},
-		Response: sourcefetch.ResponseMetadata{
+		Response: sourcecapture.ResponseMetadata{
 			StatusCode: status,
 			FetchedAt:  time.Date(2026, 6, 11, 12, 0, 0, 0, time.UTC),
 		},
@@ -162,6 +172,7 @@ func testSnapshot(status int, sourceKey string, sourceInstance string, objectTyp
 	}
 }
 
+// assertCount names materialized row-count failures in graph assertions.
 func assertCount(t *testing.T, name string, got int, want int) {
 	t.Helper()
 	if got != want {

@@ -1,4 +1,11 @@
-package flinksource
+// Association:
+//
+//	Config -> Plan* -> sourcecapture.Request -> source snapshot
+//	Record -> extractor -> issue keys / PR refs / docs paths
+//
+// The planner names every source request before fetching so replay, idempotency,
+// and later evidence all share the same source identity.
+package sourcegraph
 
 import (
 	"encoding/json"
@@ -12,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	"cubicle/services/ontology-service/internal/sourcefetch"
+	"cubicle/services/ontology-service/internal/flinkcubiclepoc/sourcecapture"
 )
 
 const (
@@ -53,9 +60,9 @@ type Config struct {
 	DocsRef          string
 }
 
-// ReadFixtureManifest converts the captured Flink dataset manifest into sourcefetch replay records.
-func ReadFixtureManifest(dir string) ([]sourcefetch.SnapshotRecord, error) {
-	return sourcefetch.ReadCaptureManifest(dir, sourcefetch.CaptureManifestOptions{
+// ReadFixtureManifest converts the captured Flink dataset manifest into sourcecapture records.
+func ReadFixtureManifest(dir string) ([]sourcecapture.Record, error) {
+	return sourcecapture.ReadCaptureManifest(dir, sourcecapture.CaptureManifestOptions{
 		SourceInstances: map[string]string{
 			SourceJira:   SourceInstanceJira,
 			SourceGitHub: SourceInstanceGitHub,
@@ -81,7 +88,7 @@ func DefaultConfig(crawlStartedAt time.Time) Config {
 }
 
 // PlanSeedRequests plans the first bounded source pass: Jira page, GitHub seed search, and docs tree.
-func PlanSeedRequests(cfg Config) ([]sourcefetch.Request, error) {
+func PlanSeedRequests(cfg Config) ([]sourcecapture.Request, error) {
 	cfg = cfg.withDefaults()
 	if err := cfg.validate(); err != nil {
 		return nil, err
@@ -98,15 +105,15 @@ func PlanSeedRequests(cfg Config) ([]sourcefetch.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []sourcefetch.Request{jira, github, docs}, nil
+	return []sourcecapture.Request{jira, github, docs}, nil
 }
 
 // PlanJiraSearchPage creates one bounded Autoscaler Jira search page request.
-func PlanJiraSearchPage(cfg Config, startAt int) (sourcefetch.Request, error) {
+func PlanJiraSearchPage(cfg Config, startAt int) (sourcecapture.Request, error) {
 	cfg = cfg.withDefaults()
 	endpoint, err := parseBaseURL(cfg.JiraBaseURL)
 	if err != nil {
-		return sourcefetch.Request{}, err
+		return sourcecapture.Request{}, err
 	}
 	endpoint.Path = path.Join(endpoint.Path, "rest/api/2/search")
 	query := endpoint.Query()
@@ -133,7 +140,7 @@ func PlanJiraSearchPage(cfg Config, startAt int) (sourcefetch.Request, error) {
 	endpoint.RawQuery = query.Encode()
 
 	objectID := fmt.Sprintf("start-%d", startAt)
-	return sourcefetch.Request{
+	return sourcecapture.Request{
 		SnapshotKey:      "snapshot:jira:search:" + crawlID(cfg.CrawlStartedAt) + ":" + objectID,
 		URL:              endpoint.String(),
 		SourceKey:        SourceJira,
@@ -145,16 +152,16 @@ func PlanJiraSearchPage(cfg Config, startAt int) (sourcefetch.Request, error) {
 }
 
 // PlanJiraRemoteLinks creates remote-link requests for stable Jira issue keys.
-func PlanJiraRemoteLinks(cfg Config, issueKeys []string) ([]sourcefetch.Request, error) {
+func PlanJiraRemoteLinks(cfg Config, issueKeys []string) ([]sourcecapture.Request, error) {
 	cfg = cfg.withDefaults()
 	keys := NormalizeIssueKeys(issueKeys)
-	requests := make([]sourcefetch.Request, 0, len(keys))
+	requests := make([]sourcecapture.Request, 0, len(keys))
 	for _, key := range keys {
 		endpoint, err := joinURLPath(cfg.JiraBaseURL, "rest/api/2/issue/"+key+"/remotelink")
 		if err != nil {
 			return nil, err
 		}
-		requests = append(requests, sourcefetch.Request{
+		requests = append(requests, sourcecapture.Request{
 			SnapshotKey:      "snapshot:jira:remote-links:" + key + ":" + crawlID(cfg.CrawlStartedAt),
 			URL:              endpoint,
 			SourceKey:        SourceJira,
@@ -168,11 +175,11 @@ func PlanJiraRemoteLinks(cfg Config, issueKeys []string) ([]sourcefetch.Request,
 }
 
 // PlanGitHubSeedSearch creates one repo-wide hint search page.
-func PlanGitHubSeedSearch(cfg Config, pageNumber int) (sourcefetch.Request, error) {
+func PlanGitHubSeedSearch(cfg Config, pageNumber int) (sourcecapture.Request, error) {
 	cfg = cfg.withDefaults()
 	endpoint, err := parseBaseURL(cfg.GitHubAPIBaseURL)
 	if err != nil {
-		return sourcefetch.Request{}, err
+		return sourcecapture.Request{}, err
 	}
 	endpoint.Path = path.Join(endpoint.Path, "search/issues")
 	query := endpoint.Query()
@@ -182,7 +189,7 @@ func PlanGitHubSeedSearch(cfg Config, pageNumber int) (sourcefetch.Request, erro
 	query.Set("per_page", strconv.Itoa(cfg.GitHubPageSize))
 	query.Set("page", strconv.Itoa(pageNumber))
 	endpoint.RawQuery = query.Encode()
-	return sourcefetch.Request{
+	return sourcecapture.Request{
 		SnapshotKey:      "snapshot:github:search:" + safeKey(cfg.GitHubRepo) + ":" + crawlID(cfg.CrawlStartedAt) + ":page-" + strconv.Itoa(pageNumber),
 		URL:              endpoint.String(),
 		SourceKey:        SourceGitHub,
@@ -194,22 +201,22 @@ func PlanGitHubSeedSearch(cfg Config, pageNumber int) (sourcefetch.Request, erro
 }
 
 // PlanGitHubIssueKeySearch creates an exact issue-key PR search to avoid repo-wide search caps.
-func PlanGitHubIssueKeySearch(cfg Config, issueKey string) (sourcefetch.Request, error) {
+func PlanGitHubIssueKeySearch(cfg Config, issueKey string) (sourcecapture.Request, error) {
 	cfg = cfg.withDefaults()
 	key := strings.ToUpper(strings.TrimSpace(issueKey))
 	if !exactIssueKeyPattern.MatchString(key) {
-		return sourcefetch.Request{}, fmt.Errorf("%w: invalid Flink issue key %q", ErrInvalidConfig, issueKey)
+		return sourcecapture.Request{}, fmt.Errorf("%w: invalid Flink issue key %q", ErrInvalidConfig, issueKey)
 	}
 	endpoint, err := parseBaseURL(cfg.GitHubAPIBaseURL)
 	if err != nil {
-		return sourcefetch.Request{}, err
+		return sourcecapture.Request{}, err
 	}
 	endpoint.Path = path.Join(endpoint.Path, "search/issues")
 	query := endpoint.Query()
 	query.Set("q", fmt.Sprintf("repo:%s is:pr %s", cfg.GitHubRepo, key))
 	query.Set("per_page", "10")
 	endpoint.RawQuery = query.Encode()
-	return sourcefetch.Request{
+	return sourcecapture.Request{
 		SnapshotKey:      "snapshot:github:search-key:" + key + ":" + crawlID(cfg.CrawlStartedAt),
 		URL:              endpoint.String(),
 		SourceKey:        SourceGitHub,
@@ -221,7 +228,7 @@ func PlanGitHubIssueKeySearch(cfg Config, issueKey string) (sourcefetch.Request,
 }
 
 // PlanGitHubPRBundle creates the endpoint snapshots needed to analyze one PR.
-func PlanGitHubPRBundle(cfg Config, pr PullRequestRef) ([]sourcefetch.Request, error) {
+func PlanGitHubPRBundle(cfg Config, pr PullRequestRef) ([]sourcecapture.Request, error) {
 	cfg = cfg.withDefaults()
 	if pr.Repo == "" {
 		pr.Repo = cfg.GitHubRepo
@@ -240,13 +247,13 @@ func PlanGitHubPRBundle(cfg Config, pr PullRequestRef) ([]sourcefetch.Request, e
 		{"github_pull_request_reviews", fmt.Sprintf("repos/%s/pulls/%d/reviews?per_page=100", pr.Repo, pr.Number)},
 		{"github_pull_request_commits", fmt.Sprintf("repos/%s/pulls/%d/commits?per_page=100", pr.Repo, pr.Number)},
 	}
-	requests := make([]sourcefetch.Request, 0, len(endpoints))
+	requests := make([]sourcecapture.Request, 0, len(endpoints))
 	for _, endpoint := range endpoints {
 		requestURL, err := joinURLPathWithQuery(cfg.GitHubAPIBaseURL, endpoint.apiPath)
 		if err != nil {
 			return nil, err
 		}
-		requests = append(requests, sourcefetch.Request{
+		requests = append(requests, sourcecapture.Request{
 			SnapshotKey:      "snapshot:github:" + endpoint.objectType + ":" + safeKey(pr.Repo) + ":" + strconv.Itoa(pr.Number) + ":" + crawlID(cfg.CrawlStartedAt),
 			URL:              requestURL,
 			SourceKey:        SourceGitHub,
@@ -260,14 +267,14 @@ func PlanGitHubPRBundle(cfg Config, pr PullRequestRef) ([]sourcefetch.Request, e
 }
 
 // PlanDocsTree creates the GitHub tree request used to discover markdown docs.
-func PlanDocsTree(cfg Config) (sourcefetch.Request, error) {
+func PlanDocsTree(cfg Config) (sourcecapture.Request, error) {
 	cfg = cfg.withDefaults()
 	requestURL, err := joinURLPath(cfg.GitHubAPIBaseURL, fmt.Sprintf("repos/%s/git/trees/%s", cfg.GitHubRepo, cfg.DocsRef))
 	if err != nil {
-		return sourcefetch.Request{}, err
+		return sourcecapture.Request{}, err
 	}
 	requestURL += "?recursive=1"
-	return sourcefetch.Request{
+	return sourcecapture.Request{
 		SnapshotKey:      "snapshot:docs:tree:" + safeKey(cfg.GitHubRepo) + ":" + cfg.DocsRef + ":" + crawlID(cfg.CrawlStartedAt),
 		URL:              requestURL,
 		SourceKey:        SourceDocs,
@@ -279,14 +286,14 @@ func PlanDocsTree(cfg Config) (sourcefetch.Request, error) {
 }
 
 // PlanDocsRaw creates a raw markdown request for one repo path.
-func PlanDocsRaw(cfg Config, docPath string) (sourcefetch.Request, error) {
+func PlanDocsRaw(cfg Config, docPath string) (sourcecapture.Request, error) {
 	cfg = cfg.withDefaults()
 	docPath = strings.TrimPrefix(strings.TrimSpace(docPath), "/")
 	if docPath == "" {
-		return sourcefetch.Request{}, fmt.Errorf("%w: docs path is required", ErrInvalidConfig)
+		return sourcecapture.Request{}, fmt.Errorf("%w: docs path is required", ErrInvalidConfig)
 	}
 	requestURL := "https://raw.githubusercontent.com/" + cfg.GitHubRepo + "/" + cfg.DocsRef + "/" + docPath
-	return sourcefetch.Request{
+	return sourcecapture.Request{
 		SnapshotKey:      "snapshot:docs:raw:" + safeKey(cfg.GitHubRepo+":"+docPath) + ":" + cfg.DocsRef + ":" + crawlID(cfg.CrawlStartedAt),
 		URL:              requestURL,
 		SourceKey:        SourceDocs,
@@ -303,7 +310,7 @@ func JiraAutoscalerJQL(since time.Time, crawlStartedAt time.Time) string {
 }
 
 // IssueKeysFromJiraSearch extracts issue keys from a Jira search page snapshot.
-func IssueKeysFromJiraSearch(record sourcefetch.SnapshotRecord) ([]string, error) {
+func IssueKeysFromJiraSearch(record sourcecapture.Record) ([]string, error) {
 	var page struct {
 		Issues []struct {
 			Key string `json:"key"`
@@ -320,7 +327,7 @@ func IssueKeysFromJiraSearch(record sourcefetch.SnapshotRecord) ([]string, error
 }
 
 // PRURLsFromJiraRemoteLinks extracts GitHub PR URLs from a Jira remote-link snapshot.
-func PRURLsFromJiraRemoteLinks(record sourcefetch.SnapshotRecord) ([]string, error) {
+func PRURLsFromJiraRemoteLinks(record sourcecapture.Record) ([]string, error) {
 	var links []struct {
 		Object struct {
 			URL string `json:"url"`
@@ -340,7 +347,7 @@ func PRURLsFromJiraRemoteLinks(record sourcefetch.SnapshotRecord) ([]string, err
 }
 
 // PullRequestsFromGitHubSearch extracts PR refs from a GitHub search snapshot.
-func PullRequestsFromGitHubSearch(record sourcefetch.SnapshotRecord) ([]PullRequestRef, error) {
+func PullRequestsFromGitHubSearch(record sourcecapture.Record) ([]PullRequestRef, error) {
 	var page struct {
 		Items []struct {
 			HTMLURL string `json:"html_url"`
@@ -359,7 +366,7 @@ func PullRequestsFromGitHubSearch(record sourcefetch.SnapshotRecord) ([]PullRequ
 }
 
 // MarkdownDocsFromTree extracts docs/content/docs markdown paths from a GitHub tree snapshot.
-func MarkdownDocsFromTree(record sourcefetch.SnapshotRecord) ([]string, error) {
+func MarkdownDocsFromTree(record sourcecapture.Record) ([]string, error) {
 	var tree struct {
 		Tree []struct {
 			Path string `json:"path"`
@@ -425,6 +432,7 @@ func ParseGitHubPRURL(rawURL string) (PullRequestRef, bool) {
 	return PullRequestRef{Repo: parts[0] + "/" + parts[1], Number: number}, true
 }
 
+// withDefaults fills the bounded Flink crawl plan without hiding caller overrides.
 func (cfg Config) withDefaults() Config {
 	defaults := DefaultConfig(cfg.CrawlStartedAt)
 	if cfg.JiraBaseURL == "" {
@@ -454,6 +462,7 @@ func (cfg Config) withDefaults() Config {
 	return cfg
 }
 
+// validate rejects source plans that would make coverage claims ambiguous.
 func (cfg Config) validate() error {
 	if cfg.CrawlStartedAt.IsZero() {
 		return fmt.Errorf("%w: crawl_started_at is required", ErrInvalidConfig)
@@ -467,6 +476,7 @@ func (cfg Config) validate() error {
 	return nil
 }
 
+// dedupePRRefs keeps one stable PR ref before the loader decides what is product truth.
 func dedupePRRefs(refs []PullRequestRef) []PullRequestRef {
 	seen := make(map[string]PullRequestRef, len(refs))
 	for _, ref := range refs {
@@ -488,6 +498,7 @@ func dedupePRRefs(refs []PullRequestRef) []PullRequestRef {
 	return out
 }
 
+// parseBaseURL checks source API roots before request paths are joined onto them.
 func parseBaseURL(rawURL string) (*url.URL, error) {
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
@@ -499,6 +510,7 @@ func parseBaseURL(rawURL string) (*url.URL, error) {
 	return parsed, nil
 }
 
+// joinURLPath builds a source URL while preserving the configured source host.
 func joinURLPath(rawBase string, parts string) (string, error) {
 	parsed, err := parseBaseURL(rawBase)
 	if err != nil {
@@ -508,6 +520,7 @@ func joinURLPath(rawBase string, parts string) (string, error) {
 	return parsed.String(), nil
 }
 
+// joinURLPathWithQuery keeps endpoint query strings attached after safe path joining.
 func joinURLPathWithQuery(rawBase string, apiPath string) (string, error) {
 	parts := strings.SplitN(apiPath, "?", 2)
 	joined, err := joinURLPath(rawBase, parts[0])
@@ -524,23 +537,28 @@ func joinURLPathWithQuery(rawBase string, apiPath string) (string, error) {
 	return joined + separator + parts[1], nil
 }
 
+// date turns crawl bounds into the day-granular source query format.
 func date(value time.Time) string {
 	return value.UTC().Format("2006-01-02")
 }
 
+// crawlID names snapshots by crawl time so replay batches stay deterministic.
 func crawlID(value time.Time) string {
 	return value.UTC().Format("20060102T150405Z")
 }
 
+// safeKey turns source IDs into filename- and key-safe fragments.
 func safeKey(value string) string {
 	replacer := strings.NewReplacer("/", "-", ":", "-", "#", "-", " ", "-")
 	return replacer.Replace(value)
 }
 
+// githubSourceInstance names the GitHub repo scope used by product source fields.
 func githubSourceInstance(repo string) string {
 	return "github.com/" + repo
 }
 
+// docsSourceInstance names the docs scope separately from PR and issue snapshots.
 func docsSourceInstance(repo string) string {
 	return "github.com/" + repo + "/docs"
 }

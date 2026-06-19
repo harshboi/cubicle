@@ -1,12 +1,12 @@
 // Association:
 //
-//	SnapshotRecord -> LoadFixture -> SourceConnection -> SourceScope -> SourceSyncRun
+//	Record -> LoadFixture -> SourceConnection -> SourceScope -> SourceSyncRun
 //	LoadFixture -> Ticket -> TicketPullRequest -> PullRequest
 //	LoadFixture -> Evidence; non-200 snapshots -> SourceSyncIssue only
 //
 // Fixture replay separates product truth from source coverage so failed fetches
 // never become empty product rows.
-package flinksource
+package sourcegraph
 
 import (
 	"context"
@@ -31,7 +31,7 @@ import (
 	"cubicle/services/ontology-service/ent/workarea"
 	"cubicle/services/ontology-service/ent/worklens"
 	"cubicle/services/ontology-service/ent/worklenswindow"
-	"cubicle/services/ontology-service/internal/sourcefetch"
+	"cubicle/services/ontology-service/internal/flinkcubiclepoc/sourcecapture"
 )
 
 const (
@@ -76,7 +76,7 @@ type LoadResult struct {
 // LoadFixture materializes replay records into the typed ontology graph. Non-200
 // source bodies are never normalized as empty product state; they only become
 // SourceSyncIssue coverage rows and aggregate sync counters.
-func LoadFixture(ctx context.Context, client *genent.Client, records []sourcefetch.SnapshotRecord, opts LoadOptions) (LoadResult, error) {
+func LoadFixture(ctx context.Context, client *genent.Client, records []sourcecapture.Record, opts LoadOptions) (LoadResult, error) {
 	if client == nil {
 		return LoadResult{}, errors.New("ent client is required")
 	}
@@ -209,6 +209,7 @@ func LoadFixture(ctx context.Context, client *genent.Client, records []sourcefet
 	return result, nil
 }
 
+// fixtureNow gives replay loads one clock so source rows and evidence agree.
 func fixtureNow(now func() time.Time) time.Time {
 	if now == nil {
 		return time.Now().UTC()
@@ -216,6 +217,7 @@ func fixtureNow(now func() time.Time) time.Time {
 	return now().UTC()
 }
 
+// fixtureStreamKey names the bounded Flink workstream when callers do not override it.
 func fixtureStreamKey(streamKey string) string {
 	if streamKey == "" {
 		return defaultFixtureStreamKey
@@ -223,6 +225,7 @@ func fixtureStreamKey(streamKey string) string {
 	return streamKey
 }
 
+// coverageModeFor makes failed snapshots visible as partial coverage, not missing facts.
 func coverageModeFor(failed int) sourcesyncrun.CoverageMode {
 	if failed > 0 {
 		return sourcesyncrun.CoverageModePartialScope
@@ -230,6 +233,7 @@ func coverageModeFor(failed int) sourcesyncrun.CoverageMode {
 	return sourcesyncrun.CoverageModeExactScope
 }
 
+// ensureFixtureConnection records the fixture as a source before any product rows appear.
 func ensureFixtureConnection(ctx context.Context, client *genent.Client, streamKey string, displayName string, now time.Time) (*genent.SourceConnection, error) {
 	key := "source-connection:" + streamKey
 	conn, err := client.SourceConnection.Query().Where(sourceconnection.KeyEQ(key)).Only(ctx)
@@ -252,6 +256,7 @@ func ensureFixtureConnection(ctx context.Context, client *genent.Client, streamK
 		Save(ctx)
 }
 
+// ensureFixtureScope bounds the crawl to one workstream so coverage is scoped.
 func ensureFixtureScope(ctx context.Context, client *genent.Client, sourceConnectionID int, streamKey string, displayName string) (*genent.SourceScope, error) {
 	key := "source-scope:" + streamKey
 	scope, err := client.SourceScope.Query().Where(sourcescope.KeyEQ(key)).Only(ctx)
@@ -271,7 +276,8 @@ func ensureFixtureScope(ctx context.Context, client *genent.Client, sourceConnec
 		Save(ctx)
 }
 
-func materializeSyncIssues(ctx context.Context, client *genent.Client, scopeID int, runID int, records []sourcefetch.SnapshotRecord, result *LoadResult) error {
+// materializeSyncIssues turns non-200 snapshots into coverage rows only.
+func materializeSyncIssues(ctx context.Context, client *genent.Client, scopeID int, runID int, records []sourcecapture.Record, result *LoadResult) error {
 	for _, record := range records {
 		status := record.Response.StatusCode
 		if status == 200 {
@@ -296,6 +302,7 @@ func materializeSyncIssues(ctx context.Context, client *genent.Client, scopeID i
 	return nil
 }
 
+// syncIssueCode keeps common source failure modes queryable by code.
 func syncIssueCode(status int) string {
 	switch status {
 	case 403:
@@ -307,6 +314,7 @@ func syncIssueCode(status int) string {
 	}
 }
 
+// jiraIssuePayload is the minimal Jira issue shape needed for Ticket materialization.
 type jiraIssuePayload struct {
 	Key    string `json:"key"`
 	Fields struct {
@@ -322,7 +330,8 @@ type jiraIssuePayload struct {
 	} `json:"fields"`
 }
 
-func materializeJiraIssue(ctx context.Context, client *genent.Client, record sourcefetch.SnapshotRecord, now time.Time) (*genent.Ticket, int, error) {
+// materializeJiraIssue maps one successful Jira issue snapshot into Ticket + Evidence.
+func materializeJiraIssue(ctx context.Context, client *genent.Client, record sourcecapture.Record, now time.Time) (*genent.Ticket, int, error) {
 	var payload jiraIssuePayload
 	if err := json.Unmarshal(record.Body, &payload); err != nil {
 		return nil, 0, fmt.Errorf("decode Jira issue %s: %w", record.SnapshotKey, err)
@@ -416,6 +425,7 @@ func materializeJiraIssue(ctx context.Context, client *genent.Client, record sou
 	return t, 1, nil
 }
 
+// jiraDescriptionText preserves Jira descriptions without depending on one payload era.
 func jiraDescriptionText(raw json.RawMessage) string {
 	if len(raw) == 0 || string(raw) == "null" {
 		return ""
@@ -427,6 +437,7 @@ func jiraDescriptionText(raw json.RawMessage) string {
 	return string(raw)
 }
 
+// normalizeTicketStatus maps source workflow names into Cubicle ticket states.
 func normalizeTicketStatus(status string) ticket.Status {
 	switch strings.ToLower(strings.TrimSpace(status)) {
 	case "closed", "done", "resolved":
@@ -438,6 +449,7 @@ func normalizeTicketStatus(status string) ticket.Status {
 	}
 }
 
+// githubPullRequestPayload is the GitHub PR detail shape required for full PR rows.
 type githubPullRequestPayload struct {
 	HTMLURL   string `json:"html_url"`
 	Title     string `json:"title"`
@@ -452,7 +464,8 @@ type githubPullRequestPayload struct {
 	} `json:"base"`
 }
 
-func materializeCompletePullRequest(ctx context.Context, client *genent.Client, record sourcefetch.SnapshotRecord, now time.Time) (*genent.PullRequest, error) {
+// materializeCompletePullRequest creates a fresh PullRequest only from a complete PR detail snapshot.
+func materializeCompletePullRequest(ctx context.Context, client *genent.Client, record sourcecapture.Record, now time.Time) (*genent.PullRequest, error) {
 	var payload githubPullRequestPayload
 	if err := json.Unmarshal(record.Body, &payload); err != nil {
 		return nil, fmt.Errorf("decode GitHub pull request %s: %w", record.SnapshotKey, err)
@@ -538,6 +551,7 @@ func materializeCompletePullRequest(ctx context.Context, client *genent.Client, 
 	return builder.Save(ctx)
 }
 
+// normalizePRState prefers merged_at because GitHub reports merged PRs as closed.
 func normalizePRState(state string, mergedAt time.Time) pullrequest.State {
 	if !mergedAt.IsZero() {
 		return pullrequest.StateMerged
@@ -554,7 +568,8 @@ func normalizePRState(state string, mergedAt time.Time) pullrequest.State {
 	}
 }
 
-func materializeJiraRemoteLinks(ctx context.Context, client *genent.Client, t *genent.Ticket, record sourcefetch.SnapshotRecord, now time.Time, prsByKey map[string]*genent.PullRequest) (int, int, error) {
+// materializeJiraRemoteLinks turns Jira PR links into TicketPullRequest edges with evidence.
+func materializeJiraRemoteLinks(ctx context.Context, client *genent.Client, t *genent.Ticket, record sourcecapture.Record, now time.Time, prsByKey map[string]*genent.PullRequest) (int, int, error) {
 	prURLs, err := PRURLsFromJiraRemoteLinks(record)
 	if err != nil {
 		return 0, 0, err
@@ -604,6 +619,7 @@ func materializeJiraRemoteLinks(ctx context.Context, client *genent.Client, t *g
 	return edges, evidenceCount, nil
 }
 
+// ensureMinimalPullRequest records a remote-link-only PR as partial, not fully trusted.
 func ensureMinimalPullRequest(ctx context.Context, client *genent.Client, ref PullRequestRef, now time.Time) (*genent.PullRequest, error) {
 	existing, err := client.PullRequest.Query().Where(pullrequest.KeyEQ(prKey(ref))).Only(ctx)
 	if err == nil {
@@ -632,7 +648,8 @@ func ensureMinimalPullRequest(ctx context.Context, client *genent.Client, ref Pu
 		Save(ctx)
 }
 
-func ensureTicketPullRequest(ctx context.Context, client *genent.Client, t *genent.Ticket, pr *genent.PullRequest, record sourcefetch.SnapshotRecord, now time.Time) (*genent.TicketPullRequest, bool, error) {
+// ensureTicketPullRequest upserts the typed "ticket implemented by PR" relationship.
+func ensureTicketPullRequest(ctx context.Context, client *genent.Client, t *genent.Ticket, pr *genent.PullRequest, record sourcecapture.Record, now time.Time) (*genent.TicketPullRequest, bool, error) {
 	rel, err := client.TicketPullRequest.Query().Where(
 		ticketpullrequest.TicketIDEQ(t.ID),
 		ticketpullrequest.PullRequestIDEQ(pr.ID),
@@ -671,7 +688,8 @@ func ensureTicketPullRequest(ctx context.Context, client *genent.Client, t *gene
 	return rel, true, nil
 }
 
-func upsertObjectEvidence(ctx context.Context, client *genent.Client, targetKind string, targetID int, locatorKind string, record sourcefetch.SnapshotRecord, excerpt string, now time.Time) (*genent.Evidence, error) {
+// upsertObjectEvidence answers why one product row is believed current.
+func upsertObjectEvidence(ctx context.Context, client *genent.Client, targetKind string, targetID int, locatorKind string, record sourcecapture.Record, excerpt string, now time.Time) (*genent.Evidence, error) {
 	key := "evidence:" + targetKind + ":" + record.SourceObjectID + ":" + record.BodySHA256
 	return upsertEvidence(ctx, client, key, evidenceSpec{
 		ClaimKind:       evidence.ClaimKindObjectState,
@@ -686,8 +704,9 @@ func upsertObjectEvidence(ctx context.Context, client *genent.Client, targetKind
 	})
 }
 
-func upsertRelationshipEvidence(ctx context.Context, client *genent.Client, relationshipID int, record sourcefetch.SnapshotRecord, excerpt string, now time.Time) (*genent.Evidence, error) {
-	key := "evidence:ticket_pull_request:" + record.SourceObjectID + ":" + sourcefetch.HashBody([]byte(excerpt))
+// upsertRelationshipEvidence answers why one typed relationship is believed current.
+func upsertRelationshipEvidence(ctx context.Context, client *genent.Client, relationshipID int, record sourcecapture.Record, excerpt string, now time.Time) (*genent.Evidence, error) {
+	key := "evidence:ticket_pull_request:" + record.SourceObjectID + ":" + sourcecapture.HashBody([]byte(excerpt))
 	return upsertEvidence(ctx, client, key, evidenceSpec{
 		ClaimKind:        evidence.ClaimKindRelationship,
 		ClaimTargetKind:  "ticket_pull_request",
@@ -703,8 +722,9 @@ func upsertRelationshipEvidence(ctx context.Context, client *genent.Client, rela
 	})
 }
 
-func upsertPullRequestRemoteLinkEvidence(ctx context.Context, client *genent.Client, pullRequestID int, record sourcefetch.SnapshotRecord, prURL string, now time.Time) (*genent.Evidence, error) {
-	key := "evidence:pull_request:jira_remote_link:" + record.SourceObjectID + ":" + sourcefetch.HashBody([]byte(prURL))
+// upsertPullRequestRemoteLinkEvidence marks remote-link-only PR rows as candidate evidence.
+func upsertPullRequestRemoteLinkEvidence(ctx context.Context, client *genent.Client, pullRequestID int, record sourcecapture.Record, prURL string, now time.Time) (*genent.Evidence, error) {
+	key := "evidence:pull_request:jira_remote_link:" + record.SourceObjectID + ":" + sourcecapture.HashBody([]byte(prURL))
 	return upsertEvidence(ctx, client, key, evidenceSpec{
 		ClaimKind:       evidence.ClaimKindCandidate,
 		ClaimTargetKind: "pull_request",
@@ -718,6 +738,7 @@ func upsertPullRequestRemoteLinkEvidence(ctx context.Context, client *genent.Cli
 	})
 }
 
+// evidenceSpec carries the source locator and claim target into the shared Evidence upsert.
 type evidenceSpec struct {
 	ClaimKind        evidence.ClaimKind
 	ClaimTargetKind  string
@@ -728,10 +749,11 @@ type evidenceSpec struct {
 	Locator          string
 	SourceSpanKey    string
 	Excerpt          string
-	Record           sourcefetch.SnapshotRecord
+	Record           sourcecapture.Record
 	ObservedAt       time.Time
 }
 
+// upsertEvidence is the idempotent writer behind object, relationship, and candidate proof.
 func upsertEvidence(ctx context.Context, client *genent.Client, key string, spec evidenceSpec) (*genent.Evidence, error) {
 	existing, err := client.Evidence.Query().Where(evidence.KeyEQ(key)).Only(ctx)
 	if err == nil {
@@ -771,6 +793,7 @@ func upsertEvidence(ctx context.Context, client *genent.Client, key string, spec
 	return builder.Save(ctx)
 }
 
+// applyEvidenceSpecCreate attaches locator-grade proof fields to new Evidence rows.
 func applyEvidenceSpecCreate(builder *genent.EvidenceCreate, spec evidenceSpec) {
 	if spec.ClaimTargetKind != "" {
 		builder.SetClaimTargetKind(spec.ClaimTargetKind)
@@ -796,7 +819,7 @@ func applyEvidenceSpecCreate(builder *genent.EvidenceCreate, spec evidenceSpec) 
 	}
 	if spec.Excerpt != "" {
 		builder.SetExcerpt(truncateEvidenceExcerpt(spec.Excerpt))
-		builder.SetTextHash(sourcefetch.HashBody([]byte(spec.Excerpt)))
+		builder.SetTextHash(sourcecapture.HashBody([]byte(spec.Excerpt)))
 	}
 	if !spec.ObservedAt.IsZero() {
 		builder.SetObservedAt(spec.ObservedAt)
@@ -805,6 +828,7 @@ func applyEvidenceSpecCreate(builder *genent.EvidenceCreate, spec evidenceSpec) 
 	}
 }
 
+// applyEvidenceSpecUpdate refreshes proof fields without changing Evidence identity.
 func applyEvidenceSpecUpdate(builder *genent.EvidenceUpdateOne, spec evidenceSpec) {
 	if spec.ClaimTargetKind != "" {
 		builder.SetClaimTargetKind(spec.ClaimTargetKind)
@@ -830,7 +854,7 @@ func applyEvidenceSpecUpdate(builder *genent.EvidenceUpdateOne, spec evidenceSpe
 	}
 	if spec.Excerpt != "" {
 		builder.SetExcerpt(truncateEvidenceExcerpt(spec.Excerpt))
-		builder.SetTextHash(sourcefetch.HashBody([]byte(spec.Excerpt)))
+		builder.SetTextHash(sourcecapture.HashBody([]byte(spec.Excerpt)))
 	}
 	if !spec.ObservedAt.IsZero() {
 		builder.SetObservedAt(spec.ObservedAt)
@@ -839,6 +863,7 @@ func applyEvidenceSpecUpdate(builder *genent.EvidenceUpdateOne, spec evidenceSpe
 	}
 }
 
+// truncateEvidenceExcerpt keeps evidence snippets bounded while preserving the locator.
 func truncateEvidenceExcerpt(excerpt string) string {
 	if len(excerpt) <= 512 {
 		return excerpt
@@ -846,6 +871,7 @@ func truncateEvidenceExcerpt(excerpt string) string {
 	return excerpt[:512]
 }
 
+// ensureFixtureLensWindow gives the replay a bounded pull-request view window.
 func ensureFixtureLensWindow(ctx context.Context, client *genent.Client, streamKey string, displayName string, resultCount int, complete bool, now time.Time) (*genent.WorkLensWindow, error) {
 	personRow, err := ensureFixturePerson(ctx, client, streamKey)
 	if err != nil {
@@ -896,6 +922,7 @@ func ensureFixtureLensWindow(ctx context.Context, client *genent.Client, streamK
 		Save(ctx)
 }
 
+// ensureFixturePerson creates the synthetic owner needed for WorkArea anchoring.
 func ensureFixturePerson(ctx context.Context, client *genent.Client, streamKey string) (*genent.Person, error) {
 	key := "person:fixture:" + streamKey
 	row, err := client.Person.Query().Where(person.KeyEQ(key)).Only(ctx)
@@ -913,6 +940,7 @@ func ensureFixturePerson(ctx context.Context, client *genent.Client, streamKey s
 		Save(ctx)
 }
 
+// ensureFixtureWorkArea anchors the fixture lens under a code-focused work area.
 func ensureFixtureWorkArea(ctx context.Context, client *genent.Client, personID int, streamKey string) (*genent.WorkArea, error) {
 	key := "work-area:fixture:" + streamKey + ":code"
 	row, err := client.WorkArea.Query().Where(workarea.KeyEQ(key)).Only(ctx)
@@ -932,6 +960,7 @@ func ensureFixtureWorkArea(ctx context.Context, client *genent.Client, personID 
 		Save(ctx)
 }
 
+// ensureFixtureWorkLens describes the replay as a pull-request lens over the work area.
 func ensureFixtureWorkLens(ctx context.Context, client *genent.Client, workAreaID int, streamKey string, displayName string, resultCount int, complete bool, now time.Time) (*genent.WorkLens, error) {
 	key := "work-lens:fixture:" + streamKey + ":pull-requests"
 	row, err := client.WorkLens.Query().Where(worklens.KeyEQ(key)).Only(ctx)
@@ -965,20 +994,21 @@ func ensureFixtureWorkLens(ctx context.Context, client *genent.Client, workAreaI
 		Save(ctx)
 }
 
-func completePRBundles(records []sourcefetch.SnapshotRecord) map[string]map[string]sourcefetch.SnapshotRecord {
-	grouped := make(map[string]map[string]sourcefetch.SnapshotRecord)
+// completePRBundles admits PRs only when every required GitHub endpoint succeeded.
+func completePRBundles(records []sourcecapture.Record) map[string]map[string]sourcecapture.Record {
+	grouped := make(map[string]map[string]sourcecapture.Record)
 	for _, record := range records {
 		if !isPRBundleType(record.SourceObjectType) {
 			continue
 		}
 		if grouped[record.SourceObjectID] == nil {
-			grouped[record.SourceObjectID] = make(map[string]sourcefetch.SnapshotRecord)
+			grouped[record.SourceObjectID] = make(map[string]sourcecapture.Record)
 		}
 		if record.Response.StatusCode == 200 {
 			grouped[record.SourceObjectID][record.SourceObjectType] = record
 		}
 	}
-	complete := make(map[string]map[string]sourcefetch.SnapshotRecord)
+	complete := make(map[string]map[string]sourcecapture.Record)
 	for objectID, byType := range grouped {
 		if hasCompletePRBundle(byType) {
 			complete[objectID] = byType
@@ -987,7 +1017,8 @@ func completePRBundles(records []sourcefetch.SnapshotRecord) map[string]map[stri
 	return complete
 }
 
-func hasCompletePRBundle(byType map[string]sourcefetch.SnapshotRecord) bool {
+// hasCompletePRBundle checks the full source coverage contract for one PR.
+func hasCompletePRBundle(byType map[string]sourcecapture.Record) bool {
 	for _, objectType := range requiredPRBundleTypes {
 		if _, ok := byType[objectType]; !ok {
 			return false
@@ -996,6 +1027,7 @@ func hasCompletePRBundle(byType map[string]sourcefetch.SnapshotRecord) bool {
 	return true
 }
 
+// isPRBundleType keeps unrelated snapshots out of PR completeness checks.
 func isPRBundleType(objectType string) bool {
 	for _, required := range requiredPRBundleTypes {
 		if objectType == required {
@@ -1005,7 +1037,8 @@ func isPRBundleType(objectType string) bool {
 	return false
 }
 
-func sortedBundleKeys(bundles map[string]map[string]sourcefetch.SnapshotRecord) []string {
+// sortedBundleKeys makes fixture loading stable across map iteration order.
+func sortedBundleKeys(bundles map[string]map[string]sourcecapture.Record) []string {
 	keys := make([]string, 0, len(bundles))
 	for key := range bundles {
 		keys = append(keys, key)
@@ -1014,7 +1047,8 @@ func sortedBundleKeys(bundles map[string]map[string]sourcefetch.SnapshotRecord) 
 	return keys
 }
 
-func discoveredPullRequests(records []sourcefetch.SnapshotRecord) map[PullRequestRef]struct{} {
+// discoveredPullRequests counts hints without turning every hint into a product row.
+func discoveredPullRequests(records []sourcecapture.Record) map[PullRequestRef]struct{} {
 	discovered := make(map[PullRequestRef]struct{})
 	for _, record := range records {
 		if record.Response.StatusCode != 200 {
@@ -1048,6 +1082,7 @@ func discoveredPullRequests(records []sourcefetch.SnapshotRecord) map[PullReques
 	return discovered
 }
 
+// parsePRObjectID converts source object IDs like repo/name#123 into PR refs.
 func parsePRObjectID(objectID string) (PullRequestRef, bool) {
 	repo, numberText, ok := strings.Cut(objectID, "#")
 	if !ok {
@@ -1060,29 +1095,35 @@ func parsePRObjectID(objectID string) (PullRequestRef, bool) {
 	return PullRequestRef{Repo: repo, Number: number}, true
 }
 
+// ticketKey gives Jira tickets a deterministic Cubicle row key.
 func ticketKey(key string) string {
 	return "ticket:jira:" + strings.ToUpper(strings.TrimSpace(key))
 }
 
+// prKey gives GitHub PRs a deterministic Cubicle row key.
 func prKey(ref PullRequestRef) string {
 	return "pull-request:github:" + prExternalID(ref)
 }
 
+// prExternalID keeps the source-native PR identity readable in rows and evidence.
 func prExternalID(ref PullRequestRef) string {
 	return ref.Repo + "#" + strconv.Itoa(ref.Number)
 }
 
+// prURL builds the human locator used when API payloads do not include one.
 func prURL(ref PullRequestRef) string {
 	return "https://github.com/" + ref.Repo + "/pull/" + strconv.Itoa(ref.Number)
 }
 
-func sourceURLForRecord(record sourcefetch.SnapshotRecord) string {
+// sourceURLForRecord chooses the human source URL before falling back to the API request.
+func sourceURLForRecord(record sourcecapture.Record) string {
 	if record.SourceURL != "" {
 		return record.SourceURL
 	}
 	return record.Request.URL
 }
 
+// nonEmptyPtr avoids writing blank optional source URLs.
 func nonEmptyPtr(value string) *string {
 	if value == "" {
 		return nil
@@ -1090,6 +1131,7 @@ func nonEmptyPtr(value string) *string {
 	return &value
 }
 
+// parseJiraTime normalizes Jira timestamps into UTC product freshness fields.
 func parseJiraTime(value string) time.Time {
 	if value == "" {
 		return time.Time{}
@@ -1103,6 +1145,7 @@ func parseJiraTime(value string) time.Time {
 	return time.Time{}
 }
 
+// parseGitHubTime normalizes GitHub timestamps into UTC product freshness fields.
 func parseGitHubTime(value string) time.Time {
 	if value == "" {
 		return time.Time{}

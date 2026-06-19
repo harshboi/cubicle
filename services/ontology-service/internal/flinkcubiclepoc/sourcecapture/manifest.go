@@ -1,11 +1,11 @@
 // Association:
 //
-//	SnapshotRecord -> Manifest -> body file -> ReadManifest -> SnapshotRecord
-//	capture manifest -> ReadCaptureManifest -> replay SnapshotRecord
+//	Record -> Manifest -> body file -> ReadManifest -> Record
+//	capture manifest -> ReadCaptureManifest -> replay Record
 //
 // Manifest replay keeps source bytes hash-checked before they reach Ent
 // materializers.
-package sourcefetch
+package sourcecapture
 
 import (
 	"bufio"
@@ -27,9 +27,9 @@ var unsafePathChars = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
 // Manifest is the on-disk replay envelope for a source fetch dump.
 type Manifest struct {
-	Version     int              `json:"version"`
-	GeneratedAt time.Time        `json:"generated_at,omitempty"`
-	Snapshots   []SnapshotRecord `json:"snapshots"`
+	Version     int       `json:"version"`
+	GeneratedAt time.Time `json:"generated_at,omitempty"`
+	Snapshots   []Record  `json:"snapshots"`
 }
 
 // DumpOptions controls how snapshots are materialized into a fixture directory.
@@ -43,11 +43,11 @@ type CaptureManifestOptions struct {
 }
 
 // WriteManifest writes a canonical manifest and one body file per snapshot.
-func WriteManifest(dir string, records []SnapshotRecord, opts DumpOptions) error {
+func WriteManifest(dir string, records []Record, opts DumpOptions) error {
 	if err := os.MkdirAll(filepath.Join(dir, "bodies"), 0o755); err != nil {
 		return fmt.Errorf("create snapshot bodies dir: %w", err)
 	}
-	materialized := make([]SnapshotRecord, len(records))
+	materialized := make([]Record, len(records))
 	copy(materialized, records)
 	sortSnapshots(materialized)
 
@@ -90,7 +90,7 @@ func WriteManifest(dir string, records []SnapshotRecord, opts DumpOptions) error
 }
 
 // ReadManifest reads a replay fixture, loads body files, and validates hashes.
-func ReadManifest(dir string) ([]SnapshotRecord, error) {
+func ReadManifest(dir string) ([]Record, error) {
 	body, err := os.ReadFile(filepath.Join(dir, "manifest.json"))
 	if err != nil {
 		return nil, fmt.Errorf("read snapshot manifest: %w", err)
@@ -103,7 +103,7 @@ func ReadManifest(dir string) ([]SnapshotRecord, error) {
 		return nil, fmt.Errorf("unsupported snapshot manifest version %d", manifest.Version)
 	}
 
-	records := make([]SnapshotRecord, 0, len(manifest.Snapshots))
+	records := make([]Record, 0, len(manifest.Snapshots))
 	for _, record := range manifest.Snapshots {
 		if err := validateManifestRecord(record); err != nil {
 			return nil, err
@@ -128,12 +128,12 @@ func ReadManifest(dir string) ([]SnapshotRecord, error) {
 // This supports the Flink fixture format, where manifest rows describe body
 // files captured from source endpoints. It preserves non-200 bodies so callers
 // can turn 403/429/5xx responses into coverage evidence instead of product data.
-func ReadCaptureManifest(dir string, opts CaptureManifestOptions) ([]SnapshotRecord, error) {
+func ReadCaptureManifest(dir string, opts CaptureManifestOptions) ([]Record, error) {
 	entries, err := readCaptureManifestEntries(dir)
 	if err != nil {
 		return nil, err
 	}
-	records := make([]SnapshotRecord, 0, len(entries))
+	records := make([]Record, 0, len(entries))
 	for _, entry := range entries {
 		if err := validateCaptureManifestEntry(entry); err != nil {
 			return nil, err
@@ -150,7 +150,7 @@ func ReadCaptureManifest(dir string, opts CaptureManifestOptions) ([]SnapshotRec
 		if opts.SourceInstances != nil && opts.SourceInstances[entry.Source] != "" {
 			sourceInstance = opts.SourceInstances[entry.Source]
 		}
-		records = append(records, SnapshotRecord{
+		records = append(records, Record{
 			SnapshotKey:      captureSnapshotKey(entry.Path),
 			SourceKey:        entry.Source,
 			SourceInstance:   sourceInstance,
@@ -173,7 +173,8 @@ func ReadCaptureManifest(dir string, opts CaptureManifestOptions) ([]SnapshotRec
 	return records, nil
 }
 
-func validateManifestRecord(record SnapshotRecord) error {
+// validateManifestRecord checks replay metadata before body bytes are trusted.
+func validateManifestRecord(record Record) error {
 	if record.SnapshotKey == "" {
 		return fmt.Errorf("invalid snapshot manifest entry: snapshot key is required")
 	}
@@ -189,6 +190,7 @@ func validateManifestRecord(record SnapshotRecord) error {
 	return nil
 }
 
+// captureManifestEntry mirrors the raw bounded source-capture manifest row.
 type captureManifestEntry struct {
 	Path             string `json:"path"`
 	Source           string `json:"source"`
@@ -200,6 +202,7 @@ type captureManifestEntry struct {
 	Bytes            int64  `json:"bytes"`
 }
 
+// readCaptureManifestEntries accepts the NDJSON capture shape first, then legacy JSON.
 func readCaptureManifestEntries(dir string) ([]captureManifestEntry, error) {
 	ndjsonPath := filepath.Join(dir, "manifest.ndjson")
 	if body, err := os.ReadFile(ndjsonPath); err == nil {
@@ -224,6 +227,7 @@ func readCaptureManifestEntries(dir string) ([]captureManifestEntry, error) {
 	return entries, nil
 }
 
+// decodeCaptureManifestNDJSON streams capture rows while preserving line-level errors.
 func decodeCaptureManifestNDJSON(name string, body []byte) ([]captureManifestEntry, error) {
 	scanner := bufio.NewScanner(bytes.NewReader(body))
 	scanner.Buffer(make([]byte, 0, 64*1024), 8*1024*1024)
@@ -247,6 +251,7 @@ func decodeCaptureManifestNDJSON(name string, body []byte) ([]captureManifestEnt
 	return entries, nil
 }
 
+// validateCaptureManifestEntry rejects source rows that cannot explain product evidence later.
 func validateCaptureManifestEntry(entry captureManifestEntry) error {
 	if entry.Path == "" {
 		return fmt.Errorf("capture manifest entry: path is required")
@@ -266,7 +271,8 @@ func validateCaptureManifestEntry(entry captureManifestEntry) error {
 	return nil
 }
 
-func sortSnapshots(records []SnapshotRecord) {
+// sortSnapshots gives manifest replay deterministic ordering by source identity.
+func sortSnapshots(records []Record) {
 	sort.SliceStable(records, func(left, right int) bool {
 		a := records[left]
 		b := records[right]
@@ -275,6 +281,7 @@ func sortSnapshots(records []SnapshotRecord) {
 	})
 }
 
+// bodyPath names captured body files by snapshot identity plus content hash.
 func bodyPath(snapshotKey string, bodySHA256 string) string {
 	safeKey := unsafePathChars.ReplaceAllString(snapshotKey, "-")
 	safeKey = strings.Trim(safeKey, "-")
@@ -288,6 +295,7 @@ func bodyPath(snapshotKey string, bodySHA256 string) string {
 	return filepath.ToSlash(filepath.Join("bodies", safeKey+"-"+hashPart+".body"))
 }
 
+// captureSnapshotKey derives a stable replay key from a captured body path.
 func captureSnapshotKey(path string) string {
 	safePath := unsafePathChars.ReplaceAllString(filepath.ToSlash(path), "-")
 	safePath = strings.Trim(safePath, "-")

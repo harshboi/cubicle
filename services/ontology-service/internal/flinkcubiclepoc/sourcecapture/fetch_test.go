@@ -1,4 +1,11 @@
-package sourcefetch
+// Association:
+//
+//	Request -> Fetcher -> Record
+//	rate limit response -> Record + RateLimitError
+//
+// These tests make sure source capture keeps bytes and provenance without
+// leaking secrets or retrying policy decisions.
+package sourcecapture
 
 import (
 	"context"
@@ -8,6 +15,7 @@ import (
 	"time"
 )
 
+// TestFetcherRecordsSnapshotMetadata checks source bytes, safe headers, and usage counters.
 func TestFetcherRecordsSnapshotMetadata(t *testing.T) {
 	now := time.Date(2026, 6, 11, 12, 0, 0, 0, time.UTC)
 	fetcher := Fetcher{
@@ -62,6 +70,7 @@ func TestFetcherRecordsSnapshotMetadata(t *testing.T) {
 	}
 }
 
+// TestFetcherStopsAtRequestBudget proves bounded crawls stop after the configured request count.
 func TestFetcherStopsAtRequestBudget(t *testing.T) {
 	fetcher := Fetcher{
 		Client: NewStaticClient(http.StatusOK, nil, []byte("ok")),
@@ -81,6 +90,7 @@ func TestFetcherStopsAtRequestBudget(t *testing.T) {
 	}
 }
 
+// TestFetcherPreservesRateLimitSnapshot keeps 429 bodies available for coverage evidence.
 func TestFetcherPreservesRateLimitSnapshot(t *testing.T) {
 	now := time.Date(2026, 6, 11, 12, 0, 0, 0, time.UTC)
 	fetcher := Fetcher{
@@ -112,6 +122,7 @@ func TestFetcherPreservesRateLimitSnapshot(t *testing.T) {
 	}
 }
 
+// testRequest creates a minimal replayable source request.
 func testRequest(key string) Request {
 	return Request{
 		SnapshotKey:      "snapshot:" + key,
