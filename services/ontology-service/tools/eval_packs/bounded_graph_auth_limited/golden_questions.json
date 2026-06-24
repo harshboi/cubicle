@@ -1,0 +1,127 @@
+{
+  "name": "bounded-graph-auth-limited",
+    "required_categories": [
+    "auth-limited",
+    "validation-lead-association",
+    "generic-no-workprogram",
+    "no-absence",
+    "prompt-redaction"
+  ],
+  "required_source_coverage_states": [
+    "auth_limited"
+  ],
+  "questions": [
+    {
+      "key": "auth:coverage-state",
+      "category": "auth-limited",
+      "source_coverage_state": "auth_limited",
+      "question": "Does the answer state that auth-limited coverage blocks absence claims?",
+      "expected_facts": [
+        {
+          "text": "Auth-limited coverage keeps missing neighbors unknown, not absent",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "coverage is complete",
+        "absence claims are allowed"
+      ]
+    },
+    {
+      "key": "auth:source-errors-are-coverage",
+      "category": "auth-limited",
+      "source_coverage_state": "auth_limited",
+      "question": "Does the answer keep 403/429 source responses as coverage evidence only?",
+      "expected_facts": [
+        {
+          "text": "403 and 429 source responses are coverage evidence only",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "empty files",
+        "empty comments",
+        "empty reviews",
+        "no linked objects"
+      ]
+    },
+    {
+      "key": "auth:validation-document-link",
+      "category": "validation-lead-association",
+      "source_coverage_state": "auth_limited",
+      "question": "Does the answer cite the known ticket-document link as validation context rather than a product claim?",
+      "expected_facts": [
+        {
+          "any_of": [
+            {
+              "text": "ticket:SUP-204` -> `document:customer-rollout-note",
+              "citation_prefix": "[graph_associations:"
+            },
+            {
+              "text": "documented_by",
+              "citation_prefix": "[graph_associations:"
+            }
+          ]
+        }
+      ],
+      "forbidden_phrases": [
+        "claimable association",
+        "inferred from missing rows",
+        "requires human review before it can be mentioned"
+      ]
+    },
+    {
+      "key": "auth:no-absence",
+      "category": "no-absence",
+      "source_coverage_state": "auth_limited",
+      "question": "Does the answer avoid absence claims about missing neighbors?",
+      "expected_no_answer": [
+        {
+          "text": "missing neighbors unknown, not absent",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "no pull requests",
+        "no reviews",
+        "no blockers",
+        "no owners"
+      ]
+    },
+    {
+      "key": "auth:redaction",
+      "category": "prompt-redaction",
+      "source_coverage_state": "auth_limited",
+      "question": "Does the answer avoid leaking raw sync issue bodies and private locators?",
+      "expected_facts": [
+        {
+          "text": "Do not expose raw source sync issue bodies",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "secret-token",
+        "private/http-design",
+        "raw status 403 body"
+      ]
+    },
+    {
+      "key": "auth:no-workprogram",
+      "category": "generic-no-workprogram",
+      "source_coverage_state": "auth_limited",
+      "question": "Does the generic bounded graph answer stay out of WorkProgram/TPM vocabulary?",
+      "expected_facts": [
+        {
+          "text": "Auth-limited coverage keeps missing neighbors unknown, not absent",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "forecast packet",
+        "[analytics:"
+      ]
+    }
+  ]
+}

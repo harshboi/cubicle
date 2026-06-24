@@ -1,0 +1,32 @@
+{
+  "promotion_gates": [
+    {
+      "key": "bounded-graph-context-over-typed-row",
+      "baseline_key": "typed-row-baseline",
+      "candidate_key": "bounded-graph-context-reference"
+    }
+  ],
+  "answers": [
+    {
+      "key": "typed-row-baseline",
+      "label": "Typed-row baseline",
+      "strategy": "typed_row_summary",
+      "answer_kind": "reference",
+      "path": "typed_row_baseline.md"
+    },
+    {
+      "key": "generic-graph-baseline",
+      "label": "Generic graph baseline",
+      "strategy": "generic_claimable_graph",
+      "answer_kind": "reference",
+      "path": "generic_graph_baseline.md"
+    },
+    {
+      "key": "bounded-graph-context-reference",
+      "label": "Bounded graph-context reference",
+      "strategy": "bounded_graph_context",
+      "answer_kind": "reference",
+      "path": "bounded_graph_context_reference.md"
+    }
+  ]
+}

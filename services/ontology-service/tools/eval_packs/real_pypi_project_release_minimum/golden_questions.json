@@ -1,0 +1,174 @@
+{
+  "name": "pypi-open-graph-requests-2-34-2",
+  "questions": [
+    {
+      "category": "traversal-shape",
+      "expected_facts": [
+        {
+          "citation_prefix": "[context:",
+          "text": "5 object(s) and 4 association(s)"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "Jira",
+        "GitHub",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "implemented_by"
+      ],
+      "key": "pypi:traversal-shape",
+      "question": "Does the answer describe the bounded PyPI open graph traversal shape?",
+      "source_coverage_state": "sparse"
+    },
+    {
+      "category": "project-release",
+      "expected_facts": [
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "pypi:project:requests` -> `pypi:release:requests:2.34.2"
+        },
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "has_release"
+        }
+      ],
+      "forbidden_phrases": [
+        "GitHub",
+        "Jira",
+        "no linked release",
+        "no releases"
+      ],
+      "key": "pypi:project-release",
+      "question": "Does the answer cite the PyPI project to release relationship?",
+      "source_coverage_state": "sparse"
+    },
+    {
+      "category": "release-files",
+      "expected_facts": [
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "pypi:release:requests:2.34.2` -> `pypi:file:requests:2.34.2:wheel"
+        },
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "pypi:release:requests:2.34.2` -> `pypi:file:requests:2.34.2:sdist"
+        },
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "has_distribution"
+        }
+      ],
+      "forbidden_phrases": [
+        "GitHub",
+        "Jira",
+        "no distribution files"
+      ],
+      "key": "pypi:release-files",
+      "question": "Does the answer cite both PyPI distribution files for the release?",
+      "source_coverage_state": "sparse"
+    },
+    {
+      "category": "package-contact",
+      "expected_facts": [
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "pypi:project:requests` -> `pypi:contact:kenneth-reitz"
+        },
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "has_contact"
+        }
+      ],
+      "forbidden_phrases": [
+        "GitHub",
+        "Jira",
+        "no package contact"
+      ],
+      "key": "pypi:contact",
+      "question": "Does the answer cite the package contact relationship from PyPI metadata?",
+      "source_coverage_state": "sparse"
+    },
+    {
+      "category": "open-ent-proof",
+      "expected_facts": [
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "pypi:project:requests"
+        },
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "pypi:release:requests:2.34.2"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "TicketPullRequest"
+      ],
+      "key": "pypi:ent-proof",
+      "question": "Does the answer stay on generic open graph rows instead of typed product ontology rows?",
+      "source_coverage_state": "sparse"
+    },
+    {
+      "category": "sparse-coverage",
+      "expected_facts": [
+        {
+          "citation_prefix": "[guardrail:",
+          "text": "missing neighbors are unknown, not absent"
+        }
+      ],
+      "forbidden_phrases": [
+        "no other releases",
+        "no other files",
+        "no other packages",
+        "absence claims are allowed"
+      ],
+      "key": "pypi:sparse-coverage",
+      "question": "Does sparse source coverage keep missing PyPI neighbors unknown?",
+      "source_coverage_state": "sparse"
+    },
+    {
+      "category": "generic-no-product-vocabulary",
+      "expected_facts": [
+        {
+          "citation_prefix": "[guardrail:",
+          "text": "missing neighbors are unknown, not absent"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "Jira",
+        "GitHub",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "implemented_by",
+        "ticket:",
+        "pull-request:"
+      ],
+      "key": "pypi:no-product-vocabulary",
+      "question": "Does the PyPI open graph answer avoid GitHub, Jira, Flink, TPM, ticket, and analytics vocabulary?",
+      "source_coverage_state": "sparse"
+    }
+  ],
+  "required_categories": [
+    "generic-no-product-vocabulary",
+    "open-ent-proof",
+    "package-contact",
+    "project-release",
+    "release-files",
+    "sparse-coverage",
+    "traversal-shape"
+  ],
+  "required_source_coverage_states": [
+    "sparse"
+  ]
+}

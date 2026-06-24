@@ -1,0 +1,688 @@
+{
+  "matrix_key": "ai_first_bounded_graph_promotion_matrix",
+  "required_tags": [
+    "auth-limited",
+    "company-multi-seed",
+    "non-flink-open-graph",
+    "real-connector",
+    "source-authority",
+    "typed-vs-graph-promotion"
+  ],
+  "advisory_tags": [
+    "derived-real-acl-runtime",
+    "derived-real-source-scope-runtime",
+    "real-negative-partial-connector",
+    "real-non-github-domain",
+    "real-non-flink-connector"
+  ],
+  "advisory_tag_details": {
+    "derived-real-acl-runtime": "Runtime ACL/read-filter path should be proven on connector-derived rows, distinct from real connector ACL ingestion.",
+    "derived-real-source-scope-runtime": "Runtime source-scope gates should be proven for stale and not-attempted states, distinct from real stale/not-attempted connector captures.",
+    "real-negative-partial-connector": "Product-safe gate needs real connector-backed negative/partial cases for missing auth, partial coverage, and stale/source-not-attempted states.",
+    "real-non-github-domain": "PoC gate passes, but production genericity still needs a real non-GitHub connector/domain case.",
+    "real-non-flink-connector": "PoC gate passes, but production genericity still needs a second real connector-backed non-Flink case."
+  },
+  "cases": [
+    {
+      "key": "bounded_graph_auth_limited",
+      "description": "Sparse auth-limited bounded graph context keeps 403/429 as coverage guardrails.",
+      "tags": [
+        "auth-limited",
+        "typed-vs-graph-promotion"
+      ],
+      "command": [
+        "sh",
+        "tools/eval_packs/bounded_graph_auth_limited/run_eval.sh"
+      ],
+      "out_dir": "{out_dir}/bounded_graph_auth_limited",
+      "contract_reports": [
+        "contract.json"
+      ],
+      "eval_reports": [
+        {
+          "path": "eval.json",
+          "min_pass_count": 6,
+          "question_count": 6
+        }
+      ],
+      "scan_paths": [
+        "context.normalized.json",
+        "prompt.md",
+        "generic_baseline.md"
+      ],
+      "forbidden_terms": [
+        "WorkProgram",
+        "TPM",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "Flink",
+        "SourceSyncIssue",
+        "UnresolvedReference"
+      ]
+    },
+    {
+      "key": "open_graph_incident_minimum",
+      "description": "Persisted non-Flink open graph incident/runbook traversal beats seed-only and typed-row baselines.",
+      "tags": [
+        "non-flink-open-graph",
+        "source-authority",
+        "typed-vs-graph-promotion"
+      ],
+      "command": [
+        "sh",
+        "tools/eval_packs/open_graph_incident_minimum/run_eval.sh"
+      ],
+      "out_dir": "{out_dir}/open_graph_incident_minimum",
+      "contract_reports": [
+        "contract.json"
+      ],
+      "promotion_audit_reports": [
+        {
+          "path": "promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        }
+      ],
+      "eval_reports": [
+        {
+          "path": "eval.json",
+          "min_pass_count": 7,
+          "question_count": 7
+        }
+      ],
+      "comparison_reports": [
+        "promotion_comparison.json"
+      ],
+      "scan_paths": [
+        "context.json",
+        "prompt.md",
+        "generic_baseline.md"
+      ],
+      "forbidden_terms": [
+        "WorkProgram",
+        "TPM",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "Flink",
+        "SourceSyncIssue",
+        "UnresolvedReference"
+      ]
+    },
+    {
+      "key": "open_graph_revenue_minimum",
+      "description": "Persisted non-Flink open graph revenue traversal beats seed-only and typed-row baselines.",
+      "tags": [
+        "non-flink-open-graph",
+        "source-authority",
+        "typed-vs-graph-promotion"
+      ],
+      "command": [
+        "sh",
+        "tools/eval_packs/open_graph_revenue_minimum/run_eval.sh"
+      ],
+      "out_dir": "{out_dir}/open_graph_revenue_minimum",
+      "contract_reports": [
+        "contract.json"
+      ],
+      "promotion_audit_reports": [
+        {
+          "path": "promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        }
+      ],
+      "eval_reports": [
+        {
+          "path": "eval.json",
+          "min_pass_count": 8,
+          "question_count": 8
+        }
+      ],
+      "comparison_reports": [
+        "promotion_comparison.json"
+      ],
+      "scan_paths": [
+        "context.json",
+        "prompt.md",
+        "generic_baseline.md"
+      ],
+      "forbidden_terms": [
+        "WorkProgram",
+        "TPM",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "Flink",
+        "SourceSyncIssue",
+        "UnresolvedReference"
+      ]
+    },
+    {
+      "key": "company_ai_first_minimum",
+      "description": "Persisted company graph covers document, person, pull request, ticket, and message starts.",
+      "tags": [
+        "company-multi-seed",
+        "source-authority",
+        "typed-vs-graph-promotion"
+      ],
+      "command": [
+        "sh",
+        "tools/eval_packs/company_ai_first_minimum/run_eval.sh"
+      ],
+      "out_dir": "{out_dir}/company_ai_first_minimum",
+      "contract_reports": [
+        "document_contract.json",
+        "person_contract.json",
+        "pull_request_contract.json",
+        "ticket_contract.json",
+        "message_contract.json",
+        "document_connector_contract.json",
+        "pull_request_connector_contract.json",
+        "ticket_connector_contract.json",
+        "message_connector_contract.json"
+      ],
+      "promotion_audit_reports": [
+        {
+          "path": "document_promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        },
+        {
+          "path": "person_promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        },
+        {
+          "path": "pull_request_promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        },
+        {
+          "path": "ticket_promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        },
+        {
+          "path": "message_promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        },
+        {
+          "path": "document_connector_promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        },
+        {
+          "path": "pull_request_connector_promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        },
+        {
+          "path": "ticket_connector_promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        },
+        {
+          "path": "message_connector_promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        }
+      ],
+      "eval_reports": [
+        {
+          "path": "document_eval.json",
+          "min_pass_count": 5,
+          "question_count": 5
+        },
+        {
+          "path": "person_eval.json",
+          "min_pass_count": 4,
+          "question_count": 4
+        },
+        {
+          "path": "pull_request_eval.json",
+          "min_pass_count": 4,
+          "question_count": 4
+        },
+        {
+          "path": "ticket_eval.json",
+          "min_pass_count": 4,
+          "question_count": 4
+        },
+        {
+          "path": "message_eval.json",
+          "min_pass_count": 4,
+          "question_count": 4
+        }
+      ],
+      "comparison_reports": [
+        "document_promotion_comparison.json",
+        "person_promotion_comparison.json",
+        "pull_request_promotion_comparison.json",
+        "ticket_promotion_comparison.json",
+        "message_promotion_comparison.json"
+      ],
+      "scan_paths": [
+        "*_context.json",
+        "*_prompt.md",
+        "*_generic_baseline.md"
+      ],
+      "forbidden_terms": [
+        "WorkProgram",
+        "TPM",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "Flink",
+        "SourceSyncIssue",
+        "UnresolvedReference"
+      ]
+    },
+    {
+      "key": "real_github_issue_pr_minimum",
+      "description": "Real public GitHub issue to pull request OpenGraph traversal from cli/cli.",
+      "tags": [
+        "real-connector",
+        "real-non-flink-connector",
+        "source-authority",
+        "typed-vs-graph-promotion"
+      ],
+      "command": [
+        "sh",
+        "tools/eval_packs/real_github_issue_pr_minimum/run_eval.sh"
+      ],
+      "out_dir": "{out_dir}/real_github_issue_pr_minimum",
+      "contract_reports": [
+        "contract.json"
+      ],
+      "promotion_audit_reports": [
+        {
+          "path": "promotion_audit.json",
+          "min_promotable_association_count": 3,
+          "max_blocked_association_count": 0
+        }
+      ],
+      "eval_reports": [
+        {
+          "path": "eval.json",
+          "min_pass_count": 6,
+          "question_count": 6
+        }
+      ],
+      "comparison_reports": [
+        "promotion_comparison.json"
+      ],
+      "scan_paths": [
+        "context.json",
+        "prompt.md",
+        "generic_baseline.md"
+      ],
+      "forbidden_terms": [
+        "WorkProgram",
+        "TPM",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "Flink",
+        "Jira",
+        "implemented_by",
+        "SourceSyncIssue",
+        "UnresolvedReference"
+      ]
+    },
+    {
+      "key": "real_pypi_project_release_minimum",
+      "description": "Real public PyPI project to release OpenGraph traversal for requests.",
+      "tags": [
+        "real-connector",
+        "real-non-flink-connector",
+        "real-non-github-domain",
+        "source-authority",
+        "typed-vs-graph-promotion"
+      ],
+      "command": [
+        "sh",
+        "tools/eval_packs/real_pypi_project_release_minimum/run_eval.sh"
+      ],
+      "out_dir": "{out_dir}/real_pypi_project_release_minimum",
+      "contract_reports": [
+        "contract.json"
+      ],
+      "promotion_audit_reports": [
+        {
+          "path": "promotion_audit.json",
+          "min_promotable_association_count": 4,
+          "max_blocked_association_count": 0
+        }
+      ],
+      "eval_reports": [
+        {
+          "path": "eval.json",
+          "min_pass_count": 7,
+          "question_count": 7
+        }
+      ],
+      "comparison_reports": [
+        "promotion_comparison.json"
+      ],
+      "scan_paths": [
+        "context.json",
+        "prompt.md",
+        "generic_baseline.md"
+      ],
+      "forbidden_terms": [
+        "WorkProgram",
+        "TPM",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "Flink",
+        "Jira",
+        "GitHub",
+        "implemented_by",
+        "SourceSyncIssue",
+        "UnresolvedReference"
+      ]
+    },
+    {
+      "key": "real_github_issue_pr_llm",
+      "description": "Real public GitHub issue to pull request OpenGraph traversal through local raw/repaired LLM gates.",
+      "tags": [
+        "real-connector",
+        "real-non-flink-connector",
+        "source-authority",
+        "typed-vs-graph-promotion"
+      ],
+      "command": [
+        "tools/eval_packs/real_github_issue_pr_minimum/run_llm.sh"
+      ],
+      "out_dir": "{out_dir}/real_github_issue_pr_llm",
+      "env": {
+        "LLM_MAX_TOKENS": "32768",
+        "LLM_TIMEOUT_SECONDS": "1800",
+        "REQUIRE_RAW_PASS": "0",
+        "REQUIRE_REPAIRED_PASS": "1"
+      },
+      "contract_reports": [
+        "contract.json"
+      ],
+      "promotion_audit_reports": [
+        {
+          "path": "promotion_audit.json",
+          "min_promotable_association_count": 3,
+          "max_blocked_association_count": 0
+        }
+      ],
+      "eval_reports": [
+        {
+          "path": "raw_eval.json",
+          "min_pass_count": 2,
+          "question_count": 6,
+          "require_passes_eval": false,
+          "require_passes_smoke_eval": true
+        },
+        {
+          "path": "repaired_eval.json",
+          "min_pass_count": 6,
+          "question_count": 6
+        },
+        {
+          "path": "generic_baseline_eval.json",
+          "min_pass_count": 6,
+          "question_count": 6
+        }
+      ],
+      "comparison_reports": [
+        "comparison.json"
+      ],
+      "scan_paths": [
+        "context.json",
+        "prompt.md",
+        "generic_baseline.md",
+        "repaired.md"
+      ],
+      "forbidden_terms": [
+        "WorkProgram",
+        "TPM",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "Flink",
+        "Jira",
+        "implemented_by",
+        "SourceSyncIssue",
+        "UnresolvedReference",
+        "Authorization",
+        "token="
+      ]
+    },
+    {
+      "key": "real_connector_negative_partial",
+      "description": "Real connector negative/partial probes for partial PR endpoints, source-sync issue coverage, and partial source scope.",
+      "tags": [
+        "real-connector",
+        "real-negative-partial-connector",
+        "source-authority",
+        "typed-vs-graph-promotion"
+      ],
+      "command": [
+        "sh",
+        "tools/eval_packs/real_connector_negative_partial/run_eval.sh"
+      ],
+      "out_dir": "{out_dir}/real_connector_negative_partial",
+      "contract_reports": [
+        "partial_endpoint_contract.json",
+        "source_sync_issue_contract.json",
+        "source_scope_partial_contract.json"
+      ],
+      "promotion_audit_reports": [
+        {
+          "path": "partial_endpoint_promotion_audit.json",
+          "min_promotable_association_count": 0,
+          "max_blocked_association_count": 6
+        },
+        {
+          "path": "source_sync_issue_promotion_audit.json",
+          "min_promotable_association_count": 3,
+          "max_blocked_association_count": 1
+        },
+        {
+          "path": "source_scope_partial_promotion_audit.json",
+          "min_promotable_association_count": 4,
+          "max_blocked_association_count": 0
+        }
+      ],
+      "eval_reports": [
+        {
+          "path": "eval.json",
+          "min_pass_count": 18,
+          "question_count": 18
+        }
+      ],
+      "scan_paths": [
+        "*_context.json"
+      ],
+      "forbidden_terms": [
+        "SourceSyncIssue",
+        "SourceSyncRun",
+        "source_non_200",
+        "source_missing_snapshot",
+        "source snapshot returned status 401",
+        "source snapshot for github_pull_request_files was not captured",
+        "Authorization",
+        "token="
+      ]
+    },
+    {
+      "key": "real_connector_acl_probe",
+      "description": "Derived-real connector runtime ACL probe proving private high-rank rows are filtered before traversal and fanout.",
+      "tags": [
+        "derived-real-acl-runtime",
+        "real-connector",
+        "source-authority",
+        "typed-vs-graph-promotion"
+      ],
+      "command": [
+        "sh",
+        "tools/eval_packs/real_connector_acl_probe/run_eval.sh"
+      ],
+      "out_dir": "{out_dir}/real_connector_acl_probe",
+      "contract_reports": [
+        "public_contract.json",
+        "private_allowed_contract.json"
+      ],
+      "promotion_audit_reports": [
+        {
+          "path": "public_promotion_audit.json",
+          "min_promotable_association_count": 1,
+          "max_blocked_association_count": 0
+        },
+        {
+          "path": "private_allowed_promotion_audit.json",
+          "min_promotable_association_count": 0,
+          "max_blocked_association_count": 1
+        }
+      ],
+      "eval_reports": [
+        {
+          "path": "eval.json",
+          "min_pass_count": 10,
+          "question_count": 10
+        }
+      ],
+      "scan_paths": [
+        "public_context.json"
+      ],
+      "forbidden_terms": [
+        "pull-request:github:apache/flink-kubernetes-operator#909",
+        "derived-real-acl-probe:private-reader",
+        "SourceSyncIssue",
+        "SourceSyncRun",
+        "Authorization",
+        "token="
+      ]
+    },
+    {
+      "key": "real_connector_source_scope_runtime",
+      "description": "Derived-real connector source-scope runtime probe proving stale and not-attempted coverage states gate absence claims.",
+      "tags": [
+        "derived-real-source-scope-runtime",
+        "real-connector",
+        "source-authority",
+        "typed-vs-graph-promotion"
+      ],
+      "command": [
+        "sh",
+        "tools/eval_packs/real_connector_source_scope_runtime/run_eval.sh"
+      ],
+      "out_dir": "{out_dir}/real_connector_source_scope_runtime",
+      "contract_reports": [
+        "stale_contract.json"
+      ],
+      "promotion_audit_reports": [
+        {
+          "path": "stale_promotion_audit.json",
+          "min_promotable_association_count": 4,
+          "max_blocked_association_count": 0
+        }
+      ],
+      "eval_reports": [
+        {
+          "path": "eval.json",
+          "min_pass_count": 12,
+          "question_count": 12
+        }
+      ],
+      "scan_paths": [
+        "stale_context.json",
+        "not_attempted_context.json"
+      ],
+      "forbidden_terms": [
+        "Derived-real stale source-scope runtime probe.",
+        "Derived-real source-not-attempted runtime probe.",
+        "SourceSyncIssue",
+        "SourceSyncRun",
+        "error_message",
+        "Authorization",
+        "token="
+      ]
+    },
+    {
+      "key": "real_connector_claimable_flink",
+      "description": "Current typed real connector case with claimable Jira remote-link-backed ticket to PR relationships.",
+      "tags": [
+        "real-flink-connector",
+        "real-connector",
+        "source-authority",
+        "typed-vs-graph-promotion"
+      ],
+      "command": [
+        "tools/eval_packs/real_connector_bounded_probe/run_llm.sh"
+      ],
+      "out_dir": "{out_dir}/real_connector_claimable_flink",
+      "env": {
+        "DATABASE": "/Users/harsh/workspace/data/flink-pr-jira-1000-plus-500-jira-2026-06-22/ontology.source-scope-claimable-20260624.db",
+        "START_OBJECT_TYPE": "ticket",
+        "START_KEY": "ticket:jira:FLINK-36332",
+        "ASSOCIATION_TYPES": "implemented_by",
+        "DEPTH": "1",
+        "LIMIT_PER_OBJECT": "6",
+        "LLM_MAX_TOKENS": "32768",
+        "LLM_TIMEOUT_SECONDS": "1800",
+        "REQUIRE_RAW_PASS": "0",
+        "REQUIRE_REPAIRED_PASS": "1"
+      },
+      "contract_reports": [
+        "contract.json"
+      ],
+      "promotion_audit_reports": [
+        {
+          "path": "promotion_audit.json",
+          "min_promotable_association_count": 4,
+          "max_blocked_association_count": 0
+        }
+      ],
+      "eval_reports": [
+        {
+          "path": "raw_eval.json",
+          "min_pass_count": 1,
+          "question_count": 7,
+          "require_passes_eval": false,
+          "require_passes_smoke_eval": true
+        },
+        {
+          "path": "repaired_eval.json",
+          "min_pass_count": 7,
+          "question_count": 7
+        },
+        {
+          "path": "generic_baseline_eval.json",
+          "min_pass_count": 7,
+          "question_count": 7
+        }
+      ],
+      "comparison_reports": [
+        "comparison.json"
+      ],
+      "scan_paths": [
+        "context.json",
+        "prompt.md",
+        "generic_baseline.md",
+        "repaired.md"
+      ],
+      "forbidden_terms": [
+        "WorkProgram",
+        "TPM",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "SourceSyncIssue",
+        "UnresolvedReference",
+        "Authorization",
+        "token="
+      ]
+    }
+  ]
+}

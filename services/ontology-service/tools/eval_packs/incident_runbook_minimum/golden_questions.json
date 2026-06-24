@@ -1,0 +1,134 @@
+{
+  "name": "incident-runbook-minimum",
+  "required_categories": [
+    "account-incident",
+    "generic-no-product-vocabulary",
+    "incident-runbook",
+    "incident-update",
+    "sparse-coverage",
+    "traversal-shape"
+  ],
+  "required_source_coverage_states": [
+    "sparse"
+  ],
+  "questions": [
+    {
+      "key": "incident:traversal-shape",
+      "category": "traversal-shape",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer describe the bounded non-product graph traversal shape?",
+      "expected_facts": [
+        {
+          "text": "4 object(s) and 3 association(s)",
+          "citation_prefix": "[context:"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "ticket:",
+        "pull-request:"
+      ]
+    },
+    {
+      "key": "incident:account-incident",
+      "category": "account-incident",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer cite the customer account to incident relationship?",
+      "expected_facts": [
+        {
+          "text": "customer-account:acme` -> `incident:payments-latency",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "reported_incident",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "implemented_by",
+        "documented_by"
+      ]
+    },
+    {
+      "key": "incident:update-message",
+      "category": "incident-update",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer cite the incident update message relationship?",
+      "expected_facts": [
+        {
+          "text": "incident:payments-latency` -> `slack-message:payments-update-1",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "has_update",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "finance export"
+      ]
+    },
+    {
+      "key": "incident:runbook",
+      "category": "incident-runbook",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer cite the incident runbook relationship?",
+      "expected_facts": [
+        {
+          "text": "incident:payments-latency` -> `runbook:payments-latency",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "has_runbook",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "runbook:finance-export"
+      ]
+    },
+    {
+      "key": "incident:sparse-coverage",
+      "category": "sparse-coverage",
+      "source_coverage_state": "sparse",
+      "question": "Does sparse source coverage keep missing neighbors unknown?",
+      "expected_facts": [
+        {
+          "text": "missing neighbors are unknown, not absent",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "no other incidents",
+        "no other runbooks",
+        "absence claims are allowed"
+      ]
+    },
+    {
+      "key": "incident:no-product-vocabulary",
+      "category": "generic-no-product-vocabulary",
+      "source_coverage_state": "sparse",
+      "question": "Does the generic graph answer avoid ticket, PR, TPM, and analytics vocabulary?",
+      "expected_facts": [
+        {
+          "text": "missing neighbors are unknown, not absent",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "Jira",
+        "GitHub",
+        "ticket:",
+        "pull-request:",
+        "implemented_by",
+        "documented_by",
+        "[analytics:"
+      ]
+    }
+  ]
+}

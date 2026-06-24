@@ -1,0 +1,34 @@
+{
+  "relationship_authority": {
+    "affected_by": {
+      "presence_sources": [
+        "pagerduty"
+      ],
+      "presence_locator_kinds": {
+        "pagerduty": [
+          "incident_link"
+        ]
+      }
+    },
+    "mitigated_by": {
+      "presence_sources": [
+        "docs"
+      ],
+      "presence_locator_kinds": {
+        "docs": [
+          "runbook_link"
+        ]
+      }
+    },
+    "updated_in": {
+      "presence_sources": [
+        "slack"
+      ],
+      "presence_locator_kinds": {
+        "slack": [
+          "slack_message"
+        ]
+      }
+    }
+  }
+}

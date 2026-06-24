@@ -1,0 +1,95 @@
+{
+  "boundedGraphContext": {
+    "contextHash": "docmsgctx1234567",
+    "scopeMode": "bounded_graph_context",
+    "seed": {
+      "objectType": "document",
+      "key": "doc:architecture-note"
+    },
+    "depth": 2,
+    "limitPerObject": 4,
+    "coverage": {
+      "coverageState": "sparse",
+      "absenceClaimsAllowed": false,
+      "absenceClaimGateReason": "partial_message_history",
+      "summary": "Only selected document and message rows were loaded."
+    },
+    "guardrails": [
+      "Do not claim missing replies, owners, or blockers from sparse message history."
+    ],
+    "objects": [
+      {
+        "objectType": "document",
+        "key": "doc:architecture-note",
+        "title": "Architecture note",
+        "visibility": "public",
+        "freshnessState": "fresh",
+        "claimAllowed": true,
+        "proofState": "source_observed"
+      },
+      {
+        "objectType": "message",
+        "key": "message:standup-1",
+        "title": "Standup mention of rollout risk",
+        "visibility": "public",
+        "freshnessState": "fresh",
+        "claimAllowed": true,
+        "proofState": "source_observed"
+      },
+      {
+        "objectType": "ticket",
+        "key": "ticket:SUP-101",
+        "title": "Support escalation",
+        "visibility": "public",
+        "freshnessState": "fresh",
+        "claimAllowed": true,
+        "proofState": "source_observed"
+      }
+    ],
+    "associations": [
+      {
+        "key": "assoc:doc-message",
+        "associationType": "mentions",
+        "from": {
+          "objectType": "document",
+          "key": "doc:architecture-note"
+        },
+        "to": {
+          "objectType": "message",
+          "key": "message:standup-1"
+        },
+        "evidenceKey": "evidence:doc-message",
+        "confidence": 1,
+        "visibility": "public",
+        "freshnessState": "fresh",
+        "claimAllowed": true,
+        "proofState": "source_observed",
+        "claimGateReason": "source_evidence_full_confidence"
+      },
+      {
+        "key": "assoc:message-ticket-candidate",
+        "associationType": "possible_followup_for",
+        "from": {
+          "objectType": "message",
+          "key": "message:standup-1"
+        },
+        "to": {
+          "objectType": "ticket",
+          "key": "ticket:SUP-101"
+        },
+        "claimAllowed": false,
+        "claimGateReason": "candidate_link_requires_human_review"
+      }
+    ],
+    "evidence": [
+      {
+        "key": "evidence:doc-message",
+        "source": "fixture",
+        "sourceInstance": "generic-bounded-graph-test",
+        "visibility": "public",
+        "freshnessState": "fresh",
+        "confidence": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "connectorKind": "slack_api",
+  "observedAt": "2026-06-24T18:10:00Z",
+  "sourceInstance": "slack.example.test/workspace-a",
+  "sourceScope": {
+    "checkpointToken": "slack-history:C-incident:latest",
+    "completedAt": "2026-06-24T18:10:00Z",
+    "coverageEndAt": "2026-06-24T18:10:00Z",
+    "coverageMode": "partial_scope",
+    "coverageStartAt": "2026-06-24T18:05:00Z",
+    "crawlPolicy": "slack_channel_history acl=source_visibility",
+    "displayName": "Slack incident channel",
+    "freshnessState": "fresh",
+    "runKey": "source-sync-run:slack:channel:C-incident:20260624T181000Z",
+    "scopeKey": "C-incident",
+    "scopeKind": "channel",
+    "startedAt": "2026-06-24T18:05:00Z",
+    "status": "complete",
+    "syncMode": "snapshot"
+  },
+  "sourceSystem": "slack",
+  "objects": [
+    {
+      "externalID": "C-incident",
+      "externalKind": "channel",
+      "freshnessState": "fresh",
+      "key": "slack:channel:C-incident",
+      "objectType": "slack_channel",
+      "rankScore": 90,
+      "sourceSystem": "slack",
+      "sourceURL": "https://slack.example.test/archives/C-incident",
+      "title": "Incident coordination",
+      "visibility": "public"
+    },
+    {
+      "externalID": "C-incident/T-public",
+      "externalKind": "message",
+      "freshnessState": "fresh",
+      "key": "slack:message:C-incident:T-public",
+      "objectType": "slack_message",
+      "rankScore": 70,
+      "sourceSystem": "slack",
+      "sourceURL": "https://slack.example.test/archives/C-incident/p-public",
+      "title": "Public incident update",
+      "visibility": "public"
+    },
+    {
+      "aclPolicyKey": "slack:workspace-a:channel:C-incident:private-thread",
+      "externalID": "C-incident/T-private",
+      "externalKind": "message",
+      "freshnessState": "fresh",
+      "key": "slack:message:C-incident:T-private",
+      "objectType": "slack_message",
+      "rankScore": 100,
+      "sourceSystem": "slack",
+      "sourceURL": "https://slack.example.test/archives/C-incident/p-private",
+      "title": "Private payroll incident note",
+      "visibility": "private",
+      "visibilityHash": "slack-private-thread-hash"
+    },
+    {
+      "externalID": "canvas/runbook-failover",
+      "externalKind": "canvas",
+      "freshnessState": "fresh",
+      "key": "slack:canvas:runbook-failover",
+      "objectType": "runbook_document",
+      "rankScore": 50,
+      "sourceSystem": "slack",
+      "sourceURL": "https://slack.example.test/canvas/runbook-failover",
+      "title": "Checkout failover canvas",
+      "visibility": "public"
+    }
+  ],
+  "associations": [
+    {
+      "aclPolicyKey": "slack:workspace-a:channel:C-incident:private-thread",
+      "associationType": "contains_message",
+      "evidenceKey": "evidence:slack:C-incident:private-message",
+      "externalID": "C-incident/T-private",
+      "externalKind": "channel_history_message",
+      "freshnessState": "fresh",
+      "from": {
+        "key": "slack:channel:C-incident",
+        "objectType": "slack_channel"
+      },
+      "locator": "conversations.history C-incident private thread",
+      "locatorKind": "slack_channel_history",
+      "rankScore": 100,
+      "sourceSystem": "slack",
+      "sourceURL": "https://slack.example.test/archives/C-incident/p-private",
+      "to": {
+        "key": "slack:message:C-incident:T-private",
+        "objectType": "slack_message"
+      },
+      "visibility": "private",
+      "visibilityHash": "slack-private-thread-hash"
+    },
+    {
+      "associationType": "contains_message",
+      "evidenceKey": "evidence:slack:C-incident:public-message",
+      "externalID": "C-incident/T-public",
+      "externalKind": "channel_history_message",
+      "freshnessState": "fresh",
+      "from": {
+        "key": "slack:channel:C-incident",
+        "objectType": "slack_channel"
+      },
+      "locator": "conversations.history C-incident public update",
+      "locatorKind": "slack_channel_history",
+      "rankScore": 10,
+      "sourceSystem": "slack",
+      "sourceURL": "https://slack.example.test/archives/C-incident/p-public",
+      "to": {
+        "key": "slack:message:C-incident:T-public",
+        "objectType": "slack_message"
+      },
+      "visibility": "public"
+    },
+    {
+      "associationType": "links_to",
+      "evidenceKey": "evidence:slack:public-message:runbook",
+      "externalID": "C-incident/T-public->canvas/runbook-failover",
+      "externalKind": "message_link",
+      "freshnessState": "fresh",
+      "from": {
+        "key": "slack:message:C-incident:T-public",
+        "objectType": "slack_message"
+      },
+      "locator": "message text link to failover canvas",
+      "locatorKind": "slack_message_link",
+      "rankScore": 8,
+      "sourceSystem": "slack",
+      "sourceURL": "https://slack.example.test/archives/C-incident/p-public",
+      "to": {
+        "key": "slack:canvas:runbook-failover",
+        "objectType": "runbook_document"
+      },
+      "visibility": "public"
+    }
+  ]
+}

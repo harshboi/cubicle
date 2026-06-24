@@ -1,0 +1,152 @@
+{
+  "name": "github-open-graph-cli-cli-13262-13523",
+  "questions": [
+    {
+      "category": "traversal-shape",
+      "expected_facts": [
+        {
+          "citation_prefix": "[context:",
+          "text": "4 object(s) and 3 association(s)"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "Jira",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "implemented_by"
+      ],
+      "key": "github:traversal-shape",
+      "question": "Does the answer describe the bounded GitHub open graph traversal shape?",
+      "source_coverage_state": "sparse"
+    },
+    {
+      "category": "issue-pr",
+      "expected_facts": [
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "github:issue:cli/cli#13262` -> `github:pr:cli/cli#13523"
+        },
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "closed_by"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "Jira",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "implemented_by",
+        "no linked pull request"
+      ],
+      "key": "github:issue-pr",
+      "question": "Does the answer cite the GitHub issue to pull request relationship?",
+      "source_coverage_state": "sparse"
+    },
+    {
+      "category": "github-author",
+      "expected_facts": [
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "authored_by"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "Jira",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "implemented_by"
+      ],
+      "key": "github:author",
+      "question": "Does the answer cite at least one GitHub author relationship?",
+      "source_coverage_state": "sparse"
+    },
+    {
+      "category": "open-ent-proof",
+      "expected_facts": [
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "github:issue:cli/cli#13262"
+        },
+        {
+          "citation_prefix": "[graph_associations:",
+          "text": "github:pr:cli/cli#13523"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "Jira",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "implemented_by"
+      ],
+      "key": "github:ent-proof",
+      "question": "Does the answer stay on the generic open graph instead of typed product ontology rows?",
+      "source_coverage_state": "sparse"
+    },
+    {
+      "category": "sparse-coverage",
+      "expected_facts": [
+        {
+          "citation_prefix": "[guardrail:",
+          "text": "missing neighbors are unknown, not absent"
+        }
+      ],
+      "forbidden_phrases": [
+        "no other pull requests",
+        "no other issues",
+        "absence claims are allowed"
+      ],
+      "key": "github:sparse-coverage",
+      "question": "Does sparse source coverage keep missing neighbors unknown?",
+      "source_coverage_state": "sparse"
+    },
+    {
+      "category": "generic-no-product-vocabulary",
+      "expected_facts": [
+        {
+          "citation_prefix": "[guardrail:",
+          "text": "missing neighbors are unknown, not absent"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "Jira",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "[analytics:",
+        "implemented_by"
+      ],
+      "key": "github:no-product-vocabulary",
+      "question": "Does the GitHub open graph answer avoid Flink, Jira, TPM, and analytics vocabulary?",
+      "source_coverage_state": "sparse"
+    }
+  ],
+  "required_categories": [
+    "generic-no-product-vocabulary",
+    "github-author",
+    "issue-pr",
+    "open-ent-proof",
+    "sparse-coverage",
+    "traversal-shape"
+  ],
+  "required_source_coverage_states": [
+    "sparse"
+  ]
+}

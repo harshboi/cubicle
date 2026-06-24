@@ -1,0 +1,183 @@
+{
+  "name": "open-graph-revenue-minimum",
+  "required_categories": [
+    "account-opportunity",
+    "generic-no-product-vocabulary",
+    "opportunity-blocker",
+    "opportunity-playbook",
+    "open-ent-proof",
+    "sparse-coverage",
+    "traversal-shape",
+    "update-message"
+  ],
+  "required_source_coverage_states": [
+    "sparse"
+  ],
+  "questions": [
+    {
+      "key": "open-graph-revenue:traversal-shape",
+      "category": "traversal-shape",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer describe the bounded open graph traversal shape?",
+      "expected_facts": [
+        {
+          "text": "5 object(s) and 4 association(s)",
+          "citation_prefix": "[context:"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "ticket:",
+        "pull-request:"
+      ]
+    },
+    {
+      "key": "open-graph-revenue:account-opportunity",
+      "category": "account-opportunity",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer cite the customer account to renewal opportunity relationship?",
+      "expected_facts": [
+        {
+          "text": "customer:globex` -> `opportunity:globex-q3-renewal",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "has_opportunity",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "opportunity:hidden-private-renewal",
+        "incident:",
+        "implemented_by"
+      ]
+    },
+    {
+      "key": "open-graph-revenue:opportunity-blocker",
+      "category": "opportunity-blocker",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer cite the support case blocking the renewal opportunity?",
+      "expected_facts": [
+        {
+          "text": "opportunity:globex-q3-renewal` -> `case:data-export-latency",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "blocked_by",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "incident:",
+        "runbook:"
+      ]
+    },
+    {
+      "key": "open-graph-revenue:playbook",
+      "category": "opportunity-playbook",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer cite the playbook guiding the renewal opportunity?",
+      "expected_facts": [
+        {
+          "text": "opportunity:globex-q3-renewal` -> `playbook:renewal-risk",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "guided_by",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "runbook:failover",
+        "incident:"
+      ]
+    },
+    {
+      "key": "open-graph-revenue:update-message",
+      "category": "update-message",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer cite the support case update message relationship?",
+      "expected_facts": [
+        {
+          "text": "case:data-export-latency` -> `slack:renewal-update-1",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "updated_in",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "slack:incident-update-1",
+        "incident:"
+      ]
+    },
+    {
+      "key": "open-graph-revenue:ent-proof",
+      "category": "open-ent-proof",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer stay on the generic open graph instead of product ontology rows?",
+      "expected_facts": [
+        {
+          "text": "customer:globex` -> `opportunity:globex-q3-renewal",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "case:data-export-latency",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "TicketPullRequest"
+      ]
+    },
+    {
+      "key": "open-graph-revenue:sparse-coverage",
+      "category": "sparse-coverage",
+      "source_coverage_state": "sparse",
+      "question": "Does sparse source coverage keep missing neighbors unknown?",
+      "expected_facts": [
+        {
+          "text": "missing neighbors are unknown, not absent",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "no other opportunities",
+        "no other cases",
+        "absence claims are allowed"
+      ]
+    },
+    {
+      "key": "open-graph-revenue:no-product-vocabulary",
+      "category": "generic-no-product-vocabulary",
+      "source_coverage_state": "sparse",
+      "question": "Does the generic graph answer avoid ticket, PR, TPM, incident, and analytics vocabulary?",
+      "expected_facts": [
+        {
+          "text": "missing neighbors are unknown, not absent",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "Jira",
+        "GitHub",
+        "ticket:",
+        "pull-request:",
+        "incident:",
+        "implemented_by",
+        "documented_by",
+        "[analytics:"
+      ]
+    }
+  ]
+}

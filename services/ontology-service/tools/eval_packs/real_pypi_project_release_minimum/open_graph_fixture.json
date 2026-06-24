@@ -1,0 +1,166 @@
+{
+  "connectorKind": "pypi_json_api",
+  "sourceInstance": "pypi.org/project/requests",
+  "sourceSystem": "pypi",
+  "observedAt": "2026-06-24T16:53:04Z",
+  "sourceScope": {
+    "checkpointToken": "pypi-json:requests",
+    "completedAt": "2026-06-24T16:53:04Z",
+    "coverageEndAt": "2026-06-24T16:53:04Z",
+    "coverageMode": "partial_scope",
+    "coverageStartAt": "2026-06-24T16:53:04Z",
+    "crawlPolicy": "pypi_project_release_minimum",
+    "displayName": "PyPI project requests",
+    "freshnessState": "fresh",
+    "runKey": "source-sync-run:pypi:project:requests:20260624T165304Z",
+    "scopeKey": "requests",
+    "scopeKind": "project",
+    "startedAt": "2026-06-24T16:53:04Z",
+    "status": "complete",
+    "syncMode": "snapshot"
+  },
+  "objects": [
+    {
+      "objectType": "pypi_project",
+      "key": "pypi:project:requests",
+      "title": "requests",
+      "sourceSystem": "pypi",
+      "externalKind": "project",
+      "externalID": "requests",
+      "sourceURL": "https://pypi.org/project/requests/",
+      "rankScore": 95,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "pypi_release",
+      "key": "pypi:release:requests:2.34.2",
+      "title": "requests 2.34.2",
+      "sourceSystem": "pypi",
+      "externalKind": "release",
+      "externalID": "requests==2.34.2",
+      "sourceURL": "https://pypi.org/project/requests/2.34.2/",
+      "rankScore": 85,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "pypi_distribution",
+      "key": "pypi:file:requests:2.34.2:wheel",
+      "title": "requests-2.34.2-py3-none-any.whl",
+      "sourceSystem": "pypi",
+      "externalKind": "bdist_wheel",
+      "externalID": "requests-2.34.2-py3-none-any.whl",
+      "sourceURL": "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl",
+      "rankScore": 70,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "pypi_distribution",
+      "key": "pypi:file:requests:2.34.2:sdist",
+      "title": "requests-2.34.2.tar.gz",
+      "sourceSystem": "pypi",
+      "externalKind": "sdist",
+      "externalID": "requests-2.34.2.tar.gz",
+      "sourceURL": "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz",
+      "rankScore": 69,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "package_contact",
+      "key": "pypi:contact:kenneth-reitz",
+      "title": "Kenneth Reitz",
+      "sourceSystem": "pypi",
+      "externalKind": "author_email",
+      "externalID": "Kenneth Reitz",
+      "sourceURL": "https://pypi.org/project/requests/",
+      "rankScore": 65,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    }
+  ],
+  "associations": [
+    {
+      "from": {
+        "objectType": "pypi_project",
+        "key": "pypi:project:requests"
+      },
+      "to": {
+        "objectType": "pypi_release",
+        "key": "pypi:release:requests:2.34.2"
+      },
+      "associationType": "has_release",
+      "sourceSystem": "pypi",
+      "externalKind": "project_release",
+      "externalID": "requests==2.34.2",
+      "sourceURL": "https://pypi.org/pypi/requests/json",
+      "locatorKind": "project_version_field",
+      "locator": "info.version=2.34.2",
+      "rankScore": 10,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "from": {
+        "objectType": "pypi_release",
+        "key": "pypi:release:requests:2.34.2"
+      },
+      "to": {
+        "objectType": "pypi_distribution",
+        "key": "pypi:file:requests:2.34.2:wheel"
+      },
+      "associationType": "has_distribution",
+      "sourceSystem": "pypi",
+      "externalKind": "release_file",
+      "externalID": "requests-2.34.2-py3-none-any.whl",
+      "sourceURL": "https://pypi.org/pypi/requests/json",
+      "locatorKind": "release_file_api",
+      "locator": "releases.2.34.2[bdist_wheel]",
+      "rankScore": 9,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "from": {
+        "objectType": "pypi_release",
+        "key": "pypi:release:requests:2.34.2"
+      },
+      "to": {
+        "objectType": "pypi_distribution",
+        "key": "pypi:file:requests:2.34.2:sdist"
+      },
+      "associationType": "has_distribution",
+      "sourceSystem": "pypi",
+      "externalKind": "release_file",
+      "externalID": "requests-2.34.2.tar.gz",
+      "sourceURL": "https://pypi.org/pypi/requests/json",
+      "locatorKind": "release_file_api",
+      "locator": "releases.2.34.2[sdist]",
+      "rankScore": 8,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "from": {
+        "objectType": "pypi_project",
+        "key": "pypi:project:requests"
+      },
+      "to": {
+        "objectType": "package_contact",
+        "key": "pypi:contact:kenneth-reitz"
+      },
+      "associationType": "has_contact",
+      "sourceSystem": "pypi",
+      "externalKind": "author_email",
+      "externalID": "Kenneth Reitz",
+      "sourceURL": "https://pypi.org/pypi/requests/json",
+      "locatorKind": "project_author_email_field",
+      "locator": "info.author_email=Kenneth Reitz <me@kennethreitz.org>",
+      "rankScore": 7,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    }
+  ]
+}
