@@ -189,3 +189,49 @@ func TestReadFixtureManifestMapsSourceInstances(t *testing.T) {
 		t.Fatalf("source instance = %q, want %q", records[0].SourceInstance, SourceInstanceDocs)
 	}
 }
+
+// TestReadFixtureManifestPrefersReplayManifest keeps enrichment output from
+// being shadowed by an older raw capture manifest in the same fixture dir.
+func TestReadFixtureManifestPrefersReplayManifest(t *testing.T) {
+	dir := t.TempDir()
+	if err := sourcecapture.WriteManifest(dir, []sourcecapture.Record{
+		{
+			SnapshotKey:      "snapshot:github:pull:1",
+			SourceKey:        SourceGitHub,
+			SourceInstance:   SourceInstanceGitHub,
+			SourceObjectType: "github_pull_request",
+			SourceObjectID:   "apache/flink-kubernetes-operator#1",
+			Request: sourcecapture.RequestMetadata{
+				Method: "GET",
+				URL:    "https://api.github.test/repos/apache/flink-kubernetes-operator/pulls/1",
+			},
+			Response: sourcecapture.ResponseMetadata{StatusCode: 200},
+			Body:     []byte(`{"number":1}`),
+		},
+	}, sourcecapture.DumpOptions{GeneratedAt: time.Date(2026, 6, 22, 17, 24, 20, 0, time.UTC)}); err != nil {
+		t.Fatalf("write replay manifest: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, "docs"), 0o755); err != nil {
+		t.Fatalf("create stale fixture dir: %v", err)
+	}
+	staleBody := []byte("# stale")
+	staleHash := sourcecapture.HashBody(staleBody)
+	if err := os.WriteFile(filepath.Join(dir, "docs", "stale.md"), staleBody, 0o644); err != nil {
+		t.Fatalf("write stale body: %v", err)
+	}
+	staleManifest := `{"path":"docs/stale.md","source":"github_docs","source_object_type":"github_markdown_doc","source_object_id":"stale","url":"https://raw.githubusercontent.test/stale.md","status_code":200,"body_sha256":"` + staleHash + `","bytes":7}` + "\n"
+	if err := os.WriteFile(filepath.Join(dir, "manifest.ndjson"), []byte(staleManifest), 0o644); err != nil {
+		t.Fatalf("write stale capture manifest: %v", err)
+	}
+
+	records, err := ReadFixtureManifest(dir)
+	if err != nil {
+		t.Fatalf("ReadFixtureManifest returned error: %v", err)
+	}
+	if len(records) != 1 {
+		t.Fatalf("records len = %d, want replay manifest record", len(records))
+	}
+	if records[0].SourceObjectType != "github_pull_request" || records[0].SourceObjectID != "apache/flink-kubernetes-operator#1" {
+		t.Fatalf("loaded stale capture manifest instead of replay manifest: %#v", records[0])
+	}
+}

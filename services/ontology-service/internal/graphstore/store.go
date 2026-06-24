@@ -24,7 +24,7 @@ type Expander interface {
 // crawlers seed the graph without depending on HTTP-only behavior. MemoryStore
 // and future typed ontology stores should satisfy this interface.
 type Writer interface {
-	// UpsertObject inserts or replaces one object by its stable domain key.
+	// UpsertObject inserts or replaces one object by its stable object ref.
 	UpsertObject(context.Context, domain.Object) error
 
 	// UpsertAssociation inserts or replaces one directed relationship between

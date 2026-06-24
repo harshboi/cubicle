@@ -38,15 +38,15 @@ var (
 // MemoryStore is the first graphstore implementation used for tests, examples,
 // and the initial localhost server.
 type MemoryStore struct {
-	// objects stores every object by stable domain key. This mirrors the later
-	// Ent unique key and keeps object lookup independent of database IDs.
+	// objects stores every object by stable object ref. This mirrors the domain
+	// contract that object identity is (object_type, key), not key alone.
 	objects map[string]domain.Object
 
 	// associations stores every association by its derived or caller-supplied
 	// key so repeated writes replace the logical relationship.
 	associations map[string]domain.Association
 
-	// out is the adjacency list from object key to association keys. Expand uses
+	// out is the adjacency list from object ref to association keys. Expand uses
 	// it for bounded breadth-first traversal.
 	out map[string][]string
 }
@@ -61,12 +61,12 @@ func NewMemoryStore() *MemoryStore {
 	}
 }
 
-// UpsertObject inserts or replaces an object by its stable domain key.
+// UpsertObject inserts or replaces an object by its stable object ref.
 func (s *MemoryStore) UpsertObject(_ context.Context, object domain.Object) error {
 	if object.ObjectType == "" || object.Key == "" {
 		return fmt.Errorf("%w: object_type and key are required", ErrMissingObject)
 	}
-	s.objects[object.Key] = object
+	s.objects[objectRefKey(object.Ref())] = object
 	return nil
 }
 
@@ -79,17 +79,19 @@ func (s *MemoryStore) UpsertAssociation(_ context.Context, association domain.As
 	if association.From.Key == "" || association.To.Key == "" || association.AssociationType == "" {
 		return fmt.Errorf("%w: from, to, and association_type are required", ErrInvalidExpansion)
 	}
-	if _, ok := s.objects[association.From.Key]; !ok {
+	fromRefKey := objectRefKey(association.From)
+	if _, ok := s.objects[fromRefKey]; !ok {
 		return fmt.Errorf("%w: %s", ErrMissingObject, association.From.Key)
 	}
-	if _, ok := s.objects[association.To.Key]; !ok {
+	toRefKey := objectRefKey(association.To)
+	if _, ok := s.objects[toRefKey]; !ok {
 		return fmt.Errorf("%w: %s", ErrMissingObject, association.To.Key)
 	}
 	if association.Key == "" {
 		association.Key = associationKey(association)
 	}
 	if _, exists := s.associations[association.Key]; !exists {
-		s.out[association.From.Key] = append(s.out[association.From.Key], association.Key)
+		s.out[fromRefKey] = append(s.out[fromRefKey], association.Key)
 	}
 	s.associations[association.Key] = association
 	return nil
@@ -104,7 +106,9 @@ func (s *MemoryStore) Expand(_ context.Context, req domain.ExpandRequest) (domai
 	if req.Start.ObjectType == "" || req.Start.Key == "" || req.Depth < 0 || req.LimitPerObject <= 0 {
 		return domain.Neighborhood{}, fmt.Errorf("%w: start, non-negative depth, and positive limit are required", ErrInvalidExpansion)
 	}
-	if _, ok := s.objects[req.Start.Key]; !ok {
+	startRefKey := objectRefKey(req.Start)
+	startObject, ok := s.objects[startRefKey]
+	if !ok || !objectAllowed(req.ReadFilter, startObject) {
 		return domain.Neighborhood{}, fmt.Errorf("%w: %s", ErrMissingObject, req.Start.Key)
 	}
 
@@ -114,7 +118,7 @@ func (s *MemoryStore) Expand(_ context.Context, req domain.ExpandRequest) (domai
 
 	// seenObjects prevents duplicate objects in the response and avoids cycling
 	// forever when the graph later contains reverse or cyclic associations.
-	seenObjects := map[string]bool{req.Start.Key: true}
+	seenObjects := map[string]bool{startRefKey: true}
 
 	// seenAssociations prevents repeated associations in the response when two
 	// traversal paths reach the same relationship.
@@ -122,7 +126,7 @@ func (s *MemoryStore) Expand(_ context.Context, req domain.ExpandRequest) (domai
 
 	// objectOrder preserves deterministic response order while seenObjects gives
 	// constant-time membership checks.
-	objectOrder := []string{req.Start.Key}
+	objectOrder := []string{startRefKey}
 
 	// associationOrder preserves deterministic response order for associations.
 	associationOrder := make([]string, 0)
@@ -138,7 +142,7 @@ func (s *MemoryStore) Expand(_ context.Context, req domain.ExpandRequest) (domai
 		for _, ref := range frontier {
 			// associationKeys is copied before sorting so deterministic traversal
 			// does not mutate the store's insertion-order adjacency list.
-			associationKeys := append([]string(nil), s.out[ref.Key]...)
+			associationKeys := append([]string(nil), s.out[objectRefKey(ref)]...)
 			sort.Strings(associationKeys)
 
 			// used tracks how many associations have been accepted from this one
@@ -153,14 +157,19 @@ func (s *MemoryStore) Expand(_ context.Context, req domain.ExpandRequest) (domai
 				if len(allowedTypes) > 0 && !allowedTypes[association.AssociationType] {
 					continue
 				}
+				toObject, ok := s.objects[objectRefKey(association.To)]
+				if !ok || !objectAllowed(req.ReadFilter, toObject) || !associationAllowed(req.ReadFilter, association) {
+					continue
+				}
 				used++
 				if !seenAssociations[key] {
 					seenAssociations[key] = true
 					associationOrder = append(associationOrder, key)
 				}
-				if !seenObjects[association.To.Key] {
-					seenObjects[association.To.Key] = true
-					objectOrder = append(objectOrder, association.To.Key)
+				toRefKey := objectRefKey(association.To)
+				if !seenObjects[toRefKey] {
+					seenObjects[toRefKey] = true
+					objectOrder = append(objectOrder, toRefKey)
 					next = append(next, association.To)
 				}
 			}
@@ -181,6 +190,24 @@ func (s *MemoryStore) Expand(_ context.Context, req domain.ExpandRequest) (domai
 		graph.Associations = append(graph.Associations, s.associations[key])
 	}
 	return graph, nil
+}
+
+func objectAllowed(filter domain.ExpandReadFilter, object domain.Object) bool {
+	if filter.ObjectAllowed == nil {
+		return true
+	}
+	return filter.ObjectAllowed(object)
+}
+
+func associationAllowed(filter domain.ExpandReadFilter, association domain.Association) bool {
+	if filter.AssociationAllowed == nil {
+		return true
+	}
+	return filter.AssociationAllowed(association)
+}
+
+func objectRefKey(ref domain.ObjectRef) string {
+	return string(ref.ObjectType) + "\x00" + ref.Key
 }
 
 func associationTypeSet(types []domain.AssociationType) map[domain.AssociationType]bool {

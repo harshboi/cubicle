@@ -5,12 +5,21 @@ import (
 	"net/http"
 	"time"
 
+	genent "cubicle/services/ontology-service/ent"
+	"cubicle/services/ontology-service/internal/graphcontext"
+	ontologygraphql "cubicle/services/ontology-service/internal/graphql"
+	"cubicle/services/ontology-service/internal/graphstore"
+
 	"github.com/gin-gonic/gin"
 )
 
 // RouterOptions controls process-level HTTP behavior.
 type RouterOptions struct {
-	GraphQLPlaygroundEnabled bool // GraphQLPlaygroundEnabled mounts GET /playground for local development.
+	GraphQLPlaygroundEnabled            bool // GraphQLPlaygroundEnabled mounts GET /playground for local development.
+	EntClient                           *genent.Client
+	GraphExpander                       graphstore.Expander
+	BoundedGraphSourceAuthority         graphcontext.SourceAuthorityPolicy
+	BoundedGraphPrincipalAccessProvider func(*http.Request) (ontologygraphql.BoundedGraphPrincipalAccess, bool)
 }
 
 // NewRouter wires the HTTP framework layer.

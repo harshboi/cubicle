@@ -43,7 +43,7 @@ const (
 
 var (
 	ErrInvalidConfig     = errors.New("invalid Flink source config")
-	issueKeyPattern      = regexp.MustCompile(`\bFLINK-\d+\b`)
+	issueKeyPattern      = regexp.MustCompile(`(?i)FLINK-\d+`)
 	exactIssueKeyPattern = regexp.MustCompile(`^FLINK-\d+$`)
 )
 
@@ -62,7 +62,11 @@ type Config struct {
 
 // ReadFixtureManifest converts the captured Flink dataset manifest into sourcecapture records.
 func ReadFixtureManifest(dir string) ([]sourcecapture.Record, error) {
-	return sourcecapture.ReadCaptureManifest(dir, sourcecapture.CaptureManifestOptions{
+	replayRecords, replayErr := sourcecapture.ReadManifest(dir)
+	if replayErr == nil {
+		return replayRecords, nil
+	}
+	records, err := sourcecapture.ReadCaptureManifest(dir, sourcecapture.CaptureManifestOptions{
 		SourceInstances: map[string]string{
 			SourceJira:   SourceInstanceJira,
 			SourceGitHub: SourceInstanceGitHub,
@@ -70,6 +74,10 @@ func ReadFixtureManifest(dir string) ([]sourcecapture.Record, error) {
 			SourceMail:   SourceInstanceMail,
 		},
 	})
+	if err == nil {
+		return records, nil
+	}
+	return nil, fmt.Errorf("read fixture as replay manifest: %w; read fixture as capture manifest: %v", replayErr, err)
 }
 
 // DefaultConfig returns the current Flink Autoscaler POC crawl scope.
@@ -388,7 +396,40 @@ func MarkdownDocsFromTree(record sourcecapture.Record) ([]string, error) {
 
 // ExtractIssueKeys returns unique FLINK issue keys from source text.
 func ExtractIssueKeys(text string) []string {
-	return NormalizeIssueKeys(issueKeyPattern.FindAllString(strings.ToUpper(text), -1))
+	matches := issueKeyPattern.FindAllStringIndex(text, -1)
+	keys := make([]string, 0, len(matches))
+	for _, match := range matches {
+		if !isIssueKeyLeftBoundary(text, match[0]) || !isIssueKeyRightBoundary(text, match[1]) {
+			continue
+		}
+		keys = append(keys, text[match[0]:match[1]])
+	}
+	return NormalizeIssueKeys(keys)
+}
+
+// isIssueKeyLeftBoundary rejects embedded tokens such as XFLINK-123.
+func isIssueKeyLeftBoundary(text string, idx int) bool {
+	if idx == 0 {
+		return true
+	}
+	return !isIssueKeyWordByte(text[idx-1])
+}
+
+// isIssueKeyRightBoundary rejects embedded tokens and version-like FLINK-1.20 strings.
+func isIssueKeyRightBoundary(text string, idx int) bool {
+	if idx >= len(text) {
+		return true
+	}
+	if isIssueKeyWordByte(text[idx]) {
+		return false
+	}
+	return !(text[idx] == '.' && idx+1 < len(text) && text[idx+1] >= '0' && text[idx+1] <= '9')
+}
+
+func isIssueKeyWordByte(value byte) bool {
+	return value >= 'A' && value <= 'Z' ||
+		value >= 'a' && value <= 'z' ||
+		value >= '0' && value <= '9'
 }
 
 // NormalizeIssueKeys uppercases, dedupes, filters, and sorts FLINK issue keys.

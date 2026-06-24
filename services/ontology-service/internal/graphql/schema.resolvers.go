@@ -7,9 +7,32 @@ package graphql
 
 import (
 	"context"
+	genent "cubicle/services/ontology-service/ent"
+	"cubicle/services/ontology-service/ent/pullrequestlensresult"
+	"cubicle/services/ontology-service/ent/ticketlensresult"
+	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workblocker"
+	"cubicle/services/ontology-service/ent/workblockerimpact"
+	"cubicle/services/ontology-service/ent/workdependencyedge"
+	"cubicle/services/ontology-service/ent/workdependencyendpoint"
+	"cubicle/services/ontology-service/ent/workinsight"
+	"cubicle/services/ontology-service/ent/workinsightreview"
+	"cubicle/services/ontology-service/ent/workitemforecast"
+	"cubicle/services/ontology-service/ent/workitemstatesnapshot"
+	"cubicle/services/ontology-service/ent/workitemstatetransition"
+	"cubicle/services/ontology-service/ent/worklens"
+	"cubicle/services/ontology-service/ent/worklenswindow"
+	"cubicle/services/ontology-service/ent/workownerloadsnapshot"
+	"cubicle/services/ontology-service/ent/workstream"
+	"cubicle/services/ontology-service/ent/workstreamhealthsnapshot"
+	"cubicle/services/ontology-service/internal/domain"
+	"cubicle/services/ontology-service/internal/graphcontext"
 	"cubicle/services/ontology-service/internal/graphql/generated"
 	"cubicle/services/ontology-service/internal/graphql/model"
 	"fmt"
+	"strings"
+
+	entsql "entgo.io/ent/dialect/sql"
 )
 
 // Health is the resolver for the health field.
@@ -22,192 +45,1391 @@ func (r *queryResolver) Health(ctx context.Context) (*model.Health, error) {
 
 // WorkActions is the resolver for the workActions field.
 func (r *queryResolver) WorkActions(ctx context.Context, limit *int, decisionState *string, actionState *string, ownerKey *string, sourceInstance *string) ([]*model.WorkAction, error) {
-	panic(fmt.Errorf("not implemented: WorkActions - workActions"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workActions requires an Ent-backed ontology store")
+	}
+	rowLimit := 20
+	if limit != nil {
+		rowLimit = *limit
+	}
+	if rowLimit <= 0 {
+		rowLimit = 20
+	}
+	if rowLimit > 100 {
+		rowLimit = 100
+	}
+
+	fetchLimit := rowLimit * 5
+	if fetchLimit < 100 {
+		fetchLimit = 100
+	}
+	if fetchLimit > 500 {
+		fetchLimit = 500
+	}
+
+	state := "open"
+	if actionState != nil {
+		state = *actionState
+	}
+	if state == "" {
+		state = "open"
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	if sourceFilter == nil {
+		return []*model.WorkAction{}, nil
+	}
+	rows, err := r.workActionRowsForSourceAndDecision(ctx, state, fetchLimit, sourceFilter, decisionState, ownerKey)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) > rowLimit {
+		rows = rows[:rowLimit]
+	}
+	claimPolicies, err := r.workActionResponsibilityClaimPolicies(ctx, sourceFilter, rows, workActionClaimPolicy{})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.WorkAction, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, workActionModelWithClaimPolicy(row, workActionClaimPolicyForRow(row.Key, claimPolicies, workActionClaimPolicy{})))
+	}
+	return out, nil
 }
 
 // WorkProgramItems is the resolver for the workProgramItems field.
 func (r *queryResolver) WorkProgramItems(ctx context.Context, limit *int, workstreamKey *string, programStatus *string, tpmBucket *string, ownerKey *string, sourceInstance *string) ([]*model.WorkProgramItem, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramItems - workProgramItems"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workProgramItems requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	rowLimit := boundedLimit(limit, 50, 200)
+	rows, err := r.workProgramItemRowsForSource(ctx, rowLimit, workstreamKey, programStatus, tpmBucket, ownerKey, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	claimPolicies, err := r.workProgramItemResponsibilityClaimPolicies(ctx, sourceFilter, rows, workActionClaimPolicy{})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.WorkProgramItem, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, workProgramItemModelWithClaimPolicy(row, workActionClaimPolicyForRow(row.Key, claimPolicies, workActionClaimPolicy{})))
+	}
+	return out, nil
 }
 
 // WorkProgramMilestonePacket is the resolver for the workProgramMilestonePacket field.
 func (r *queryResolver) WorkProgramMilestonePacket(ctx context.Context, workstreamKey string, limit *int, sourceInstance *string) (*model.WorkProgramMilestonePacket, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramMilestonePacket - workProgramMilestonePacket"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workProgramMilestonePacket requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	rowLimit := boundedLimit(limit, 50, 200)
+	if sourceFilter == nil {
+		return emptyWorkProgramMilestonePacket(workstreamKey, nil), nil
+	}
+	rows, allRows, generatedAt, err := r.latestWorkProgramMilestoneRows(ctx, sourceFilter, &workstreamKey, rowLimit)
+	if err != nil {
+		return nil, err
+	}
+	return workProgramMilestonePacketModel(sourceFilter, workstreamKey, generatedAt, rows, allRows), nil
 }
 
 // WorkProgramSummary is the resolver for the workProgramSummary field.
 func (r *queryResolver) WorkProgramSummary(ctx context.Context, workstreamKey *string, sourceInstance *string) (*model.WorkProgramSummary, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramSummary - workProgramSummary"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workProgramSummary requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.workProgramItemRowsForSource(ctx, 1000, workstreamKey, nil, nil, nil, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	signals, err := r.workProgramExternalSignals(ctx, sourceFilter, workstreamKey, rows)
+	if err != nil {
+		return nil, err
+	}
+	forecastReadiness, err := r.forecastReadinessModel(ctx, sourceFilter, "open")
+	if err != nil {
+		return nil, err
+	}
+	summary := workProgramSummaryModel(sourceFilter, workstreamKey, rows, signals, forecastReadiness)
+	persistedSummary, err := r.latestWorkProgramSummarySnapshotData(ctx, sourceFilter, workstreamKey)
+	if err != nil {
+		return nil, err
+	}
+	summary = applyWorkProgramSummarySnapshotData(summary, persistedSummary)
+	ownerRollups, err := r.latestWorkProgramOwnerRollupSnapshotModels(ctx, sourceFilter, workstreamKey, 100)
+	if err != nil {
+		return nil, err
+	}
+	if len(ownerRollups) > 0 {
+		summary.OwnerRollups = ownerRollups
+	}
+	return summary, nil
 }
 
 // WorkProgramBrief is the resolver for the workProgramBrief field.
 func (r *queryResolver) WorkProgramBrief(ctx context.Context, workstreamKey *string, sourceInstance *string) (*model.WorkProgramBrief, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramBrief - workProgramBrief"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workProgramBrief requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.workProgramItemRowsForSource(ctx, 1000, workstreamKey, nil, nil, nil, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	signals, err := r.workProgramExternalSignals(ctx, sourceFilter, workstreamKey, rows)
+	if err != nil {
+		return nil, err
+	}
+	forecastReadiness, err := r.forecastReadinessModel(ctx, sourceFilter, "open")
+	if err != nil {
+		return nil, err
+	}
+	summary := workProgramSummaryModel(sourceFilter, workstreamKey, rows, signals, forecastReadiness)
+	persistedSummary, err := r.latestWorkProgramSummarySnapshotData(ctx, sourceFilter, workstreamKey)
+	if err != nil {
+		return nil, err
+	}
+	summary = applyWorkProgramSummarySnapshotData(summary, persistedSummary)
+	ownerRollups, err := r.latestWorkProgramOwnerRollupSnapshotModels(ctx, sourceFilter, workstreamKey, 100)
+	if err != nil {
+		return nil, err
+	}
+	if len(ownerRollups) > 0 {
+		summary.OwnerRollups = ownerRollups
+	}
+	briefSnapshot, err := r.latestWorkProgramBriefSnapshotData(ctx, sourceFilter, workstreamKey)
+	if err != nil {
+		return nil, err
+	}
+	sections, err := r.latestWorkstreamStandupSectionModels(ctx, 12, workstreamKey, nil, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	evaluation, err := r.WorkInsightEvaluation(ctx, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	runGeneratedAt, err := r.latestWorkProgramAutomationReadinessRunGeneratedAt(ctx, sourceFilter, workstreamKey)
+	if err != nil {
+		return nil, err
+	}
+	qualityGates, _, err := r.latestWorkProgramQualityGateModelsAndBlockingCountForGeneratedAt(ctx, sourceFilter, workstreamKey, runGeneratedAt, 20)
+	if err != nil {
+		return nil, err
+	}
+	adversarialChecks, _, err := r.latestWorkProgramAdversarialCheckModelsAndCountsForGeneratedAt(ctx, sourceFilter, workstreamKey, runGeneratedAt, 20)
+	if err != nil {
+		return nil, err
+	}
+	caveats, _, err := r.latestWorkProgramBriefCaveatModelsAndCountForGeneratedAt(ctx, sourceFilter, workstreamKey, runGeneratedAt, 20)
+	if err != nil {
+		return nil, err
+	}
+	evidenceNeeds, err := r.latestWorkProgramEvidenceNeedModelsForFilters(ctx, workProgramEvidenceNeedFilters{
+		sourceFilter:  sourceFilter,
+		workstreamKey: workstreamKey,
+		generatedAt:   runGeneratedAt,
+	}, 50)
+	if err != nil {
+		return nil, err
+	}
+	riskDrivers, err := r.latestWorkProgramRiskDriverModels(ctx, sourceFilter, workstreamKey, 100)
+	if err != nil {
+		return nil, err
+	}
+	automationReadiness, err := r.latestWorkProgramAutomationReadinessModel(ctx, sourceFilter, workstreamKey, qualityGates, evidenceNeeds)
+	if err != nil {
+		return nil, err
+	}
+	if workstreamKey != nil && strings.TrimSpace(*workstreamKey) != "" {
+		_, responsibilityValidationCount, err := r.workProgramAttentionResponsibilityModelsAndCount(ctx, sourceFilter, *workstreamKey, 1)
+		if err != nil {
+			return nil, err
+		}
+		automationReadiness = workProgramGuardrailReadinessWithResponsibilityValidation(automationReadiness, responsibilityValidationCount)
+	}
+	functionRows, err := r.latestWorkProgramTPMFunctionReadinessRowsForGeneratedAt(ctx, sourceFilter, workstreamKey, runGeneratedAt)
+	if err != nil {
+		return nil, err
+	}
+	functionReadiness := workProgramTPMFunctionReadinessModels(limitWorkProgramTPMFunctionReadinessRows(functionRows, 20))
+	return workProgramBriefModel(summary, briefSnapshot, sections, evaluation, qualityGates, automationReadiness, riskDrivers, adversarialChecks, caveats, evidenceNeeds, functionReadiness), nil
 }
 
 // WorkProgramGraphBrief is the resolver for the workProgramGraphBrief field.
 func (r *queryResolver) WorkProgramGraphBrief(ctx context.Context, workstreamKey string, sourceInstance *string, promptMode *string) (*model.WorkProgramGraphBrief, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramGraphBrief - workProgramGraphBrief"))
+	return r.workProgramGraphBrief(ctx, workstreamKey, sourceInstance, promptMode)
 }
 
 // WorkProgramGraphContext is the resolver for the workProgramGraphContext field.
 func (r *queryResolver) WorkProgramGraphContext(ctx context.Context, workstreamKey string, itemLimit *int, actionLimit *int, edgeLimit *int, insightLimit *int, forecastLimit *int, evidenceLimit *int, traversalDepth *int, runKey *string, generatedAt *string, sourceInstance *string) (*model.WorkProgramGraphContext, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramGraphContext - workProgramGraphContext"))
+	return r.workProgramGraphContext(ctx, workstreamKey, itemLimit, actionLimit, edgeLimit, insightLimit, forecastLimit, evidenceLimit, traversalDepth, runKey, generatedAt, sourceInstance)
 }
 
 // BoundedGraphContext is the resolver for the boundedGraphContext field.
 func (r *queryResolver) BoundedGraphContext(ctx context.Context, startObjectType string, startKey string, associationTypes []string, depth *int, limitPerObject *int) (*model.BoundedGraphContext, error) {
-	panic(fmt.Errorf("not implemented: BoundedGraphContext - boundedGraphContext"))
+	if r.GraphExpander == nil {
+		return nil, fmt.Errorf("boundedGraphContext requires a configured graph expander")
+	}
+
+	startObjectType = strings.TrimSpace(startObjectType)
+	startKey = strings.TrimSpace(startKey)
+	if startObjectType == "" || startKey == "" {
+		return nil, fmt.Errorf("boundedGraphContext requires startObjectType and startKey")
+	}
+
+	start := domain.ObjectRef{
+		ObjectType: domain.ObjectType(startObjectType),
+		Key:        startKey,
+	}
+	opts := graphcontext.Options{
+		Coverage:                      r.boundedGraphCoveragePolicy(ctx, start),
+		AssociationClaimMinConfidence: 1,
+	}
+	if len(r.BoundedGraphSourceAuthority.RelationshipAuthority) > 0 {
+		opts.SourceAuthorityPolicy = r.BoundedGraphSourceAuthority
+	} else if r.EntClient != nil {
+		opts.SourceAuthorityPolicy = boundedGraphSourceAuthorityPolicy()
+	}
+	graphContext, err := graphcontext.Build(ctx, r.GraphExpander, domain.ExpandRequest{
+		Start:            start,
+		AssociationTypes: boundedGraphAssociationTypes(associationTypes),
+		Depth:            boundedGraphDepth(depth),
+		LimitPerObject:   boundedLimit(limitPerObject, 4, 25),
+		ReadFilter:       r.boundedGraphReadFilter(ctx),
+	}, opts)
+	if err != nil {
+		return nil, err
+	}
+	return boundedGraphContextModel(graphContext), nil
 }
 
 // WorkProgramEvidenceNeeds is the resolver for the workProgramEvidenceNeeds field.
 func (r *queryResolver) WorkProgramEvidenceNeeds(ctx context.Context, limit *int, workstreamKey *string, gateKey *string, evidenceKind *string, executionState *string, ownerKey *string, actionKey *string, actionState *string, sourceInstance *string) ([]*model.WorkProgramAutomationEvidenceNeed, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramEvidenceNeeds - workProgramEvidenceNeeds"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workProgramEvidenceNeeds requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	return r.latestWorkProgramEvidenceNeedModelsForFilters(ctx, workProgramEvidenceNeedFilters{
+		sourceFilter:   sourceFilter,
+		workstreamKey:  workstreamKey,
+		gateKey:        gateKey,
+		evidenceKind:   evidenceKind,
+		executionState: executionState,
+		ownerKey:       ownerKey,
+		actionKey:      actionKey,
+		actionState:    actionState,
+	}, boundedLimit(limit, 50, 200))
 }
 
 // WorkResponsibilities is the resolver for the workResponsibilities field.
 func (r *queryResolver) WorkResponsibilities(ctx context.Context, limit *int, subjectKind *string, subjectKey *string, partyKind *string, partyKey *string, responsibilityKind *string, responsibilityState *string, basisKind *string, sourceInstance *string) ([]*model.WorkResponsibility, error) {
-	panic(fmt.Errorf("not implemented: WorkResponsibilities - workResponsibilities"))
+	return r.workResponsibilityModelsForFilters(ctx, limit, workResponsibilityFilters{
+		subjectKind:         subjectKind,
+		subjectKey:          subjectKey,
+		partyKind:           partyKind,
+		partyKey:            partyKey,
+		responsibilityKind:  responsibilityKind,
+		responsibilityState: responsibilityState,
+		basisKind:           basisKind,
+		sourceInstance:      sourceInstance,
+	})
 }
 
 // WorkProgramAttentionPacket is the resolver for the workProgramAttentionPacket field.
 func (r *queryResolver) WorkProgramAttentionPacket(ctx context.Context, workstreamKey string, limit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramAttentionPacket, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramAttentionPacket - workProgramAttentionPacket"))
+	return r.workProgramAttentionPacket(ctx, workstreamKey, limit, evidenceLimit, sourceInstance)
 }
 
 // WorkProgramAutomationPlanPacket is the resolver for the workProgramAutomationPlanPacket field.
 func (r *queryResolver) WorkProgramAutomationPlanPacket(ctx context.Context, workstreamKey string, actionState *string, actionLimit *int, evidenceLimit *int, reviewLimit *int, sourceInstance *string) (*model.WorkProgramAutomationPlanPacket, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramAutomationPlanPacket - workProgramAutomationPlanPacket"))
+	return r.workProgramAutomationPlanPacket(ctx, workstreamKey, actionState, actionLimit, evidenceLimit, reviewLimit, sourceInstance)
 }
 
 // WorkProgramExecutionPacket is the resolver for the workProgramExecutionPacket field.
 func (r *queryResolver) WorkProgramExecutionPacket(ctx context.Context, workstreamKey string, actionState *string, actionLimit *int, evidenceLimit *int, reviewLimit *int, sourceInstance *string) (*model.WorkProgramExecutionPacket, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramExecutionPacket - workProgramExecutionPacket"))
+	return r.workProgramExecutionPacket(ctx, workstreamKey, actionState, actionLimit, evidenceLimit, reviewLimit, sourceInstance)
 }
 
 // WorkProgramOwnerPacket is the resolver for the workProgramOwnerPacket field.
 func (r *queryResolver) WorkProgramOwnerPacket(ctx context.Context, workstreamKey string, ownerKey string, actionState *string, actionLimit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramOwnerPacket, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramOwnerPacket - workProgramOwnerPacket"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workProgramOwnerPacket requires an Ent-backed ontology store")
+	}
+	workstream := strings.TrimSpace(workstreamKey)
+	if workstream == "" {
+		return nil, fmt.Errorf("workProgramOwnerPacket requires workstreamKey")
+	}
+	owner := strings.TrimSpace(ownerKey)
+	if owner == "" {
+		return nil, fmt.Errorf("workProgramOwnerPacket requires ownerKey")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	runGeneratedAt, err := r.latestWorkProgramAutomationReadinessRunGeneratedAt(ctx, sourceFilter, &workstream)
+	if err != nil {
+		return nil, err
+	}
+	state := "open"
+	if actionState != nil {
+		state = strings.TrimSpace(*actionState)
+	}
+	if state == "" {
+		state = "open"
+	}
+
+	ownerLoadLimit := 1
+	ownerLoads, err := r.OwnerLoadSnapshots(ctx, &ownerLoadLimit, workstream, &owner, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	var ownerLoad *model.WorkOwnerLoadSnapshot
+	if len(ownerLoads) > 0 {
+		ownerLoad = ownerLoads[0]
+	}
+
+	actionRowLimit := boundedLimit(actionLimit, 20, 100)
+	items, err := r.workProgramItemRowsForSource(ctx, 1000, &workstream, nil, nil, &owner, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	actionRows := workProgramExecutionActionRows(items, state, actionRowLimit)
+	actions := workActionModels(actionRows)
+	totalActionRows := workProgramExecutionActionRows(items, state, 1000)
+
+	evidenceRowLimit := boundedLimit(evidenceLimit, 50, 200)
+	evidenceNeeds, evidenceNeedCount, err := r.latestWorkProgramEvidenceNeedModelsAndCountForFilters(ctx, workProgramEvidenceNeedFilters{
+		sourceFilter:  sourceFilter,
+		workstreamKey: &workstream,
+		ownerKey:      &owner,
+		generatedAt:   runGeneratedAt,
+	}, evidenceRowLimit)
+	if err != nil {
+		return nil, err
+	}
+	responsibilityRowLimit := actionRowLimit + evidenceRowLimit
+	if responsibilityRowLimit < 50 {
+		responsibilityRowLimit = 50
+	}
+	if responsibilityRowLimit > 200 {
+		responsibilityRowLimit = 200
+	}
+	responsibilities, err := r.workProgramOwnerResponsibilitySummary(ctx, sourceFilter, workstream, owner, responsibilityRowLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	actionCount := len(actions)
+	loadStatus := "unknown"
+	var recommendedFocus *string
+	if ownerLoad != nil {
+		loadStatus = ownerLoad.LoadStatus
+		actionCount = ownerLoad.ActionCount
+		recommendedFocus = ownerLoad.RecommendedFocus
+	} else {
+		actionCount = len(totalActionRows)
+	}
+	if recommendedFocus == nil {
+		recommendedFocus = firstWorkProgramOwnerPacketActionFocus(actions, evidenceNeeds)
+	}
+
+	return &model.WorkProgramOwnerPacket{
+		SourceInstance:                sourceFilter,
+		GeneratedAt:                   optionalTimePtr(runGeneratedAt),
+		WorkstreamKey:                 workstream,
+		OwnerKey:                      owner,
+		LoadStatus:                    loadStatus,
+		RecommendedFocus:              recommendedFocus,
+		ActionCount:                   actionCount,
+		EvidenceNeedCount:             evidenceNeedCount,
+		ResponsibilityCount:           responsibilities.total,
+		ActiveResponsibilityCount:     responsibilities.active,
+		CandidateResponsibilityCount:  responsibilities.candidate,
+		UnassignedResponsibilityCount: responsibilities.unassigned,
+		HumanRequired:                 workProgramOwnerPacketHumanRequired(loadStatus, actionCount, len(actions), evidenceNeedCount) || responsibilities.candidate > 0 || responsibilities.unassigned > 0,
+		AutomationSummary:             workProgramOwnerPacketAutomationSummary(owner, state, actionCount, evidenceNeedCount, recommendedFocus),
+		OwnerLoad:                     ownerLoad,
+		Actions:                       actions,
+		EvidenceNeeds:                 evidenceNeeds,
+		Responsibilities:              responsibilities.rows,
+	}, nil
 }
 
 // WorkProgramBlockerPacket is the resolver for the workProgramBlockerPacket field.
 func (r *queryResolver) WorkProgramBlockerPacket(ctx context.Context, workstreamKey string, blockerState *string, limit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramBlockerPacket, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramBlockerPacket - workProgramBlockerPacket"))
+	return r.workProgramBlockerPacket(ctx, workstreamKey, blockerState, limit, evidenceLimit, sourceInstance)
 }
 
 // WorkProgramForecastPacket is the resolver for the workProgramForecastPacket field.
 func (r *queryResolver) WorkProgramForecastPacket(ctx context.Context, workstreamKey string, limit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramForecastPacket, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramForecastPacket - workProgramForecastPacket"))
+	return r.workProgramForecastPacket(ctx, workstreamKey, limit, evidenceLimit, sourceInstance)
 }
 
 // WorkProgramGuardrailPacket is the resolver for the workProgramGuardrailPacket field.
 func (r *queryResolver) WorkProgramGuardrailPacket(ctx context.Context, workstreamKey string, limit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramGuardrailPacket, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramGuardrailPacket - workProgramGuardrailPacket"))
+	return r.workProgramGuardrailPacket(ctx, workstreamKey, limit, evidenceLimit, sourceInstance)
 }
 
 // WorkProgramSourceCoveragePacket is the resolver for the workProgramSourceCoveragePacket field.
 func (r *queryResolver) WorkProgramSourceCoveragePacket(ctx context.Context, workstreamKey string, limit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramSourceCoveragePacket, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramSourceCoveragePacket - workProgramSourceCoveragePacket"))
+	return r.workProgramSourceCoveragePacket(ctx, workstreamKey, limit, evidenceLimit, sourceInstance)
 }
 
 // WorkProgramTpmReadinessPacket is the resolver for the workProgramTpmReadinessPacket field.
 func (r *queryResolver) WorkProgramTpmReadinessPacket(ctx context.Context, workstreamKey string, functionLimit *int, evidenceLimit *int, reviewLimit *int, sourceInstance *string) (*model.WorkProgramTpmReadinessPacket, error) {
-	panic(fmt.Errorf("not implemented: WorkProgramTpmReadinessPacket - workProgramTpmReadinessPacket"))
+	return r.workProgramTpmReadinessPacket(ctx, workstreamKey, functionLimit, evidenceLimit, reviewLimit, sourceInstance)
 }
 
 // WorkDecisionTargetEvaluations is the resolver for the workDecisionTargetEvaluations field.
 func (r *queryResolver) WorkDecisionTargetEvaluations(ctx context.Context, limit *int, targetKind *string, evaluationKind *string, productActionGateState *string, sourceInstance *string) ([]*model.WorkDecisionTargetEvaluation, error) {
-	panic(fmt.Errorf("not implemented: WorkDecisionTargetEvaluations - workDecisionTargetEvaluations"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workDecisionTargetEvaluations requires an Ent-backed ontology store")
+	}
+	rows, err := r.workDecisionTargetEvaluationRows(ctx, sourceInstance, targetKind, evaluationKind, productActionGateState, boundedLimit(limit, 20, 100))
+	if err != nil {
+		return nil, err
+	}
+	return workDecisionTargetEvaluationModels(rows), nil
 }
 
 // WorkDecisionTargetReadiness is the resolver for the workDecisionTargetReadiness field.
 func (r *queryResolver) WorkDecisionTargetReadiness(ctx context.Context, limit *int, sourceInstance *string) (*model.WorkDecisionTargetReadiness, error) {
-	panic(fmt.Errorf("not implemented: WorkDecisionTargetReadiness - workDecisionTargetReadiness"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workDecisionTargetReadiness requires an Ent-backed ontology store")
+	}
+	return r.workDecisionTargetReadinessModel(ctx, sourceInstance, boundedLimit(limit, 20, 100))
 }
 
 // WorkItemForecasts is the resolver for the workItemForecasts field.
 func (r *queryResolver) WorkItemForecasts(ctx context.Context, limit *int, riskBand *string, subjectState *string, sourceInstance string) ([]*model.WorkItemForecast, error) {
-	panic(fmt.Errorf("not implemented: WorkItemForecasts - workItemForecasts"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workItemForecasts requires an Ent-backed ontology store")
+	}
+	source := strings.TrimSpace(sourceInstance)
+	if source == "" {
+		return nil, fmt.Errorf("workItemForecasts requires sourceInstance")
+	}
+	forecastReadiness, err := r.forecastReadinessModel(ctx, &source, "open")
+	if err != nil {
+		return nil, err
+	}
+	rowLimit := 20
+	if limit != nil {
+		rowLimit = *limit
+	}
+	if rowLimit <= 0 {
+		rowLimit = 20
+	}
+	if rowLimit > 100 {
+		rowLimit = 100
+	}
+
+	if riskBand != nil && *riskBand != "" && *riskBand != "all" {
+		value := workitemforecast.RiskBand(*riskBand)
+		if err := workitemforecast.RiskBandValidator(value); err != nil {
+			return nil, err
+		}
+	}
+	state := "open"
+	if subjectState != nil {
+		state = *subjectState
+	}
+	if state == "" {
+		state = "open"
+	}
+
+	buildQuery := func() *genent.WorkItemForecastQuery {
+		query := r.EntClient.WorkItemForecast.Query().
+			Where(
+				workitemforecast.SourceSystemEQ("cubicle_analytics"),
+				workitemforecast.SourceInstanceEQ(source),
+				workitemforecast.ExternalKindIn("tpm_pr_forecast", "tpm_work_item_forecast"),
+			)
+		if riskBand != nil && *riskBand != "" && *riskBand != "all" {
+			query = query.Where(workitemforecast.RiskBandEQ(workitemforecast.RiskBand(*riskBand)))
+		}
+		if state != "all" {
+			query = query.Where(workitemforecast.SubjectStateEQ(state))
+		}
+		return query
+	}
+
+	latestForecasted, err := buildQuery().
+		Where(workitemforecast.ForecastedAtNotNil()).
+		Order(
+			workitemforecast.ByForecastedAt(entsql.OrderDesc()),
+			workitemforecast.ByUpdatedAt(entsql.OrderDesc()),
+		).
+		First(ctx)
+	if err != nil && !genent.IsNotFound(err) {
+		return nil, err
+	}
+
+	fetchLimit := rowLimit * 5
+	if fetchLimit < 100 {
+		fetchLimit = 100
+	}
+	if fetchLimit > 500 {
+		fetchLimit = 500
+	}
+	query := buildQuery().
+		WithPullRequest(func(q *genent.PullRequestQuery) {
+			q.WithTickets()
+		}).
+		WithTicket(func(q *genent.TicketQuery) {
+			q.WithPullRequests()
+		}).
+		WithWorkAction(workActionDetails(&source)).
+		WithLatestEvidence().
+		Limit(fetchLimit)
+	if latestForecasted != nil && !latestForecasted.ForecastedAt.IsZero() {
+		query = query.Order(
+			workitemforecast.ByForecastedAt(entsql.OrderDesc()),
+			workitemforecast.ByRiskScore(entsql.OrderDesc()),
+			workitemforecast.ByOverdueDays(entsql.OrderDesc()),
+			workitemforecast.ByUpdatedAt(entsql.OrderDesc()),
+		)
+	} else {
+		query = query.Order(
+			workitemforecast.ByRiskScore(entsql.OrderDesc()),
+			workitemforecast.ByOverdueDays(entsql.OrderDesc()),
+			workitemforecast.ByUpdatedAt(entsql.OrderDesc()),
+		)
+	}
+
+	rows, err := query.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if latestForecasted != nil && !latestForecasted.ForecastedAt.IsZero() {
+		latestForecastedAt := latestForecasted.ForecastedAt
+		currentRunRows := rows[:0]
+		for _, row := range rows {
+			if !row.ForecastedAt.IsZero() && row.ForecastedAt.UTC().Equal(latestForecastedAt.UTC()) {
+				currentRunRows = append(currentRunRows, row)
+			}
+		}
+		rows = currentRunRows
+	}
+	out := make([]*model.WorkItemForecast, 0, min(rowLimit, len(rows)))
+	seen := make(map[string]struct{}, len(rows))
+	for _, row := range rows {
+		subjectKey := row.ForecastKind.String() + "\x00" + row.SubjectKind.String() + "\x00" + row.SubjectKey
+		if _, ok := seen[subjectKey]; ok {
+			continue
+		}
+		seen[subjectKey] = struct{}{}
+		out = append(out, workItemForecastModelWithReadiness(row, forecastReadiness))
+		if len(out) >= rowLimit {
+			break
+		}
+	}
+	return out, nil
 }
 
 // ForecastReadiness is the resolver for the forecastReadiness field.
 func (r *queryResolver) ForecastReadiness(ctx context.Context, sourceInstance string, actionState *string) (*model.WorkForecastReadiness, error) {
-	panic(fmt.Errorf("not implemented: ForecastReadiness - forecastReadiness"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("forecastReadiness requires an Ent-backed ontology store")
+	}
+	state := "open"
+	if actionState != nil {
+		state = *actionState
+	}
+	if state == "" {
+		state = "open"
+	}
+	return r.forecastReadinessModel(ctx, &sourceInstance, state)
 }
 
 // WorkItemStateSnapshots is the resolver for the workItemStateSnapshots field.
 func (r *queryResolver) WorkItemStateSnapshots(ctx context.Context, subjectKind string, subjectKey string, limit *int, sourceInstance *string) ([]*model.WorkItemStateSnapshot, error) {
-	panic(fmt.Errorf("not implemented: WorkItemStateSnapshots - workItemStateSnapshots"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workItemStateSnapshots requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	if sourceFilter == nil {
+		return []*model.WorkItemStateSnapshot{}, nil
+	}
+	rowLimit := 20
+	if limit != nil {
+		rowLimit = *limit
+	}
+	if rowLimit <= 0 {
+		rowLimit = 20
+	}
+	if rowLimit > 100 {
+		rowLimit = 100
+	}
+	kind := workitemstatesnapshot.SubjectKind(subjectKind)
+	if err := workitemstatesnapshot.SubjectKindValidator(kind); err != nil {
+		return nil, err
+	}
+	if subjectKey == "" {
+		return nil, fmt.Errorf("subjectKey is required")
+	}
+	rows, err := r.EntClient.WorkItemStateSnapshot.Query().
+		Where(
+			workitemstatesnapshot.SubjectKindEQ(kind),
+			workitemstatesnapshot.SubjectKeyEQ(subjectKey),
+			workitemstatesnapshot.SourceSystemEQ("cubicle_analytics"),
+			workitemstatesnapshot.SourceInstanceEQ(*sourceFilter),
+			workitemstatesnapshot.ExternalKindIn("tpm_pr_state_snapshot", "tpm_ticket_state_snapshot"),
+		).
+		WithPullRequest().
+		WithTicket().
+		WithLatestEvidence().
+		Order(
+			workitemstatesnapshot.ByObservedAt(entsql.OrderDesc()),
+			workitemstatesnapshot.ByCapturedAt(entsql.OrderDesc()),
+		).
+		Limit(rowLimit).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.WorkItemStateSnapshot, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, workItemStateSnapshotModel(row))
+	}
+	return out, nil
 }
 
 // WorkItemStateTransitions is the resolver for the workItemStateTransitions field.
 func (r *queryResolver) WorkItemStateTransitions(ctx context.Context, limit *int, subjectKind *string, subjectKey *string, transitionKind *string, requiresCloseout *bool, sourceInstance *string) ([]*model.WorkItemStateTransition, error) {
-	panic(fmt.Errorf("not implemented: WorkItemStateTransitions - workItemStateTransitions"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workItemStateTransitions requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	if sourceFilter == nil {
+		return []*model.WorkItemStateTransition{}, nil
+	}
+	rowLimit := 20
+	if limit != nil {
+		rowLimit = *limit
+	}
+	if rowLimit <= 0 {
+		rowLimit = 20
+	}
+	if rowLimit > 100 {
+		rowLimit = 100
+	}
+	query := r.EntClient.WorkItemStateTransition.Query().
+		Where(
+			workitemstatetransition.SourceSystemEQ("cubicle_analytics"),
+			workitemstatetransition.SourceInstanceEQ(*sourceFilter),
+			workitemstatetransition.ExternalKindEQ("tpm_state_transition_candidate"),
+		).
+		WithPullRequest().
+		WithTicket().
+		WithFromSnapshot(func(q *genent.WorkItemStateSnapshotQuery) {
+			q.WithPullRequest()
+			q.WithTicket()
+		}).
+		WithToSnapshot(func(q *genent.WorkItemStateSnapshotQuery) {
+			q.WithPullRequest()
+			q.WithTicket()
+		}).
+		WithLatestEvidence().
+		Order(
+			workitemstatetransition.ByToObservedAt(entsql.OrderDesc()),
+			workitemstatetransition.ByUpdatedAt(entsql.OrderDesc()),
+		).
+		Limit(rowLimit)
+
+	if subjectKind != nil && *subjectKind != "" {
+		value := workitemstatetransition.SubjectKind(*subjectKind)
+		if err := workitemstatetransition.SubjectKindValidator(value); err != nil {
+			return nil, err
+		}
+		query = query.Where(workitemstatetransition.SubjectKindEQ(value))
+	}
+	if subjectKey != nil && *subjectKey != "" {
+		query = query.Where(workitemstatetransition.SubjectKeyEQ(*subjectKey))
+	}
+	if transitionKind != nil && *transitionKind != "" && *transitionKind != "all" {
+		value := workitemstatetransition.TransitionKind(*transitionKind)
+		if err := workitemstatetransition.TransitionKindValidator(value); err != nil {
+			return nil, err
+		}
+		query = query.Where(workitemstatetransition.TransitionKindEQ(value))
+	}
+	if requiresCloseout != nil {
+		query = query.Where(workitemstatetransition.RequiresCloseoutEQ(*requiresCloseout))
+	}
+
+	rows, err := query.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.WorkItemStateTransition, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, workItemStateTransitionModel(row))
+	}
+	return out, nil
 }
 
 // WorkActionSummary is the resolver for the workActionSummary field.
 func (r *queryResolver) WorkActionSummary(ctx context.Context, actionState *string, sourceInstance *string) (*model.WorkActionSummary, error) {
-	panic(fmt.Errorf("not implemented: WorkActionSummary - workActionSummary"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workActionSummary requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	state := "open"
+	if actionState != nil {
+		state = *actionState
+	}
+	if state == "" {
+		state = "open"
+	}
+
+	rows, err := r.workActionRowsForSource(ctx, state, 1000, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	forecastRows, err := r.workForecastEvaluationRows(ctx, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	return workActionSummaryModel(state, sourceFilter, rows, forecastRows...), nil
 }
 
 // WorkInsightEvaluation is the resolver for the workInsightEvaluation field.
 func (r *queryResolver) WorkInsightEvaluation(ctx context.Context, sourceInstance *string) (*model.WorkInsightEvaluation, error) {
-	panic(fmt.Errorf("not implemented: WorkInsightEvaluation - workInsightEvaluation"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workInsightEvaluation requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	persisted, err := r.latestWorkInsightEvaluationSnapshotModel(ctx, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	if persisted != nil {
+		return persisted, nil
+	}
+	query := r.EntClient.WorkInsight.Query().
+		Where(
+			workinsight.ProducerStateEQ(workinsight.ProducerStateCurrent),
+		).
+		WithReviews(func(q *genent.WorkInsightReviewQuery) {
+			q = applyWorkInsightReviewSourceFilter(q, sourceFilter)
+			q.Order(workinsightreview.ByCreatedAt())
+		}).
+		Order(
+			workinsight.ByInsightKind(),
+			workinsight.ByRankScore(entsql.OrderDesc()),
+			workinsight.ByLastActivityAt(entsql.OrderDesc()),
+		).
+		Limit(1000)
+	if sourceFilter != nil {
+		query = query.Where(
+			workinsight.SourceSystemEQ("cubicle_analytics"),
+			workinsight.SourceInstanceEQ(*sourceFilter),
+			workinsight.ExternalKindEQ("tpm_insight"),
+		)
+	}
+	rows, err := query.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return workInsightEvaluationModel(sourceFilter, rows), nil
 }
 
 // WorkInsightMeasurementPacket is the resolver for the workInsightMeasurementPacket field.
 func (r *queryResolver) WorkInsightMeasurementPacket(ctx context.Context, sourceInstance *string, reviewLimit *int, insightKind *string) (*model.WorkInsightMeasurementPacket, error) {
-	panic(fmt.Errorf("not implemented: WorkInsightMeasurementPacket - workInsightMeasurementPacket"))
+	return r.workInsightMeasurementPacket(ctx, sourceInstance, reviewLimit, insightKind)
 }
 
 // WorkInsightReviews is the resolver for the workInsightReviews field.
 func (r *queryResolver) WorkInsightReviews(ctx context.Context, limit *int, sourceInstance *string, reviewState *string, reviewKind *string, insightKind *string, measurementEligible *bool) ([]*model.WorkInsightReview, error) {
-	panic(fmt.Errorf("not implemented: WorkInsightReviews - workInsightReviews"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workInsightReviews requires an Ent-backed ontology store")
+	}
+	rows, err := r.workInsightReviewRows(ctx, boundedLimit(limit, 50, 200), sourceInstance, reviewState, reviewKind, insightKind, measurementEligible)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.WorkInsightReview, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, workInsightReviewModel(row))
+	}
+	return out, nil
 }
 
 // Workstreams is the resolver for the workstreams field.
 func (r *queryResolver) Workstreams(ctx context.Context, limit *int, actionState *string, sourceInstance *string) ([]*model.WorkstreamRegister, error) {
-	panic(fmt.Errorf("not implemented: Workstreams - workstreams"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workstreams requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	rowLimit := 20
+	if limit != nil {
+		rowLimit = *limit
+	}
+	if rowLimit <= 0 {
+		rowLimit = 20
+	}
+	if rowLimit > 100 {
+		rowLimit = 100
+	}
+	state := "open"
+	if actionState != nil {
+		state = *actionState
+	}
+	if state == "" {
+		state = "open"
+	}
+	query := r.EntClient.Workstream.Query().
+		WithTickets().
+		Order(
+			workstream.ByRankScore(entsql.OrderDesc()),
+			workstream.ByLastActivityAt(entsql.OrderDesc()),
+		).
+		Limit(rowLimit)
+	if sourceFilter != nil {
+		query = query.Where(workstream.SourceInstanceEQ(*sourceFilter))
+	}
+	streams, err := query.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	actions, err := r.workActionRowsForSource(ctx, state, 1000, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	forecastRows, err := r.workForecastEvaluationRows(ctx, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	return r.workstreamRegisterModels(ctx, state, streams, actions, forecastRows)
 }
 
 // OwnerLoadSnapshots is the resolver for the ownerLoadSnapshots field.
 func (r *queryResolver) OwnerLoadSnapshots(ctx context.Context, limit *int, workstreamKey string, ownerKey *string, sourceInstance *string) ([]*model.WorkOwnerLoadSnapshot, error) {
-	panic(fmt.Errorf("not implemented: OwnerLoadSnapshots - ownerLoadSnapshots"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("ownerLoadSnapshots requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := optionalSourceInstanceArgument(sourceInstance, "sourceInstance")
+	if err != nil {
+		return nil, err
+	}
+	rowLimit := boundedLimit(limit, 20, 100)
+	workstreamKeyFilter := &workstreamKey
+	latestQuery := r.applyOwnerLoadFilters(
+		r.EntClient.WorkOwnerLoadSnapshot.Query().
+			Order(
+				workownerloadsnapshot.ByGeneratedAt(entsql.OrderDesc()),
+				workownerloadsnapshot.ByActionCount(entsql.OrderDesc()),
+				workownerloadsnapshot.ByMaxPriorityScore(entsql.OrderDesc()),
+			),
+		workstreamKeyFilter,
+		nil,
+		sourceFilter,
+	)
+	latest, err := latestQuery.First(ctx)
+	if genent.IsNotFound(err) {
+		return []*model.WorkOwnerLoadSnapshot{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	query := r.applyOwnerLoadFilters(
+		r.EntClient.WorkOwnerLoadSnapshot.Query().
+			WithPerson().
+			WithLatestEvidence(),
+		workstreamKeyFilter,
+		ownerKey,
+		sourceFilter,
+	)
+	if latest.SourceInstance != "" {
+		query = query.Where(workownerloadsnapshot.SourceInstanceEQ(latest.SourceInstance))
+	}
+	if runPrefix := ownerLoadRunPrefix(latest.ExternalID, latest.OwnerKey); runPrefix != "" {
+		query = query.Where(workownerloadsnapshot.ExternalIDHasPrefix(runPrefix + ":"))
+	} else if latest.GeneratedAt.IsZero() {
+		query = query.Where(workownerloadsnapshot.GeneratedAtIsNil())
+	} else {
+		query = query.Where(workownerloadsnapshot.GeneratedAtEQ(latest.GeneratedAt))
+	}
+	rows, err := query.
+		Order(
+			workownerloadsnapshot.ByActionCount(entsql.OrderDesc()),
+			workownerloadsnapshot.ByMaxPriorityScore(entsql.OrderDesc()),
+			workownerloadsnapshot.ByOwnerKey(),
+		).
+		Limit(rowLimit).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.ownerLoadSnapshotModels(ctx, rows)
 }
 
 // WorkstreamStandup is the resolver for the workstreamStandup field.
 func (r *queryResolver) WorkstreamStandup(ctx context.Context, actionState *string, sourceInstance *string) (*model.WorkstreamStandup, error) {
-	panic(fmt.Errorf("not implemented: WorkstreamStandup - workstreamStandup"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workstreamStandup requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	state := "open"
+	if actionState != nil {
+		state = *actionState
+	}
+	if state == "" {
+		state = "open"
+	}
+
+	rows, err := r.workActionRowsForSource(ctx, state, 1000, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	forecastRows, err := r.workForecastEvaluationRows(ctx, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	standup := workstreamStandupModel(state, sourceFilter, rows, forecastRows...)
+	persistedSections, err := r.latestWorkstreamStandupSectionModels(ctx, 100, nil, nil, sourceFilter)
+	if err != nil {
+		return nil, err
+	}
+	if len(persistedSections) > 0 {
+		standup.Sections = persistedSections
+	}
+	return standup, nil
 }
 
 // WorkstreamStandupSections is the resolver for the workstreamStandupSections field.
 func (r *queryResolver) WorkstreamStandupSections(ctx context.Context, limit *int, workstreamKey *string, sectionKind *string, sourceInstance *string) ([]*model.WorkstreamStandupSection, error) {
-	panic(fmt.Errorf("not implemented: WorkstreamStandupSections - workstreamStandupSections"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workstreamStandupSections requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := optionalSourceInstanceArgument(sourceInstance, "sourceInstance")
+	if err != nil {
+		return nil, err
+	}
+	rowLimit := boundedLimit(limit, 30, 100)
+	return r.latestWorkstreamStandupSectionModels(ctx, rowLimit, workstreamKey, sectionKind, sourceFilter)
 }
 
 // WorkstreamHealthSnapshots is the resolver for the workstreamHealthSnapshots field.
 func (r *queryResolver) WorkstreamHealthSnapshots(ctx context.Context, limit *int, workstreamKey *string, sourceInstance *string) ([]*model.WorkstreamHealthSnapshot, error) {
-	panic(fmt.Errorf("not implemented: WorkstreamHealthSnapshots - workstreamHealthSnapshots"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workstreamHealthSnapshots requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	rowLimit := boundedLimit(limit, 20, 100)
+	query := r.EntClient.WorkstreamHealthSnapshot.Query().
+		WithWorkstream().
+		WithLatestEvidence().
+		Order(
+			workstreamhealthsnapshot.ByGeneratedAt(entsql.OrderDesc()),
+			workstreamhealthsnapshot.ByUpdatedAt(entsql.OrderDesc()),
+		).
+		Limit(rowLimit)
+	if sourceFilter != nil {
+		query = query.Where(workstreamhealthsnapshot.SourceInstanceEQ(*sourceFilter))
+	}
+	if workstreamKey != nil && *workstreamKey != "" {
+		filterKey := strings.TrimSpace(*workstreamKey)
+		filterKeys := []string{filterKey}
+		if strings.HasPrefix(filterKey, "workstream:") {
+			filterKeys = append(filterKeys, strings.TrimPrefix(filterKey, "workstream:"))
+		} else {
+			filterKeys = append(filterKeys, "workstream:"+filterKey)
+		}
+		query = query.Where(workstreamhealthsnapshot.Or(
+			workstreamhealthsnapshot.WorkstreamKeyIn(filterKeys...),
+			workstreamhealthsnapshot.HasWorkstreamWith(workstream.KeyIn(filterKeys...)),
+		))
+	}
+	rows, err := query.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.WorkstreamHealthSnapshot, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, workstreamHealthSnapshotModel(row))
+	}
+	return out, nil
 }
 
 // WorkLensWindows is the resolver for the workLensWindows field.
 func (r *queryResolver) WorkLensWindows(ctx context.Context, limit *int, targetKind *string, lensKind *string, resultLimit *int) ([]*model.WorkLensWindow, error) {
-	panic(fmt.Errorf("not implemented: WorkLensWindows - workLensWindows"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workLensWindows requires an Ent-backed ontology store")
+	}
+	rowLimit := boundedLimit(limit, 20, 100)
+	childLimit := boundedLimit(resultLimit, 20, 100)
+	query := r.EntClient.WorkLensWindow.Query().
+		WithLens().
+		WithPullRequestResults(func(q *genent.PullRequestLensResultQuery) {
+			q.WithPullRequest(func(prq *genent.PullRequestQuery) {
+				prq.WithTickets()
+			})
+			q.WithLatestEvidence()
+			q.Order(
+				pullrequestlensresult.ByRankScore(entsql.OrderDesc()),
+				pullrequestlensresult.ByLastActivityAt(entsql.OrderDesc()),
+			)
+			q.Limit(childLimit)
+		}).
+		WithTicketResults(func(q *genent.TicketLensResultQuery) {
+			q.WithTicket(func(tq *genent.TicketQuery) {
+				tq.WithPullRequests()
+			})
+			q.WithLatestEvidence()
+			q.Order(
+				ticketlensresult.ByRankScore(entsql.OrderDesc()),
+				ticketlensresult.ByLastActivityAt(entsql.OrderDesc()),
+			)
+			q.Limit(childLimit)
+		}).
+		Order(
+			worklenswindow.ByLastIndexedAt(entsql.OrderDesc()),
+			worklenswindow.ByLastActivityAt(entsql.OrderDesc()),
+		).
+		Limit(rowLimit)
+
+	if targetKind != nil && *targetKind != "" && *targetKind != "all" {
+		value := worklens.LensTargetKind(*targetKind)
+		if err := worklens.LensTargetKindValidator(value); err != nil {
+			return nil, err
+		}
+		query = query.Where(worklenswindow.HasLensWith(worklens.LensTargetKindEQ(value)))
+	}
+	if lensKind != nil && *lensKind != "" && *lensKind != "all" {
+		value := worklens.WorkLensKind(*lensKind)
+		if err := worklens.WorkLensKindValidator(value); err != nil {
+			return nil, err
+		}
+		query = query.Where(worklenswindow.HasLensWith(worklens.WorkLensKindEQ(value)))
+	}
+
+	rows, err := query.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.WorkLensWindow, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, workLensWindowModel(row))
+	}
+	return out, nil
 }
 
 // WorkBlockers is the resolver for the workBlockers field.
 func (r *queryResolver) WorkBlockers(ctx context.Context, limit *int, blockerState *string, subjectKind *string, subjectKey *string, sourceInstance *string) ([]*model.WorkBlocker, error) {
-	panic(fmt.Errorf("not implemented: WorkBlockers - workBlockers"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workBlockers requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	if sourceFilter == nil {
+		return []*model.WorkBlocker{}, nil
+	}
+	rowLimit := boundedLimit(limit, 20, 100)
+	query := r.EntClient.WorkBlocker.Query().
+		WithPullRequest().
+		WithTicket()
+	if sourceFilter != nil {
+		query = query.
+			WithWorkAction(func(q *genent.WorkActionQuery) {
+				q.Where(
+					workaction.SourceSystemEQ("cubicle_analytics"),
+					workaction.SourceInstanceEQ(*sourceFilter),
+					workaction.ExternalKindEQ("tpm_work_action"),
+				)
+			}).
+			WithWorkInsight(func(q *genent.WorkInsightQuery) {
+				q.Where(
+					workinsight.SourceSystemEQ("cubicle_analytics"),
+					workinsight.SourceInstanceEQ(*sourceFilter),
+					workinsight.ExternalKindEQ("tpm_insight"),
+				)
+			})
+	} else {
+		query = query.
+			WithWorkAction().
+			WithWorkInsight()
+	}
+	query = query.WithLatestEvidence().
+		Order(
+			workblocker.ByRankScore(entsql.OrderDesc()),
+			workblocker.ByLastActivityAt(entsql.OrderDesc()),
+			workblocker.ByUpdatedAt(entsql.OrderDesc()),
+		).
+		Limit(rowLimit)
+
+	state := "open"
+	if blockerState != nil {
+		state = *blockerState
+	}
+	if state == "" {
+		state = "open"
+	}
+	switch state {
+	case "all":
+	case "open":
+		query = query.Where(workblocker.BlockerStateIn(
+			workblocker.BlockerStateActive,
+			workblocker.BlockerStateValidating,
+		))
+	default:
+		value := workblocker.BlockerState(state)
+		if err := workblocker.BlockerStateValidator(value); err != nil {
+			return nil, err
+		}
+		query = query.Where(workblocker.BlockerStateEQ(value))
+	}
+	if subjectKind != nil && *subjectKind != "" && *subjectKind != "all" {
+		value := workblocker.SubjectKind(*subjectKind)
+		if err := workblocker.SubjectKindValidator(value); err != nil {
+			return nil, err
+		}
+		query = query.Where(workblocker.SubjectKindEQ(value))
+	}
+	if subjectKey != nil && *subjectKey != "" {
+		query = query.Where(workblocker.SubjectKeyEQ(*subjectKey))
+	}
+	if sourceFilter != nil {
+		query = query.Where(
+			workblocker.SourceSystemEQ("cubicle_analytics"),
+			workblocker.SourceInstanceEQ(*sourceFilter),
+			workblocker.ExternalKindEQ("tpm_work_blocker"),
+		)
+	}
+
+	rows, err := query.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.WorkBlocker, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, workBlockerModel(row))
+	}
+	return out, nil
 }
 
 // WorkDependencyEdges is the resolver for the workDependencyEdges field.
 func (r *queryResolver) WorkDependencyEdges(ctx context.Context, limit *int, fromKind *string, fromKey *string, edgeKind *string, sourceInstance *string) ([]*model.WorkDependencyEdge, error) {
-	panic(fmt.Errorf("not implemented: WorkDependencyEdges - workDependencyEdges"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workDependencyEdges requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	if sourceFilter == nil {
+		return []*model.WorkDependencyEdge{}, nil
+	}
+	rowLimit := boundedLimit(limit, 100, 500)
+	query := r.EntClient.WorkDependencyEdge.Query().
+		WithWorkBlocker(func(q *genent.WorkBlockerQuery) {
+			q.Where(
+				workblocker.SourceSystemEQ("cubicle_analytics"),
+				workblocker.SourceInstanceEQ(*sourceFilter),
+				workblocker.ExternalKindEQ("tpm_work_blocker"),
+			)
+		}).
+		WithWorkAction(workActionDetails(sourceFilter)).
+		WithEndpoints(func(q *genent.WorkDependencyEndpointQuery) {
+			q.WithLatestEvidence().
+				Order(workdependencyendpoint.ByEndpointRole())
+		}).
+		WithLatestEvidence().
+		Order(
+			workdependencyedge.ByRankScore(entsql.OrderDesc()),
+			workdependencyedge.ByLastActivityAt(entsql.OrderDesc()),
+			workdependencyedge.ByUpdatedAt(entsql.OrderDesc()),
+		).
+		Limit(rowLimit)
+
+	if fromKind != nil && *fromKind != "" && *fromKind != "all" {
+		value := workdependencyedge.FromKind(*fromKind)
+		if err := workdependencyedge.FromKindValidator(value); err != nil {
+			return nil, err
+		}
+		query = query.Where(workdependencyedge.FromKindEQ(value))
+	}
+	if fromKey != nil && *fromKey != "" {
+		query = query.Where(workdependencyedge.FromKeyEQ(*fromKey))
+	}
+	if edgeKind != nil && *edgeKind != "" && *edgeKind != "all" {
+		value := workdependencyedge.EdgeKind(*edgeKind)
+		if err := workdependencyedge.EdgeKindValidator(value); err != nil {
+			return nil, err
+		}
+		query = query.Where(workdependencyedge.EdgeKindEQ(value))
+	}
+	if sourceFilter != nil {
+		query = query.Where(
+			workdependencyedge.SourceSystemEQ("cubicle_analytics"),
+			workdependencyedge.SourceInstanceEQ(*sourceFilter),
+			workdependencyedge.ExternalKindEQ("tpm_work_dependency_edge"),
+		)
+	}
+
+	rows, err := query.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.WorkDependencyEdge, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, workDependencyEdgeModel(row))
+	}
+	return out, nil
 }
 
 // WorkBlockerImpacts is the resolver for the workBlockerImpacts field.
 func (r *queryResolver) WorkBlockerImpacts(ctx context.Context, limit *int, impactState *string, affectedKind *string, affectedKey *string, workstreamKey *string, sourceInstance *string) ([]*model.WorkBlockerImpact, error) {
-	panic(fmt.Errorf("not implemented: WorkBlockerImpacts - workBlockerImpacts"))
+	if r.EntClient == nil {
+		return nil, fmt.Errorf("workBlockerImpacts requires an Ent-backed ontology store")
+	}
+	sourceFilter, err := r.aggregateSourceInstance(ctx, sourceInstance)
+	if err != nil {
+		return nil, err
+	}
+	if sourceFilter == nil {
+		return []*model.WorkBlockerImpact{}, nil
+	}
+	rowLimit := boundedLimit(limit, 20, 100)
+	query := r.EntClient.WorkBlockerImpact.Query()
+	if sourceFilter != nil {
+		query = query.
+			WithWorkBlocker(func(q *genent.WorkBlockerQuery) {
+				q.Where(
+					workblocker.SourceSystemEQ("cubicle_analytics"),
+					workblocker.SourceInstanceEQ(*sourceFilter),
+					workblocker.ExternalKindEQ("tpm_work_blocker"),
+				)
+			}).
+			WithWorkAction(func(q *genent.WorkActionQuery) {
+				q.Where(
+					workaction.SourceSystemEQ("cubicle_analytics"),
+					workaction.SourceInstanceEQ(*sourceFilter),
+					workaction.ExternalKindEQ("tpm_work_action"),
+				)
+			}).
+			WithWorkstream(func(q *genent.WorkstreamQuery) {
+				q.Where(
+					workstream.SourceSystemEQ("cubicle_analytics"),
+					workstream.SourceInstanceEQ(*sourceFilter),
+					workstream.ExternalKindEQ("tpm_workstream"),
+				)
+			})
+	} else {
+		query = query.
+			WithWorkBlocker().
+			WithWorkAction().
+			WithWorkstream()
+	}
+	query = query.
+		WithPullRequest().
+		WithTicket().
+		WithLatestEvidence().
+		Order(
+			workblockerimpact.ByImpactScore(entsql.OrderDesc()),
+			workblockerimpact.ByRankScore(entsql.OrderDesc()),
+			workblockerimpact.ByLastActivityAt(entsql.OrderDesc()),
+		).
+		Limit(rowLimit)
+
+	state := "open"
+	if impactState != nil {
+		state = *impactState
+	}
+	if state == "" {
+		state = "open"
+	}
+	switch state {
+	case "all":
+	case "open":
+		query = query.Where(workblockerimpact.ImpactStateIn(
+			workblockerimpact.ImpactStateActive,
+			workblockerimpact.ImpactStateValidating,
+		))
+	default:
+		value := workblockerimpact.ImpactState(state)
+		if err := workblockerimpact.ImpactStateValidator(value); err != nil {
+			return nil, err
+		}
+		query = query.Where(workblockerimpact.ImpactStateEQ(value))
+	}
+	if affectedKind != nil && *affectedKind != "" && *affectedKind != "all" {
+		value := workblockerimpact.AffectedKind(*affectedKind)
+		if err := workblockerimpact.AffectedKindValidator(value); err != nil {
+			return nil, err
+		}
+		query = query.Where(workblockerimpact.AffectedKindEQ(value))
+	}
+	if affectedKey != nil && *affectedKey != "" {
+		query = query.Where(workblockerimpact.AffectedKeyEQ(*affectedKey))
+	}
+	if workstreamKey != nil && *workstreamKey != "" {
+		query = query.Where(workblockerimpact.HasWorkstreamWith(workstream.KeyEQ(*workstreamKey)))
+	}
+	if sourceFilter != nil {
+		query = query.Where(
+			workblockerimpact.SourceSystemEQ("cubicle_analytics"),
+			workblockerimpact.SourceInstanceEQ(*sourceFilter),
+			workblockerimpact.ExternalKindEQ("tpm_work_blocker_impact"),
+		)
+	}
+
+	rows, err := query.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.WorkBlockerImpact, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, workBlockerImpactModel(row))
+	}
+	return out, nil
 }
 
 // Query returns generated.QueryResolver implementation.

@@ -170,6 +170,39 @@ func TestMemoryStoreUsesOpenAssociationVocabulary(t *testing.T) {
 	}
 }
 
+func TestMemoryStoreUsesObjectTypeAndKeyForIdentity(t *testing.T) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+	observedAt := time.Date(2026, 6, 24, 12, 45, 0, 0, time.UTC)
+
+	ticket := domain.Object{ObjectType: ontology.ObjectTicket, Key: "shared-key", Title: "Ticket"}
+	document := domain.Object{ObjectType: ontology.ObjectDocument, Key: "shared-key", Title: "Document"}
+	if err := store.UpsertObject(ctx, ticket); err != nil {
+		t.Fatalf("upsert ticket: %v", err)
+	}
+	if err := store.UpsertObject(ctx, document); err != nil {
+		t.Fatalf("upsert document: %v", err)
+	}
+	if err := store.UpsertAssociation(ctx, association("shared-key", ontology.ObjectTicket, ontology.AssocDocuments, "shared-key", ontology.ObjectDocument, "evidence:shared-key", observedAt)); err != nil {
+		t.Fatalf("upsert shared-key association: %v", err)
+	}
+
+	graph, err := store.Expand(ctx, domain.ExpandRequest{
+		Start:          ticket.Ref(),
+		Depth:          1,
+		LimitPerObject: 10,
+	})
+	if err != nil {
+		t.Fatalf("expand shared-key graph: %v", err)
+	}
+	if len(graph.Objects) != 2 {
+		t.Fatalf("objects = %#v, want distinct ticket and document with same key", graph.Objects)
+	}
+	assertObjectRef(t, graph, ontology.ObjectTicket, "shared-key")
+	assertObjectRef(t, graph, ontology.ObjectDocument, "shared-key")
+	assertAssociation(t, graph, "shared-key", ontology.AssocDocuments, "shared-key")
+}
+
 // association builds a fixture relationship with evidence metadata.
 //
 // fromKey/fromObjectType describe the directed source object, associationType
@@ -203,6 +236,18 @@ func assertObject(t *testing.T, graph domain.Neighborhood, key string) {
 		}
 	}
 	t.Fatalf("expected object %q in graph; got %#v", key, graph.Objects)
+}
+
+// assertObjectRef checks that a neighborhood contains an object with type and key.
+func assertObjectRef(t *testing.T, graph domain.Neighborhood, objectType domain.ObjectType, key string) {
+	t.Helper()
+
+	for _, object := range graph.Objects {
+		if object.ObjectType == objectType && object.Key == key {
+			return
+		}
+	}
+	t.Fatalf("expected object %s/%q in graph; got %#v", objectType, key, graph.Objects)
 }
 
 // assertAssociation checks that a neighborhood contains a directed relationship.

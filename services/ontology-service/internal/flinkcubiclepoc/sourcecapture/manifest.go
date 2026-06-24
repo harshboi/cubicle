@@ -67,6 +67,9 @@ func WriteManifest(dir string, records []Record, opts DumpOptions) error {
 		if record.Path == "" {
 			record.Path = bodyPath(record.SnapshotKey, bodySHA256)
 		}
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(dir, record.Path)), 0o755); err != nil {
+			return fmt.Errorf("create snapshot body parent %s: %w", record.Path, err)
+		}
 		if err := os.WriteFile(filepath.Join(dir, record.Path), record.Body, 0o644); err != nil {
 			return fmt.Errorf("write snapshot body %s: %w", record.Path, err)
 		}
