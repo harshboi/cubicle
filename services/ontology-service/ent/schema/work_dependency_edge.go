@@ -25,7 +25,7 @@ func (WorkDependencyEdge) Annotations() []entschema.Annotation {
 		"work_dependency_edges_no_self_edge":                         "from_kind != to_kind OR from_key != to_key",
 		"work_dependency_edges_canonical_mirror_requires_typed_kind": "relationship_authority != 'canonical_mirror' OR canonical_relationship_kind IS NOT NULL",
 		"work_dependency_edges_projection_has_no_canonical_kind":     "relationship_authority = 'canonical_mirror' OR canonical_relationship_kind IS NULL",
-		"work_dependency_edges_ticket_pr_mirror_shape":               "relationship_authority != 'canonical_mirror' OR (edge_kind = 'ticket_pr' AND canonical_relationship_kind = 'ticket_pull_request' AND from_kind = 'ticket' AND to_kind = 'pull_request' AND ticket_id IS NOT NULL AND pull_request_id IS NOT NULL)",
+		"work_dependency_edges_ticket_pr_mirror_shape":               "relationship_authority != 'canonical_mirror' OR (edge_kind = 'ticket_pr' AND canonical_relationship_kind = 'ticket_pull_request' AND from_kind = 'ticket' AND to_kind = 'pull_request' AND ticket_id IS NOT NULL AND pull_request_id IS NOT NULL AND ticket_pull_request_id IS NOT NULL)",
 	}))
 }
 
@@ -78,6 +78,9 @@ func (WorkDependencyEdge) Fields() []ent.Field {
 			field.Int("pull_request_id").
 				Optional().
 				Comment("Optional PullRequest endpoint or context for this dependency edge."),
+			field.Int("ticket_pull_request_id").
+				Optional().
+				Comment("Optional canonical TicketPullRequest row this edge mirrors."),
 		},
 		sourceBackedFields(),
 		objectEvidenceFields(),
@@ -100,6 +103,11 @@ func (WorkDependencyEdge) Edges() []ent.Edge {
 			Field("work_action_id").
 			Annotations(entsql.OnDelete(entsql.SetNull)).
 			Comment("Action ledger context for needs-action edges."),
+		edge.To("ticket_pull_request", TicketPullRequest.Type).
+			Unique().
+			Field("ticket_pull_request_id").
+			Annotations(entsql.OnDelete(entsql.Restrict)).
+			Comment("Canonical TicketPullRequest row mirrored by this dependency edge."),
 		edge.To("latest_evidence", Evidence.Type).
 			Unique().
 			Field("latest_evidence_id").
@@ -121,6 +129,7 @@ func (WorkDependencyEdge) Indexes() []ent.Index {
 		index.Fields("work_action_id", "edge_kind", "rank_score", "last_activity_at"),
 		index.Fields("ticket_id", "edge_kind", "rank_score", "last_activity_at"),
 		index.Fields("pull_request_id", "edge_kind", "rank_score", "last_activity_at"),
+		index.Fields("ticket_pull_request_id", "relationship_authority", "edge_kind"),
 		index.Fields("from_kind", "from_key", "edge_kind", "rank_score"),
 		index.Fields("to_kind", "to_key", "edge_kind", "rank_score"),
 		index.Fields("source_system", "source_instance", "external_kind", "external_id").Unique(),

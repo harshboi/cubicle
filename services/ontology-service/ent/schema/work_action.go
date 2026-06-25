@@ -59,6 +59,7 @@ func (WorkAction) Fields() []ent.Field {
 				Values(workInsightSubjectKindValues()...).
 				Default(workInsightSubjectUnknown).
 				Comment("Resolved typed product kind this action is about."),
+			genericSubjectObjectTypeField(),
 			field.String("subject_key").
 				NotEmpty().
 				Comment("Stable product key or source-neutral subject key this action is about."),

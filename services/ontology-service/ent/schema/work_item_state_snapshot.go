@@ -39,6 +39,7 @@ func (WorkItemStateSnapshot) Fields() []ent.Field {
 				Values(workInsightSubjectKindValues()...).
 				Default(workInsightSubjectUnknown).
 				Comment("Resolved typed product kind this snapshot is about."),
+			genericSubjectObjectTypeField(),
 			field.String("subject_key").
 				NotEmpty().
 				Comment("Stable product key this snapshot is about."),

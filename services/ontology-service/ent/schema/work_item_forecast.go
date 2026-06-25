@@ -44,6 +44,7 @@ func (WorkItemForecast) Fields() []ent.Field {
 				Values(workInsightSubjectKindValues()...).
 				Default(workInsightSubjectUnknown).
 				Comment("Resolved typed product kind this forecast is about."),
+			genericSubjectObjectTypeField(),
 			field.String("subject_key").
 				NotEmpty().
 				Comment("Stable product key this forecast is about."),
@@ -56,6 +57,9 @@ func (WorkItemForecast) Fields() []ent.Field {
 			field.Int("work_action_id").
 				Optional().
 				Comment("Optional TPM action that should execute or validate this forecast risk."),
+			field.Int("forecast_evaluation_id").
+				Optional().
+				Comment("Optional WorkForecastEvaluation row authorizing this forecast's readiness state."),
 			field.String("subject_state").
 				Optional().
 				Comment("Source lifecycle state of the subject when this forecast was generated."),
@@ -128,6 +132,11 @@ func (WorkItemForecast) Edges() []ent.Edge {
 			Field("work_action_id").
 			Annotations(entsql.OnDelete(entsql.Restrict)).
 			Comment("Executable TPM action for this forecast risk, when materialized."),
+		edge.To("forecast_evaluation", WorkForecastEvaluation.Type).
+			Unique().
+			Field("forecast_evaluation_id").
+			Annotations(entsql.OnDelete(entsql.Restrict)).
+			Comment("Forecast evaluation row that authorizes ETA readiness for this forecast."),
 		edge.To("latest_evidence", Evidence.Type).
 			Unique().
 			Field("latest_evidence_id").
@@ -144,6 +153,7 @@ func (WorkItemForecast) Indexes() []ent.Index {
 		index.Fields("pull_request_id", "forecast_kind"),
 		index.Fields("ticket_id", "forecast_kind"),
 		index.Fields("work_action_id"),
+		index.Fields("forecast_evaluation_id", "readiness_state", "ready_for_eta"),
 		index.Fields("source_system", "source_instance", "external_kind", "external_id").Unique(),
 	}
 }

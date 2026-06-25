@@ -74,6 +74,7 @@ func (WorkResponsibility) Fields() []ent.Field {
 			field.Enum("subject_kind").
 				Values(workResponsibilitySubjectKindValues()...).
 				Comment("Typed work subject this responsibility points at."),
+			genericSubjectObjectTypeField(),
 			field.String("subject_key").
 				NotEmpty().
 				Comment("Stable key of the subject work object."),

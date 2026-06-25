@@ -74,6 +74,7 @@ func (WorkBlockerImpact) Fields() []ent.Field {
 				Values(workInsightSubjectKindValues()...).
 				Default(workInsightSubjectUnknown).
 				Comment("Original typed product subject kind on the blocker."),
+			genericSubjectObjectTypeField(),
 			field.String("subject_key").
 				NotEmpty().
 				Comment("Original typed product subject key on the blocker."),

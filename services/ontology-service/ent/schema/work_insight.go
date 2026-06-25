@@ -53,6 +53,7 @@ func (WorkInsight) Fields() []ent.Field {
 				Values(workInsightSubjectKindValues()...).
 				Default(workInsightSubjectUnknown).
 				Comment("Resolved typed product kind this insight is about; unsupported subjects stay unknown until modeled."),
+			genericSubjectObjectTypeField(),
 			field.String("subject_key").
 				NotEmpty().
 				Comment("Stable product key or source-neutral subject key this insight is about."),

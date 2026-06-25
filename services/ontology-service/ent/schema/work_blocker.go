@@ -52,6 +52,7 @@ func (WorkBlocker) Fields() []ent.Field {
 				Values(workInsightSubjectKindValues()...).
 				Default(workInsightSubjectUnknown).
 				Comment("Typed product kind this blocker is about."),
+			genericSubjectObjectTypeField(),
 			field.String("subject_key").
 				NotEmpty().
 				Comment("Stable product key this blocker is about."),
