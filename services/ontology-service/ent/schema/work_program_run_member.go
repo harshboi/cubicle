@@ -26,8 +26,7 @@ func (WorkProgramRunMember) Annotations() []entschema.Annotation {
 func (WorkProgramRunMember) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("work_program_run_id").
-			Optional().
-			Comment("Optional Ent run row this membership belongs to."),
+			Comment("Ent run row this membership belongs to."),
 		field.String("run_key").
 			NotEmpty().
 			Comment("Stable run key, retained for replay compatibility."),
@@ -58,6 +57,7 @@ func (WorkProgramRunMember) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("work_program_run", WorkProgramRun.Type).
 			Unique().
+			Required().
 			Field("work_program_run_id").
 			Annotations(entsql.OnDelete(entsql.Cascade)).
 			Comment("Run boundary that owns this member."),

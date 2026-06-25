@@ -55,6 +55,7 @@ func (WorkProgramItem) Fields() []ent.Field {
 				Values(workInsightSubjectKindValues()...).
 				Default(workInsightSubjectUnknown).
 				Comment("Typed product kind this program item is about."),
+			genericSubjectObjectTypeField(),
 			field.String("subject_key").
 				NotEmpty().
 				Comment("Stable product key or source-neutral subject key this item is about."),
@@ -176,6 +177,9 @@ func (WorkProgramItem) Edges() []ent.Edge {
 			Unique().
 			Field("latest_evidence_id").
 			Comment("Most recent evidence supporting this register item."),
+		edge.From("links", WorkProgramItemLink.Type).
+			Ref("work_program_item").
+			Comment("Structured product and open-graph links attached to this register item."),
 	}
 }
 
@@ -185,6 +189,7 @@ func (WorkProgramItem) Indexes() []ent.Index {
 		index.Fields("workstream_key", "program_status", "due_bucket", "risk_score", "last_activity_at"),
 		index.Fields("workstream_id", "program_status", "due_bucket", "risk_score"),
 		index.Fields("subject_kind", "subject_key", "program_status"),
+		index.Fields("subject_object_type", "subject_key", "program_status"),
 		index.Fields("owner_key", "program_status", "due_bucket", "risk_score"),
 		index.Fields("work_action_id").Unique(),
 		index.Fields("pull_request_id", "program_status", "risk_score"),

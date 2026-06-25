@@ -53,6 +53,7 @@ func (WorkProgramMilestone) Fields() []ent.Field {
 				Values(workInsightSubjectKindValues()...).
 				Default(workInsightSubjectUnknown).
 				Comment("Typed product kind this milestone is about."),
+			genericSubjectObjectTypeField(),
 			field.String("subject_key").
 				NotEmpty().
 				Comment("Stable product key this milestone is about."),
@@ -137,6 +138,7 @@ func (WorkProgramMilestone) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("workstream_key", "generated_at", "milestone_kind", "target_date"),
 		index.Fields("subject_kind", "subject_key", "milestone_kind"),
+		index.Fields("subject_object_type", "subject_key", "milestone_kind"),
 		index.Fields("commitment_strength", "date_claim_allowed", "target_date"),
 		index.Fields("ticket_id", "milestone_kind", "target_date"),
 		index.Fields("pull_request_id", "milestone_kind", "target_date"),

@@ -46,6 +46,7 @@ func (WorkProgramRiskDriver) Fields() []ent.Field {
 			field.String("subject_kind").
 				Optional().
 				Comment("Kind of subject this risk driver points at."),
+			genericSubjectObjectTypeField(),
 			field.String("subject_key").
 				Optional().
 				Comment("Subject key this risk driver points at."),
@@ -103,6 +104,7 @@ func (WorkProgramRiskDriver) Indexes() []ent.Index {
 		index.Fields("workstream_key", "generated_at", "driver_kind"),
 		index.Fields("driver_kind", "rank_score", "generated_at"),
 		index.Fields("workstream_id", "generated_at"),
+		index.Fields("subject_object_type", "subject_key", "generated_at"),
 		index.Fields("source_system", "source_instance", "external_kind", "external_id").Unique(),
 	}
 }

@@ -130,6 +130,7 @@ type WorkProgramItem {
   sourceInstance: String
   workstreamKey: String!
   subjectKind: String!
+  subjectObjectType: String
   subjectKey: String!
   linkedTicketKeys: [String!]!
   linkedPullRequestKeys: [String!]!
@@ -165,6 +166,28 @@ type WorkProgramItem {
   evidence: WorkEvidenceSummary
   badges: [WorkActionBadge!]!
   action: WorkAction
+  links: [WorkProgramItemLink!]!
+}
+
+"""
+Structured adjacency for a WorkProgramItem.
+Display key lists remain UI hints; these rows are the traversable relationships.
+"""
+type WorkProgramItemLink {
+  key: ID!
+  sourceInstance: String
+  linkKind: String!
+  targetObjectType: String!
+  targetKey: String!
+  targetResolutionState: String!
+  linkSummary: String
+  linkSource: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+  rankScore: Float!
 }
 
 """
@@ -224,6 +247,7 @@ type WorkProgramMilestone {
   sourceInstance: String
   workstreamKey: String!
   subjectKind: String!
+  subjectObjectType: String
   subjectKey: String!
   subjectTitle: String
   subjectUrl: String
@@ -794,6 +818,8 @@ type WorkGraphCitation {
 type WorkProgramBriefRiskDriver {
   key: ID!
   driverKind: String!
+  subjectKind: String
+  subjectObjectType: String
   subjectKey: String
   title: String!
   status: String!
@@ -1184,6 +1210,8 @@ type WorkstreamStandupSection {
   freshnessState: String!
   confidence: Float!
   ownerKey: String
+  subjectKind: String!
+  subjectObjectType: String
   subjectKey: String
   actionType: String
   statusSignal: String

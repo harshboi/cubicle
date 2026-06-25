@@ -61,6 +61,7 @@ func (WorkstreamStandupSection) Fields() []ent.Field {
 				Values(workInsightSubjectKindValues()...).
 				Default(workInsightSubjectUnknown).
 				Comment("Typed product kind this agenda item is about, when known."),
+			genericSubjectObjectTypeField(),
 			field.String("subject_key").
 				Optional().
 				Comment("Stable product subject key this agenda item is about."),
@@ -121,6 +122,7 @@ func (WorkstreamStandupSection) Indexes() []ent.Index {
 		index.Fields("workstream_id", "generated_at", "section_rank"),
 		index.Fields("section_kind", "urgency", "generated_at"),
 		index.Fields("work_action_id"),
+		index.Fields("subject_object_type", "subject_key", "generated_at"),
 		index.Fields("source_system", "source_instance", "external_kind", "external_id").Unique(),
 	}
 }
