@@ -204,10 +204,11 @@ const DefaultClaimKind = ClaimKindObjectState
 
 // ClaimKind values.
 const (
-	ClaimKindObjectState  ClaimKind = "object_state"
-	ClaimKindRelationship ClaimKind = "relationship"
-	ClaimKindIdentity     ClaimKind = "identity"
-	ClaimKindCandidate    ClaimKind = "candidate"
+	ClaimKindObjectState      ClaimKind = "object_state"
+	ClaimKindRelationship     ClaimKind = "relationship"
+	ClaimKindIdentity         ClaimKind = "identity"
+	ClaimKindCandidate        ClaimKind = "candidate"
+	ClaimKindGeneratedSummary ClaimKind = "generated_summary"
 )
 
 func (ck ClaimKind) String() string {
@@ -217,7 +218,7 @@ func (ck ClaimKind) String() string {
 // ClaimKindValidator is a validator for the "claim_kind" field enum values. It is called by the builders before save.
 func ClaimKindValidator(ck ClaimKind) error {
 	switch ck {
-	case ClaimKindObjectState, ClaimKindRelationship, ClaimKindIdentity, ClaimKindCandidate:
+	case ClaimKindObjectState, ClaimKindRelationship, ClaimKindIdentity, ClaimKindCandidate, ClaimKindGeneratedSummary:
 		return nil
 	default:
 		return fmt.Errorf("evidence: invalid enum value for claim_kind field: %q", ck)
@@ -238,6 +239,7 @@ const (
 	ProofStateDeleted           ProofState = "deleted"
 	ProofStatePermissionBlocked ProofState = "permission_blocked"
 	ProofStateLocatorFailed     ProofState = "locator_failed"
+	ProofStateGenerated         ProofState = "generated"
 )
 
 func (ps ProofState) String() string {
@@ -247,7 +249,7 @@ func (ps ProofState) String() string {
 // ProofStateValidator is a validator for the "proof_state" field enum values. It is called by the builders before save.
 func ProofStateValidator(ps ProofState) error {
 	switch ps {
-	case ProofStateCurrent, ProofStateStale, ProofStateSuperseded, ProofStateDeleted, ProofStatePermissionBlocked, ProofStateLocatorFailed:
+	case ProofStateCurrent, ProofStateStale, ProofStateSuperseded, ProofStateDeleted, ProofStatePermissionBlocked, ProofStateLocatorFailed, ProofStateGenerated:
 		return nil
 	default:
 		return fmt.Errorf("evidence: invalid enum value for proof_state field: %q", ps)

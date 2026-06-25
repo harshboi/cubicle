@@ -16,10 +16,13 @@ import (
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/documentlink"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/evidenceattachment"
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/messageauthorship"
 	"cubicle/services/ontology-service/ent/messagelensresult"
 	"cubicle/services/ontology-service/ent/messagemention"
+	"cubicle/services/ontology-service/ent/opengraphassociation"
+	"cubicle/services/ontology-service/ent/opengraphobject"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/personidentity"
 	"cubicle/services/ontology-service/ent/pullrequest"
@@ -40,10 +43,44 @@ import (
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/unresolvedreference"
+	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workactionobservation"
 	"cubicle/services/ontology-service/ent/workarea"
+	"cubicle/services/ontology-service/ent/workblocker"
+	"cubicle/services/ontology-service/ent/workblockerimpact"
+	"cubicle/services/ontology-service/ent/workdecisiontargetevaluation"
+	"cubicle/services/ontology-service/ent/workdependencyedge"
+	"cubicle/services/ontology-service/ent/workdependencyendpoint"
+	"cubicle/services/ontology-service/ent/workforecastevaluation"
+	"cubicle/services/ontology-service/ent/workinsight"
+	"cubicle/services/ontology-service/ent/workinsightevaluationsnapshot"
+	"cubicle/services/ontology-service/ent/workinsightkindevaluationsnapshot"
+	"cubicle/services/ontology-service/ent/workinsightreview"
+	"cubicle/services/ontology-service/ent/workitemforecast"
+	"cubicle/services/ontology-service/ent/workitemstatesnapshot"
+	"cubicle/services/ontology-service/ent/workitemstatetransition"
 	"cubicle/services/ontology-service/ent/worklens"
 	"cubicle/services/ontology-service/ent/worklenswindow"
+	"cubicle/services/ontology-service/ent/workownerloadsnapshot"
+	"cubicle/services/ontology-service/ent/workprogramadversarialcheck"
+	"cubicle/services/ontology-service/ent/workprogramautomationreadiness"
+	"cubicle/services/ontology-service/ent/workprogrambriefcaveat"
+	"cubicle/services/ontology-service/ent/workprogrambriefsnapshot"
+	"cubicle/services/ontology-service/ent/workprogramevidenceneed"
+	"cubicle/services/ontology-service/ent/workprogramitem"
+	"cubicle/services/ontology-service/ent/workprogramitemlink"
+	"cubicle/services/ontology-service/ent/workprogrammilestone"
+	"cubicle/services/ontology-service/ent/workprogramownerrollupsnapshot"
+	"cubicle/services/ontology-service/ent/workprogramqualitygate"
+	"cubicle/services/ontology-service/ent/workprogramriskdriver"
+	"cubicle/services/ontology-service/ent/workprogramrun"
+	"cubicle/services/ontology-service/ent/workprogramrunmember"
+	"cubicle/services/ontology-service/ent/workprogramsummarysnapshot"
+	"cubicle/services/ontology-service/ent/workprogramtpmfunctionreadiness"
+	"cubicle/services/ontology-service/ent/workresponsibility"
 	"cubicle/services/ontology-service/ent/workstream"
+	"cubicle/services/ontology-service/ent/workstreamhealthsnapshot"
+	"cubicle/services/ontology-service/ent/workstreamstandupsection"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 
 	"entgo.io/ent"
@@ -67,6 +104,8 @@ type Client struct {
 	DocumentLink *DocumentLinkClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
+	// EvidenceAttachment is the client for interacting with the EvidenceAttachment builders.
+	EvidenceAttachment *EvidenceAttachmentClient
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
 	// MessageAuthorship is the client for interacting with the MessageAuthorship builders.
@@ -75,6 +114,10 @@ type Client struct {
 	MessageLensResult *MessageLensResultClient
 	// MessageMention is the client for interacting with the MessageMention builders.
 	MessageMention *MessageMentionClient
+	// OpenGraphAssociation is the client for interacting with the OpenGraphAssociation builders.
+	OpenGraphAssociation *OpenGraphAssociationClient
+	// OpenGraphObject is the client for interacting with the OpenGraphObject builders.
+	OpenGraphObject *OpenGraphObjectClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
 	// PersonIdentity is the client for interacting with the PersonIdentity builders.
@@ -115,14 +158,82 @@ type Client struct {
 	TicketPullRequest *TicketPullRequestClient
 	// UnresolvedReference is the client for interacting with the UnresolvedReference builders.
 	UnresolvedReference *UnresolvedReferenceClient
+	// WorkAction is the client for interacting with the WorkAction builders.
+	WorkAction *WorkActionClient
+	// WorkActionObservation is the client for interacting with the WorkActionObservation builders.
+	WorkActionObservation *WorkActionObservationClient
 	// WorkArea is the client for interacting with the WorkArea builders.
 	WorkArea *WorkAreaClient
+	// WorkBlocker is the client for interacting with the WorkBlocker builders.
+	WorkBlocker *WorkBlockerClient
+	// WorkBlockerImpact is the client for interacting with the WorkBlockerImpact builders.
+	WorkBlockerImpact *WorkBlockerImpactClient
+	// WorkDecisionTargetEvaluation is the client for interacting with the WorkDecisionTargetEvaluation builders.
+	WorkDecisionTargetEvaluation *WorkDecisionTargetEvaluationClient
+	// WorkDependencyEdge is the client for interacting with the WorkDependencyEdge builders.
+	WorkDependencyEdge *WorkDependencyEdgeClient
+	// WorkDependencyEndpoint is the client for interacting with the WorkDependencyEndpoint builders.
+	WorkDependencyEndpoint *WorkDependencyEndpointClient
+	// WorkForecastEvaluation is the client for interacting with the WorkForecastEvaluation builders.
+	WorkForecastEvaluation *WorkForecastEvaluationClient
+	// WorkInsight is the client for interacting with the WorkInsight builders.
+	WorkInsight *WorkInsightClient
+	// WorkInsightEvaluationSnapshot is the client for interacting with the WorkInsightEvaluationSnapshot builders.
+	WorkInsightEvaluationSnapshot *WorkInsightEvaluationSnapshotClient
+	// WorkInsightKindEvaluationSnapshot is the client for interacting with the WorkInsightKindEvaluationSnapshot builders.
+	WorkInsightKindEvaluationSnapshot *WorkInsightKindEvaluationSnapshotClient
+	// WorkInsightReview is the client for interacting with the WorkInsightReview builders.
+	WorkInsightReview *WorkInsightReviewClient
+	// WorkItemForecast is the client for interacting with the WorkItemForecast builders.
+	WorkItemForecast *WorkItemForecastClient
+	// WorkItemStateSnapshot is the client for interacting with the WorkItemStateSnapshot builders.
+	WorkItemStateSnapshot *WorkItemStateSnapshotClient
+	// WorkItemStateTransition is the client for interacting with the WorkItemStateTransition builders.
+	WorkItemStateTransition *WorkItemStateTransitionClient
 	// WorkLens is the client for interacting with the WorkLens builders.
 	WorkLens *WorkLensClient
 	// WorkLensWindow is the client for interacting with the WorkLensWindow builders.
 	WorkLensWindow *WorkLensWindowClient
+	// WorkOwnerLoadSnapshot is the client for interacting with the WorkOwnerLoadSnapshot builders.
+	WorkOwnerLoadSnapshot *WorkOwnerLoadSnapshotClient
+	// WorkProgramAdversarialCheck is the client for interacting with the WorkProgramAdversarialCheck builders.
+	WorkProgramAdversarialCheck *WorkProgramAdversarialCheckClient
+	// WorkProgramAutomationReadiness is the client for interacting with the WorkProgramAutomationReadiness builders.
+	WorkProgramAutomationReadiness *WorkProgramAutomationReadinessClient
+	// WorkProgramBriefCaveat is the client for interacting with the WorkProgramBriefCaveat builders.
+	WorkProgramBriefCaveat *WorkProgramBriefCaveatClient
+	// WorkProgramBriefSnapshot is the client for interacting with the WorkProgramBriefSnapshot builders.
+	WorkProgramBriefSnapshot *WorkProgramBriefSnapshotClient
+	// WorkProgramEvidenceNeed is the client for interacting with the WorkProgramEvidenceNeed builders.
+	WorkProgramEvidenceNeed *WorkProgramEvidenceNeedClient
+	// WorkProgramItem is the client for interacting with the WorkProgramItem builders.
+	WorkProgramItem *WorkProgramItemClient
+	// WorkProgramItemLink is the client for interacting with the WorkProgramItemLink builders.
+	WorkProgramItemLink *WorkProgramItemLinkClient
+	// WorkProgramMilestone is the client for interacting with the WorkProgramMilestone builders.
+	WorkProgramMilestone *WorkProgramMilestoneClient
+	// WorkProgramOwnerRollupSnapshot is the client for interacting with the WorkProgramOwnerRollupSnapshot builders.
+	WorkProgramOwnerRollupSnapshot *WorkProgramOwnerRollupSnapshotClient
+	// WorkProgramQualityGate is the client for interacting with the WorkProgramQualityGate builders.
+	WorkProgramQualityGate *WorkProgramQualityGateClient
+	// WorkProgramRiskDriver is the client for interacting with the WorkProgramRiskDriver builders.
+	WorkProgramRiskDriver *WorkProgramRiskDriverClient
+	// WorkProgramRun is the client for interacting with the WorkProgramRun builders.
+	WorkProgramRun *WorkProgramRunClient
+	// WorkProgramRunMember is the client for interacting with the WorkProgramRunMember builders.
+	WorkProgramRunMember *WorkProgramRunMemberClient
+	// WorkProgramSummarySnapshot is the client for interacting with the WorkProgramSummarySnapshot builders.
+	WorkProgramSummarySnapshot *WorkProgramSummarySnapshotClient
+	// WorkProgramTPMFunctionReadiness is the client for interacting with the WorkProgramTPMFunctionReadiness builders.
+	WorkProgramTPMFunctionReadiness *WorkProgramTPMFunctionReadinessClient
+	// WorkResponsibility is the client for interacting with the WorkResponsibility builders.
+	WorkResponsibility *WorkResponsibilityClient
 	// Workstream is the client for interacting with the Workstream builders.
 	Workstream *WorkstreamClient
+	// WorkstreamHealthSnapshot is the client for interacting with the WorkstreamHealthSnapshot builders.
+	WorkstreamHealthSnapshot *WorkstreamHealthSnapshotClient
+	// WorkstreamStandupSection is the client for interacting with the WorkstreamStandupSection builders.
+	WorkstreamStandupSection *WorkstreamStandupSectionClient
 	// WorkstreamTicket is the client for interacting with the WorkstreamTicket builders.
 	WorkstreamTicket *WorkstreamTicketClient
 }
@@ -141,10 +252,13 @@ func (c *Client) init() {
 	c.DocumentLensResult = NewDocumentLensResultClient(c.config)
 	c.DocumentLink = NewDocumentLinkClient(c.config)
 	c.Evidence = NewEvidenceClient(c.config)
+	c.EvidenceAttachment = NewEvidenceAttachmentClient(c.config)
 	c.Message = NewMessageClient(c.config)
 	c.MessageAuthorship = NewMessageAuthorshipClient(c.config)
 	c.MessageLensResult = NewMessageLensResultClient(c.config)
 	c.MessageMention = NewMessageMentionClient(c.config)
+	c.OpenGraphAssociation = NewOpenGraphAssociationClient(c.config)
+	c.OpenGraphObject = NewOpenGraphObjectClient(c.config)
 	c.Person = NewPersonClient(c.config)
 	c.PersonIdentity = NewPersonIdentityClient(c.config)
 	c.PullRequest = NewPullRequestClient(c.config)
@@ -165,10 +279,44 @@ func (c *Client) init() {
 	c.TicketMessage = NewTicketMessageClient(c.config)
 	c.TicketPullRequest = NewTicketPullRequestClient(c.config)
 	c.UnresolvedReference = NewUnresolvedReferenceClient(c.config)
+	c.WorkAction = NewWorkActionClient(c.config)
+	c.WorkActionObservation = NewWorkActionObservationClient(c.config)
 	c.WorkArea = NewWorkAreaClient(c.config)
+	c.WorkBlocker = NewWorkBlockerClient(c.config)
+	c.WorkBlockerImpact = NewWorkBlockerImpactClient(c.config)
+	c.WorkDecisionTargetEvaluation = NewWorkDecisionTargetEvaluationClient(c.config)
+	c.WorkDependencyEdge = NewWorkDependencyEdgeClient(c.config)
+	c.WorkDependencyEndpoint = NewWorkDependencyEndpointClient(c.config)
+	c.WorkForecastEvaluation = NewWorkForecastEvaluationClient(c.config)
+	c.WorkInsight = NewWorkInsightClient(c.config)
+	c.WorkInsightEvaluationSnapshot = NewWorkInsightEvaluationSnapshotClient(c.config)
+	c.WorkInsightKindEvaluationSnapshot = NewWorkInsightKindEvaluationSnapshotClient(c.config)
+	c.WorkInsightReview = NewWorkInsightReviewClient(c.config)
+	c.WorkItemForecast = NewWorkItemForecastClient(c.config)
+	c.WorkItemStateSnapshot = NewWorkItemStateSnapshotClient(c.config)
+	c.WorkItemStateTransition = NewWorkItemStateTransitionClient(c.config)
 	c.WorkLens = NewWorkLensClient(c.config)
 	c.WorkLensWindow = NewWorkLensWindowClient(c.config)
+	c.WorkOwnerLoadSnapshot = NewWorkOwnerLoadSnapshotClient(c.config)
+	c.WorkProgramAdversarialCheck = NewWorkProgramAdversarialCheckClient(c.config)
+	c.WorkProgramAutomationReadiness = NewWorkProgramAutomationReadinessClient(c.config)
+	c.WorkProgramBriefCaveat = NewWorkProgramBriefCaveatClient(c.config)
+	c.WorkProgramBriefSnapshot = NewWorkProgramBriefSnapshotClient(c.config)
+	c.WorkProgramEvidenceNeed = NewWorkProgramEvidenceNeedClient(c.config)
+	c.WorkProgramItem = NewWorkProgramItemClient(c.config)
+	c.WorkProgramItemLink = NewWorkProgramItemLinkClient(c.config)
+	c.WorkProgramMilestone = NewWorkProgramMilestoneClient(c.config)
+	c.WorkProgramOwnerRollupSnapshot = NewWorkProgramOwnerRollupSnapshotClient(c.config)
+	c.WorkProgramQualityGate = NewWorkProgramQualityGateClient(c.config)
+	c.WorkProgramRiskDriver = NewWorkProgramRiskDriverClient(c.config)
+	c.WorkProgramRun = NewWorkProgramRunClient(c.config)
+	c.WorkProgramRunMember = NewWorkProgramRunMemberClient(c.config)
+	c.WorkProgramSummarySnapshot = NewWorkProgramSummarySnapshotClient(c.config)
+	c.WorkProgramTPMFunctionReadiness = NewWorkProgramTPMFunctionReadinessClient(c.config)
+	c.WorkResponsibility = NewWorkResponsibilityClient(c.config)
 	c.Workstream = NewWorkstreamClient(c.config)
+	c.WorkstreamHealthSnapshot = NewWorkstreamHealthSnapshotClient(c.config)
+	c.WorkstreamStandupSection = NewWorkstreamStandupSectionClient(c.config)
 	c.WorkstreamTicket = NewWorkstreamTicketClient(c.config)
 }
 
@@ -260,42 +408,79 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                   ctx,
-		config:                cfg,
-		Document:              NewDocumentClient(cfg),
-		DocumentAuthorship:    NewDocumentAuthorshipClient(cfg),
-		DocumentLensResult:    NewDocumentLensResultClient(cfg),
-		DocumentLink:          NewDocumentLinkClient(cfg),
-		Evidence:              NewEvidenceClient(cfg),
-		Message:               NewMessageClient(cfg),
-		MessageAuthorship:     NewMessageAuthorshipClient(cfg),
-		MessageLensResult:     NewMessageLensResultClient(cfg),
-		MessageMention:        NewMessageMentionClient(cfg),
-		Person:                NewPersonClient(cfg),
-		PersonIdentity:        NewPersonIdentityClient(cfg),
-		PullRequest:           NewPullRequestClient(cfg),
-		PullRequestAuthorship: NewPullRequestAuthorshipClient(cfg),
-		PullRequestLensResult: NewPullRequestLensResultClient(cfg),
-		PullRequestReview:     NewPullRequestReviewClient(cfg),
-		SourceAlias:           NewSourceAliasClient(cfg),
-		SourceConnection:      NewSourceConnectionClient(cfg),
-		SourceScope:           NewSourceScopeClient(cfg),
-		SourceScopeState:      NewSourceScopeStateClient(cfg),
-		SourceSyncIssue:       NewSourceSyncIssueClient(cfg),
-		SourceSyncRun:         NewSourceSyncRunClient(cfg),
-		Ticket:                NewTicketClient(cfg),
-		TicketAssignment:      NewTicketAssignmentClient(cfg),
-		TicketDocument:        NewTicketDocumentClient(cfg),
-		TicketLensResult:      NewTicketLensResultClient(cfg),
-		TicketMention:         NewTicketMentionClient(cfg),
-		TicketMessage:         NewTicketMessageClient(cfg),
-		TicketPullRequest:     NewTicketPullRequestClient(cfg),
-		UnresolvedReference:   NewUnresolvedReferenceClient(cfg),
-		WorkArea:              NewWorkAreaClient(cfg),
-		WorkLens:              NewWorkLensClient(cfg),
-		WorkLensWindow:        NewWorkLensWindowClient(cfg),
-		Workstream:            NewWorkstreamClient(cfg),
-		WorkstreamTicket:      NewWorkstreamTicketClient(cfg),
+		ctx:                               ctx,
+		config:                            cfg,
+		Document:                          NewDocumentClient(cfg),
+		DocumentAuthorship:                NewDocumentAuthorshipClient(cfg),
+		DocumentLensResult:                NewDocumentLensResultClient(cfg),
+		DocumentLink:                      NewDocumentLinkClient(cfg),
+		Evidence:                          NewEvidenceClient(cfg),
+		EvidenceAttachment:                NewEvidenceAttachmentClient(cfg),
+		Message:                           NewMessageClient(cfg),
+		MessageAuthorship:                 NewMessageAuthorshipClient(cfg),
+		MessageLensResult:                 NewMessageLensResultClient(cfg),
+		MessageMention:                    NewMessageMentionClient(cfg),
+		OpenGraphAssociation:              NewOpenGraphAssociationClient(cfg),
+		OpenGraphObject:                   NewOpenGraphObjectClient(cfg),
+		Person:                            NewPersonClient(cfg),
+		PersonIdentity:                    NewPersonIdentityClient(cfg),
+		PullRequest:                       NewPullRequestClient(cfg),
+		PullRequestAuthorship:             NewPullRequestAuthorshipClient(cfg),
+		PullRequestLensResult:             NewPullRequestLensResultClient(cfg),
+		PullRequestReview:                 NewPullRequestReviewClient(cfg),
+		SourceAlias:                       NewSourceAliasClient(cfg),
+		SourceConnection:                  NewSourceConnectionClient(cfg),
+		SourceScope:                       NewSourceScopeClient(cfg),
+		SourceScopeState:                  NewSourceScopeStateClient(cfg),
+		SourceSyncIssue:                   NewSourceSyncIssueClient(cfg),
+		SourceSyncRun:                     NewSourceSyncRunClient(cfg),
+		Ticket:                            NewTicketClient(cfg),
+		TicketAssignment:                  NewTicketAssignmentClient(cfg),
+		TicketDocument:                    NewTicketDocumentClient(cfg),
+		TicketLensResult:                  NewTicketLensResultClient(cfg),
+		TicketMention:                     NewTicketMentionClient(cfg),
+		TicketMessage:                     NewTicketMessageClient(cfg),
+		TicketPullRequest:                 NewTicketPullRequestClient(cfg),
+		UnresolvedReference:               NewUnresolvedReferenceClient(cfg),
+		WorkAction:                        NewWorkActionClient(cfg),
+		WorkActionObservation:             NewWorkActionObservationClient(cfg),
+		WorkArea:                          NewWorkAreaClient(cfg),
+		WorkBlocker:                       NewWorkBlockerClient(cfg),
+		WorkBlockerImpact:                 NewWorkBlockerImpactClient(cfg),
+		WorkDecisionTargetEvaluation:      NewWorkDecisionTargetEvaluationClient(cfg),
+		WorkDependencyEdge:                NewWorkDependencyEdgeClient(cfg),
+		WorkDependencyEndpoint:            NewWorkDependencyEndpointClient(cfg),
+		WorkForecastEvaluation:            NewWorkForecastEvaluationClient(cfg),
+		WorkInsight:                       NewWorkInsightClient(cfg),
+		WorkInsightEvaluationSnapshot:     NewWorkInsightEvaluationSnapshotClient(cfg),
+		WorkInsightKindEvaluationSnapshot: NewWorkInsightKindEvaluationSnapshotClient(cfg),
+		WorkInsightReview:                 NewWorkInsightReviewClient(cfg),
+		WorkItemForecast:                  NewWorkItemForecastClient(cfg),
+		WorkItemStateSnapshot:             NewWorkItemStateSnapshotClient(cfg),
+		WorkItemStateTransition:           NewWorkItemStateTransitionClient(cfg),
+		WorkLens:                          NewWorkLensClient(cfg),
+		WorkLensWindow:                    NewWorkLensWindowClient(cfg),
+		WorkOwnerLoadSnapshot:             NewWorkOwnerLoadSnapshotClient(cfg),
+		WorkProgramAdversarialCheck:       NewWorkProgramAdversarialCheckClient(cfg),
+		WorkProgramAutomationReadiness:    NewWorkProgramAutomationReadinessClient(cfg),
+		WorkProgramBriefCaveat:            NewWorkProgramBriefCaveatClient(cfg),
+		WorkProgramBriefSnapshot:          NewWorkProgramBriefSnapshotClient(cfg),
+		WorkProgramEvidenceNeed:           NewWorkProgramEvidenceNeedClient(cfg),
+		WorkProgramItem:                   NewWorkProgramItemClient(cfg),
+		WorkProgramItemLink:               NewWorkProgramItemLinkClient(cfg),
+		WorkProgramMilestone:              NewWorkProgramMilestoneClient(cfg),
+		WorkProgramOwnerRollupSnapshot:    NewWorkProgramOwnerRollupSnapshotClient(cfg),
+		WorkProgramQualityGate:            NewWorkProgramQualityGateClient(cfg),
+		WorkProgramRiskDriver:             NewWorkProgramRiskDriverClient(cfg),
+		WorkProgramRun:                    NewWorkProgramRunClient(cfg),
+		WorkProgramRunMember:              NewWorkProgramRunMemberClient(cfg),
+		WorkProgramSummarySnapshot:        NewWorkProgramSummarySnapshotClient(cfg),
+		WorkProgramTPMFunctionReadiness:   NewWorkProgramTPMFunctionReadinessClient(cfg),
+		WorkResponsibility:                NewWorkResponsibilityClient(cfg),
+		Workstream:                        NewWorkstreamClient(cfg),
+		WorkstreamHealthSnapshot:          NewWorkstreamHealthSnapshotClient(cfg),
+		WorkstreamStandupSection:          NewWorkstreamStandupSectionClient(cfg),
+		WorkstreamTicket:                  NewWorkstreamTicketClient(cfg),
 	}, nil
 }
 
@@ -313,42 +498,79 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                   ctx,
-		config:                cfg,
-		Document:              NewDocumentClient(cfg),
-		DocumentAuthorship:    NewDocumentAuthorshipClient(cfg),
-		DocumentLensResult:    NewDocumentLensResultClient(cfg),
-		DocumentLink:          NewDocumentLinkClient(cfg),
-		Evidence:              NewEvidenceClient(cfg),
-		Message:               NewMessageClient(cfg),
-		MessageAuthorship:     NewMessageAuthorshipClient(cfg),
-		MessageLensResult:     NewMessageLensResultClient(cfg),
-		MessageMention:        NewMessageMentionClient(cfg),
-		Person:                NewPersonClient(cfg),
-		PersonIdentity:        NewPersonIdentityClient(cfg),
-		PullRequest:           NewPullRequestClient(cfg),
-		PullRequestAuthorship: NewPullRequestAuthorshipClient(cfg),
-		PullRequestLensResult: NewPullRequestLensResultClient(cfg),
-		PullRequestReview:     NewPullRequestReviewClient(cfg),
-		SourceAlias:           NewSourceAliasClient(cfg),
-		SourceConnection:      NewSourceConnectionClient(cfg),
-		SourceScope:           NewSourceScopeClient(cfg),
-		SourceScopeState:      NewSourceScopeStateClient(cfg),
-		SourceSyncIssue:       NewSourceSyncIssueClient(cfg),
-		SourceSyncRun:         NewSourceSyncRunClient(cfg),
-		Ticket:                NewTicketClient(cfg),
-		TicketAssignment:      NewTicketAssignmentClient(cfg),
-		TicketDocument:        NewTicketDocumentClient(cfg),
-		TicketLensResult:      NewTicketLensResultClient(cfg),
-		TicketMention:         NewTicketMentionClient(cfg),
-		TicketMessage:         NewTicketMessageClient(cfg),
-		TicketPullRequest:     NewTicketPullRequestClient(cfg),
-		UnresolvedReference:   NewUnresolvedReferenceClient(cfg),
-		WorkArea:              NewWorkAreaClient(cfg),
-		WorkLens:              NewWorkLensClient(cfg),
-		WorkLensWindow:        NewWorkLensWindowClient(cfg),
-		Workstream:            NewWorkstreamClient(cfg),
-		WorkstreamTicket:      NewWorkstreamTicketClient(cfg),
+		ctx:                               ctx,
+		config:                            cfg,
+		Document:                          NewDocumentClient(cfg),
+		DocumentAuthorship:                NewDocumentAuthorshipClient(cfg),
+		DocumentLensResult:                NewDocumentLensResultClient(cfg),
+		DocumentLink:                      NewDocumentLinkClient(cfg),
+		Evidence:                          NewEvidenceClient(cfg),
+		EvidenceAttachment:                NewEvidenceAttachmentClient(cfg),
+		Message:                           NewMessageClient(cfg),
+		MessageAuthorship:                 NewMessageAuthorshipClient(cfg),
+		MessageLensResult:                 NewMessageLensResultClient(cfg),
+		MessageMention:                    NewMessageMentionClient(cfg),
+		OpenGraphAssociation:              NewOpenGraphAssociationClient(cfg),
+		OpenGraphObject:                   NewOpenGraphObjectClient(cfg),
+		Person:                            NewPersonClient(cfg),
+		PersonIdentity:                    NewPersonIdentityClient(cfg),
+		PullRequest:                       NewPullRequestClient(cfg),
+		PullRequestAuthorship:             NewPullRequestAuthorshipClient(cfg),
+		PullRequestLensResult:             NewPullRequestLensResultClient(cfg),
+		PullRequestReview:                 NewPullRequestReviewClient(cfg),
+		SourceAlias:                       NewSourceAliasClient(cfg),
+		SourceConnection:                  NewSourceConnectionClient(cfg),
+		SourceScope:                       NewSourceScopeClient(cfg),
+		SourceScopeState:                  NewSourceScopeStateClient(cfg),
+		SourceSyncIssue:                   NewSourceSyncIssueClient(cfg),
+		SourceSyncRun:                     NewSourceSyncRunClient(cfg),
+		Ticket:                            NewTicketClient(cfg),
+		TicketAssignment:                  NewTicketAssignmentClient(cfg),
+		TicketDocument:                    NewTicketDocumentClient(cfg),
+		TicketLensResult:                  NewTicketLensResultClient(cfg),
+		TicketMention:                     NewTicketMentionClient(cfg),
+		TicketMessage:                     NewTicketMessageClient(cfg),
+		TicketPullRequest:                 NewTicketPullRequestClient(cfg),
+		UnresolvedReference:               NewUnresolvedReferenceClient(cfg),
+		WorkAction:                        NewWorkActionClient(cfg),
+		WorkActionObservation:             NewWorkActionObservationClient(cfg),
+		WorkArea:                          NewWorkAreaClient(cfg),
+		WorkBlocker:                       NewWorkBlockerClient(cfg),
+		WorkBlockerImpact:                 NewWorkBlockerImpactClient(cfg),
+		WorkDecisionTargetEvaluation:      NewWorkDecisionTargetEvaluationClient(cfg),
+		WorkDependencyEdge:                NewWorkDependencyEdgeClient(cfg),
+		WorkDependencyEndpoint:            NewWorkDependencyEndpointClient(cfg),
+		WorkForecastEvaluation:            NewWorkForecastEvaluationClient(cfg),
+		WorkInsight:                       NewWorkInsightClient(cfg),
+		WorkInsightEvaluationSnapshot:     NewWorkInsightEvaluationSnapshotClient(cfg),
+		WorkInsightKindEvaluationSnapshot: NewWorkInsightKindEvaluationSnapshotClient(cfg),
+		WorkInsightReview:                 NewWorkInsightReviewClient(cfg),
+		WorkItemForecast:                  NewWorkItemForecastClient(cfg),
+		WorkItemStateSnapshot:             NewWorkItemStateSnapshotClient(cfg),
+		WorkItemStateTransition:           NewWorkItemStateTransitionClient(cfg),
+		WorkLens:                          NewWorkLensClient(cfg),
+		WorkLensWindow:                    NewWorkLensWindowClient(cfg),
+		WorkOwnerLoadSnapshot:             NewWorkOwnerLoadSnapshotClient(cfg),
+		WorkProgramAdversarialCheck:       NewWorkProgramAdversarialCheckClient(cfg),
+		WorkProgramAutomationReadiness:    NewWorkProgramAutomationReadinessClient(cfg),
+		WorkProgramBriefCaveat:            NewWorkProgramBriefCaveatClient(cfg),
+		WorkProgramBriefSnapshot:          NewWorkProgramBriefSnapshotClient(cfg),
+		WorkProgramEvidenceNeed:           NewWorkProgramEvidenceNeedClient(cfg),
+		WorkProgramItem:                   NewWorkProgramItemClient(cfg),
+		WorkProgramItemLink:               NewWorkProgramItemLinkClient(cfg),
+		WorkProgramMilestone:              NewWorkProgramMilestoneClient(cfg),
+		WorkProgramOwnerRollupSnapshot:    NewWorkProgramOwnerRollupSnapshotClient(cfg),
+		WorkProgramQualityGate:            NewWorkProgramQualityGateClient(cfg),
+		WorkProgramRiskDriver:             NewWorkProgramRiskDriverClient(cfg),
+		WorkProgramRun:                    NewWorkProgramRunClient(cfg),
+		WorkProgramRunMember:              NewWorkProgramRunMemberClient(cfg),
+		WorkProgramSummarySnapshot:        NewWorkProgramSummarySnapshotClient(cfg),
+		WorkProgramTPMFunctionReadiness:   NewWorkProgramTPMFunctionReadinessClient(cfg),
+		WorkResponsibility:                NewWorkResponsibilityClient(cfg),
+		Workstream:                        NewWorkstreamClient(cfg),
+		WorkstreamHealthSnapshot:          NewWorkstreamHealthSnapshotClient(cfg),
+		WorkstreamStandupSection:          NewWorkstreamStandupSectionClient(cfg),
+		WorkstreamTicket:                  NewWorkstreamTicketClient(cfg),
 	}, nil
 }
 
@@ -379,14 +601,28 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Document, c.DocumentAuthorship, c.DocumentLensResult, c.DocumentLink,
-		c.Evidence, c.Message, c.MessageAuthorship, c.MessageLensResult,
-		c.MessageMention, c.Person, c.PersonIdentity, c.PullRequest,
+		c.Evidence, c.EvidenceAttachment, c.Message, c.MessageAuthorship,
+		c.MessageLensResult, c.MessageMention, c.OpenGraphAssociation,
+		c.OpenGraphObject, c.Person, c.PersonIdentity, c.PullRequest,
 		c.PullRequestAuthorship, c.PullRequestLensResult, c.PullRequestReview,
 		c.SourceAlias, c.SourceConnection, c.SourceScope, c.SourceScopeState,
 		c.SourceSyncIssue, c.SourceSyncRun, c.Ticket, c.TicketAssignment,
 		c.TicketDocument, c.TicketLensResult, c.TicketMention, c.TicketMessage,
-		c.TicketPullRequest, c.UnresolvedReference, c.WorkArea, c.WorkLens,
-		c.WorkLensWindow, c.Workstream, c.WorkstreamTicket,
+		c.TicketPullRequest, c.UnresolvedReference, c.WorkAction,
+		c.WorkActionObservation, c.WorkArea, c.WorkBlocker, c.WorkBlockerImpact,
+		c.WorkDecisionTargetEvaluation, c.WorkDependencyEdge, c.WorkDependencyEndpoint,
+		c.WorkForecastEvaluation, c.WorkInsight, c.WorkInsightEvaluationSnapshot,
+		c.WorkInsightKindEvaluationSnapshot, c.WorkInsightReview, c.WorkItemForecast,
+		c.WorkItemStateSnapshot, c.WorkItemStateTransition, c.WorkLens,
+		c.WorkLensWindow, c.WorkOwnerLoadSnapshot, c.WorkProgramAdversarialCheck,
+		c.WorkProgramAutomationReadiness, c.WorkProgramBriefCaveat,
+		c.WorkProgramBriefSnapshot, c.WorkProgramEvidenceNeed, c.WorkProgramItem,
+		c.WorkProgramItemLink, c.WorkProgramMilestone,
+		c.WorkProgramOwnerRollupSnapshot, c.WorkProgramQualityGate,
+		c.WorkProgramRiskDriver, c.WorkProgramRun, c.WorkProgramRunMember,
+		c.WorkProgramSummarySnapshot, c.WorkProgramTPMFunctionReadiness,
+		c.WorkResponsibility, c.Workstream, c.WorkstreamHealthSnapshot,
+		c.WorkstreamStandupSection, c.WorkstreamTicket,
 	} {
 		n.Use(hooks...)
 	}
@@ -397,14 +633,28 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Document, c.DocumentAuthorship, c.DocumentLensResult, c.DocumentLink,
-		c.Evidence, c.Message, c.MessageAuthorship, c.MessageLensResult,
-		c.MessageMention, c.Person, c.PersonIdentity, c.PullRequest,
+		c.Evidence, c.EvidenceAttachment, c.Message, c.MessageAuthorship,
+		c.MessageLensResult, c.MessageMention, c.OpenGraphAssociation,
+		c.OpenGraphObject, c.Person, c.PersonIdentity, c.PullRequest,
 		c.PullRequestAuthorship, c.PullRequestLensResult, c.PullRequestReview,
 		c.SourceAlias, c.SourceConnection, c.SourceScope, c.SourceScopeState,
 		c.SourceSyncIssue, c.SourceSyncRun, c.Ticket, c.TicketAssignment,
 		c.TicketDocument, c.TicketLensResult, c.TicketMention, c.TicketMessage,
-		c.TicketPullRequest, c.UnresolvedReference, c.WorkArea, c.WorkLens,
-		c.WorkLensWindow, c.Workstream, c.WorkstreamTicket,
+		c.TicketPullRequest, c.UnresolvedReference, c.WorkAction,
+		c.WorkActionObservation, c.WorkArea, c.WorkBlocker, c.WorkBlockerImpact,
+		c.WorkDecisionTargetEvaluation, c.WorkDependencyEdge, c.WorkDependencyEndpoint,
+		c.WorkForecastEvaluation, c.WorkInsight, c.WorkInsightEvaluationSnapshot,
+		c.WorkInsightKindEvaluationSnapshot, c.WorkInsightReview, c.WorkItemForecast,
+		c.WorkItemStateSnapshot, c.WorkItemStateTransition, c.WorkLens,
+		c.WorkLensWindow, c.WorkOwnerLoadSnapshot, c.WorkProgramAdversarialCheck,
+		c.WorkProgramAutomationReadiness, c.WorkProgramBriefCaveat,
+		c.WorkProgramBriefSnapshot, c.WorkProgramEvidenceNeed, c.WorkProgramItem,
+		c.WorkProgramItemLink, c.WorkProgramMilestone,
+		c.WorkProgramOwnerRollupSnapshot, c.WorkProgramQualityGate,
+		c.WorkProgramRiskDriver, c.WorkProgramRun, c.WorkProgramRunMember,
+		c.WorkProgramSummarySnapshot, c.WorkProgramTPMFunctionReadiness,
+		c.WorkResponsibility, c.Workstream, c.WorkstreamHealthSnapshot,
+		c.WorkstreamStandupSection, c.WorkstreamTicket,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -423,6 +673,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.DocumentLink.mutate(ctx, m)
 	case *EvidenceMutation:
 		return c.Evidence.mutate(ctx, m)
+	case *EvidenceAttachmentMutation:
+		return c.EvidenceAttachment.mutate(ctx, m)
 	case *MessageMutation:
 		return c.Message.mutate(ctx, m)
 	case *MessageAuthorshipMutation:
@@ -431,6 +683,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.MessageLensResult.mutate(ctx, m)
 	case *MessageMentionMutation:
 		return c.MessageMention.mutate(ctx, m)
+	case *OpenGraphAssociationMutation:
+		return c.OpenGraphAssociation.mutate(ctx, m)
+	case *OpenGraphObjectMutation:
+		return c.OpenGraphObject.mutate(ctx, m)
 	case *PersonMutation:
 		return c.Person.mutate(ctx, m)
 	case *PersonIdentityMutation:
@@ -471,14 +727,82 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.TicketPullRequest.mutate(ctx, m)
 	case *UnresolvedReferenceMutation:
 		return c.UnresolvedReference.mutate(ctx, m)
+	case *WorkActionMutation:
+		return c.WorkAction.mutate(ctx, m)
+	case *WorkActionObservationMutation:
+		return c.WorkActionObservation.mutate(ctx, m)
 	case *WorkAreaMutation:
 		return c.WorkArea.mutate(ctx, m)
+	case *WorkBlockerMutation:
+		return c.WorkBlocker.mutate(ctx, m)
+	case *WorkBlockerImpactMutation:
+		return c.WorkBlockerImpact.mutate(ctx, m)
+	case *WorkDecisionTargetEvaluationMutation:
+		return c.WorkDecisionTargetEvaluation.mutate(ctx, m)
+	case *WorkDependencyEdgeMutation:
+		return c.WorkDependencyEdge.mutate(ctx, m)
+	case *WorkDependencyEndpointMutation:
+		return c.WorkDependencyEndpoint.mutate(ctx, m)
+	case *WorkForecastEvaluationMutation:
+		return c.WorkForecastEvaluation.mutate(ctx, m)
+	case *WorkInsightMutation:
+		return c.WorkInsight.mutate(ctx, m)
+	case *WorkInsightEvaluationSnapshotMutation:
+		return c.WorkInsightEvaluationSnapshot.mutate(ctx, m)
+	case *WorkInsightKindEvaluationSnapshotMutation:
+		return c.WorkInsightKindEvaluationSnapshot.mutate(ctx, m)
+	case *WorkInsightReviewMutation:
+		return c.WorkInsightReview.mutate(ctx, m)
+	case *WorkItemForecastMutation:
+		return c.WorkItemForecast.mutate(ctx, m)
+	case *WorkItemStateSnapshotMutation:
+		return c.WorkItemStateSnapshot.mutate(ctx, m)
+	case *WorkItemStateTransitionMutation:
+		return c.WorkItemStateTransition.mutate(ctx, m)
 	case *WorkLensMutation:
 		return c.WorkLens.mutate(ctx, m)
 	case *WorkLensWindowMutation:
 		return c.WorkLensWindow.mutate(ctx, m)
+	case *WorkOwnerLoadSnapshotMutation:
+		return c.WorkOwnerLoadSnapshot.mutate(ctx, m)
+	case *WorkProgramAdversarialCheckMutation:
+		return c.WorkProgramAdversarialCheck.mutate(ctx, m)
+	case *WorkProgramAutomationReadinessMutation:
+		return c.WorkProgramAutomationReadiness.mutate(ctx, m)
+	case *WorkProgramBriefCaveatMutation:
+		return c.WorkProgramBriefCaveat.mutate(ctx, m)
+	case *WorkProgramBriefSnapshotMutation:
+		return c.WorkProgramBriefSnapshot.mutate(ctx, m)
+	case *WorkProgramEvidenceNeedMutation:
+		return c.WorkProgramEvidenceNeed.mutate(ctx, m)
+	case *WorkProgramItemMutation:
+		return c.WorkProgramItem.mutate(ctx, m)
+	case *WorkProgramItemLinkMutation:
+		return c.WorkProgramItemLink.mutate(ctx, m)
+	case *WorkProgramMilestoneMutation:
+		return c.WorkProgramMilestone.mutate(ctx, m)
+	case *WorkProgramOwnerRollupSnapshotMutation:
+		return c.WorkProgramOwnerRollupSnapshot.mutate(ctx, m)
+	case *WorkProgramQualityGateMutation:
+		return c.WorkProgramQualityGate.mutate(ctx, m)
+	case *WorkProgramRiskDriverMutation:
+		return c.WorkProgramRiskDriver.mutate(ctx, m)
+	case *WorkProgramRunMutation:
+		return c.WorkProgramRun.mutate(ctx, m)
+	case *WorkProgramRunMemberMutation:
+		return c.WorkProgramRunMember.mutate(ctx, m)
+	case *WorkProgramSummarySnapshotMutation:
+		return c.WorkProgramSummarySnapshot.mutate(ctx, m)
+	case *WorkProgramTPMFunctionReadinessMutation:
+		return c.WorkProgramTPMFunctionReadiness.mutate(ctx, m)
+	case *WorkResponsibilityMutation:
+		return c.WorkResponsibility.mutate(ctx, m)
 	case *WorkstreamMutation:
 		return c.Workstream.mutate(ctx, m)
+	case *WorkstreamHealthSnapshotMutation:
+		return c.WorkstreamHealthSnapshot.mutate(ctx, m)
+	case *WorkstreamStandupSectionMutation:
+		return c.WorkstreamStandupSection.mutate(ctx, m)
 	case *WorkstreamTicketMutation:
 		return c.WorkstreamTicket.mutate(ctx, m)
 	default:
@@ -1407,6 +1731,331 @@ func (c *EvidenceClient) mutate(ctx context.Context, m *EvidenceMutation) (Value
 	}
 }
 
+// EvidenceAttachmentClient is a client for the EvidenceAttachment schema.
+type EvidenceAttachmentClient struct {
+	config
+}
+
+// NewEvidenceAttachmentClient returns a client for the EvidenceAttachment from the given config.
+func NewEvidenceAttachmentClient(c config) *EvidenceAttachmentClient {
+	return &EvidenceAttachmentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `evidenceattachment.Hooks(f(g(h())))`.
+func (c *EvidenceAttachmentClient) Use(hooks ...Hook) {
+	c.hooks.EvidenceAttachment = append(c.hooks.EvidenceAttachment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `evidenceattachment.Intercept(f(g(h())))`.
+func (c *EvidenceAttachmentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EvidenceAttachment = append(c.inters.EvidenceAttachment, interceptors...)
+}
+
+// Create returns a builder for creating a EvidenceAttachment entity.
+func (c *EvidenceAttachmentClient) Create() *EvidenceAttachmentCreate {
+	mutation := newEvidenceAttachmentMutation(c.config, OpCreate)
+	return &EvidenceAttachmentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EvidenceAttachment entities.
+func (c *EvidenceAttachmentClient) CreateBulk(builders ...*EvidenceAttachmentCreate) *EvidenceAttachmentCreateBulk {
+	return &EvidenceAttachmentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EvidenceAttachmentClient) MapCreateBulk(slice any, setFunc func(*EvidenceAttachmentCreate, int)) *EvidenceAttachmentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EvidenceAttachmentCreateBulk{err: fmt.Errorf("calling to EvidenceAttachmentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EvidenceAttachmentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EvidenceAttachmentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EvidenceAttachment.
+func (c *EvidenceAttachmentClient) Update() *EvidenceAttachmentUpdate {
+	mutation := newEvidenceAttachmentMutation(c.config, OpUpdate)
+	return &EvidenceAttachmentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EvidenceAttachmentClient) UpdateOne(_m *EvidenceAttachment) *EvidenceAttachmentUpdateOne {
+	mutation := newEvidenceAttachmentMutation(c.config, OpUpdateOne, withEvidenceAttachment(_m))
+	return &EvidenceAttachmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EvidenceAttachmentClient) UpdateOneID(id int) *EvidenceAttachmentUpdateOne {
+	mutation := newEvidenceAttachmentMutation(c.config, OpUpdateOne, withEvidenceAttachmentID(id))
+	return &EvidenceAttachmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EvidenceAttachment.
+func (c *EvidenceAttachmentClient) Delete() *EvidenceAttachmentDelete {
+	mutation := newEvidenceAttachmentMutation(c.config, OpDelete)
+	return &EvidenceAttachmentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EvidenceAttachmentClient) DeleteOne(_m *EvidenceAttachment) *EvidenceAttachmentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EvidenceAttachmentClient) DeleteOneID(id int) *EvidenceAttachmentDeleteOne {
+	builder := c.Delete().Where(evidenceattachment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EvidenceAttachmentDeleteOne{builder}
+}
+
+// Query returns a query builder for EvidenceAttachment.
+func (c *EvidenceAttachmentClient) Query() *EvidenceAttachmentQuery {
+	return &EvidenceAttachmentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEvidenceAttachment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EvidenceAttachment entity by its id.
+func (c *EvidenceAttachmentClient) Get(ctx context.Context, id int) (*EvidenceAttachment, error) {
+	return c.Query().Where(evidenceattachment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EvidenceAttachmentClient) GetX(ctx context.Context, id int) *EvidenceAttachment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEvidence queries the evidence edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryEvidence(_m *EvidenceAttachment) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.EvidenceTable, evidenceattachment.EvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryTicket(_m *EvidenceAttachment) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.TicketTable, evidenceattachment.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPullRequest queries the pull_request edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryPullRequest(_m *EvidenceAttachment) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.PullRequestTable, evidenceattachment.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicketPullRequest queries the ticket_pull_request edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryTicketPullRequest(_m *EvidenceAttachment) *TicketPullRequestQuery {
+	query := (&TicketPullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(ticketpullrequest.Table, ticketpullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.TicketPullRequestTable, evidenceattachment.TicketPullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOpenGraphObject queries the open_graph_object edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryOpenGraphObject(_m *EvidenceAttachment) *OpenGraphObjectQuery {
+	query := (&OpenGraphObjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(opengraphobject.Table, opengraphobject.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.OpenGraphObjectTable, evidenceattachment.OpenGraphObjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOpenGraphAssociation queries the open_graph_association edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryOpenGraphAssociation(_m *EvidenceAttachment) *OpenGraphAssociationQuery {
+	query := (&OpenGraphAssociationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(opengraphassociation.Table, opengraphassociation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.OpenGraphAssociationTable, evidenceattachment.OpenGraphAssociationColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkAction queries the work_action edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkAction(_m *EvidenceAttachment) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkActionTable, evidenceattachment.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkInsight queries the work_insight edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkInsight(_m *EvidenceAttachment) *WorkInsightQuery {
+	query := (&WorkInsightClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workinsight.Table, workinsight.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkInsightTable, evidenceattachment.WorkInsightColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkBlocker queries the work_blocker edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkBlocker(_m *EvidenceAttachment) *WorkBlockerQuery {
+	query := (&WorkBlockerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workblocker.Table, workblocker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkBlockerTable, evidenceattachment.WorkBlockerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkDependencyEdge queries the work_dependency_edge edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkDependencyEdge(_m *EvidenceAttachment) *WorkDependencyEdgeQuery {
+	query := (&WorkDependencyEdgeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workdependencyedge.Table, workdependencyedge.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkDependencyEdgeTable, evidenceattachment.WorkDependencyEdgeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkItemForecast queries the work_item_forecast edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkItemForecast(_m *EvidenceAttachment) *WorkItemForecastQuery {
+	query := (&WorkItemForecastClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workitemforecast.Table, workitemforecast.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkItemForecastTable, evidenceattachment.WorkItemForecastColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkResponsibility queries the work_responsibility edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkResponsibility(_m *EvidenceAttachment) *WorkResponsibilityQuery {
+	query := (&WorkResponsibilityClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workresponsibility.Table, workresponsibility.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkResponsibilityTable, evidenceattachment.WorkResponsibilityColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EvidenceAttachmentClient) Hooks() []Hook {
+	return c.hooks.EvidenceAttachment
+}
+
+// Interceptors returns the client interceptors.
+func (c *EvidenceAttachmentClient) Interceptors() []Interceptor {
+	return c.inters.EvidenceAttachment
+}
+
+func (c *EvidenceAttachmentClient) mutate(ctx context.Context, m *EvidenceAttachmentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EvidenceAttachmentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EvidenceAttachmentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EvidenceAttachmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EvidenceAttachmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EvidenceAttachment mutation op: %q", m.Op())
+	}
+}
+
 // MessageClient is a client for the Message schema.
 type MessageClient struct {
 	config
@@ -2131,6 +2780,368 @@ func (c *MessageMentionClient) mutate(ctx context.Context, m *MessageMentionMuta
 	}
 }
 
+// OpenGraphAssociationClient is a client for the OpenGraphAssociation schema.
+type OpenGraphAssociationClient struct {
+	config
+}
+
+// NewOpenGraphAssociationClient returns a client for the OpenGraphAssociation from the given config.
+func NewOpenGraphAssociationClient(c config) *OpenGraphAssociationClient {
+	return &OpenGraphAssociationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `opengraphassociation.Hooks(f(g(h())))`.
+func (c *OpenGraphAssociationClient) Use(hooks ...Hook) {
+	c.hooks.OpenGraphAssociation = append(c.hooks.OpenGraphAssociation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `opengraphassociation.Intercept(f(g(h())))`.
+func (c *OpenGraphAssociationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.OpenGraphAssociation = append(c.inters.OpenGraphAssociation, interceptors...)
+}
+
+// Create returns a builder for creating a OpenGraphAssociation entity.
+func (c *OpenGraphAssociationClient) Create() *OpenGraphAssociationCreate {
+	mutation := newOpenGraphAssociationMutation(c.config, OpCreate)
+	return &OpenGraphAssociationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of OpenGraphAssociation entities.
+func (c *OpenGraphAssociationClient) CreateBulk(builders ...*OpenGraphAssociationCreate) *OpenGraphAssociationCreateBulk {
+	return &OpenGraphAssociationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *OpenGraphAssociationClient) MapCreateBulk(slice any, setFunc func(*OpenGraphAssociationCreate, int)) *OpenGraphAssociationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &OpenGraphAssociationCreateBulk{err: fmt.Errorf("calling to OpenGraphAssociationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*OpenGraphAssociationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &OpenGraphAssociationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for OpenGraphAssociation.
+func (c *OpenGraphAssociationClient) Update() *OpenGraphAssociationUpdate {
+	mutation := newOpenGraphAssociationMutation(c.config, OpUpdate)
+	return &OpenGraphAssociationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *OpenGraphAssociationClient) UpdateOne(_m *OpenGraphAssociation) *OpenGraphAssociationUpdateOne {
+	mutation := newOpenGraphAssociationMutation(c.config, OpUpdateOne, withOpenGraphAssociation(_m))
+	return &OpenGraphAssociationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *OpenGraphAssociationClient) UpdateOneID(id int) *OpenGraphAssociationUpdateOne {
+	mutation := newOpenGraphAssociationMutation(c.config, OpUpdateOne, withOpenGraphAssociationID(id))
+	return &OpenGraphAssociationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for OpenGraphAssociation.
+func (c *OpenGraphAssociationClient) Delete() *OpenGraphAssociationDelete {
+	mutation := newOpenGraphAssociationMutation(c.config, OpDelete)
+	return &OpenGraphAssociationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *OpenGraphAssociationClient) DeleteOne(_m *OpenGraphAssociation) *OpenGraphAssociationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *OpenGraphAssociationClient) DeleteOneID(id int) *OpenGraphAssociationDeleteOne {
+	builder := c.Delete().Where(opengraphassociation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &OpenGraphAssociationDeleteOne{builder}
+}
+
+// Query returns a query builder for OpenGraphAssociation.
+func (c *OpenGraphAssociationClient) Query() *OpenGraphAssociationQuery {
+	return &OpenGraphAssociationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeOpenGraphAssociation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a OpenGraphAssociation entity by its id.
+func (c *OpenGraphAssociationClient) Get(ctx context.Context, id int) (*OpenGraphAssociation, error) {
+	return c.Query().Where(opengraphassociation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *OpenGraphAssociationClient) GetX(ctx context.Context, id int) *OpenGraphAssociation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryFromObject queries the from_object edge of a OpenGraphAssociation.
+func (c *OpenGraphAssociationClient) QueryFromObject(_m *OpenGraphAssociation) *OpenGraphObjectQuery {
+	query := (&OpenGraphObjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(opengraphassociation.Table, opengraphassociation.FieldID, id),
+			sqlgraph.To(opengraphobject.Table, opengraphobject.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, opengraphassociation.FromObjectTable, opengraphassociation.FromObjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryToObject queries the to_object edge of a OpenGraphAssociation.
+func (c *OpenGraphAssociationClient) QueryToObject(_m *OpenGraphAssociation) *OpenGraphObjectQuery {
+	query := (&OpenGraphObjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(opengraphassociation.Table, opengraphassociation.FieldID, id),
+			sqlgraph.To(opengraphobject.Table, opengraphobject.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, opengraphassociation.ToObjectTable, opengraphassociation.ToObjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a OpenGraphAssociation.
+func (c *OpenGraphAssociationClient) QueryLatestEvidence(_m *OpenGraphAssociation) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(opengraphassociation.Table, opengraphassociation.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, opengraphassociation.LatestEvidenceTable, opengraphassociation.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *OpenGraphAssociationClient) Hooks() []Hook {
+	return c.hooks.OpenGraphAssociation
+}
+
+// Interceptors returns the client interceptors.
+func (c *OpenGraphAssociationClient) Interceptors() []Interceptor {
+	return c.inters.OpenGraphAssociation
+}
+
+func (c *OpenGraphAssociationClient) mutate(ctx context.Context, m *OpenGraphAssociationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&OpenGraphAssociationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&OpenGraphAssociationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&OpenGraphAssociationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&OpenGraphAssociationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown OpenGraphAssociation mutation op: %q", m.Op())
+	}
+}
+
+// OpenGraphObjectClient is a client for the OpenGraphObject schema.
+type OpenGraphObjectClient struct {
+	config
+}
+
+// NewOpenGraphObjectClient returns a client for the OpenGraphObject from the given config.
+func NewOpenGraphObjectClient(c config) *OpenGraphObjectClient {
+	return &OpenGraphObjectClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `opengraphobject.Hooks(f(g(h())))`.
+func (c *OpenGraphObjectClient) Use(hooks ...Hook) {
+	c.hooks.OpenGraphObject = append(c.hooks.OpenGraphObject, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `opengraphobject.Intercept(f(g(h())))`.
+func (c *OpenGraphObjectClient) Intercept(interceptors ...Interceptor) {
+	c.inters.OpenGraphObject = append(c.inters.OpenGraphObject, interceptors...)
+}
+
+// Create returns a builder for creating a OpenGraphObject entity.
+func (c *OpenGraphObjectClient) Create() *OpenGraphObjectCreate {
+	mutation := newOpenGraphObjectMutation(c.config, OpCreate)
+	return &OpenGraphObjectCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of OpenGraphObject entities.
+func (c *OpenGraphObjectClient) CreateBulk(builders ...*OpenGraphObjectCreate) *OpenGraphObjectCreateBulk {
+	return &OpenGraphObjectCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *OpenGraphObjectClient) MapCreateBulk(slice any, setFunc func(*OpenGraphObjectCreate, int)) *OpenGraphObjectCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &OpenGraphObjectCreateBulk{err: fmt.Errorf("calling to OpenGraphObjectClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*OpenGraphObjectCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &OpenGraphObjectCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for OpenGraphObject.
+func (c *OpenGraphObjectClient) Update() *OpenGraphObjectUpdate {
+	mutation := newOpenGraphObjectMutation(c.config, OpUpdate)
+	return &OpenGraphObjectUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *OpenGraphObjectClient) UpdateOne(_m *OpenGraphObject) *OpenGraphObjectUpdateOne {
+	mutation := newOpenGraphObjectMutation(c.config, OpUpdateOne, withOpenGraphObject(_m))
+	return &OpenGraphObjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *OpenGraphObjectClient) UpdateOneID(id int) *OpenGraphObjectUpdateOne {
+	mutation := newOpenGraphObjectMutation(c.config, OpUpdateOne, withOpenGraphObjectID(id))
+	return &OpenGraphObjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for OpenGraphObject.
+func (c *OpenGraphObjectClient) Delete() *OpenGraphObjectDelete {
+	mutation := newOpenGraphObjectMutation(c.config, OpDelete)
+	return &OpenGraphObjectDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *OpenGraphObjectClient) DeleteOne(_m *OpenGraphObject) *OpenGraphObjectDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *OpenGraphObjectClient) DeleteOneID(id int) *OpenGraphObjectDeleteOne {
+	builder := c.Delete().Where(opengraphobject.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &OpenGraphObjectDeleteOne{builder}
+}
+
+// Query returns a query builder for OpenGraphObject.
+func (c *OpenGraphObjectClient) Query() *OpenGraphObjectQuery {
+	return &OpenGraphObjectQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeOpenGraphObject},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a OpenGraphObject entity by its id.
+func (c *OpenGraphObjectClient) Get(ctx context.Context, id int) (*OpenGraphObject, error) {
+	return c.Query().Where(opengraphobject.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *OpenGraphObjectClient) GetX(ctx context.Context, id int) *OpenGraphObject {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryOutgoingAssociations queries the outgoing_associations edge of a OpenGraphObject.
+func (c *OpenGraphObjectClient) QueryOutgoingAssociations(_m *OpenGraphObject) *OpenGraphAssociationQuery {
+	query := (&OpenGraphAssociationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(opengraphobject.Table, opengraphobject.FieldID, id),
+			sqlgraph.To(opengraphassociation.Table, opengraphassociation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, opengraphobject.OutgoingAssociationsTable, opengraphobject.OutgoingAssociationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryIncomingAssociations queries the incoming_associations edge of a OpenGraphObject.
+func (c *OpenGraphObjectClient) QueryIncomingAssociations(_m *OpenGraphObject) *OpenGraphAssociationQuery {
+	query := (&OpenGraphAssociationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(opengraphobject.Table, opengraphobject.FieldID, id),
+			sqlgraph.To(opengraphassociation.Table, opengraphassociation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, opengraphobject.IncomingAssociationsTable, opengraphobject.IncomingAssociationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a OpenGraphObject.
+func (c *OpenGraphObjectClient) QueryLatestEvidence(_m *OpenGraphObject) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(opengraphobject.Table, opengraphobject.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, opengraphobject.LatestEvidenceTable, opengraphobject.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *OpenGraphObjectClient) Hooks() []Hook {
+	return c.hooks.OpenGraphObject
+}
+
+// Interceptors returns the client interceptors.
+func (c *OpenGraphObjectClient) Interceptors() []Interceptor {
+	return c.inters.OpenGraphObject
+}
+
+func (c *OpenGraphObjectClient) mutate(ctx context.Context, m *OpenGraphObjectMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&OpenGraphObjectCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&OpenGraphObjectUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&OpenGraphObjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&OpenGraphObjectDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown OpenGraphObject mutation op: %q", m.Op())
+	}
+}
+
 // PersonClient is a client for the Person schema.
 type PersonClient struct {
 	config
@@ -2626,6 +3637,86 @@ func (c *PullRequestClient) QueryLatestEvidence(_m *PullRequest) *EvidenceQuery 
 			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, id),
 			sqlgraph.To(evidence.Table, evidence.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, pullrequest.LatestEvidenceTable, pullrequest.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryInsights queries the insights edge of a PullRequest.
+func (c *PullRequestClient) QueryInsights(_m *PullRequest) *WorkInsightQuery {
+	query := (&WorkInsightClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, id),
+			sqlgraph.To(workinsight.Table, workinsight.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, pullrequest.InsightsTable, pullrequest.InsightsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryActions queries the actions edge of a PullRequest.
+func (c *PullRequestClient) QueryActions(_m *PullRequest) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, pullrequest.ActionsTable, pullrequest.ActionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryStateSnapshots queries the state_snapshots edge of a PullRequest.
+func (c *PullRequestClient) QueryStateSnapshots(_m *PullRequest) *WorkItemStateSnapshotQuery {
+	query := (&WorkItemStateSnapshotClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, id),
+			sqlgraph.To(workitemstatesnapshot.Table, workitemstatesnapshot.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, pullrequest.StateSnapshotsTable, pullrequest.StateSnapshotsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryStateTransitions queries the state_transitions edge of a PullRequest.
+func (c *PullRequestClient) QueryStateTransitions(_m *PullRequest) *WorkItemStateTransitionQuery {
+	query := (&WorkItemStateTransitionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, id),
+			sqlgraph.To(workitemstatetransition.Table, workitemstatetransition.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, pullrequest.StateTransitionsTable, pullrequest.StateTransitionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMilestones queries the milestones edge of a PullRequest.
+func (c *PullRequestClient) QueryMilestones(_m *PullRequest) *WorkProgramMilestoneQuery {
+	query := (&WorkProgramMilestoneClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, id),
+			sqlgraph.To(workprogrammilestone.Table, workprogrammilestone.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, pullrequest.MilestonesTable, pullrequest.MilestonesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -4411,6 +5502,86 @@ func (c *TicketClient) QueryLatestEvidence(_m *Ticket) *EvidenceQuery {
 	return query
 }
 
+// QueryInsights queries the insights edge of a Ticket.
+func (c *TicketClient) QueryInsights(_m *Ticket) *WorkInsightQuery {
+	query := (&WorkInsightClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(workinsight.Table, workinsight.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.InsightsTable, ticket.InsightsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryActions queries the actions edge of a Ticket.
+func (c *TicketClient) QueryActions(_m *Ticket) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.ActionsTable, ticket.ActionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryStateSnapshots queries the state_snapshots edge of a Ticket.
+func (c *TicketClient) QueryStateSnapshots(_m *Ticket) *WorkItemStateSnapshotQuery {
+	query := (&WorkItemStateSnapshotClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(workitemstatesnapshot.Table, workitemstatesnapshot.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.StateSnapshotsTable, ticket.StateSnapshotsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryStateTransitions queries the state_transitions edge of a Ticket.
+func (c *TicketClient) QueryStateTransitions(_m *Ticket) *WorkItemStateTransitionQuery {
+	query := (&WorkItemStateTransitionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(workitemstatetransition.Table, workitemstatetransition.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.StateTransitionsTable, ticket.StateTransitionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMilestones queries the milestones edge of a Ticket.
+func (c *TicketClient) QueryMilestones(_m *Ticket) *WorkProgramMilestoneQuery {
+	query := (&WorkProgramMilestoneClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, id),
+			sqlgraph.To(workprogrammilestone.Table, workprogrammilestone.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.MilestonesTable, ticket.MilestonesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryTicketPullRequests queries the ticket_pull_requests edge of a Ticket.
 func (c *TicketClient) QueryTicketPullRequests(_m *Ticket) *TicketPullRequestQuery {
 	query := (&TicketPullRequestClient{config: c.config}).Query()
@@ -5735,6 +6906,384 @@ func (c *UnresolvedReferenceClient) mutate(ctx context.Context, m *UnresolvedRef
 	}
 }
 
+// WorkActionClient is a client for the WorkAction schema.
+type WorkActionClient struct {
+	config
+}
+
+// NewWorkActionClient returns a client for the WorkAction from the given config.
+func NewWorkActionClient(c config) *WorkActionClient {
+	return &WorkActionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workaction.Hooks(f(g(h())))`.
+func (c *WorkActionClient) Use(hooks ...Hook) {
+	c.hooks.WorkAction = append(c.hooks.WorkAction, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workaction.Intercept(f(g(h())))`.
+func (c *WorkActionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkAction = append(c.inters.WorkAction, interceptors...)
+}
+
+// Create returns a builder for creating a WorkAction entity.
+func (c *WorkActionClient) Create() *WorkActionCreate {
+	mutation := newWorkActionMutation(c.config, OpCreate)
+	return &WorkActionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkAction entities.
+func (c *WorkActionClient) CreateBulk(builders ...*WorkActionCreate) *WorkActionCreateBulk {
+	return &WorkActionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkActionClient) MapCreateBulk(slice any, setFunc func(*WorkActionCreate, int)) *WorkActionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkActionCreateBulk{err: fmt.Errorf("calling to WorkActionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkActionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkActionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkAction.
+func (c *WorkActionClient) Update() *WorkActionUpdate {
+	mutation := newWorkActionMutation(c.config, OpUpdate)
+	return &WorkActionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkActionClient) UpdateOne(_m *WorkAction) *WorkActionUpdateOne {
+	mutation := newWorkActionMutation(c.config, OpUpdateOne, withWorkAction(_m))
+	return &WorkActionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkActionClient) UpdateOneID(id int) *WorkActionUpdateOne {
+	mutation := newWorkActionMutation(c.config, OpUpdateOne, withWorkActionID(id))
+	return &WorkActionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkAction.
+func (c *WorkActionClient) Delete() *WorkActionDelete {
+	mutation := newWorkActionMutation(c.config, OpDelete)
+	return &WorkActionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkActionClient) DeleteOne(_m *WorkAction) *WorkActionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkActionClient) DeleteOneID(id int) *WorkActionDeleteOne {
+	builder := c.Delete().Where(workaction.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkActionDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkAction.
+func (c *WorkActionClient) Query() *WorkActionQuery {
+	return &WorkActionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkAction},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkAction entity by its id.
+func (c *WorkActionClient) Get(ctx context.Context, id int) (*WorkAction, error) {
+	return c.Query().Where(workaction.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkActionClient) GetX(ctx context.Context, id int) *WorkAction {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkAction.
+func (c *WorkActionClient) QueryPullRequest(_m *WorkAction) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workaction.Table, workaction.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workaction.PullRequestTable, workaction.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkAction.
+func (c *WorkActionClient) QueryTicket(_m *WorkAction) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workaction.Table, workaction.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workaction.TicketTable, workaction.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySourceInsights queries the source_insights edge of a WorkAction.
+func (c *WorkActionClient) QuerySourceInsights(_m *WorkAction) *WorkInsightQuery {
+	query := (&WorkInsightClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workaction.Table, workaction.FieldID, id),
+			sqlgraph.To(workinsight.Table, workinsight.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, workaction.SourceInsightsTable, workaction.SourceInsightsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkAction.
+func (c *WorkActionClient) QueryLatestEvidence(_m *WorkAction) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workaction.Table, workaction.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workaction.LatestEvidenceTable, workaction.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryObservations queries the observations edge of a WorkAction.
+func (c *WorkActionClient) QueryObservations(_m *WorkAction) *WorkActionObservationQuery {
+	query := (&WorkActionObservationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workaction.Table, workaction.FieldID, id),
+			sqlgraph.To(workactionobservation.Table, workactionobservation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workaction.ObservationsTable, workaction.ObservationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkActionClient) Hooks() []Hook {
+	return c.hooks.WorkAction
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkActionClient) Interceptors() []Interceptor {
+	return c.inters.WorkAction
+}
+
+func (c *WorkActionClient) mutate(ctx context.Context, m *WorkActionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkActionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkActionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkActionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkActionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkAction mutation op: %q", m.Op())
+	}
+}
+
+// WorkActionObservationClient is a client for the WorkActionObservation schema.
+type WorkActionObservationClient struct {
+	config
+}
+
+// NewWorkActionObservationClient returns a client for the WorkActionObservation from the given config.
+func NewWorkActionObservationClient(c config) *WorkActionObservationClient {
+	return &WorkActionObservationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workactionobservation.Hooks(f(g(h())))`.
+func (c *WorkActionObservationClient) Use(hooks ...Hook) {
+	c.hooks.WorkActionObservation = append(c.hooks.WorkActionObservation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workactionobservation.Intercept(f(g(h())))`.
+func (c *WorkActionObservationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkActionObservation = append(c.inters.WorkActionObservation, interceptors...)
+}
+
+// Create returns a builder for creating a WorkActionObservation entity.
+func (c *WorkActionObservationClient) Create() *WorkActionObservationCreate {
+	mutation := newWorkActionObservationMutation(c.config, OpCreate)
+	return &WorkActionObservationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkActionObservation entities.
+func (c *WorkActionObservationClient) CreateBulk(builders ...*WorkActionObservationCreate) *WorkActionObservationCreateBulk {
+	return &WorkActionObservationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkActionObservationClient) MapCreateBulk(slice any, setFunc func(*WorkActionObservationCreate, int)) *WorkActionObservationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkActionObservationCreateBulk{err: fmt.Errorf("calling to WorkActionObservationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkActionObservationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkActionObservationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkActionObservation.
+func (c *WorkActionObservationClient) Update() *WorkActionObservationUpdate {
+	mutation := newWorkActionObservationMutation(c.config, OpUpdate)
+	return &WorkActionObservationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkActionObservationClient) UpdateOne(_m *WorkActionObservation) *WorkActionObservationUpdateOne {
+	mutation := newWorkActionObservationMutation(c.config, OpUpdateOne, withWorkActionObservation(_m))
+	return &WorkActionObservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkActionObservationClient) UpdateOneID(id int) *WorkActionObservationUpdateOne {
+	mutation := newWorkActionObservationMutation(c.config, OpUpdateOne, withWorkActionObservationID(id))
+	return &WorkActionObservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkActionObservation.
+func (c *WorkActionObservationClient) Delete() *WorkActionObservationDelete {
+	mutation := newWorkActionObservationMutation(c.config, OpDelete)
+	return &WorkActionObservationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkActionObservationClient) DeleteOne(_m *WorkActionObservation) *WorkActionObservationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkActionObservationClient) DeleteOneID(id int) *WorkActionObservationDeleteOne {
+	builder := c.Delete().Where(workactionobservation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkActionObservationDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkActionObservation.
+func (c *WorkActionObservationClient) Query() *WorkActionObservationQuery {
+	return &WorkActionObservationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkActionObservation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkActionObservation entity by its id.
+func (c *WorkActionObservationClient) Get(ctx context.Context, id int) (*WorkActionObservation, error) {
+	return c.Query().Where(workactionobservation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkActionObservationClient) GetX(ctx context.Context, id int) *WorkActionObservation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAction queries the action edge of a WorkActionObservation.
+func (c *WorkActionObservationClient) QueryAction(_m *WorkActionObservation) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workactionobservation.Table, workactionobservation.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, workactionobservation.ActionTable, workactionobservation.ActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkActionObservation.
+func (c *WorkActionObservationClient) QueryLatestEvidence(_m *WorkActionObservation) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workactionobservation.Table, workactionobservation.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workactionobservation.LatestEvidenceTable, workactionobservation.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkActionObservationClient) Hooks() []Hook {
+	return c.hooks.WorkActionObservation
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkActionObservationClient) Interceptors() []Interceptor {
+	return c.inters.WorkActionObservation
+}
+
+func (c *WorkActionObservationClient) mutate(ctx context.Context, m *WorkActionObservationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkActionObservationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkActionObservationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkActionObservationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkActionObservationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkActionObservation mutation op: %q", m.Op())
+	}
+}
+
 // WorkAreaClient is a client for the WorkArea schema.
 type WorkAreaClient struct {
 	config
@@ -5897,6 +7446,2535 @@ func (c *WorkAreaClient) mutate(ctx context.Context, m *WorkAreaMutation) (Value
 		return (&WorkAreaDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown WorkArea mutation op: %q", m.Op())
+	}
+}
+
+// WorkBlockerClient is a client for the WorkBlocker schema.
+type WorkBlockerClient struct {
+	config
+}
+
+// NewWorkBlockerClient returns a client for the WorkBlocker from the given config.
+func NewWorkBlockerClient(c config) *WorkBlockerClient {
+	return &WorkBlockerClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workblocker.Hooks(f(g(h())))`.
+func (c *WorkBlockerClient) Use(hooks ...Hook) {
+	c.hooks.WorkBlocker = append(c.hooks.WorkBlocker, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workblocker.Intercept(f(g(h())))`.
+func (c *WorkBlockerClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkBlocker = append(c.inters.WorkBlocker, interceptors...)
+}
+
+// Create returns a builder for creating a WorkBlocker entity.
+func (c *WorkBlockerClient) Create() *WorkBlockerCreate {
+	mutation := newWorkBlockerMutation(c.config, OpCreate)
+	return &WorkBlockerCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkBlocker entities.
+func (c *WorkBlockerClient) CreateBulk(builders ...*WorkBlockerCreate) *WorkBlockerCreateBulk {
+	return &WorkBlockerCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkBlockerClient) MapCreateBulk(slice any, setFunc func(*WorkBlockerCreate, int)) *WorkBlockerCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkBlockerCreateBulk{err: fmt.Errorf("calling to WorkBlockerClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkBlockerCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkBlockerCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkBlocker.
+func (c *WorkBlockerClient) Update() *WorkBlockerUpdate {
+	mutation := newWorkBlockerMutation(c.config, OpUpdate)
+	return &WorkBlockerUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkBlockerClient) UpdateOne(_m *WorkBlocker) *WorkBlockerUpdateOne {
+	mutation := newWorkBlockerMutation(c.config, OpUpdateOne, withWorkBlocker(_m))
+	return &WorkBlockerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkBlockerClient) UpdateOneID(id int) *WorkBlockerUpdateOne {
+	mutation := newWorkBlockerMutation(c.config, OpUpdateOne, withWorkBlockerID(id))
+	return &WorkBlockerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkBlocker.
+func (c *WorkBlockerClient) Delete() *WorkBlockerDelete {
+	mutation := newWorkBlockerMutation(c.config, OpDelete)
+	return &WorkBlockerDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkBlockerClient) DeleteOne(_m *WorkBlocker) *WorkBlockerDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkBlockerClient) DeleteOneID(id int) *WorkBlockerDeleteOne {
+	builder := c.Delete().Where(workblocker.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkBlockerDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkBlocker.
+func (c *WorkBlockerClient) Query() *WorkBlockerQuery {
+	return &WorkBlockerQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkBlocker},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkBlocker entity by its id.
+func (c *WorkBlockerClient) Get(ctx context.Context, id int) (*WorkBlocker, error) {
+	return c.Query().Where(workblocker.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkBlockerClient) GetX(ctx context.Context, id int) *WorkBlocker {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkBlocker.
+func (c *WorkBlockerClient) QueryPullRequest(_m *WorkBlocker) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workblocker.Table, workblocker.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workblocker.PullRequestTable, workblocker.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkBlocker.
+func (c *WorkBlockerClient) QueryTicket(_m *WorkBlocker) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workblocker.Table, workblocker.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workblocker.TicketTable, workblocker.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkAction queries the work_action edge of a WorkBlocker.
+func (c *WorkBlockerClient) QueryWorkAction(_m *WorkBlocker) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workblocker.Table, workblocker.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workblocker.WorkActionTable, workblocker.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkInsight queries the work_insight edge of a WorkBlocker.
+func (c *WorkBlockerClient) QueryWorkInsight(_m *WorkBlocker) *WorkInsightQuery {
+	query := (&WorkInsightClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workblocker.Table, workblocker.FieldID, id),
+			sqlgraph.To(workinsight.Table, workinsight.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workblocker.WorkInsightTable, workblocker.WorkInsightColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkBlocker.
+func (c *WorkBlockerClient) QueryLatestEvidence(_m *WorkBlocker) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workblocker.Table, workblocker.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workblocker.LatestEvidenceTable, workblocker.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkBlockerClient) Hooks() []Hook {
+	return c.hooks.WorkBlocker
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkBlockerClient) Interceptors() []Interceptor {
+	return c.inters.WorkBlocker
+}
+
+func (c *WorkBlockerClient) mutate(ctx context.Context, m *WorkBlockerMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkBlockerCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkBlockerUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkBlockerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkBlockerDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkBlocker mutation op: %q", m.Op())
+	}
+}
+
+// WorkBlockerImpactClient is a client for the WorkBlockerImpact schema.
+type WorkBlockerImpactClient struct {
+	config
+}
+
+// NewWorkBlockerImpactClient returns a client for the WorkBlockerImpact from the given config.
+func NewWorkBlockerImpactClient(c config) *WorkBlockerImpactClient {
+	return &WorkBlockerImpactClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workblockerimpact.Hooks(f(g(h())))`.
+func (c *WorkBlockerImpactClient) Use(hooks ...Hook) {
+	c.hooks.WorkBlockerImpact = append(c.hooks.WorkBlockerImpact, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workblockerimpact.Intercept(f(g(h())))`.
+func (c *WorkBlockerImpactClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkBlockerImpact = append(c.inters.WorkBlockerImpact, interceptors...)
+}
+
+// Create returns a builder for creating a WorkBlockerImpact entity.
+func (c *WorkBlockerImpactClient) Create() *WorkBlockerImpactCreate {
+	mutation := newWorkBlockerImpactMutation(c.config, OpCreate)
+	return &WorkBlockerImpactCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkBlockerImpact entities.
+func (c *WorkBlockerImpactClient) CreateBulk(builders ...*WorkBlockerImpactCreate) *WorkBlockerImpactCreateBulk {
+	return &WorkBlockerImpactCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkBlockerImpactClient) MapCreateBulk(slice any, setFunc func(*WorkBlockerImpactCreate, int)) *WorkBlockerImpactCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkBlockerImpactCreateBulk{err: fmt.Errorf("calling to WorkBlockerImpactClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkBlockerImpactCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkBlockerImpactCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkBlockerImpact.
+func (c *WorkBlockerImpactClient) Update() *WorkBlockerImpactUpdate {
+	mutation := newWorkBlockerImpactMutation(c.config, OpUpdate)
+	return &WorkBlockerImpactUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkBlockerImpactClient) UpdateOne(_m *WorkBlockerImpact) *WorkBlockerImpactUpdateOne {
+	mutation := newWorkBlockerImpactMutation(c.config, OpUpdateOne, withWorkBlockerImpact(_m))
+	return &WorkBlockerImpactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkBlockerImpactClient) UpdateOneID(id int) *WorkBlockerImpactUpdateOne {
+	mutation := newWorkBlockerImpactMutation(c.config, OpUpdateOne, withWorkBlockerImpactID(id))
+	return &WorkBlockerImpactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkBlockerImpact.
+func (c *WorkBlockerImpactClient) Delete() *WorkBlockerImpactDelete {
+	mutation := newWorkBlockerImpactMutation(c.config, OpDelete)
+	return &WorkBlockerImpactDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkBlockerImpactClient) DeleteOne(_m *WorkBlockerImpact) *WorkBlockerImpactDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkBlockerImpactClient) DeleteOneID(id int) *WorkBlockerImpactDeleteOne {
+	builder := c.Delete().Where(workblockerimpact.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkBlockerImpactDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkBlockerImpact.
+func (c *WorkBlockerImpactClient) Query() *WorkBlockerImpactQuery {
+	return &WorkBlockerImpactQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkBlockerImpact},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkBlockerImpact entity by its id.
+func (c *WorkBlockerImpactClient) Get(ctx context.Context, id int) (*WorkBlockerImpact, error) {
+	return c.Query().Where(workblockerimpact.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkBlockerImpactClient) GetX(ctx context.Context, id int) *WorkBlockerImpact {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkBlocker queries the work_blocker edge of a WorkBlockerImpact.
+func (c *WorkBlockerImpactClient) QueryWorkBlocker(_m *WorkBlockerImpact) *WorkBlockerQuery {
+	query := (&WorkBlockerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workblockerimpact.Table, workblockerimpact.FieldID, id),
+			sqlgraph.To(workblocker.Table, workblocker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workblockerimpact.WorkBlockerTable, workblockerimpact.WorkBlockerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkAction queries the work_action edge of a WorkBlockerImpact.
+func (c *WorkBlockerImpactClient) QueryWorkAction(_m *WorkBlockerImpact) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workblockerimpact.Table, workblockerimpact.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workblockerimpact.WorkActionTable, workblockerimpact.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkstream queries the workstream edge of a WorkBlockerImpact.
+func (c *WorkBlockerImpactClient) QueryWorkstream(_m *WorkBlockerImpact) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workblockerimpact.Table, workblockerimpact.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workblockerimpact.WorkstreamTable, workblockerimpact.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkBlockerImpact.
+func (c *WorkBlockerImpactClient) QueryPullRequest(_m *WorkBlockerImpact) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workblockerimpact.Table, workblockerimpact.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workblockerimpact.PullRequestTable, workblockerimpact.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkBlockerImpact.
+func (c *WorkBlockerImpactClient) QueryTicket(_m *WorkBlockerImpact) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workblockerimpact.Table, workblockerimpact.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workblockerimpact.TicketTable, workblockerimpact.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkBlockerImpact.
+func (c *WorkBlockerImpactClient) QueryLatestEvidence(_m *WorkBlockerImpact) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workblockerimpact.Table, workblockerimpact.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workblockerimpact.LatestEvidenceTable, workblockerimpact.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkBlockerImpactClient) Hooks() []Hook {
+	return c.hooks.WorkBlockerImpact
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkBlockerImpactClient) Interceptors() []Interceptor {
+	return c.inters.WorkBlockerImpact
+}
+
+func (c *WorkBlockerImpactClient) mutate(ctx context.Context, m *WorkBlockerImpactMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkBlockerImpactCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkBlockerImpactUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkBlockerImpactUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkBlockerImpactDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkBlockerImpact mutation op: %q", m.Op())
+	}
+}
+
+// WorkDecisionTargetEvaluationClient is a client for the WorkDecisionTargetEvaluation schema.
+type WorkDecisionTargetEvaluationClient struct {
+	config
+}
+
+// NewWorkDecisionTargetEvaluationClient returns a client for the WorkDecisionTargetEvaluation from the given config.
+func NewWorkDecisionTargetEvaluationClient(c config) *WorkDecisionTargetEvaluationClient {
+	return &WorkDecisionTargetEvaluationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workdecisiontargetevaluation.Hooks(f(g(h())))`.
+func (c *WorkDecisionTargetEvaluationClient) Use(hooks ...Hook) {
+	c.hooks.WorkDecisionTargetEvaluation = append(c.hooks.WorkDecisionTargetEvaluation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workdecisiontargetevaluation.Intercept(f(g(h())))`.
+func (c *WorkDecisionTargetEvaluationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkDecisionTargetEvaluation = append(c.inters.WorkDecisionTargetEvaluation, interceptors...)
+}
+
+// Create returns a builder for creating a WorkDecisionTargetEvaluation entity.
+func (c *WorkDecisionTargetEvaluationClient) Create() *WorkDecisionTargetEvaluationCreate {
+	mutation := newWorkDecisionTargetEvaluationMutation(c.config, OpCreate)
+	return &WorkDecisionTargetEvaluationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkDecisionTargetEvaluation entities.
+func (c *WorkDecisionTargetEvaluationClient) CreateBulk(builders ...*WorkDecisionTargetEvaluationCreate) *WorkDecisionTargetEvaluationCreateBulk {
+	return &WorkDecisionTargetEvaluationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkDecisionTargetEvaluationClient) MapCreateBulk(slice any, setFunc func(*WorkDecisionTargetEvaluationCreate, int)) *WorkDecisionTargetEvaluationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkDecisionTargetEvaluationCreateBulk{err: fmt.Errorf("calling to WorkDecisionTargetEvaluationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkDecisionTargetEvaluationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkDecisionTargetEvaluationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkDecisionTargetEvaluation.
+func (c *WorkDecisionTargetEvaluationClient) Update() *WorkDecisionTargetEvaluationUpdate {
+	mutation := newWorkDecisionTargetEvaluationMutation(c.config, OpUpdate)
+	return &WorkDecisionTargetEvaluationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkDecisionTargetEvaluationClient) UpdateOne(_m *WorkDecisionTargetEvaluation) *WorkDecisionTargetEvaluationUpdateOne {
+	mutation := newWorkDecisionTargetEvaluationMutation(c.config, OpUpdateOne, withWorkDecisionTargetEvaluation(_m))
+	return &WorkDecisionTargetEvaluationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkDecisionTargetEvaluationClient) UpdateOneID(id int) *WorkDecisionTargetEvaluationUpdateOne {
+	mutation := newWorkDecisionTargetEvaluationMutation(c.config, OpUpdateOne, withWorkDecisionTargetEvaluationID(id))
+	return &WorkDecisionTargetEvaluationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkDecisionTargetEvaluation.
+func (c *WorkDecisionTargetEvaluationClient) Delete() *WorkDecisionTargetEvaluationDelete {
+	mutation := newWorkDecisionTargetEvaluationMutation(c.config, OpDelete)
+	return &WorkDecisionTargetEvaluationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkDecisionTargetEvaluationClient) DeleteOne(_m *WorkDecisionTargetEvaluation) *WorkDecisionTargetEvaluationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkDecisionTargetEvaluationClient) DeleteOneID(id int) *WorkDecisionTargetEvaluationDeleteOne {
+	builder := c.Delete().Where(workdecisiontargetevaluation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkDecisionTargetEvaluationDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkDecisionTargetEvaluation.
+func (c *WorkDecisionTargetEvaluationClient) Query() *WorkDecisionTargetEvaluationQuery {
+	return &WorkDecisionTargetEvaluationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkDecisionTargetEvaluation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkDecisionTargetEvaluation entity by its id.
+func (c *WorkDecisionTargetEvaluationClient) Get(ctx context.Context, id int) (*WorkDecisionTargetEvaluation, error) {
+	return c.Query().Where(workdecisiontargetevaluation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkDecisionTargetEvaluationClient) GetX(ctx context.Context, id int) *WorkDecisionTargetEvaluation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkDecisionTargetEvaluation.
+func (c *WorkDecisionTargetEvaluationClient) QueryLatestEvidence(_m *WorkDecisionTargetEvaluation) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdecisiontargetevaluation.Table, workdecisiontargetevaluation.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdecisiontargetevaluation.LatestEvidenceTable, workdecisiontargetevaluation.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkDecisionTargetEvaluationClient) Hooks() []Hook {
+	return c.hooks.WorkDecisionTargetEvaluation
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkDecisionTargetEvaluationClient) Interceptors() []Interceptor {
+	return c.inters.WorkDecisionTargetEvaluation
+}
+
+func (c *WorkDecisionTargetEvaluationClient) mutate(ctx context.Context, m *WorkDecisionTargetEvaluationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkDecisionTargetEvaluationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkDecisionTargetEvaluationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkDecisionTargetEvaluationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkDecisionTargetEvaluationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkDecisionTargetEvaluation mutation op: %q", m.Op())
+	}
+}
+
+// WorkDependencyEdgeClient is a client for the WorkDependencyEdge schema.
+type WorkDependencyEdgeClient struct {
+	config
+}
+
+// NewWorkDependencyEdgeClient returns a client for the WorkDependencyEdge from the given config.
+func NewWorkDependencyEdgeClient(c config) *WorkDependencyEdgeClient {
+	return &WorkDependencyEdgeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workdependencyedge.Hooks(f(g(h())))`.
+func (c *WorkDependencyEdgeClient) Use(hooks ...Hook) {
+	c.hooks.WorkDependencyEdge = append(c.hooks.WorkDependencyEdge, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workdependencyedge.Intercept(f(g(h())))`.
+func (c *WorkDependencyEdgeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkDependencyEdge = append(c.inters.WorkDependencyEdge, interceptors...)
+}
+
+// Create returns a builder for creating a WorkDependencyEdge entity.
+func (c *WorkDependencyEdgeClient) Create() *WorkDependencyEdgeCreate {
+	mutation := newWorkDependencyEdgeMutation(c.config, OpCreate)
+	return &WorkDependencyEdgeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkDependencyEdge entities.
+func (c *WorkDependencyEdgeClient) CreateBulk(builders ...*WorkDependencyEdgeCreate) *WorkDependencyEdgeCreateBulk {
+	return &WorkDependencyEdgeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkDependencyEdgeClient) MapCreateBulk(slice any, setFunc func(*WorkDependencyEdgeCreate, int)) *WorkDependencyEdgeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkDependencyEdgeCreateBulk{err: fmt.Errorf("calling to WorkDependencyEdgeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkDependencyEdgeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkDependencyEdgeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkDependencyEdge.
+func (c *WorkDependencyEdgeClient) Update() *WorkDependencyEdgeUpdate {
+	mutation := newWorkDependencyEdgeMutation(c.config, OpUpdate)
+	return &WorkDependencyEdgeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkDependencyEdgeClient) UpdateOne(_m *WorkDependencyEdge) *WorkDependencyEdgeUpdateOne {
+	mutation := newWorkDependencyEdgeMutation(c.config, OpUpdateOne, withWorkDependencyEdge(_m))
+	return &WorkDependencyEdgeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkDependencyEdgeClient) UpdateOneID(id int) *WorkDependencyEdgeUpdateOne {
+	mutation := newWorkDependencyEdgeMutation(c.config, OpUpdateOne, withWorkDependencyEdgeID(id))
+	return &WorkDependencyEdgeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkDependencyEdge.
+func (c *WorkDependencyEdgeClient) Delete() *WorkDependencyEdgeDelete {
+	mutation := newWorkDependencyEdgeMutation(c.config, OpDelete)
+	return &WorkDependencyEdgeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkDependencyEdgeClient) DeleteOne(_m *WorkDependencyEdge) *WorkDependencyEdgeDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkDependencyEdgeClient) DeleteOneID(id int) *WorkDependencyEdgeDeleteOne {
+	builder := c.Delete().Where(workdependencyedge.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkDependencyEdgeDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkDependencyEdge.
+func (c *WorkDependencyEdgeClient) Query() *WorkDependencyEdgeQuery {
+	return &WorkDependencyEdgeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkDependencyEdge},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkDependencyEdge entity by its id.
+func (c *WorkDependencyEdgeClient) Get(ctx context.Context, id int) (*WorkDependencyEdge, error) {
+	return c.Query().Where(workdependencyedge.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkDependencyEdgeClient) GetX(ctx context.Context, id int) *WorkDependencyEdge {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkBlocker queries the work_blocker edge of a WorkDependencyEdge.
+func (c *WorkDependencyEdgeClient) QueryWorkBlocker(_m *WorkDependencyEdge) *WorkBlockerQuery {
+	query := (&WorkBlockerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyedge.Table, workdependencyedge.FieldID, id),
+			sqlgraph.To(workblocker.Table, workblocker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyedge.WorkBlockerTable, workdependencyedge.WorkBlockerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkAction queries the work_action edge of a WorkDependencyEdge.
+func (c *WorkDependencyEdgeClient) QueryWorkAction(_m *WorkDependencyEdge) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyedge.Table, workdependencyedge.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyedge.WorkActionTable, workdependencyedge.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicketPullRequest queries the ticket_pull_request edge of a WorkDependencyEdge.
+func (c *WorkDependencyEdgeClient) QueryTicketPullRequest(_m *WorkDependencyEdge) *TicketPullRequestQuery {
+	query := (&TicketPullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyedge.Table, workdependencyedge.FieldID, id),
+			sqlgraph.To(ticketpullrequest.Table, ticketpullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyedge.TicketPullRequestTable, workdependencyedge.TicketPullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkDependencyEdge.
+func (c *WorkDependencyEdgeClient) QueryLatestEvidence(_m *WorkDependencyEdge) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyedge.Table, workdependencyedge.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyedge.LatestEvidenceTable, workdependencyedge.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEndpoints queries the endpoints edge of a WorkDependencyEdge.
+func (c *WorkDependencyEdgeClient) QueryEndpoints(_m *WorkDependencyEdge) *WorkDependencyEndpointQuery {
+	query := (&WorkDependencyEndpointClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyedge.Table, workdependencyedge.FieldID, id),
+			sqlgraph.To(workdependencyendpoint.Table, workdependencyendpoint.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, workdependencyedge.EndpointsTable, workdependencyedge.EndpointsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkDependencyEdgeClient) Hooks() []Hook {
+	return c.hooks.WorkDependencyEdge
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkDependencyEdgeClient) Interceptors() []Interceptor {
+	return c.inters.WorkDependencyEdge
+}
+
+func (c *WorkDependencyEdgeClient) mutate(ctx context.Context, m *WorkDependencyEdgeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkDependencyEdgeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkDependencyEdgeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkDependencyEdgeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkDependencyEdgeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkDependencyEdge mutation op: %q", m.Op())
+	}
+}
+
+// WorkDependencyEndpointClient is a client for the WorkDependencyEndpoint schema.
+type WorkDependencyEndpointClient struct {
+	config
+}
+
+// NewWorkDependencyEndpointClient returns a client for the WorkDependencyEndpoint from the given config.
+func NewWorkDependencyEndpointClient(c config) *WorkDependencyEndpointClient {
+	return &WorkDependencyEndpointClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workdependencyendpoint.Hooks(f(g(h())))`.
+func (c *WorkDependencyEndpointClient) Use(hooks ...Hook) {
+	c.hooks.WorkDependencyEndpoint = append(c.hooks.WorkDependencyEndpoint, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workdependencyendpoint.Intercept(f(g(h())))`.
+func (c *WorkDependencyEndpointClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkDependencyEndpoint = append(c.inters.WorkDependencyEndpoint, interceptors...)
+}
+
+// Create returns a builder for creating a WorkDependencyEndpoint entity.
+func (c *WorkDependencyEndpointClient) Create() *WorkDependencyEndpointCreate {
+	mutation := newWorkDependencyEndpointMutation(c.config, OpCreate)
+	return &WorkDependencyEndpointCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkDependencyEndpoint entities.
+func (c *WorkDependencyEndpointClient) CreateBulk(builders ...*WorkDependencyEndpointCreate) *WorkDependencyEndpointCreateBulk {
+	return &WorkDependencyEndpointCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkDependencyEndpointClient) MapCreateBulk(slice any, setFunc func(*WorkDependencyEndpointCreate, int)) *WorkDependencyEndpointCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkDependencyEndpointCreateBulk{err: fmt.Errorf("calling to WorkDependencyEndpointClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkDependencyEndpointCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkDependencyEndpointCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkDependencyEndpoint.
+func (c *WorkDependencyEndpointClient) Update() *WorkDependencyEndpointUpdate {
+	mutation := newWorkDependencyEndpointMutation(c.config, OpUpdate)
+	return &WorkDependencyEndpointUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkDependencyEndpointClient) UpdateOne(_m *WorkDependencyEndpoint) *WorkDependencyEndpointUpdateOne {
+	mutation := newWorkDependencyEndpointMutation(c.config, OpUpdateOne, withWorkDependencyEndpoint(_m))
+	return &WorkDependencyEndpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkDependencyEndpointClient) UpdateOneID(id int) *WorkDependencyEndpointUpdateOne {
+	mutation := newWorkDependencyEndpointMutation(c.config, OpUpdateOne, withWorkDependencyEndpointID(id))
+	return &WorkDependencyEndpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkDependencyEndpoint.
+func (c *WorkDependencyEndpointClient) Delete() *WorkDependencyEndpointDelete {
+	mutation := newWorkDependencyEndpointMutation(c.config, OpDelete)
+	return &WorkDependencyEndpointDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkDependencyEndpointClient) DeleteOne(_m *WorkDependencyEndpoint) *WorkDependencyEndpointDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkDependencyEndpointClient) DeleteOneID(id int) *WorkDependencyEndpointDeleteOne {
+	builder := c.Delete().Where(workdependencyendpoint.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkDependencyEndpointDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkDependencyEndpoint.
+func (c *WorkDependencyEndpointClient) Query() *WorkDependencyEndpointQuery {
+	return &WorkDependencyEndpointQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkDependencyEndpoint},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkDependencyEndpoint entity by its id.
+func (c *WorkDependencyEndpointClient) Get(ctx context.Context, id int) (*WorkDependencyEndpoint, error) {
+	return c.Query().Where(workdependencyendpoint.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkDependencyEndpointClient) GetX(ctx context.Context, id int) *WorkDependencyEndpoint {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkDependencyEdge queries the work_dependency_edge edge of a WorkDependencyEndpoint.
+func (c *WorkDependencyEndpointClient) QueryWorkDependencyEdge(_m *WorkDependencyEndpoint) *WorkDependencyEdgeQuery {
+	query := (&WorkDependencyEdgeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyendpoint.Table, workdependencyendpoint.FieldID, id),
+			sqlgraph.To(workdependencyedge.Table, workdependencyedge.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyendpoint.WorkDependencyEdgeTable, workdependencyendpoint.WorkDependencyEdgeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkstream queries the workstream edge of a WorkDependencyEndpoint.
+func (c *WorkDependencyEndpointClient) QueryWorkstream(_m *WorkDependencyEndpoint) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyendpoint.Table, workdependencyendpoint.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyendpoint.WorkstreamTable, workdependencyendpoint.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkBlocker queries the work_blocker edge of a WorkDependencyEndpoint.
+func (c *WorkDependencyEndpointClient) QueryWorkBlocker(_m *WorkDependencyEndpoint) *WorkBlockerQuery {
+	query := (&WorkBlockerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyendpoint.Table, workdependencyendpoint.FieldID, id),
+			sqlgraph.To(workblocker.Table, workblocker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyendpoint.WorkBlockerTable, workdependencyendpoint.WorkBlockerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkAction queries the work_action edge of a WorkDependencyEndpoint.
+func (c *WorkDependencyEndpointClient) QueryWorkAction(_m *WorkDependencyEndpoint) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyendpoint.Table, workdependencyendpoint.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyendpoint.WorkActionTable, workdependencyendpoint.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkDependencyEndpoint.
+func (c *WorkDependencyEndpointClient) QueryTicket(_m *WorkDependencyEndpoint) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyendpoint.Table, workdependencyendpoint.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyendpoint.TicketTable, workdependencyendpoint.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkDependencyEndpoint.
+func (c *WorkDependencyEndpointClient) QueryPullRequest(_m *WorkDependencyEndpoint) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyendpoint.Table, workdependencyendpoint.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyendpoint.PullRequestTable, workdependencyendpoint.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkDependencyEndpoint.
+func (c *WorkDependencyEndpointClient) QueryLatestEvidence(_m *WorkDependencyEndpoint) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyendpoint.Table, workdependencyendpoint.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyendpoint.LatestEvidenceTable, workdependencyendpoint.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkDependencyEndpointClient) Hooks() []Hook {
+	return c.hooks.WorkDependencyEndpoint
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkDependencyEndpointClient) Interceptors() []Interceptor {
+	return c.inters.WorkDependencyEndpoint
+}
+
+func (c *WorkDependencyEndpointClient) mutate(ctx context.Context, m *WorkDependencyEndpointMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkDependencyEndpointCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkDependencyEndpointUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkDependencyEndpointUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkDependencyEndpointDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkDependencyEndpoint mutation op: %q", m.Op())
+	}
+}
+
+// WorkForecastEvaluationClient is a client for the WorkForecastEvaluation schema.
+type WorkForecastEvaluationClient struct {
+	config
+}
+
+// NewWorkForecastEvaluationClient returns a client for the WorkForecastEvaluation from the given config.
+func NewWorkForecastEvaluationClient(c config) *WorkForecastEvaluationClient {
+	return &WorkForecastEvaluationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workforecastevaluation.Hooks(f(g(h())))`.
+func (c *WorkForecastEvaluationClient) Use(hooks ...Hook) {
+	c.hooks.WorkForecastEvaluation = append(c.hooks.WorkForecastEvaluation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workforecastevaluation.Intercept(f(g(h())))`.
+func (c *WorkForecastEvaluationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkForecastEvaluation = append(c.inters.WorkForecastEvaluation, interceptors...)
+}
+
+// Create returns a builder for creating a WorkForecastEvaluation entity.
+func (c *WorkForecastEvaluationClient) Create() *WorkForecastEvaluationCreate {
+	mutation := newWorkForecastEvaluationMutation(c.config, OpCreate)
+	return &WorkForecastEvaluationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkForecastEvaluation entities.
+func (c *WorkForecastEvaluationClient) CreateBulk(builders ...*WorkForecastEvaluationCreate) *WorkForecastEvaluationCreateBulk {
+	return &WorkForecastEvaluationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkForecastEvaluationClient) MapCreateBulk(slice any, setFunc func(*WorkForecastEvaluationCreate, int)) *WorkForecastEvaluationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkForecastEvaluationCreateBulk{err: fmt.Errorf("calling to WorkForecastEvaluationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkForecastEvaluationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkForecastEvaluationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkForecastEvaluation.
+func (c *WorkForecastEvaluationClient) Update() *WorkForecastEvaluationUpdate {
+	mutation := newWorkForecastEvaluationMutation(c.config, OpUpdate)
+	return &WorkForecastEvaluationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkForecastEvaluationClient) UpdateOne(_m *WorkForecastEvaluation) *WorkForecastEvaluationUpdateOne {
+	mutation := newWorkForecastEvaluationMutation(c.config, OpUpdateOne, withWorkForecastEvaluation(_m))
+	return &WorkForecastEvaluationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkForecastEvaluationClient) UpdateOneID(id int) *WorkForecastEvaluationUpdateOne {
+	mutation := newWorkForecastEvaluationMutation(c.config, OpUpdateOne, withWorkForecastEvaluationID(id))
+	return &WorkForecastEvaluationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkForecastEvaluation.
+func (c *WorkForecastEvaluationClient) Delete() *WorkForecastEvaluationDelete {
+	mutation := newWorkForecastEvaluationMutation(c.config, OpDelete)
+	return &WorkForecastEvaluationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkForecastEvaluationClient) DeleteOne(_m *WorkForecastEvaluation) *WorkForecastEvaluationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkForecastEvaluationClient) DeleteOneID(id int) *WorkForecastEvaluationDeleteOne {
+	builder := c.Delete().Where(workforecastevaluation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkForecastEvaluationDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkForecastEvaluation.
+func (c *WorkForecastEvaluationClient) Query() *WorkForecastEvaluationQuery {
+	return &WorkForecastEvaluationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkForecastEvaluation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkForecastEvaluation entity by its id.
+func (c *WorkForecastEvaluationClient) Get(ctx context.Context, id int) (*WorkForecastEvaluation, error) {
+	return c.Query().Where(workforecastevaluation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkForecastEvaluationClient) GetX(ctx context.Context, id int) *WorkForecastEvaluation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkForecastEvaluation.
+func (c *WorkForecastEvaluationClient) QueryLatestEvidence(_m *WorkForecastEvaluation) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workforecastevaluation.Table, workforecastevaluation.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workforecastevaluation.LatestEvidenceTable, workforecastevaluation.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkForecastEvaluationClient) Hooks() []Hook {
+	return c.hooks.WorkForecastEvaluation
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkForecastEvaluationClient) Interceptors() []Interceptor {
+	return c.inters.WorkForecastEvaluation
+}
+
+func (c *WorkForecastEvaluationClient) mutate(ctx context.Context, m *WorkForecastEvaluationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkForecastEvaluationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkForecastEvaluationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkForecastEvaluationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkForecastEvaluationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkForecastEvaluation mutation op: %q", m.Op())
+	}
+}
+
+// WorkInsightClient is a client for the WorkInsight schema.
+type WorkInsightClient struct {
+	config
+}
+
+// NewWorkInsightClient returns a client for the WorkInsight from the given config.
+func NewWorkInsightClient(c config) *WorkInsightClient {
+	return &WorkInsightClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workinsight.Hooks(f(g(h())))`.
+func (c *WorkInsightClient) Use(hooks ...Hook) {
+	c.hooks.WorkInsight = append(c.hooks.WorkInsight, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workinsight.Intercept(f(g(h())))`.
+func (c *WorkInsightClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkInsight = append(c.inters.WorkInsight, interceptors...)
+}
+
+// Create returns a builder for creating a WorkInsight entity.
+func (c *WorkInsightClient) Create() *WorkInsightCreate {
+	mutation := newWorkInsightMutation(c.config, OpCreate)
+	return &WorkInsightCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkInsight entities.
+func (c *WorkInsightClient) CreateBulk(builders ...*WorkInsightCreate) *WorkInsightCreateBulk {
+	return &WorkInsightCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkInsightClient) MapCreateBulk(slice any, setFunc func(*WorkInsightCreate, int)) *WorkInsightCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkInsightCreateBulk{err: fmt.Errorf("calling to WorkInsightClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkInsightCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkInsightCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkInsight.
+func (c *WorkInsightClient) Update() *WorkInsightUpdate {
+	mutation := newWorkInsightMutation(c.config, OpUpdate)
+	return &WorkInsightUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkInsightClient) UpdateOne(_m *WorkInsight) *WorkInsightUpdateOne {
+	mutation := newWorkInsightMutation(c.config, OpUpdateOne, withWorkInsight(_m))
+	return &WorkInsightUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkInsightClient) UpdateOneID(id int) *WorkInsightUpdateOne {
+	mutation := newWorkInsightMutation(c.config, OpUpdateOne, withWorkInsightID(id))
+	return &WorkInsightUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkInsight.
+func (c *WorkInsightClient) Delete() *WorkInsightDelete {
+	mutation := newWorkInsightMutation(c.config, OpDelete)
+	return &WorkInsightDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkInsightClient) DeleteOne(_m *WorkInsight) *WorkInsightDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkInsightClient) DeleteOneID(id int) *WorkInsightDeleteOne {
+	builder := c.Delete().Where(workinsight.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkInsightDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkInsight.
+func (c *WorkInsightClient) Query() *WorkInsightQuery {
+	return &WorkInsightQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkInsight},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkInsight entity by its id.
+func (c *WorkInsightClient) Get(ctx context.Context, id int) (*WorkInsight, error) {
+	return c.Query().Where(workinsight.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkInsightClient) GetX(ctx context.Context, id int) *WorkInsight {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkInsight.
+func (c *WorkInsightClient) QueryPullRequest(_m *WorkInsight) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workinsight.Table, workinsight.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workinsight.PullRequestTable, workinsight.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkInsight.
+func (c *WorkInsightClient) QueryTicket(_m *WorkInsight) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workinsight.Table, workinsight.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workinsight.TicketTable, workinsight.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkInsight.
+func (c *WorkInsightClient) QueryLatestEvidence(_m *WorkInsight) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workinsight.Table, workinsight.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workinsight.LatestEvidenceTable, workinsight.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReviews queries the reviews edge of a WorkInsight.
+func (c *WorkInsightClient) QueryReviews(_m *WorkInsight) *WorkInsightReviewQuery {
+	query := (&WorkInsightReviewClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workinsight.Table, workinsight.FieldID, id),
+			sqlgraph.To(workinsightreview.Table, workinsightreview.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workinsight.ReviewsTable, workinsight.ReviewsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryActions queries the actions edge of a WorkInsight.
+func (c *WorkInsightClient) QueryActions(_m *WorkInsight) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workinsight.Table, workinsight.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, workinsight.ActionsTable, workinsight.ActionsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkInsightClient) Hooks() []Hook {
+	return c.hooks.WorkInsight
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkInsightClient) Interceptors() []Interceptor {
+	return c.inters.WorkInsight
+}
+
+func (c *WorkInsightClient) mutate(ctx context.Context, m *WorkInsightMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkInsightCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkInsightUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkInsightUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkInsightDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkInsight mutation op: %q", m.Op())
+	}
+}
+
+// WorkInsightEvaluationSnapshotClient is a client for the WorkInsightEvaluationSnapshot schema.
+type WorkInsightEvaluationSnapshotClient struct {
+	config
+}
+
+// NewWorkInsightEvaluationSnapshotClient returns a client for the WorkInsightEvaluationSnapshot from the given config.
+func NewWorkInsightEvaluationSnapshotClient(c config) *WorkInsightEvaluationSnapshotClient {
+	return &WorkInsightEvaluationSnapshotClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workinsightevaluationsnapshot.Hooks(f(g(h())))`.
+func (c *WorkInsightEvaluationSnapshotClient) Use(hooks ...Hook) {
+	c.hooks.WorkInsightEvaluationSnapshot = append(c.hooks.WorkInsightEvaluationSnapshot, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workinsightevaluationsnapshot.Intercept(f(g(h())))`.
+func (c *WorkInsightEvaluationSnapshotClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkInsightEvaluationSnapshot = append(c.inters.WorkInsightEvaluationSnapshot, interceptors...)
+}
+
+// Create returns a builder for creating a WorkInsightEvaluationSnapshot entity.
+func (c *WorkInsightEvaluationSnapshotClient) Create() *WorkInsightEvaluationSnapshotCreate {
+	mutation := newWorkInsightEvaluationSnapshotMutation(c.config, OpCreate)
+	return &WorkInsightEvaluationSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkInsightEvaluationSnapshot entities.
+func (c *WorkInsightEvaluationSnapshotClient) CreateBulk(builders ...*WorkInsightEvaluationSnapshotCreate) *WorkInsightEvaluationSnapshotCreateBulk {
+	return &WorkInsightEvaluationSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkInsightEvaluationSnapshotClient) MapCreateBulk(slice any, setFunc func(*WorkInsightEvaluationSnapshotCreate, int)) *WorkInsightEvaluationSnapshotCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkInsightEvaluationSnapshotCreateBulk{err: fmt.Errorf("calling to WorkInsightEvaluationSnapshotClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkInsightEvaluationSnapshotCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkInsightEvaluationSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkInsightEvaluationSnapshot.
+func (c *WorkInsightEvaluationSnapshotClient) Update() *WorkInsightEvaluationSnapshotUpdate {
+	mutation := newWorkInsightEvaluationSnapshotMutation(c.config, OpUpdate)
+	return &WorkInsightEvaluationSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkInsightEvaluationSnapshotClient) UpdateOne(_m *WorkInsightEvaluationSnapshot) *WorkInsightEvaluationSnapshotUpdateOne {
+	mutation := newWorkInsightEvaluationSnapshotMutation(c.config, OpUpdateOne, withWorkInsightEvaluationSnapshot(_m))
+	return &WorkInsightEvaluationSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkInsightEvaluationSnapshotClient) UpdateOneID(id int) *WorkInsightEvaluationSnapshotUpdateOne {
+	mutation := newWorkInsightEvaluationSnapshotMutation(c.config, OpUpdateOne, withWorkInsightEvaluationSnapshotID(id))
+	return &WorkInsightEvaluationSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkInsightEvaluationSnapshot.
+func (c *WorkInsightEvaluationSnapshotClient) Delete() *WorkInsightEvaluationSnapshotDelete {
+	mutation := newWorkInsightEvaluationSnapshotMutation(c.config, OpDelete)
+	return &WorkInsightEvaluationSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkInsightEvaluationSnapshotClient) DeleteOne(_m *WorkInsightEvaluationSnapshot) *WorkInsightEvaluationSnapshotDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkInsightEvaluationSnapshotClient) DeleteOneID(id int) *WorkInsightEvaluationSnapshotDeleteOne {
+	builder := c.Delete().Where(workinsightevaluationsnapshot.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkInsightEvaluationSnapshotDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkInsightEvaluationSnapshot.
+func (c *WorkInsightEvaluationSnapshotClient) Query() *WorkInsightEvaluationSnapshotQuery {
+	return &WorkInsightEvaluationSnapshotQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkInsightEvaluationSnapshot},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkInsightEvaluationSnapshot entity by its id.
+func (c *WorkInsightEvaluationSnapshotClient) Get(ctx context.Context, id int) (*WorkInsightEvaluationSnapshot, error) {
+	return c.Query().Where(workinsightevaluationsnapshot.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkInsightEvaluationSnapshotClient) GetX(ctx context.Context, id int) *WorkInsightEvaluationSnapshot {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryKindEvaluations queries the kind_evaluations edge of a WorkInsightEvaluationSnapshot.
+func (c *WorkInsightEvaluationSnapshotClient) QueryKindEvaluations(_m *WorkInsightEvaluationSnapshot) *WorkInsightKindEvaluationSnapshotQuery {
+	query := (&WorkInsightKindEvaluationSnapshotClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workinsightevaluationsnapshot.Table, workinsightevaluationsnapshot.FieldID, id),
+			sqlgraph.To(workinsightkindevaluationsnapshot.Table, workinsightkindevaluationsnapshot.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workinsightevaluationsnapshot.KindEvaluationsTable, workinsightevaluationsnapshot.KindEvaluationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkInsightEvaluationSnapshot.
+func (c *WorkInsightEvaluationSnapshotClient) QueryLatestEvidence(_m *WorkInsightEvaluationSnapshot) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workinsightevaluationsnapshot.Table, workinsightevaluationsnapshot.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workinsightevaluationsnapshot.LatestEvidenceTable, workinsightevaluationsnapshot.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkInsightEvaluationSnapshotClient) Hooks() []Hook {
+	return c.hooks.WorkInsightEvaluationSnapshot
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkInsightEvaluationSnapshotClient) Interceptors() []Interceptor {
+	return c.inters.WorkInsightEvaluationSnapshot
+}
+
+func (c *WorkInsightEvaluationSnapshotClient) mutate(ctx context.Context, m *WorkInsightEvaluationSnapshotMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkInsightEvaluationSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkInsightEvaluationSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkInsightEvaluationSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkInsightEvaluationSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkInsightEvaluationSnapshot mutation op: %q", m.Op())
+	}
+}
+
+// WorkInsightKindEvaluationSnapshotClient is a client for the WorkInsightKindEvaluationSnapshot schema.
+type WorkInsightKindEvaluationSnapshotClient struct {
+	config
+}
+
+// NewWorkInsightKindEvaluationSnapshotClient returns a client for the WorkInsightKindEvaluationSnapshot from the given config.
+func NewWorkInsightKindEvaluationSnapshotClient(c config) *WorkInsightKindEvaluationSnapshotClient {
+	return &WorkInsightKindEvaluationSnapshotClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workinsightkindevaluationsnapshot.Hooks(f(g(h())))`.
+func (c *WorkInsightKindEvaluationSnapshotClient) Use(hooks ...Hook) {
+	c.hooks.WorkInsightKindEvaluationSnapshot = append(c.hooks.WorkInsightKindEvaluationSnapshot, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workinsightkindevaluationsnapshot.Intercept(f(g(h())))`.
+func (c *WorkInsightKindEvaluationSnapshotClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkInsightKindEvaluationSnapshot = append(c.inters.WorkInsightKindEvaluationSnapshot, interceptors...)
+}
+
+// Create returns a builder for creating a WorkInsightKindEvaluationSnapshot entity.
+func (c *WorkInsightKindEvaluationSnapshotClient) Create() *WorkInsightKindEvaluationSnapshotCreate {
+	mutation := newWorkInsightKindEvaluationSnapshotMutation(c.config, OpCreate)
+	return &WorkInsightKindEvaluationSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkInsightKindEvaluationSnapshot entities.
+func (c *WorkInsightKindEvaluationSnapshotClient) CreateBulk(builders ...*WorkInsightKindEvaluationSnapshotCreate) *WorkInsightKindEvaluationSnapshotCreateBulk {
+	return &WorkInsightKindEvaluationSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkInsightKindEvaluationSnapshotClient) MapCreateBulk(slice any, setFunc func(*WorkInsightKindEvaluationSnapshotCreate, int)) *WorkInsightKindEvaluationSnapshotCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkInsightKindEvaluationSnapshotCreateBulk{err: fmt.Errorf("calling to WorkInsightKindEvaluationSnapshotClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkInsightKindEvaluationSnapshotCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkInsightKindEvaluationSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkInsightKindEvaluationSnapshot.
+func (c *WorkInsightKindEvaluationSnapshotClient) Update() *WorkInsightKindEvaluationSnapshotUpdate {
+	mutation := newWorkInsightKindEvaluationSnapshotMutation(c.config, OpUpdate)
+	return &WorkInsightKindEvaluationSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkInsightKindEvaluationSnapshotClient) UpdateOne(_m *WorkInsightKindEvaluationSnapshot) *WorkInsightKindEvaluationSnapshotUpdateOne {
+	mutation := newWorkInsightKindEvaluationSnapshotMutation(c.config, OpUpdateOne, withWorkInsightKindEvaluationSnapshot(_m))
+	return &WorkInsightKindEvaluationSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkInsightKindEvaluationSnapshotClient) UpdateOneID(id int) *WorkInsightKindEvaluationSnapshotUpdateOne {
+	mutation := newWorkInsightKindEvaluationSnapshotMutation(c.config, OpUpdateOne, withWorkInsightKindEvaluationSnapshotID(id))
+	return &WorkInsightKindEvaluationSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkInsightKindEvaluationSnapshot.
+func (c *WorkInsightKindEvaluationSnapshotClient) Delete() *WorkInsightKindEvaluationSnapshotDelete {
+	mutation := newWorkInsightKindEvaluationSnapshotMutation(c.config, OpDelete)
+	return &WorkInsightKindEvaluationSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkInsightKindEvaluationSnapshotClient) DeleteOne(_m *WorkInsightKindEvaluationSnapshot) *WorkInsightKindEvaluationSnapshotDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkInsightKindEvaluationSnapshotClient) DeleteOneID(id int) *WorkInsightKindEvaluationSnapshotDeleteOne {
+	builder := c.Delete().Where(workinsightkindevaluationsnapshot.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkInsightKindEvaluationSnapshotDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkInsightKindEvaluationSnapshot.
+func (c *WorkInsightKindEvaluationSnapshotClient) Query() *WorkInsightKindEvaluationSnapshotQuery {
+	return &WorkInsightKindEvaluationSnapshotQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkInsightKindEvaluationSnapshot},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkInsightKindEvaluationSnapshot entity by its id.
+func (c *WorkInsightKindEvaluationSnapshotClient) Get(ctx context.Context, id int) (*WorkInsightKindEvaluationSnapshot, error) {
+	return c.Query().Where(workinsightkindevaluationsnapshot.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkInsightKindEvaluationSnapshotClient) GetX(ctx context.Context, id int) *WorkInsightKindEvaluationSnapshot {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEvaluationSnapshot queries the evaluation_snapshot edge of a WorkInsightKindEvaluationSnapshot.
+func (c *WorkInsightKindEvaluationSnapshotClient) QueryEvaluationSnapshot(_m *WorkInsightKindEvaluationSnapshot) *WorkInsightEvaluationSnapshotQuery {
+	query := (&WorkInsightEvaluationSnapshotClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workinsightkindevaluationsnapshot.Table, workinsightkindevaluationsnapshot.FieldID, id),
+			sqlgraph.To(workinsightevaluationsnapshot.Table, workinsightevaluationsnapshot.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, workinsightkindevaluationsnapshot.EvaluationSnapshotTable, workinsightkindevaluationsnapshot.EvaluationSnapshotColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkInsightKindEvaluationSnapshot.
+func (c *WorkInsightKindEvaluationSnapshotClient) QueryLatestEvidence(_m *WorkInsightKindEvaluationSnapshot) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workinsightkindevaluationsnapshot.Table, workinsightkindevaluationsnapshot.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workinsightkindevaluationsnapshot.LatestEvidenceTable, workinsightkindevaluationsnapshot.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkInsightKindEvaluationSnapshotClient) Hooks() []Hook {
+	return c.hooks.WorkInsightKindEvaluationSnapshot
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkInsightKindEvaluationSnapshotClient) Interceptors() []Interceptor {
+	return c.inters.WorkInsightKindEvaluationSnapshot
+}
+
+func (c *WorkInsightKindEvaluationSnapshotClient) mutate(ctx context.Context, m *WorkInsightKindEvaluationSnapshotMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkInsightKindEvaluationSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkInsightKindEvaluationSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkInsightKindEvaluationSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkInsightKindEvaluationSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkInsightKindEvaluationSnapshot mutation op: %q", m.Op())
+	}
+}
+
+// WorkInsightReviewClient is a client for the WorkInsightReview schema.
+type WorkInsightReviewClient struct {
+	config
+}
+
+// NewWorkInsightReviewClient returns a client for the WorkInsightReview from the given config.
+func NewWorkInsightReviewClient(c config) *WorkInsightReviewClient {
+	return &WorkInsightReviewClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workinsightreview.Hooks(f(g(h())))`.
+func (c *WorkInsightReviewClient) Use(hooks ...Hook) {
+	c.hooks.WorkInsightReview = append(c.hooks.WorkInsightReview, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workinsightreview.Intercept(f(g(h())))`.
+func (c *WorkInsightReviewClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkInsightReview = append(c.inters.WorkInsightReview, interceptors...)
+}
+
+// Create returns a builder for creating a WorkInsightReview entity.
+func (c *WorkInsightReviewClient) Create() *WorkInsightReviewCreate {
+	mutation := newWorkInsightReviewMutation(c.config, OpCreate)
+	return &WorkInsightReviewCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkInsightReview entities.
+func (c *WorkInsightReviewClient) CreateBulk(builders ...*WorkInsightReviewCreate) *WorkInsightReviewCreateBulk {
+	return &WorkInsightReviewCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkInsightReviewClient) MapCreateBulk(slice any, setFunc func(*WorkInsightReviewCreate, int)) *WorkInsightReviewCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkInsightReviewCreateBulk{err: fmt.Errorf("calling to WorkInsightReviewClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkInsightReviewCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkInsightReviewCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkInsightReview.
+func (c *WorkInsightReviewClient) Update() *WorkInsightReviewUpdate {
+	mutation := newWorkInsightReviewMutation(c.config, OpUpdate)
+	return &WorkInsightReviewUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkInsightReviewClient) UpdateOne(_m *WorkInsightReview) *WorkInsightReviewUpdateOne {
+	mutation := newWorkInsightReviewMutation(c.config, OpUpdateOne, withWorkInsightReview(_m))
+	return &WorkInsightReviewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkInsightReviewClient) UpdateOneID(id int) *WorkInsightReviewUpdateOne {
+	mutation := newWorkInsightReviewMutation(c.config, OpUpdateOne, withWorkInsightReviewID(id))
+	return &WorkInsightReviewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkInsightReview.
+func (c *WorkInsightReviewClient) Delete() *WorkInsightReviewDelete {
+	mutation := newWorkInsightReviewMutation(c.config, OpDelete)
+	return &WorkInsightReviewDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkInsightReviewClient) DeleteOne(_m *WorkInsightReview) *WorkInsightReviewDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkInsightReviewClient) DeleteOneID(id int) *WorkInsightReviewDeleteOne {
+	builder := c.Delete().Where(workinsightreview.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkInsightReviewDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkInsightReview.
+func (c *WorkInsightReviewClient) Query() *WorkInsightReviewQuery {
+	return &WorkInsightReviewQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkInsightReview},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkInsightReview entity by its id.
+func (c *WorkInsightReviewClient) Get(ctx context.Context, id int) (*WorkInsightReview, error) {
+	return c.Query().Where(workinsightreview.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkInsightReviewClient) GetX(ctx context.Context, id int) *WorkInsightReview {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryInsight queries the insight edge of a WorkInsightReview.
+func (c *WorkInsightReviewClient) QueryInsight(_m *WorkInsightReview) *WorkInsightQuery {
+	query := (&WorkInsightClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workinsightreview.Table, workinsightreview.FieldID, id),
+			sqlgraph.To(workinsight.Table, workinsight.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, workinsightreview.InsightTable, workinsightreview.InsightColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkInsightReviewClient) Hooks() []Hook {
+	return c.hooks.WorkInsightReview
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkInsightReviewClient) Interceptors() []Interceptor {
+	return c.inters.WorkInsightReview
+}
+
+func (c *WorkInsightReviewClient) mutate(ctx context.Context, m *WorkInsightReviewMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkInsightReviewCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkInsightReviewUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkInsightReviewUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkInsightReviewDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkInsightReview mutation op: %q", m.Op())
+	}
+}
+
+// WorkItemForecastClient is a client for the WorkItemForecast schema.
+type WorkItemForecastClient struct {
+	config
+}
+
+// NewWorkItemForecastClient returns a client for the WorkItemForecast from the given config.
+func NewWorkItemForecastClient(c config) *WorkItemForecastClient {
+	return &WorkItemForecastClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workitemforecast.Hooks(f(g(h())))`.
+func (c *WorkItemForecastClient) Use(hooks ...Hook) {
+	c.hooks.WorkItemForecast = append(c.hooks.WorkItemForecast, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workitemforecast.Intercept(f(g(h())))`.
+func (c *WorkItemForecastClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkItemForecast = append(c.inters.WorkItemForecast, interceptors...)
+}
+
+// Create returns a builder for creating a WorkItemForecast entity.
+func (c *WorkItemForecastClient) Create() *WorkItemForecastCreate {
+	mutation := newWorkItemForecastMutation(c.config, OpCreate)
+	return &WorkItemForecastCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkItemForecast entities.
+func (c *WorkItemForecastClient) CreateBulk(builders ...*WorkItemForecastCreate) *WorkItemForecastCreateBulk {
+	return &WorkItemForecastCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkItemForecastClient) MapCreateBulk(slice any, setFunc func(*WorkItemForecastCreate, int)) *WorkItemForecastCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkItemForecastCreateBulk{err: fmt.Errorf("calling to WorkItemForecastClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkItemForecastCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkItemForecastCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkItemForecast.
+func (c *WorkItemForecastClient) Update() *WorkItemForecastUpdate {
+	mutation := newWorkItemForecastMutation(c.config, OpUpdate)
+	return &WorkItemForecastUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkItemForecastClient) UpdateOne(_m *WorkItemForecast) *WorkItemForecastUpdateOne {
+	mutation := newWorkItemForecastMutation(c.config, OpUpdateOne, withWorkItemForecast(_m))
+	return &WorkItemForecastUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkItemForecastClient) UpdateOneID(id int) *WorkItemForecastUpdateOne {
+	mutation := newWorkItemForecastMutation(c.config, OpUpdateOne, withWorkItemForecastID(id))
+	return &WorkItemForecastUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkItemForecast.
+func (c *WorkItemForecastClient) Delete() *WorkItemForecastDelete {
+	mutation := newWorkItemForecastMutation(c.config, OpDelete)
+	return &WorkItemForecastDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkItemForecastClient) DeleteOne(_m *WorkItemForecast) *WorkItemForecastDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkItemForecastClient) DeleteOneID(id int) *WorkItemForecastDeleteOne {
+	builder := c.Delete().Where(workitemforecast.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkItemForecastDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkItemForecast.
+func (c *WorkItemForecastClient) Query() *WorkItemForecastQuery {
+	return &WorkItemForecastQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkItemForecast},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkItemForecast entity by its id.
+func (c *WorkItemForecastClient) Get(ctx context.Context, id int) (*WorkItemForecast, error) {
+	return c.Query().Where(workitemforecast.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkItemForecastClient) GetX(ctx context.Context, id int) *WorkItemForecast {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkItemForecast.
+func (c *WorkItemForecastClient) QueryPullRequest(_m *WorkItemForecast) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemforecast.Table, workitemforecast.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemforecast.PullRequestTable, workitemforecast.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkItemForecast.
+func (c *WorkItemForecastClient) QueryTicket(_m *WorkItemForecast) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemforecast.Table, workitemforecast.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemforecast.TicketTable, workitemforecast.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkAction queries the work_action edge of a WorkItemForecast.
+func (c *WorkItemForecastClient) QueryWorkAction(_m *WorkItemForecast) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemforecast.Table, workitemforecast.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemforecast.WorkActionTable, workitemforecast.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryForecastEvaluation queries the forecast_evaluation edge of a WorkItemForecast.
+func (c *WorkItemForecastClient) QueryForecastEvaluation(_m *WorkItemForecast) *WorkForecastEvaluationQuery {
+	query := (&WorkForecastEvaluationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemforecast.Table, workitemforecast.FieldID, id),
+			sqlgraph.To(workforecastevaluation.Table, workforecastevaluation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemforecast.ForecastEvaluationTable, workitemforecast.ForecastEvaluationColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkItemForecast.
+func (c *WorkItemForecastClient) QueryLatestEvidence(_m *WorkItemForecast) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemforecast.Table, workitemforecast.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemforecast.LatestEvidenceTable, workitemforecast.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkItemForecastClient) Hooks() []Hook {
+	return c.hooks.WorkItemForecast
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkItemForecastClient) Interceptors() []Interceptor {
+	return c.inters.WorkItemForecast
+}
+
+func (c *WorkItemForecastClient) mutate(ctx context.Context, m *WorkItemForecastMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkItemForecastCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkItemForecastUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkItemForecastUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkItemForecastDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkItemForecast mutation op: %q", m.Op())
+	}
+}
+
+// WorkItemStateSnapshotClient is a client for the WorkItemStateSnapshot schema.
+type WorkItemStateSnapshotClient struct {
+	config
+}
+
+// NewWorkItemStateSnapshotClient returns a client for the WorkItemStateSnapshot from the given config.
+func NewWorkItemStateSnapshotClient(c config) *WorkItemStateSnapshotClient {
+	return &WorkItemStateSnapshotClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workitemstatesnapshot.Hooks(f(g(h())))`.
+func (c *WorkItemStateSnapshotClient) Use(hooks ...Hook) {
+	c.hooks.WorkItemStateSnapshot = append(c.hooks.WorkItemStateSnapshot, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workitemstatesnapshot.Intercept(f(g(h())))`.
+func (c *WorkItemStateSnapshotClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkItemStateSnapshot = append(c.inters.WorkItemStateSnapshot, interceptors...)
+}
+
+// Create returns a builder for creating a WorkItemStateSnapshot entity.
+func (c *WorkItemStateSnapshotClient) Create() *WorkItemStateSnapshotCreate {
+	mutation := newWorkItemStateSnapshotMutation(c.config, OpCreate)
+	return &WorkItemStateSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkItemStateSnapshot entities.
+func (c *WorkItemStateSnapshotClient) CreateBulk(builders ...*WorkItemStateSnapshotCreate) *WorkItemStateSnapshotCreateBulk {
+	return &WorkItemStateSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkItemStateSnapshotClient) MapCreateBulk(slice any, setFunc func(*WorkItemStateSnapshotCreate, int)) *WorkItemStateSnapshotCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkItemStateSnapshotCreateBulk{err: fmt.Errorf("calling to WorkItemStateSnapshotClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkItemStateSnapshotCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkItemStateSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkItemStateSnapshot.
+func (c *WorkItemStateSnapshotClient) Update() *WorkItemStateSnapshotUpdate {
+	mutation := newWorkItemStateSnapshotMutation(c.config, OpUpdate)
+	return &WorkItemStateSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkItemStateSnapshotClient) UpdateOne(_m *WorkItemStateSnapshot) *WorkItemStateSnapshotUpdateOne {
+	mutation := newWorkItemStateSnapshotMutation(c.config, OpUpdateOne, withWorkItemStateSnapshot(_m))
+	return &WorkItemStateSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkItemStateSnapshotClient) UpdateOneID(id int) *WorkItemStateSnapshotUpdateOne {
+	mutation := newWorkItemStateSnapshotMutation(c.config, OpUpdateOne, withWorkItemStateSnapshotID(id))
+	return &WorkItemStateSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkItemStateSnapshot.
+func (c *WorkItemStateSnapshotClient) Delete() *WorkItemStateSnapshotDelete {
+	mutation := newWorkItemStateSnapshotMutation(c.config, OpDelete)
+	return &WorkItemStateSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkItemStateSnapshotClient) DeleteOne(_m *WorkItemStateSnapshot) *WorkItemStateSnapshotDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkItemStateSnapshotClient) DeleteOneID(id int) *WorkItemStateSnapshotDeleteOne {
+	builder := c.Delete().Where(workitemstatesnapshot.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkItemStateSnapshotDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkItemStateSnapshot.
+func (c *WorkItemStateSnapshotClient) Query() *WorkItemStateSnapshotQuery {
+	return &WorkItemStateSnapshotQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkItemStateSnapshot},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkItemStateSnapshot entity by its id.
+func (c *WorkItemStateSnapshotClient) Get(ctx context.Context, id int) (*WorkItemStateSnapshot, error) {
+	return c.Query().Where(workitemstatesnapshot.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkItemStateSnapshotClient) GetX(ctx context.Context, id int) *WorkItemStateSnapshot {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkItemStateSnapshot.
+func (c *WorkItemStateSnapshotClient) QueryPullRequest(_m *WorkItemStateSnapshot) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemstatesnapshot.Table, workitemstatesnapshot.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemstatesnapshot.PullRequestTable, workitemstatesnapshot.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkItemStateSnapshot.
+func (c *WorkItemStateSnapshotClient) QueryTicket(_m *WorkItemStateSnapshot) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemstatesnapshot.Table, workitemstatesnapshot.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemstatesnapshot.TicketTable, workitemstatesnapshot.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkItemStateSnapshot.
+func (c *WorkItemStateSnapshotClient) QueryLatestEvidence(_m *WorkItemStateSnapshot) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemstatesnapshot.Table, workitemstatesnapshot.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemstatesnapshot.LatestEvidenceTable, workitemstatesnapshot.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFromTransitions queries the from_transitions edge of a WorkItemStateSnapshot.
+func (c *WorkItemStateSnapshotClient) QueryFromTransitions(_m *WorkItemStateSnapshot) *WorkItemStateTransitionQuery {
+	query := (&WorkItemStateTransitionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemstatesnapshot.Table, workitemstatesnapshot.FieldID, id),
+			sqlgraph.To(workitemstatetransition.Table, workitemstatetransition.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, workitemstatesnapshot.FromTransitionsTable, workitemstatesnapshot.FromTransitionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryToTransitions queries the to_transitions edge of a WorkItemStateSnapshot.
+func (c *WorkItemStateSnapshotClient) QueryToTransitions(_m *WorkItemStateSnapshot) *WorkItemStateTransitionQuery {
+	query := (&WorkItemStateTransitionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemstatesnapshot.Table, workitemstatesnapshot.FieldID, id),
+			sqlgraph.To(workitemstatetransition.Table, workitemstatetransition.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, workitemstatesnapshot.ToTransitionsTable, workitemstatesnapshot.ToTransitionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkItemStateSnapshotClient) Hooks() []Hook {
+	return c.hooks.WorkItemStateSnapshot
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkItemStateSnapshotClient) Interceptors() []Interceptor {
+	return c.inters.WorkItemStateSnapshot
+}
+
+func (c *WorkItemStateSnapshotClient) mutate(ctx context.Context, m *WorkItemStateSnapshotMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkItemStateSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkItemStateSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkItemStateSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkItemStateSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkItemStateSnapshot mutation op: %q", m.Op())
+	}
+}
+
+// WorkItemStateTransitionClient is a client for the WorkItemStateTransition schema.
+type WorkItemStateTransitionClient struct {
+	config
+}
+
+// NewWorkItemStateTransitionClient returns a client for the WorkItemStateTransition from the given config.
+func NewWorkItemStateTransitionClient(c config) *WorkItemStateTransitionClient {
+	return &WorkItemStateTransitionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workitemstatetransition.Hooks(f(g(h())))`.
+func (c *WorkItemStateTransitionClient) Use(hooks ...Hook) {
+	c.hooks.WorkItemStateTransition = append(c.hooks.WorkItemStateTransition, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workitemstatetransition.Intercept(f(g(h())))`.
+func (c *WorkItemStateTransitionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkItemStateTransition = append(c.inters.WorkItemStateTransition, interceptors...)
+}
+
+// Create returns a builder for creating a WorkItemStateTransition entity.
+func (c *WorkItemStateTransitionClient) Create() *WorkItemStateTransitionCreate {
+	mutation := newWorkItemStateTransitionMutation(c.config, OpCreate)
+	return &WorkItemStateTransitionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkItemStateTransition entities.
+func (c *WorkItemStateTransitionClient) CreateBulk(builders ...*WorkItemStateTransitionCreate) *WorkItemStateTransitionCreateBulk {
+	return &WorkItemStateTransitionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkItemStateTransitionClient) MapCreateBulk(slice any, setFunc func(*WorkItemStateTransitionCreate, int)) *WorkItemStateTransitionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkItemStateTransitionCreateBulk{err: fmt.Errorf("calling to WorkItemStateTransitionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkItemStateTransitionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkItemStateTransitionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkItemStateTransition.
+func (c *WorkItemStateTransitionClient) Update() *WorkItemStateTransitionUpdate {
+	mutation := newWorkItemStateTransitionMutation(c.config, OpUpdate)
+	return &WorkItemStateTransitionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkItemStateTransitionClient) UpdateOne(_m *WorkItemStateTransition) *WorkItemStateTransitionUpdateOne {
+	mutation := newWorkItemStateTransitionMutation(c.config, OpUpdateOne, withWorkItemStateTransition(_m))
+	return &WorkItemStateTransitionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkItemStateTransitionClient) UpdateOneID(id int) *WorkItemStateTransitionUpdateOne {
+	mutation := newWorkItemStateTransitionMutation(c.config, OpUpdateOne, withWorkItemStateTransitionID(id))
+	return &WorkItemStateTransitionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkItemStateTransition.
+func (c *WorkItemStateTransitionClient) Delete() *WorkItemStateTransitionDelete {
+	mutation := newWorkItemStateTransitionMutation(c.config, OpDelete)
+	return &WorkItemStateTransitionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkItemStateTransitionClient) DeleteOne(_m *WorkItemStateTransition) *WorkItemStateTransitionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkItemStateTransitionClient) DeleteOneID(id int) *WorkItemStateTransitionDeleteOne {
+	builder := c.Delete().Where(workitemstatetransition.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkItemStateTransitionDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkItemStateTransition.
+func (c *WorkItemStateTransitionClient) Query() *WorkItemStateTransitionQuery {
+	return &WorkItemStateTransitionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkItemStateTransition},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkItemStateTransition entity by its id.
+func (c *WorkItemStateTransitionClient) Get(ctx context.Context, id int) (*WorkItemStateTransition, error) {
+	return c.Query().Where(workitemstatetransition.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkItemStateTransitionClient) GetX(ctx context.Context, id int) *WorkItemStateTransition {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkItemStateTransition.
+func (c *WorkItemStateTransitionClient) QueryPullRequest(_m *WorkItemStateTransition) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemstatetransition.Table, workitemstatetransition.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemstatetransition.PullRequestTable, workitemstatetransition.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkItemStateTransition.
+func (c *WorkItemStateTransitionClient) QueryTicket(_m *WorkItemStateTransition) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemstatetransition.Table, workitemstatetransition.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemstatetransition.TicketTable, workitemstatetransition.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFromSnapshot queries the from_snapshot edge of a WorkItemStateTransition.
+func (c *WorkItemStateTransitionClient) QueryFromSnapshot(_m *WorkItemStateTransition) *WorkItemStateSnapshotQuery {
+	query := (&WorkItemStateSnapshotClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemstatetransition.Table, workitemstatetransition.FieldID, id),
+			sqlgraph.To(workitemstatesnapshot.Table, workitemstatesnapshot.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemstatetransition.FromSnapshotTable, workitemstatetransition.FromSnapshotColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryToSnapshot queries the to_snapshot edge of a WorkItemStateTransition.
+func (c *WorkItemStateTransitionClient) QueryToSnapshot(_m *WorkItemStateTransition) *WorkItemStateSnapshotQuery {
+	query := (&WorkItemStateSnapshotClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemstatetransition.Table, workitemstatetransition.FieldID, id),
+			sqlgraph.To(workitemstatesnapshot.Table, workitemstatesnapshot.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemstatetransition.ToSnapshotTable, workitemstatetransition.ToSnapshotColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkItemStateTransition.
+func (c *WorkItemStateTransitionClient) QueryLatestEvidence(_m *WorkItemStateTransition) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemstatetransition.Table, workitemstatetransition.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemstatetransition.LatestEvidenceTable, workitemstatetransition.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkItemStateTransitionClient) Hooks() []Hook {
+	return c.hooks.WorkItemStateTransition
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkItemStateTransitionClient) Interceptors() []Interceptor {
+	return c.inters.WorkItemStateTransition
+}
+
+func (c *WorkItemStateTransitionClient) mutate(ctx context.Context, m *WorkItemStateTransitionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkItemStateTransitionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkItemStateTransitionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkItemStateTransitionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkItemStateTransitionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkItemStateTransition mutation op: %q", m.Op())
 	}
 }
 
@@ -6279,6 +10357,3163 @@ func (c *WorkLensWindowClient) mutate(ctx context.Context, m *WorkLensWindowMuta
 	}
 }
 
+// WorkOwnerLoadSnapshotClient is a client for the WorkOwnerLoadSnapshot schema.
+type WorkOwnerLoadSnapshotClient struct {
+	config
+}
+
+// NewWorkOwnerLoadSnapshotClient returns a client for the WorkOwnerLoadSnapshot from the given config.
+func NewWorkOwnerLoadSnapshotClient(c config) *WorkOwnerLoadSnapshotClient {
+	return &WorkOwnerLoadSnapshotClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workownerloadsnapshot.Hooks(f(g(h())))`.
+func (c *WorkOwnerLoadSnapshotClient) Use(hooks ...Hook) {
+	c.hooks.WorkOwnerLoadSnapshot = append(c.hooks.WorkOwnerLoadSnapshot, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workownerloadsnapshot.Intercept(f(g(h())))`.
+func (c *WorkOwnerLoadSnapshotClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkOwnerLoadSnapshot = append(c.inters.WorkOwnerLoadSnapshot, interceptors...)
+}
+
+// Create returns a builder for creating a WorkOwnerLoadSnapshot entity.
+func (c *WorkOwnerLoadSnapshotClient) Create() *WorkOwnerLoadSnapshotCreate {
+	mutation := newWorkOwnerLoadSnapshotMutation(c.config, OpCreate)
+	return &WorkOwnerLoadSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkOwnerLoadSnapshot entities.
+func (c *WorkOwnerLoadSnapshotClient) CreateBulk(builders ...*WorkOwnerLoadSnapshotCreate) *WorkOwnerLoadSnapshotCreateBulk {
+	return &WorkOwnerLoadSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkOwnerLoadSnapshotClient) MapCreateBulk(slice any, setFunc func(*WorkOwnerLoadSnapshotCreate, int)) *WorkOwnerLoadSnapshotCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkOwnerLoadSnapshotCreateBulk{err: fmt.Errorf("calling to WorkOwnerLoadSnapshotClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkOwnerLoadSnapshotCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkOwnerLoadSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkOwnerLoadSnapshot.
+func (c *WorkOwnerLoadSnapshotClient) Update() *WorkOwnerLoadSnapshotUpdate {
+	mutation := newWorkOwnerLoadSnapshotMutation(c.config, OpUpdate)
+	return &WorkOwnerLoadSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkOwnerLoadSnapshotClient) UpdateOne(_m *WorkOwnerLoadSnapshot) *WorkOwnerLoadSnapshotUpdateOne {
+	mutation := newWorkOwnerLoadSnapshotMutation(c.config, OpUpdateOne, withWorkOwnerLoadSnapshot(_m))
+	return &WorkOwnerLoadSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkOwnerLoadSnapshotClient) UpdateOneID(id int) *WorkOwnerLoadSnapshotUpdateOne {
+	mutation := newWorkOwnerLoadSnapshotMutation(c.config, OpUpdateOne, withWorkOwnerLoadSnapshotID(id))
+	return &WorkOwnerLoadSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkOwnerLoadSnapshot.
+func (c *WorkOwnerLoadSnapshotClient) Delete() *WorkOwnerLoadSnapshotDelete {
+	mutation := newWorkOwnerLoadSnapshotMutation(c.config, OpDelete)
+	return &WorkOwnerLoadSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkOwnerLoadSnapshotClient) DeleteOne(_m *WorkOwnerLoadSnapshot) *WorkOwnerLoadSnapshotDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkOwnerLoadSnapshotClient) DeleteOneID(id int) *WorkOwnerLoadSnapshotDeleteOne {
+	builder := c.Delete().Where(workownerloadsnapshot.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkOwnerLoadSnapshotDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkOwnerLoadSnapshot.
+func (c *WorkOwnerLoadSnapshotClient) Query() *WorkOwnerLoadSnapshotQuery {
+	return &WorkOwnerLoadSnapshotQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkOwnerLoadSnapshot},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkOwnerLoadSnapshot entity by its id.
+func (c *WorkOwnerLoadSnapshotClient) Get(ctx context.Context, id int) (*WorkOwnerLoadSnapshot, error) {
+	return c.Query().Where(workownerloadsnapshot.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkOwnerLoadSnapshotClient) GetX(ctx context.Context, id int) *WorkOwnerLoadSnapshot {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkOwnerLoadSnapshot.
+func (c *WorkOwnerLoadSnapshotClient) QueryWorkstream(_m *WorkOwnerLoadSnapshot) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workownerloadsnapshot.Table, workownerloadsnapshot.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workownerloadsnapshot.WorkstreamTable, workownerloadsnapshot.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPerson queries the person edge of a WorkOwnerLoadSnapshot.
+func (c *WorkOwnerLoadSnapshotClient) QueryPerson(_m *WorkOwnerLoadSnapshot) *PersonQuery {
+	query := (&PersonClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workownerloadsnapshot.Table, workownerloadsnapshot.FieldID, id),
+			sqlgraph.To(person.Table, person.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workownerloadsnapshot.PersonTable, workownerloadsnapshot.PersonColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkOwnerLoadSnapshot.
+func (c *WorkOwnerLoadSnapshotClient) QueryLatestEvidence(_m *WorkOwnerLoadSnapshot) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workownerloadsnapshot.Table, workownerloadsnapshot.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workownerloadsnapshot.LatestEvidenceTable, workownerloadsnapshot.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkOwnerLoadSnapshotClient) Hooks() []Hook {
+	return c.hooks.WorkOwnerLoadSnapshot
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkOwnerLoadSnapshotClient) Interceptors() []Interceptor {
+	return c.inters.WorkOwnerLoadSnapshot
+}
+
+func (c *WorkOwnerLoadSnapshotClient) mutate(ctx context.Context, m *WorkOwnerLoadSnapshotMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkOwnerLoadSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkOwnerLoadSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkOwnerLoadSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkOwnerLoadSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkOwnerLoadSnapshot mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramAdversarialCheckClient is a client for the WorkProgramAdversarialCheck schema.
+type WorkProgramAdversarialCheckClient struct {
+	config
+}
+
+// NewWorkProgramAdversarialCheckClient returns a client for the WorkProgramAdversarialCheck from the given config.
+func NewWorkProgramAdversarialCheckClient(c config) *WorkProgramAdversarialCheckClient {
+	return &WorkProgramAdversarialCheckClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramadversarialcheck.Hooks(f(g(h())))`.
+func (c *WorkProgramAdversarialCheckClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramAdversarialCheck = append(c.hooks.WorkProgramAdversarialCheck, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramadversarialcheck.Intercept(f(g(h())))`.
+func (c *WorkProgramAdversarialCheckClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramAdversarialCheck = append(c.inters.WorkProgramAdversarialCheck, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramAdversarialCheck entity.
+func (c *WorkProgramAdversarialCheckClient) Create() *WorkProgramAdversarialCheckCreate {
+	mutation := newWorkProgramAdversarialCheckMutation(c.config, OpCreate)
+	return &WorkProgramAdversarialCheckCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramAdversarialCheck entities.
+func (c *WorkProgramAdversarialCheckClient) CreateBulk(builders ...*WorkProgramAdversarialCheckCreate) *WorkProgramAdversarialCheckCreateBulk {
+	return &WorkProgramAdversarialCheckCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramAdversarialCheckClient) MapCreateBulk(slice any, setFunc func(*WorkProgramAdversarialCheckCreate, int)) *WorkProgramAdversarialCheckCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramAdversarialCheckCreateBulk{err: fmt.Errorf("calling to WorkProgramAdversarialCheckClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramAdversarialCheckCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramAdversarialCheckCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramAdversarialCheck.
+func (c *WorkProgramAdversarialCheckClient) Update() *WorkProgramAdversarialCheckUpdate {
+	mutation := newWorkProgramAdversarialCheckMutation(c.config, OpUpdate)
+	return &WorkProgramAdversarialCheckUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramAdversarialCheckClient) UpdateOne(_m *WorkProgramAdversarialCheck) *WorkProgramAdversarialCheckUpdateOne {
+	mutation := newWorkProgramAdversarialCheckMutation(c.config, OpUpdateOne, withWorkProgramAdversarialCheck(_m))
+	return &WorkProgramAdversarialCheckUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramAdversarialCheckClient) UpdateOneID(id int) *WorkProgramAdversarialCheckUpdateOne {
+	mutation := newWorkProgramAdversarialCheckMutation(c.config, OpUpdateOne, withWorkProgramAdversarialCheckID(id))
+	return &WorkProgramAdversarialCheckUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramAdversarialCheck.
+func (c *WorkProgramAdversarialCheckClient) Delete() *WorkProgramAdversarialCheckDelete {
+	mutation := newWorkProgramAdversarialCheckMutation(c.config, OpDelete)
+	return &WorkProgramAdversarialCheckDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramAdversarialCheckClient) DeleteOne(_m *WorkProgramAdversarialCheck) *WorkProgramAdversarialCheckDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramAdversarialCheckClient) DeleteOneID(id int) *WorkProgramAdversarialCheckDeleteOne {
+	builder := c.Delete().Where(workprogramadversarialcheck.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramAdversarialCheckDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramAdversarialCheck.
+func (c *WorkProgramAdversarialCheckClient) Query() *WorkProgramAdversarialCheckQuery {
+	return &WorkProgramAdversarialCheckQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramAdversarialCheck},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramAdversarialCheck entity by its id.
+func (c *WorkProgramAdversarialCheckClient) Get(ctx context.Context, id int) (*WorkProgramAdversarialCheck, error) {
+	return c.Query().Where(workprogramadversarialcheck.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramAdversarialCheckClient) GetX(ctx context.Context, id int) *WorkProgramAdversarialCheck {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramAdversarialCheck.
+func (c *WorkProgramAdversarialCheckClient) QueryWorkstream(_m *WorkProgramAdversarialCheck) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramadversarialcheck.Table, workprogramadversarialcheck.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramadversarialcheck.WorkstreamTable, workprogramadversarialcheck.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramAdversarialCheck.
+func (c *WorkProgramAdversarialCheckClient) QueryLatestEvidence(_m *WorkProgramAdversarialCheck) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramadversarialcheck.Table, workprogramadversarialcheck.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramadversarialcheck.LatestEvidenceTable, workprogramadversarialcheck.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramAdversarialCheckClient) Hooks() []Hook {
+	return c.hooks.WorkProgramAdversarialCheck
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramAdversarialCheckClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramAdversarialCheck
+}
+
+func (c *WorkProgramAdversarialCheckClient) mutate(ctx context.Context, m *WorkProgramAdversarialCheckMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramAdversarialCheckCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramAdversarialCheckUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramAdversarialCheckUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramAdversarialCheckDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramAdversarialCheck mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramAutomationReadinessClient is a client for the WorkProgramAutomationReadiness schema.
+type WorkProgramAutomationReadinessClient struct {
+	config
+}
+
+// NewWorkProgramAutomationReadinessClient returns a client for the WorkProgramAutomationReadiness from the given config.
+func NewWorkProgramAutomationReadinessClient(c config) *WorkProgramAutomationReadinessClient {
+	return &WorkProgramAutomationReadinessClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramautomationreadiness.Hooks(f(g(h())))`.
+func (c *WorkProgramAutomationReadinessClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramAutomationReadiness = append(c.hooks.WorkProgramAutomationReadiness, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramautomationreadiness.Intercept(f(g(h())))`.
+func (c *WorkProgramAutomationReadinessClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramAutomationReadiness = append(c.inters.WorkProgramAutomationReadiness, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramAutomationReadiness entity.
+func (c *WorkProgramAutomationReadinessClient) Create() *WorkProgramAutomationReadinessCreate {
+	mutation := newWorkProgramAutomationReadinessMutation(c.config, OpCreate)
+	return &WorkProgramAutomationReadinessCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramAutomationReadiness entities.
+func (c *WorkProgramAutomationReadinessClient) CreateBulk(builders ...*WorkProgramAutomationReadinessCreate) *WorkProgramAutomationReadinessCreateBulk {
+	return &WorkProgramAutomationReadinessCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramAutomationReadinessClient) MapCreateBulk(slice any, setFunc func(*WorkProgramAutomationReadinessCreate, int)) *WorkProgramAutomationReadinessCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramAutomationReadinessCreateBulk{err: fmt.Errorf("calling to WorkProgramAutomationReadinessClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramAutomationReadinessCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramAutomationReadinessCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramAutomationReadiness.
+func (c *WorkProgramAutomationReadinessClient) Update() *WorkProgramAutomationReadinessUpdate {
+	mutation := newWorkProgramAutomationReadinessMutation(c.config, OpUpdate)
+	return &WorkProgramAutomationReadinessUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramAutomationReadinessClient) UpdateOne(_m *WorkProgramAutomationReadiness) *WorkProgramAutomationReadinessUpdateOne {
+	mutation := newWorkProgramAutomationReadinessMutation(c.config, OpUpdateOne, withWorkProgramAutomationReadiness(_m))
+	return &WorkProgramAutomationReadinessUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramAutomationReadinessClient) UpdateOneID(id int) *WorkProgramAutomationReadinessUpdateOne {
+	mutation := newWorkProgramAutomationReadinessMutation(c.config, OpUpdateOne, withWorkProgramAutomationReadinessID(id))
+	return &WorkProgramAutomationReadinessUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramAutomationReadiness.
+func (c *WorkProgramAutomationReadinessClient) Delete() *WorkProgramAutomationReadinessDelete {
+	mutation := newWorkProgramAutomationReadinessMutation(c.config, OpDelete)
+	return &WorkProgramAutomationReadinessDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramAutomationReadinessClient) DeleteOne(_m *WorkProgramAutomationReadiness) *WorkProgramAutomationReadinessDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramAutomationReadinessClient) DeleteOneID(id int) *WorkProgramAutomationReadinessDeleteOne {
+	builder := c.Delete().Where(workprogramautomationreadiness.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramAutomationReadinessDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramAutomationReadiness.
+func (c *WorkProgramAutomationReadinessClient) Query() *WorkProgramAutomationReadinessQuery {
+	return &WorkProgramAutomationReadinessQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramAutomationReadiness},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramAutomationReadiness entity by its id.
+func (c *WorkProgramAutomationReadinessClient) Get(ctx context.Context, id int) (*WorkProgramAutomationReadiness, error) {
+	return c.Query().Where(workprogramautomationreadiness.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramAutomationReadinessClient) GetX(ctx context.Context, id int) *WorkProgramAutomationReadiness {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramAutomationReadiness.
+func (c *WorkProgramAutomationReadinessClient) QueryWorkstream(_m *WorkProgramAutomationReadiness) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramautomationreadiness.Table, workprogramautomationreadiness.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramautomationreadiness.WorkstreamTable, workprogramautomationreadiness.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramAutomationReadiness.
+func (c *WorkProgramAutomationReadinessClient) QueryLatestEvidence(_m *WorkProgramAutomationReadiness) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramautomationreadiness.Table, workprogramautomationreadiness.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramautomationreadiness.LatestEvidenceTable, workprogramautomationreadiness.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramAutomationReadinessClient) Hooks() []Hook {
+	return c.hooks.WorkProgramAutomationReadiness
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramAutomationReadinessClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramAutomationReadiness
+}
+
+func (c *WorkProgramAutomationReadinessClient) mutate(ctx context.Context, m *WorkProgramAutomationReadinessMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramAutomationReadinessCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramAutomationReadinessUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramAutomationReadinessUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramAutomationReadinessDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramAutomationReadiness mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramBriefCaveatClient is a client for the WorkProgramBriefCaveat schema.
+type WorkProgramBriefCaveatClient struct {
+	config
+}
+
+// NewWorkProgramBriefCaveatClient returns a client for the WorkProgramBriefCaveat from the given config.
+func NewWorkProgramBriefCaveatClient(c config) *WorkProgramBriefCaveatClient {
+	return &WorkProgramBriefCaveatClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogrambriefcaveat.Hooks(f(g(h())))`.
+func (c *WorkProgramBriefCaveatClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramBriefCaveat = append(c.hooks.WorkProgramBriefCaveat, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogrambriefcaveat.Intercept(f(g(h())))`.
+func (c *WorkProgramBriefCaveatClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramBriefCaveat = append(c.inters.WorkProgramBriefCaveat, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramBriefCaveat entity.
+func (c *WorkProgramBriefCaveatClient) Create() *WorkProgramBriefCaveatCreate {
+	mutation := newWorkProgramBriefCaveatMutation(c.config, OpCreate)
+	return &WorkProgramBriefCaveatCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramBriefCaveat entities.
+func (c *WorkProgramBriefCaveatClient) CreateBulk(builders ...*WorkProgramBriefCaveatCreate) *WorkProgramBriefCaveatCreateBulk {
+	return &WorkProgramBriefCaveatCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramBriefCaveatClient) MapCreateBulk(slice any, setFunc func(*WorkProgramBriefCaveatCreate, int)) *WorkProgramBriefCaveatCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramBriefCaveatCreateBulk{err: fmt.Errorf("calling to WorkProgramBriefCaveatClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramBriefCaveatCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramBriefCaveatCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramBriefCaveat.
+func (c *WorkProgramBriefCaveatClient) Update() *WorkProgramBriefCaveatUpdate {
+	mutation := newWorkProgramBriefCaveatMutation(c.config, OpUpdate)
+	return &WorkProgramBriefCaveatUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramBriefCaveatClient) UpdateOne(_m *WorkProgramBriefCaveat) *WorkProgramBriefCaveatUpdateOne {
+	mutation := newWorkProgramBriefCaveatMutation(c.config, OpUpdateOne, withWorkProgramBriefCaveat(_m))
+	return &WorkProgramBriefCaveatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramBriefCaveatClient) UpdateOneID(id int) *WorkProgramBriefCaveatUpdateOne {
+	mutation := newWorkProgramBriefCaveatMutation(c.config, OpUpdateOne, withWorkProgramBriefCaveatID(id))
+	return &WorkProgramBriefCaveatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramBriefCaveat.
+func (c *WorkProgramBriefCaveatClient) Delete() *WorkProgramBriefCaveatDelete {
+	mutation := newWorkProgramBriefCaveatMutation(c.config, OpDelete)
+	return &WorkProgramBriefCaveatDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramBriefCaveatClient) DeleteOne(_m *WorkProgramBriefCaveat) *WorkProgramBriefCaveatDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramBriefCaveatClient) DeleteOneID(id int) *WorkProgramBriefCaveatDeleteOne {
+	builder := c.Delete().Where(workprogrambriefcaveat.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramBriefCaveatDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramBriefCaveat.
+func (c *WorkProgramBriefCaveatClient) Query() *WorkProgramBriefCaveatQuery {
+	return &WorkProgramBriefCaveatQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramBriefCaveat},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramBriefCaveat entity by its id.
+func (c *WorkProgramBriefCaveatClient) Get(ctx context.Context, id int) (*WorkProgramBriefCaveat, error) {
+	return c.Query().Where(workprogrambriefcaveat.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramBriefCaveatClient) GetX(ctx context.Context, id int) *WorkProgramBriefCaveat {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramBriefCaveat.
+func (c *WorkProgramBriefCaveatClient) QueryWorkstream(_m *WorkProgramBriefCaveat) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogrambriefcaveat.Table, workprogrambriefcaveat.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogrambriefcaveat.WorkstreamTable, workprogrambriefcaveat.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramBriefCaveat.
+func (c *WorkProgramBriefCaveatClient) QueryLatestEvidence(_m *WorkProgramBriefCaveat) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogrambriefcaveat.Table, workprogrambriefcaveat.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogrambriefcaveat.LatestEvidenceTable, workprogrambriefcaveat.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramBriefCaveatClient) Hooks() []Hook {
+	return c.hooks.WorkProgramBriefCaveat
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramBriefCaveatClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramBriefCaveat
+}
+
+func (c *WorkProgramBriefCaveatClient) mutate(ctx context.Context, m *WorkProgramBriefCaveatMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramBriefCaveatCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramBriefCaveatUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramBriefCaveatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramBriefCaveatDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramBriefCaveat mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramBriefSnapshotClient is a client for the WorkProgramBriefSnapshot schema.
+type WorkProgramBriefSnapshotClient struct {
+	config
+}
+
+// NewWorkProgramBriefSnapshotClient returns a client for the WorkProgramBriefSnapshot from the given config.
+func NewWorkProgramBriefSnapshotClient(c config) *WorkProgramBriefSnapshotClient {
+	return &WorkProgramBriefSnapshotClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogrambriefsnapshot.Hooks(f(g(h())))`.
+func (c *WorkProgramBriefSnapshotClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramBriefSnapshot = append(c.hooks.WorkProgramBriefSnapshot, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogrambriefsnapshot.Intercept(f(g(h())))`.
+func (c *WorkProgramBriefSnapshotClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramBriefSnapshot = append(c.inters.WorkProgramBriefSnapshot, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramBriefSnapshot entity.
+func (c *WorkProgramBriefSnapshotClient) Create() *WorkProgramBriefSnapshotCreate {
+	mutation := newWorkProgramBriefSnapshotMutation(c.config, OpCreate)
+	return &WorkProgramBriefSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramBriefSnapshot entities.
+func (c *WorkProgramBriefSnapshotClient) CreateBulk(builders ...*WorkProgramBriefSnapshotCreate) *WorkProgramBriefSnapshotCreateBulk {
+	return &WorkProgramBriefSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramBriefSnapshotClient) MapCreateBulk(slice any, setFunc func(*WorkProgramBriefSnapshotCreate, int)) *WorkProgramBriefSnapshotCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramBriefSnapshotCreateBulk{err: fmt.Errorf("calling to WorkProgramBriefSnapshotClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramBriefSnapshotCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramBriefSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramBriefSnapshot.
+func (c *WorkProgramBriefSnapshotClient) Update() *WorkProgramBriefSnapshotUpdate {
+	mutation := newWorkProgramBriefSnapshotMutation(c.config, OpUpdate)
+	return &WorkProgramBriefSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramBriefSnapshotClient) UpdateOne(_m *WorkProgramBriefSnapshot) *WorkProgramBriefSnapshotUpdateOne {
+	mutation := newWorkProgramBriefSnapshotMutation(c.config, OpUpdateOne, withWorkProgramBriefSnapshot(_m))
+	return &WorkProgramBriefSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramBriefSnapshotClient) UpdateOneID(id int) *WorkProgramBriefSnapshotUpdateOne {
+	mutation := newWorkProgramBriefSnapshotMutation(c.config, OpUpdateOne, withWorkProgramBriefSnapshotID(id))
+	return &WorkProgramBriefSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramBriefSnapshot.
+func (c *WorkProgramBriefSnapshotClient) Delete() *WorkProgramBriefSnapshotDelete {
+	mutation := newWorkProgramBriefSnapshotMutation(c.config, OpDelete)
+	return &WorkProgramBriefSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramBriefSnapshotClient) DeleteOne(_m *WorkProgramBriefSnapshot) *WorkProgramBriefSnapshotDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramBriefSnapshotClient) DeleteOneID(id int) *WorkProgramBriefSnapshotDeleteOne {
+	builder := c.Delete().Where(workprogrambriefsnapshot.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramBriefSnapshotDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramBriefSnapshot.
+func (c *WorkProgramBriefSnapshotClient) Query() *WorkProgramBriefSnapshotQuery {
+	return &WorkProgramBriefSnapshotQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramBriefSnapshot},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramBriefSnapshot entity by its id.
+func (c *WorkProgramBriefSnapshotClient) Get(ctx context.Context, id int) (*WorkProgramBriefSnapshot, error) {
+	return c.Query().Where(workprogrambriefsnapshot.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramBriefSnapshotClient) GetX(ctx context.Context, id int) *WorkProgramBriefSnapshot {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramBriefSnapshot.
+func (c *WorkProgramBriefSnapshotClient) QueryWorkstream(_m *WorkProgramBriefSnapshot) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogrambriefsnapshot.Table, workprogrambriefsnapshot.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogrambriefsnapshot.WorkstreamTable, workprogrambriefsnapshot.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramBriefSnapshot.
+func (c *WorkProgramBriefSnapshotClient) QueryLatestEvidence(_m *WorkProgramBriefSnapshot) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogrambriefsnapshot.Table, workprogrambriefsnapshot.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogrambriefsnapshot.LatestEvidenceTable, workprogrambriefsnapshot.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramBriefSnapshotClient) Hooks() []Hook {
+	return c.hooks.WorkProgramBriefSnapshot
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramBriefSnapshotClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramBriefSnapshot
+}
+
+func (c *WorkProgramBriefSnapshotClient) mutate(ctx context.Context, m *WorkProgramBriefSnapshotMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramBriefSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramBriefSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramBriefSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramBriefSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramBriefSnapshot mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramEvidenceNeedClient is a client for the WorkProgramEvidenceNeed schema.
+type WorkProgramEvidenceNeedClient struct {
+	config
+}
+
+// NewWorkProgramEvidenceNeedClient returns a client for the WorkProgramEvidenceNeed from the given config.
+func NewWorkProgramEvidenceNeedClient(c config) *WorkProgramEvidenceNeedClient {
+	return &WorkProgramEvidenceNeedClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramevidenceneed.Hooks(f(g(h())))`.
+func (c *WorkProgramEvidenceNeedClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramEvidenceNeed = append(c.hooks.WorkProgramEvidenceNeed, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramevidenceneed.Intercept(f(g(h())))`.
+func (c *WorkProgramEvidenceNeedClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramEvidenceNeed = append(c.inters.WorkProgramEvidenceNeed, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramEvidenceNeed entity.
+func (c *WorkProgramEvidenceNeedClient) Create() *WorkProgramEvidenceNeedCreate {
+	mutation := newWorkProgramEvidenceNeedMutation(c.config, OpCreate)
+	return &WorkProgramEvidenceNeedCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramEvidenceNeed entities.
+func (c *WorkProgramEvidenceNeedClient) CreateBulk(builders ...*WorkProgramEvidenceNeedCreate) *WorkProgramEvidenceNeedCreateBulk {
+	return &WorkProgramEvidenceNeedCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramEvidenceNeedClient) MapCreateBulk(slice any, setFunc func(*WorkProgramEvidenceNeedCreate, int)) *WorkProgramEvidenceNeedCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramEvidenceNeedCreateBulk{err: fmt.Errorf("calling to WorkProgramEvidenceNeedClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramEvidenceNeedCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramEvidenceNeedCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramEvidenceNeed.
+func (c *WorkProgramEvidenceNeedClient) Update() *WorkProgramEvidenceNeedUpdate {
+	mutation := newWorkProgramEvidenceNeedMutation(c.config, OpUpdate)
+	return &WorkProgramEvidenceNeedUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramEvidenceNeedClient) UpdateOne(_m *WorkProgramEvidenceNeed) *WorkProgramEvidenceNeedUpdateOne {
+	mutation := newWorkProgramEvidenceNeedMutation(c.config, OpUpdateOne, withWorkProgramEvidenceNeed(_m))
+	return &WorkProgramEvidenceNeedUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramEvidenceNeedClient) UpdateOneID(id int) *WorkProgramEvidenceNeedUpdateOne {
+	mutation := newWorkProgramEvidenceNeedMutation(c.config, OpUpdateOne, withWorkProgramEvidenceNeedID(id))
+	return &WorkProgramEvidenceNeedUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramEvidenceNeed.
+func (c *WorkProgramEvidenceNeedClient) Delete() *WorkProgramEvidenceNeedDelete {
+	mutation := newWorkProgramEvidenceNeedMutation(c.config, OpDelete)
+	return &WorkProgramEvidenceNeedDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramEvidenceNeedClient) DeleteOne(_m *WorkProgramEvidenceNeed) *WorkProgramEvidenceNeedDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramEvidenceNeedClient) DeleteOneID(id int) *WorkProgramEvidenceNeedDeleteOne {
+	builder := c.Delete().Where(workprogramevidenceneed.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramEvidenceNeedDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramEvidenceNeed.
+func (c *WorkProgramEvidenceNeedClient) Query() *WorkProgramEvidenceNeedQuery {
+	return &WorkProgramEvidenceNeedQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramEvidenceNeed},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramEvidenceNeed entity by its id.
+func (c *WorkProgramEvidenceNeedClient) Get(ctx context.Context, id int) (*WorkProgramEvidenceNeed, error) {
+	return c.Query().Where(workprogramevidenceneed.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramEvidenceNeedClient) GetX(ctx context.Context, id int) *WorkProgramEvidenceNeed {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramEvidenceNeed.
+func (c *WorkProgramEvidenceNeedClient) QueryWorkstream(_m *WorkProgramEvidenceNeed) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramevidenceneed.Table, workprogramevidenceneed.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramevidenceneed.WorkstreamTable, workprogramevidenceneed.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkAction queries the work_action edge of a WorkProgramEvidenceNeed.
+func (c *WorkProgramEvidenceNeedClient) QueryWorkAction(_m *WorkProgramEvidenceNeed) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramevidenceneed.Table, workprogramevidenceneed.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramevidenceneed.WorkActionTable, workprogramevidenceneed.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryQualityGate queries the quality_gate edge of a WorkProgramEvidenceNeed.
+func (c *WorkProgramEvidenceNeedClient) QueryQualityGate(_m *WorkProgramEvidenceNeed) *WorkProgramQualityGateQuery {
+	query := (&WorkProgramQualityGateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramevidenceneed.Table, workprogramevidenceneed.FieldID, id),
+			sqlgraph.To(workprogramqualitygate.Table, workprogramqualitygate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramevidenceneed.QualityGateTable, workprogramevidenceneed.QualityGateColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramEvidenceNeed.
+func (c *WorkProgramEvidenceNeedClient) QueryLatestEvidence(_m *WorkProgramEvidenceNeed) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramevidenceneed.Table, workprogramevidenceneed.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramevidenceneed.LatestEvidenceTable, workprogramevidenceneed.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramEvidenceNeedClient) Hooks() []Hook {
+	return c.hooks.WorkProgramEvidenceNeed
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramEvidenceNeedClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramEvidenceNeed
+}
+
+func (c *WorkProgramEvidenceNeedClient) mutate(ctx context.Context, m *WorkProgramEvidenceNeedMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramEvidenceNeedCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramEvidenceNeedUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramEvidenceNeedUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramEvidenceNeedDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramEvidenceNeed mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramItemClient is a client for the WorkProgramItem schema.
+type WorkProgramItemClient struct {
+	config
+}
+
+// NewWorkProgramItemClient returns a client for the WorkProgramItem from the given config.
+func NewWorkProgramItemClient(c config) *WorkProgramItemClient {
+	return &WorkProgramItemClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramitem.Hooks(f(g(h())))`.
+func (c *WorkProgramItemClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramItem = append(c.hooks.WorkProgramItem, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramitem.Intercept(f(g(h())))`.
+func (c *WorkProgramItemClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramItem = append(c.inters.WorkProgramItem, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramItem entity.
+func (c *WorkProgramItemClient) Create() *WorkProgramItemCreate {
+	mutation := newWorkProgramItemMutation(c.config, OpCreate)
+	return &WorkProgramItemCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramItem entities.
+func (c *WorkProgramItemClient) CreateBulk(builders ...*WorkProgramItemCreate) *WorkProgramItemCreateBulk {
+	return &WorkProgramItemCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramItemClient) MapCreateBulk(slice any, setFunc func(*WorkProgramItemCreate, int)) *WorkProgramItemCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramItemCreateBulk{err: fmt.Errorf("calling to WorkProgramItemClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramItemCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramItemCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramItem.
+func (c *WorkProgramItemClient) Update() *WorkProgramItemUpdate {
+	mutation := newWorkProgramItemMutation(c.config, OpUpdate)
+	return &WorkProgramItemUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramItemClient) UpdateOne(_m *WorkProgramItem) *WorkProgramItemUpdateOne {
+	mutation := newWorkProgramItemMutation(c.config, OpUpdateOne, withWorkProgramItem(_m))
+	return &WorkProgramItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramItemClient) UpdateOneID(id int) *WorkProgramItemUpdateOne {
+	mutation := newWorkProgramItemMutation(c.config, OpUpdateOne, withWorkProgramItemID(id))
+	return &WorkProgramItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramItem.
+func (c *WorkProgramItemClient) Delete() *WorkProgramItemDelete {
+	mutation := newWorkProgramItemMutation(c.config, OpDelete)
+	return &WorkProgramItemDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramItemClient) DeleteOne(_m *WorkProgramItem) *WorkProgramItemDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramItemClient) DeleteOneID(id int) *WorkProgramItemDeleteOne {
+	builder := c.Delete().Where(workprogramitem.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramItemDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramItem.
+func (c *WorkProgramItemClient) Query() *WorkProgramItemQuery {
+	return &WorkProgramItemQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramItem},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramItem entity by its id.
+func (c *WorkProgramItemClient) Get(ctx context.Context, id int) (*WorkProgramItem, error) {
+	return c.Query().Where(workprogramitem.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramItemClient) GetX(ctx context.Context, id int) *WorkProgramItem {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramItem.
+func (c *WorkProgramItemClient) QueryWorkstream(_m *WorkProgramItem) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitem.Table, workprogramitem.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitem.WorkstreamTable, workprogramitem.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkAction queries the work_action edge of a WorkProgramItem.
+func (c *WorkProgramItemClient) QueryWorkAction(_m *WorkProgramItem) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitem.Table, workprogramitem.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitem.WorkActionTable, workprogramitem.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkProgramItem.
+func (c *WorkProgramItemClient) QueryPullRequest(_m *WorkProgramItem) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitem.Table, workprogramitem.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitem.PullRequestTable, workprogramitem.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkProgramItem.
+func (c *WorkProgramItemClient) QueryTicket(_m *WorkProgramItem) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitem.Table, workprogramitem.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitem.TicketTable, workprogramitem.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramItem.
+func (c *WorkProgramItemClient) QueryLatestEvidence(_m *WorkProgramItem) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitem.Table, workprogramitem.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitem.LatestEvidenceTable, workprogramitem.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLinks queries the links edge of a WorkProgramItem.
+func (c *WorkProgramItemClient) QueryLinks(_m *WorkProgramItem) *WorkProgramItemLinkQuery {
+	query := (&WorkProgramItemLinkClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitem.Table, workprogramitem.FieldID, id),
+			sqlgraph.To(workprogramitemlink.Table, workprogramitemlink.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, workprogramitem.LinksTable, workprogramitem.LinksColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramItemClient) Hooks() []Hook {
+	return c.hooks.WorkProgramItem
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramItemClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramItem
+}
+
+func (c *WorkProgramItemClient) mutate(ctx context.Context, m *WorkProgramItemMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramItemCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramItemUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramItemUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramItemDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramItem mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramItemLinkClient is a client for the WorkProgramItemLink schema.
+type WorkProgramItemLinkClient struct {
+	config
+}
+
+// NewWorkProgramItemLinkClient returns a client for the WorkProgramItemLink from the given config.
+func NewWorkProgramItemLinkClient(c config) *WorkProgramItemLinkClient {
+	return &WorkProgramItemLinkClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramitemlink.Hooks(f(g(h())))`.
+func (c *WorkProgramItemLinkClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramItemLink = append(c.hooks.WorkProgramItemLink, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramitemlink.Intercept(f(g(h())))`.
+func (c *WorkProgramItemLinkClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramItemLink = append(c.inters.WorkProgramItemLink, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramItemLink entity.
+func (c *WorkProgramItemLinkClient) Create() *WorkProgramItemLinkCreate {
+	mutation := newWorkProgramItemLinkMutation(c.config, OpCreate)
+	return &WorkProgramItemLinkCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramItemLink entities.
+func (c *WorkProgramItemLinkClient) CreateBulk(builders ...*WorkProgramItemLinkCreate) *WorkProgramItemLinkCreateBulk {
+	return &WorkProgramItemLinkCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramItemLinkClient) MapCreateBulk(slice any, setFunc func(*WorkProgramItemLinkCreate, int)) *WorkProgramItemLinkCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramItemLinkCreateBulk{err: fmt.Errorf("calling to WorkProgramItemLinkClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramItemLinkCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramItemLinkCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) Update() *WorkProgramItemLinkUpdate {
+	mutation := newWorkProgramItemLinkMutation(c.config, OpUpdate)
+	return &WorkProgramItemLinkUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramItemLinkClient) UpdateOne(_m *WorkProgramItemLink) *WorkProgramItemLinkUpdateOne {
+	mutation := newWorkProgramItemLinkMutation(c.config, OpUpdateOne, withWorkProgramItemLink(_m))
+	return &WorkProgramItemLinkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramItemLinkClient) UpdateOneID(id int) *WorkProgramItemLinkUpdateOne {
+	mutation := newWorkProgramItemLinkMutation(c.config, OpUpdateOne, withWorkProgramItemLinkID(id))
+	return &WorkProgramItemLinkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) Delete() *WorkProgramItemLinkDelete {
+	mutation := newWorkProgramItemLinkMutation(c.config, OpDelete)
+	return &WorkProgramItemLinkDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramItemLinkClient) DeleteOne(_m *WorkProgramItemLink) *WorkProgramItemLinkDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramItemLinkClient) DeleteOneID(id int) *WorkProgramItemLinkDeleteOne {
+	builder := c.Delete().Where(workprogramitemlink.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramItemLinkDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) Query() *WorkProgramItemLinkQuery {
+	return &WorkProgramItemLinkQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramItemLink},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramItemLink entity by its id.
+func (c *WorkProgramItemLinkClient) Get(ctx context.Context, id int) (*WorkProgramItemLink, error) {
+	return c.Query().Where(workprogramitemlink.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramItemLinkClient) GetX(ctx context.Context, id int) *WorkProgramItemLink {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkProgramItem queries the work_program_item edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryWorkProgramItem(_m *WorkProgramItemLink) *WorkProgramItemQuery {
+	query := (&WorkProgramItemClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(workprogramitem.Table, workprogramitem.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.WorkProgramItemTable, workprogramitemlink.WorkProgramItemColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryPullRequest(_m *WorkProgramItemLink) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.PullRequestTable, workprogramitemlink.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryTicket(_m *WorkProgramItemLink) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.TicketTable, workprogramitemlink.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOpenGraphObject queries the open_graph_object edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryOpenGraphObject(_m *WorkProgramItemLink) *OpenGraphObjectQuery {
+	query := (&OpenGraphObjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(opengraphobject.Table, opengraphobject.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.OpenGraphObjectTable, workprogramitemlink.OpenGraphObjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEvidenceAttachment queries the evidence_attachment edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryEvidenceAttachment(_m *WorkProgramItemLink) *EvidenceAttachmentQuery {
+	query := (&EvidenceAttachmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(evidenceattachment.Table, evidenceattachment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.EvidenceAttachmentTable, workprogramitemlink.EvidenceAttachmentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryLatestEvidence(_m *WorkProgramItemLink) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.LatestEvidenceTable, workprogramitemlink.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramItemLinkClient) Hooks() []Hook {
+	return c.hooks.WorkProgramItemLink
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramItemLinkClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramItemLink
+}
+
+func (c *WorkProgramItemLinkClient) mutate(ctx context.Context, m *WorkProgramItemLinkMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramItemLinkCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramItemLinkUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramItemLinkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramItemLinkDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramItemLink mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramMilestoneClient is a client for the WorkProgramMilestone schema.
+type WorkProgramMilestoneClient struct {
+	config
+}
+
+// NewWorkProgramMilestoneClient returns a client for the WorkProgramMilestone from the given config.
+func NewWorkProgramMilestoneClient(c config) *WorkProgramMilestoneClient {
+	return &WorkProgramMilestoneClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogrammilestone.Hooks(f(g(h())))`.
+func (c *WorkProgramMilestoneClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramMilestone = append(c.hooks.WorkProgramMilestone, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogrammilestone.Intercept(f(g(h())))`.
+func (c *WorkProgramMilestoneClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramMilestone = append(c.inters.WorkProgramMilestone, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramMilestone entity.
+func (c *WorkProgramMilestoneClient) Create() *WorkProgramMilestoneCreate {
+	mutation := newWorkProgramMilestoneMutation(c.config, OpCreate)
+	return &WorkProgramMilestoneCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramMilestone entities.
+func (c *WorkProgramMilestoneClient) CreateBulk(builders ...*WorkProgramMilestoneCreate) *WorkProgramMilestoneCreateBulk {
+	return &WorkProgramMilestoneCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramMilestoneClient) MapCreateBulk(slice any, setFunc func(*WorkProgramMilestoneCreate, int)) *WorkProgramMilestoneCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramMilestoneCreateBulk{err: fmt.Errorf("calling to WorkProgramMilestoneClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramMilestoneCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramMilestoneCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramMilestone.
+func (c *WorkProgramMilestoneClient) Update() *WorkProgramMilestoneUpdate {
+	mutation := newWorkProgramMilestoneMutation(c.config, OpUpdate)
+	return &WorkProgramMilestoneUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramMilestoneClient) UpdateOne(_m *WorkProgramMilestone) *WorkProgramMilestoneUpdateOne {
+	mutation := newWorkProgramMilestoneMutation(c.config, OpUpdateOne, withWorkProgramMilestone(_m))
+	return &WorkProgramMilestoneUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramMilestoneClient) UpdateOneID(id int) *WorkProgramMilestoneUpdateOne {
+	mutation := newWorkProgramMilestoneMutation(c.config, OpUpdateOne, withWorkProgramMilestoneID(id))
+	return &WorkProgramMilestoneUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramMilestone.
+func (c *WorkProgramMilestoneClient) Delete() *WorkProgramMilestoneDelete {
+	mutation := newWorkProgramMilestoneMutation(c.config, OpDelete)
+	return &WorkProgramMilestoneDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramMilestoneClient) DeleteOne(_m *WorkProgramMilestone) *WorkProgramMilestoneDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramMilestoneClient) DeleteOneID(id int) *WorkProgramMilestoneDeleteOne {
+	builder := c.Delete().Where(workprogrammilestone.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramMilestoneDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramMilestone.
+func (c *WorkProgramMilestoneClient) Query() *WorkProgramMilestoneQuery {
+	return &WorkProgramMilestoneQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramMilestone},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramMilestone entity by its id.
+func (c *WorkProgramMilestoneClient) Get(ctx context.Context, id int) (*WorkProgramMilestone, error) {
+	return c.Query().Where(workprogrammilestone.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramMilestoneClient) GetX(ctx context.Context, id int) *WorkProgramMilestone {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramMilestone.
+func (c *WorkProgramMilestoneClient) QueryWorkstream(_m *WorkProgramMilestone) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogrammilestone.Table, workprogrammilestone.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogrammilestone.WorkstreamTable, workprogrammilestone.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkProgramMilestone.
+func (c *WorkProgramMilestoneClient) QueryPullRequest(_m *WorkProgramMilestone) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogrammilestone.Table, workprogrammilestone.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogrammilestone.PullRequestTable, workprogrammilestone.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkProgramMilestone.
+func (c *WorkProgramMilestoneClient) QueryTicket(_m *WorkProgramMilestone) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogrammilestone.Table, workprogrammilestone.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogrammilestone.TicketTable, workprogrammilestone.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramMilestone.
+func (c *WorkProgramMilestoneClient) QueryLatestEvidence(_m *WorkProgramMilestone) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogrammilestone.Table, workprogrammilestone.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogrammilestone.LatestEvidenceTable, workprogrammilestone.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramMilestoneClient) Hooks() []Hook {
+	return c.hooks.WorkProgramMilestone
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramMilestoneClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramMilestone
+}
+
+func (c *WorkProgramMilestoneClient) mutate(ctx context.Context, m *WorkProgramMilestoneMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramMilestoneCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramMilestoneUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramMilestoneUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramMilestoneDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramMilestone mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramOwnerRollupSnapshotClient is a client for the WorkProgramOwnerRollupSnapshot schema.
+type WorkProgramOwnerRollupSnapshotClient struct {
+	config
+}
+
+// NewWorkProgramOwnerRollupSnapshotClient returns a client for the WorkProgramOwnerRollupSnapshot from the given config.
+func NewWorkProgramOwnerRollupSnapshotClient(c config) *WorkProgramOwnerRollupSnapshotClient {
+	return &WorkProgramOwnerRollupSnapshotClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramownerrollupsnapshot.Hooks(f(g(h())))`.
+func (c *WorkProgramOwnerRollupSnapshotClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramOwnerRollupSnapshot = append(c.hooks.WorkProgramOwnerRollupSnapshot, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramownerrollupsnapshot.Intercept(f(g(h())))`.
+func (c *WorkProgramOwnerRollupSnapshotClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramOwnerRollupSnapshot = append(c.inters.WorkProgramOwnerRollupSnapshot, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramOwnerRollupSnapshot entity.
+func (c *WorkProgramOwnerRollupSnapshotClient) Create() *WorkProgramOwnerRollupSnapshotCreate {
+	mutation := newWorkProgramOwnerRollupSnapshotMutation(c.config, OpCreate)
+	return &WorkProgramOwnerRollupSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramOwnerRollupSnapshot entities.
+func (c *WorkProgramOwnerRollupSnapshotClient) CreateBulk(builders ...*WorkProgramOwnerRollupSnapshotCreate) *WorkProgramOwnerRollupSnapshotCreateBulk {
+	return &WorkProgramOwnerRollupSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramOwnerRollupSnapshotClient) MapCreateBulk(slice any, setFunc func(*WorkProgramOwnerRollupSnapshotCreate, int)) *WorkProgramOwnerRollupSnapshotCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramOwnerRollupSnapshotCreateBulk{err: fmt.Errorf("calling to WorkProgramOwnerRollupSnapshotClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramOwnerRollupSnapshotCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramOwnerRollupSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramOwnerRollupSnapshot.
+func (c *WorkProgramOwnerRollupSnapshotClient) Update() *WorkProgramOwnerRollupSnapshotUpdate {
+	mutation := newWorkProgramOwnerRollupSnapshotMutation(c.config, OpUpdate)
+	return &WorkProgramOwnerRollupSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramOwnerRollupSnapshotClient) UpdateOne(_m *WorkProgramOwnerRollupSnapshot) *WorkProgramOwnerRollupSnapshotUpdateOne {
+	mutation := newWorkProgramOwnerRollupSnapshotMutation(c.config, OpUpdateOne, withWorkProgramOwnerRollupSnapshot(_m))
+	return &WorkProgramOwnerRollupSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramOwnerRollupSnapshotClient) UpdateOneID(id int) *WorkProgramOwnerRollupSnapshotUpdateOne {
+	mutation := newWorkProgramOwnerRollupSnapshotMutation(c.config, OpUpdateOne, withWorkProgramOwnerRollupSnapshotID(id))
+	return &WorkProgramOwnerRollupSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramOwnerRollupSnapshot.
+func (c *WorkProgramOwnerRollupSnapshotClient) Delete() *WorkProgramOwnerRollupSnapshotDelete {
+	mutation := newWorkProgramOwnerRollupSnapshotMutation(c.config, OpDelete)
+	return &WorkProgramOwnerRollupSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramOwnerRollupSnapshotClient) DeleteOne(_m *WorkProgramOwnerRollupSnapshot) *WorkProgramOwnerRollupSnapshotDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramOwnerRollupSnapshotClient) DeleteOneID(id int) *WorkProgramOwnerRollupSnapshotDeleteOne {
+	builder := c.Delete().Where(workprogramownerrollupsnapshot.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramOwnerRollupSnapshotDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramOwnerRollupSnapshot.
+func (c *WorkProgramOwnerRollupSnapshotClient) Query() *WorkProgramOwnerRollupSnapshotQuery {
+	return &WorkProgramOwnerRollupSnapshotQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramOwnerRollupSnapshot},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramOwnerRollupSnapshot entity by its id.
+func (c *WorkProgramOwnerRollupSnapshotClient) Get(ctx context.Context, id int) (*WorkProgramOwnerRollupSnapshot, error) {
+	return c.Query().Where(workprogramownerrollupsnapshot.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramOwnerRollupSnapshotClient) GetX(ctx context.Context, id int) *WorkProgramOwnerRollupSnapshot {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramOwnerRollupSnapshot.
+func (c *WorkProgramOwnerRollupSnapshotClient) QueryWorkstream(_m *WorkProgramOwnerRollupSnapshot) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramownerrollupsnapshot.Table, workprogramownerrollupsnapshot.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramownerrollupsnapshot.WorkstreamTable, workprogramownerrollupsnapshot.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramOwnerRollupSnapshot.
+func (c *WorkProgramOwnerRollupSnapshotClient) QueryLatestEvidence(_m *WorkProgramOwnerRollupSnapshot) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramownerrollupsnapshot.Table, workprogramownerrollupsnapshot.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramownerrollupsnapshot.LatestEvidenceTable, workprogramownerrollupsnapshot.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramOwnerRollupSnapshotClient) Hooks() []Hook {
+	return c.hooks.WorkProgramOwnerRollupSnapshot
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramOwnerRollupSnapshotClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramOwnerRollupSnapshot
+}
+
+func (c *WorkProgramOwnerRollupSnapshotClient) mutate(ctx context.Context, m *WorkProgramOwnerRollupSnapshotMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramOwnerRollupSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramOwnerRollupSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramOwnerRollupSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramOwnerRollupSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramOwnerRollupSnapshot mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramQualityGateClient is a client for the WorkProgramQualityGate schema.
+type WorkProgramQualityGateClient struct {
+	config
+}
+
+// NewWorkProgramQualityGateClient returns a client for the WorkProgramQualityGate from the given config.
+func NewWorkProgramQualityGateClient(c config) *WorkProgramQualityGateClient {
+	return &WorkProgramQualityGateClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramqualitygate.Hooks(f(g(h())))`.
+func (c *WorkProgramQualityGateClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramQualityGate = append(c.hooks.WorkProgramQualityGate, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramqualitygate.Intercept(f(g(h())))`.
+func (c *WorkProgramQualityGateClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramQualityGate = append(c.inters.WorkProgramQualityGate, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramQualityGate entity.
+func (c *WorkProgramQualityGateClient) Create() *WorkProgramQualityGateCreate {
+	mutation := newWorkProgramQualityGateMutation(c.config, OpCreate)
+	return &WorkProgramQualityGateCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramQualityGate entities.
+func (c *WorkProgramQualityGateClient) CreateBulk(builders ...*WorkProgramQualityGateCreate) *WorkProgramQualityGateCreateBulk {
+	return &WorkProgramQualityGateCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramQualityGateClient) MapCreateBulk(slice any, setFunc func(*WorkProgramQualityGateCreate, int)) *WorkProgramQualityGateCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramQualityGateCreateBulk{err: fmt.Errorf("calling to WorkProgramQualityGateClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramQualityGateCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramQualityGateCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramQualityGate.
+func (c *WorkProgramQualityGateClient) Update() *WorkProgramQualityGateUpdate {
+	mutation := newWorkProgramQualityGateMutation(c.config, OpUpdate)
+	return &WorkProgramQualityGateUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramQualityGateClient) UpdateOne(_m *WorkProgramQualityGate) *WorkProgramQualityGateUpdateOne {
+	mutation := newWorkProgramQualityGateMutation(c.config, OpUpdateOne, withWorkProgramQualityGate(_m))
+	return &WorkProgramQualityGateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramQualityGateClient) UpdateOneID(id int) *WorkProgramQualityGateUpdateOne {
+	mutation := newWorkProgramQualityGateMutation(c.config, OpUpdateOne, withWorkProgramQualityGateID(id))
+	return &WorkProgramQualityGateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramQualityGate.
+func (c *WorkProgramQualityGateClient) Delete() *WorkProgramQualityGateDelete {
+	mutation := newWorkProgramQualityGateMutation(c.config, OpDelete)
+	return &WorkProgramQualityGateDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramQualityGateClient) DeleteOne(_m *WorkProgramQualityGate) *WorkProgramQualityGateDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramQualityGateClient) DeleteOneID(id int) *WorkProgramQualityGateDeleteOne {
+	builder := c.Delete().Where(workprogramqualitygate.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramQualityGateDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramQualityGate.
+func (c *WorkProgramQualityGateClient) Query() *WorkProgramQualityGateQuery {
+	return &WorkProgramQualityGateQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramQualityGate},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramQualityGate entity by its id.
+func (c *WorkProgramQualityGateClient) Get(ctx context.Context, id int) (*WorkProgramQualityGate, error) {
+	return c.Query().Where(workprogramqualitygate.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramQualityGateClient) GetX(ctx context.Context, id int) *WorkProgramQualityGate {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramQualityGate.
+func (c *WorkProgramQualityGateClient) QueryWorkstream(_m *WorkProgramQualityGate) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramqualitygate.Table, workprogramqualitygate.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramqualitygate.WorkstreamTable, workprogramqualitygate.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramQualityGate.
+func (c *WorkProgramQualityGateClient) QueryLatestEvidence(_m *WorkProgramQualityGate) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramqualitygate.Table, workprogramqualitygate.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramqualitygate.LatestEvidenceTable, workprogramqualitygate.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBlockingTpmFunctionReadinesses queries the blocking_tpm_function_readinesses edge of a WorkProgramQualityGate.
+func (c *WorkProgramQualityGateClient) QueryBlockingTpmFunctionReadinesses(_m *WorkProgramQualityGate) *WorkProgramTPMFunctionReadinessQuery {
+	query := (&WorkProgramTPMFunctionReadinessClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramqualitygate.Table, workprogramqualitygate.FieldID, id),
+			sqlgraph.To(workprogramtpmfunctionreadiness.Table, workprogramtpmfunctionreadiness.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, workprogramqualitygate.BlockingTpmFunctionReadinessesTable, workprogramqualitygate.BlockingTpmFunctionReadinessesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramQualityGateClient) Hooks() []Hook {
+	return c.hooks.WorkProgramQualityGate
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramQualityGateClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramQualityGate
+}
+
+func (c *WorkProgramQualityGateClient) mutate(ctx context.Context, m *WorkProgramQualityGateMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramQualityGateCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramQualityGateUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramQualityGateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramQualityGateDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramQualityGate mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramRiskDriverClient is a client for the WorkProgramRiskDriver schema.
+type WorkProgramRiskDriverClient struct {
+	config
+}
+
+// NewWorkProgramRiskDriverClient returns a client for the WorkProgramRiskDriver from the given config.
+func NewWorkProgramRiskDriverClient(c config) *WorkProgramRiskDriverClient {
+	return &WorkProgramRiskDriverClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramriskdriver.Hooks(f(g(h())))`.
+func (c *WorkProgramRiskDriverClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramRiskDriver = append(c.hooks.WorkProgramRiskDriver, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramriskdriver.Intercept(f(g(h())))`.
+func (c *WorkProgramRiskDriverClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramRiskDriver = append(c.inters.WorkProgramRiskDriver, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramRiskDriver entity.
+func (c *WorkProgramRiskDriverClient) Create() *WorkProgramRiskDriverCreate {
+	mutation := newWorkProgramRiskDriverMutation(c.config, OpCreate)
+	return &WorkProgramRiskDriverCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramRiskDriver entities.
+func (c *WorkProgramRiskDriverClient) CreateBulk(builders ...*WorkProgramRiskDriverCreate) *WorkProgramRiskDriverCreateBulk {
+	return &WorkProgramRiskDriverCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramRiskDriverClient) MapCreateBulk(slice any, setFunc func(*WorkProgramRiskDriverCreate, int)) *WorkProgramRiskDriverCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramRiskDriverCreateBulk{err: fmt.Errorf("calling to WorkProgramRiskDriverClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramRiskDriverCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramRiskDriverCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramRiskDriver.
+func (c *WorkProgramRiskDriverClient) Update() *WorkProgramRiskDriverUpdate {
+	mutation := newWorkProgramRiskDriverMutation(c.config, OpUpdate)
+	return &WorkProgramRiskDriverUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramRiskDriverClient) UpdateOne(_m *WorkProgramRiskDriver) *WorkProgramRiskDriverUpdateOne {
+	mutation := newWorkProgramRiskDriverMutation(c.config, OpUpdateOne, withWorkProgramRiskDriver(_m))
+	return &WorkProgramRiskDriverUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramRiskDriverClient) UpdateOneID(id int) *WorkProgramRiskDriverUpdateOne {
+	mutation := newWorkProgramRiskDriverMutation(c.config, OpUpdateOne, withWorkProgramRiskDriverID(id))
+	return &WorkProgramRiskDriverUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramRiskDriver.
+func (c *WorkProgramRiskDriverClient) Delete() *WorkProgramRiskDriverDelete {
+	mutation := newWorkProgramRiskDriverMutation(c.config, OpDelete)
+	return &WorkProgramRiskDriverDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramRiskDriverClient) DeleteOne(_m *WorkProgramRiskDriver) *WorkProgramRiskDriverDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramRiskDriverClient) DeleteOneID(id int) *WorkProgramRiskDriverDeleteOne {
+	builder := c.Delete().Where(workprogramriskdriver.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramRiskDriverDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramRiskDriver.
+func (c *WorkProgramRiskDriverClient) Query() *WorkProgramRiskDriverQuery {
+	return &WorkProgramRiskDriverQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramRiskDriver},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramRiskDriver entity by its id.
+func (c *WorkProgramRiskDriverClient) Get(ctx context.Context, id int) (*WorkProgramRiskDriver, error) {
+	return c.Query().Where(workprogramriskdriver.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramRiskDriverClient) GetX(ctx context.Context, id int) *WorkProgramRiskDriver {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramRiskDriver.
+func (c *WorkProgramRiskDriverClient) QueryWorkstream(_m *WorkProgramRiskDriver) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramriskdriver.Table, workprogramriskdriver.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramriskdriver.WorkstreamTable, workprogramriskdriver.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramRiskDriver.
+func (c *WorkProgramRiskDriverClient) QueryLatestEvidence(_m *WorkProgramRiskDriver) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramriskdriver.Table, workprogramriskdriver.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramriskdriver.LatestEvidenceTable, workprogramriskdriver.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramRiskDriverClient) Hooks() []Hook {
+	return c.hooks.WorkProgramRiskDriver
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramRiskDriverClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramRiskDriver
+}
+
+func (c *WorkProgramRiskDriverClient) mutate(ctx context.Context, m *WorkProgramRiskDriverMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramRiskDriverCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramRiskDriverUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramRiskDriverUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramRiskDriverDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramRiskDriver mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramRunClient is a client for the WorkProgramRun schema.
+type WorkProgramRunClient struct {
+	config
+}
+
+// NewWorkProgramRunClient returns a client for the WorkProgramRun from the given config.
+func NewWorkProgramRunClient(c config) *WorkProgramRunClient {
+	return &WorkProgramRunClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramrun.Hooks(f(g(h())))`.
+func (c *WorkProgramRunClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramRun = append(c.hooks.WorkProgramRun, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramrun.Intercept(f(g(h())))`.
+func (c *WorkProgramRunClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramRun = append(c.inters.WorkProgramRun, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramRun entity.
+func (c *WorkProgramRunClient) Create() *WorkProgramRunCreate {
+	mutation := newWorkProgramRunMutation(c.config, OpCreate)
+	return &WorkProgramRunCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramRun entities.
+func (c *WorkProgramRunClient) CreateBulk(builders ...*WorkProgramRunCreate) *WorkProgramRunCreateBulk {
+	return &WorkProgramRunCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramRunClient) MapCreateBulk(slice any, setFunc func(*WorkProgramRunCreate, int)) *WorkProgramRunCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramRunCreateBulk{err: fmt.Errorf("calling to WorkProgramRunClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramRunCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramRunCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramRun.
+func (c *WorkProgramRunClient) Update() *WorkProgramRunUpdate {
+	mutation := newWorkProgramRunMutation(c.config, OpUpdate)
+	return &WorkProgramRunUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramRunClient) UpdateOne(_m *WorkProgramRun) *WorkProgramRunUpdateOne {
+	mutation := newWorkProgramRunMutation(c.config, OpUpdateOne, withWorkProgramRun(_m))
+	return &WorkProgramRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramRunClient) UpdateOneID(id int) *WorkProgramRunUpdateOne {
+	mutation := newWorkProgramRunMutation(c.config, OpUpdateOne, withWorkProgramRunID(id))
+	return &WorkProgramRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramRun.
+func (c *WorkProgramRunClient) Delete() *WorkProgramRunDelete {
+	mutation := newWorkProgramRunMutation(c.config, OpDelete)
+	return &WorkProgramRunDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramRunClient) DeleteOne(_m *WorkProgramRun) *WorkProgramRunDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramRunClient) DeleteOneID(id int) *WorkProgramRunDeleteOne {
+	builder := c.Delete().Where(workprogramrun.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramRunDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramRun.
+func (c *WorkProgramRunClient) Query() *WorkProgramRunQuery {
+	return &WorkProgramRunQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramRun},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramRun entity by its id.
+func (c *WorkProgramRunClient) Get(ctx context.Context, id int) (*WorkProgramRun, error) {
+	return c.Query().Where(workprogramrun.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramRunClient) GetX(ctx context.Context, id int) *WorkProgramRun {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramRun.
+func (c *WorkProgramRunClient) QueryWorkstream(_m *WorkProgramRun) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramrun.Table, workprogramrun.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramrun.WorkstreamTable, workprogramrun.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMembers queries the members edge of a WorkProgramRun.
+func (c *WorkProgramRunClient) QueryMembers(_m *WorkProgramRun) *WorkProgramRunMemberQuery {
+	query := (&WorkProgramRunMemberClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramrun.Table, workprogramrun.FieldID, id),
+			sqlgraph.To(workprogramrunmember.Table, workprogramrunmember.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, workprogramrun.MembersTable, workprogramrun.MembersColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramRun.
+func (c *WorkProgramRunClient) QueryLatestEvidence(_m *WorkProgramRun) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramrun.Table, workprogramrun.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramrun.LatestEvidenceTable, workprogramrun.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramRunClient) Hooks() []Hook {
+	return c.hooks.WorkProgramRun
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramRunClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramRun
+}
+
+func (c *WorkProgramRunClient) mutate(ctx context.Context, m *WorkProgramRunMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramRunCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramRunUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramRunUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramRunDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramRun mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramRunMemberClient is a client for the WorkProgramRunMember schema.
+type WorkProgramRunMemberClient struct {
+	config
+}
+
+// NewWorkProgramRunMemberClient returns a client for the WorkProgramRunMember from the given config.
+func NewWorkProgramRunMemberClient(c config) *WorkProgramRunMemberClient {
+	return &WorkProgramRunMemberClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramrunmember.Hooks(f(g(h())))`.
+func (c *WorkProgramRunMemberClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramRunMember = append(c.hooks.WorkProgramRunMember, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramrunmember.Intercept(f(g(h())))`.
+func (c *WorkProgramRunMemberClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramRunMember = append(c.inters.WorkProgramRunMember, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramRunMember entity.
+func (c *WorkProgramRunMemberClient) Create() *WorkProgramRunMemberCreate {
+	mutation := newWorkProgramRunMemberMutation(c.config, OpCreate)
+	return &WorkProgramRunMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramRunMember entities.
+func (c *WorkProgramRunMemberClient) CreateBulk(builders ...*WorkProgramRunMemberCreate) *WorkProgramRunMemberCreateBulk {
+	return &WorkProgramRunMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramRunMemberClient) MapCreateBulk(slice any, setFunc func(*WorkProgramRunMemberCreate, int)) *WorkProgramRunMemberCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramRunMemberCreateBulk{err: fmt.Errorf("calling to WorkProgramRunMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramRunMemberCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramRunMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramRunMember.
+func (c *WorkProgramRunMemberClient) Update() *WorkProgramRunMemberUpdate {
+	mutation := newWorkProgramRunMemberMutation(c.config, OpUpdate)
+	return &WorkProgramRunMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramRunMemberClient) UpdateOne(_m *WorkProgramRunMember) *WorkProgramRunMemberUpdateOne {
+	mutation := newWorkProgramRunMemberMutation(c.config, OpUpdateOne, withWorkProgramRunMember(_m))
+	return &WorkProgramRunMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramRunMemberClient) UpdateOneID(id int) *WorkProgramRunMemberUpdateOne {
+	mutation := newWorkProgramRunMemberMutation(c.config, OpUpdateOne, withWorkProgramRunMemberID(id))
+	return &WorkProgramRunMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramRunMember.
+func (c *WorkProgramRunMemberClient) Delete() *WorkProgramRunMemberDelete {
+	mutation := newWorkProgramRunMemberMutation(c.config, OpDelete)
+	return &WorkProgramRunMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramRunMemberClient) DeleteOne(_m *WorkProgramRunMember) *WorkProgramRunMemberDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramRunMemberClient) DeleteOneID(id int) *WorkProgramRunMemberDeleteOne {
+	builder := c.Delete().Where(workprogramrunmember.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramRunMemberDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramRunMember.
+func (c *WorkProgramRunMemberClient) Query() *WorkProgramRunMemberQuery {
+	return &WorkProgramRunMemberQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramRunMember},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramRunMember entity by its id.
+func (c *WorkProgramRunMemberClient) Get(ctx context.Context, id int) (*WorkProgramRunMember, error) {
+	return c.Query().Where(workprogramrunmember.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramRunMemberClient) GetX(ctx context.Context, id int) *WorkProgramRunMember {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkProgramRun queries the work_program_run edge of a WorkProgramRunMember.
+func (c *WorkProgramRunMemberClient) QueryWorkProgramRun(_m *WorkProgramRunMember) *WorkProgramRunQuery {
+	query := (&WorkProgramRunClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramrunmember.Table, workprogramrunmember.FieldID, id),
+			sqlgraph.To(workprogramrun.Table, workprogramrun.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramrunmember.WorkProgramRunTable, workprogramrunmember.WorkProgramRunColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramRunMemberClient) Hooks() []Hook {
+	return c.hooks.WorkProgramRunMember
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramRunMemberClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramRunMember
+}
+
+func (c *WorkProgramRunMemberClient) mutate(ctx context.Context, m *WorkProgramRunMemberMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramRunMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramRunMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramRunMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramRunMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramRunMember mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramSummarySnapshotClient is a client for the WorkProgramSummarySnapshot schema.
+type WorkProgramSummarySnapshotClient struct {
+	config
+}
+
+// NewWorkProgramSummarySnapshotClient returns a client for the WorkProgramSummarySnapshot from the given config.
+func NewWorkProgramSummarySnapshotClient(c config) *WorkProgramSummarySnapshotClient {
+	return &WorkProgramSummarySnapshotClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramsummarysnapshot.Hooks(f(g(h())))`.
+func (c *WorkProgramSummarySnapshotClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramSummarySnapshot = append(c.hooks.WorkProgramSummarySnapshot, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramsummarysnapshot.Intercept(f(g(h())))`.
+func (c *WorkProgramSummarySnapshotClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramSummarySnapshot = append(c.inters.WorkProgramSummarySnapshot, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramSummarySnapshot entity.
+func (c *WorkProgramSummarySnapshotClient) Create() *WorkProgramSummarySnapshotCreate {
+	mutation := newWorkProgramSummarySnapshotMutation(c.config, OpCreate)
+	return &WorkProgramSummarySnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramSummarySnapshot entities.
+func (c *WorkProgramSummarySnapshotClient) CreateBulk(builders ...*WorkProgramSummarySnapshotCreate) *WorkProgramSummarySnapshotCreateBulk {
+	return &WorkProgramSummarySnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramSummarySnapshotClient) MapCreateBulk(slice any, setFunc func(*WorkProgramSummarySnapshotCreate, int)) *WorkProgramSummarySnapshotCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramSummarySnapshotCreateBulk{err: fmt.Errorf("calling to WorkProgramSummarySnapshotClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramSummarySnapshotCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramSummarySnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramSummarySnapshot.
+func (c *WorkProgramSummarySnapshotClient) Update() *WorkProgramSummarySnapshotUpdate {
+	mutation := newWorkProgramSummarySnapshotMutation(c.config, OpUpdate)
+	return &WorkProgramSummarySnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramSummarySnapshotClient) UpdateOne(_m *WorkProgramSummarySnapshot) *WorkProgramSummarySnapshotUpdateOne {
+	mutation := newWorkProgramSummarySnapshotMutation(c.config, OpUpdateOne, withWorkProgramSummarySnapshot(_m))
+	return &WorkProgramSummarySnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramSummarySnapshotClient) UpdateOneID(id int) *WorkProgramSummarySnapshotUpdateOne {
+	mutation := newWorkProgramSummarySnapshotMutation(c.config, OpUpdateOne, withWorkProgramSummarySnapshotID(id))
+	return &WorkProgramSummarySnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramSummarySnapshot.
+func (c *WorkProgramSummarySnapshotClient) Delete() *WorkProgramSummarySnapshotDelete {
+	mutation := newWorkProgramSummarySnapshotMutation(c.config, OpDelete)
+	return &WorkProgramSummarySnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramSummarySnapshotClient) DeleteOne(_m *WorkProgramSummarySnapshot) *WorkProgramSummarySnapshotDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramSummarySnapshotClient) DeleteOneID(id int) *WorkProgramSummarySnapshotDeleteOne {
+	builder := c.Delete().Where(workprogramsummarysnapshot.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramSummarySnapshotDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramSummarySnapshot.
+func (c *WorkProgramSummarySnapshotClient) Query() *WorkProgramSummarySnapshotQuery {
+	return &WorkProgramSummarySnapshotQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramSummarySnapshot},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramSummarySnapshot entity by its id.
+func (c *WorkProgramSummarySnapshotClient) Get(ctx context.Context, id int) (*WorkProgramSummarySnapshot, error) {
+	return c.Query().Where(workprogramsummarysnapshot.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramSummarySnapshotClient) GetX(ctx context.Context, id int) *WorkProgramSummarySnapshot {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramSummarySnapshot.
+func (c *WorkProgramSummarySnapshotClient) QueryWorkstream(_m *WorkProgramSummarySnapshot) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramsummarysnapshot.Table, workprogramsummarysnapshot.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramsummarysnapshot.WorkstreamTable, workprogramsummarysnapshot.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramSummarySnapshot.
+func (c *WorkProgramSummarySnapshotClient) QueryLatestEvidence(_m *WorkProgramSummarySnapshot) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramsummarysnapshot.Table, workprogramsummarysnapshot.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramsummarysnapshot.LatestEvidenceTable, workprogramsummarysnapshot.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramSummarySnapshotClient) Hooks() []Hook {
+	return c.hooks.WorkProgramSummarySnapshot
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramSummarySnapshotClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramSummarySnapshot
+}
+
+func (c *WorkProgramSummarySnapshotClient) mutate(ctx context.Context, m *WorkProgramSummarySnapshotMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramSummarySnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramSummarySnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramSummarySnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramSummarySnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramSummarySnapshot mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramTPMFunctionReadinessClient is a client for the WorkProgramTPMFunctionReadiness schema.
+type WorkProgramTPMFunctionReadinessClient struct {
+	config
+}
+
+// NewWorkProgramTPMFunctionReadinessClient returns a client for the WorkProgramTPMFunctionReadiness from the given config.
+func NewWorkProgramTPMFunctionReadinessClient(c config) *WorkProgramTPMFunctionReadinessClient {
+	return &WorkProgramTPMFunctionReadinessClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramtpmfunctionreadiness.Hooks(f(g(h())))`.
+func (c *WorkProgramTPMFunctionReadinessClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramTPMFunctionReadiness = append(c.hooks.WorkProgramTPMFunctionReadiness, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramtpmfunctionreadiness.Intercept(f(g(h())))`.
+func (c *WorkProgramTPMFunctionReadinessClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramTPMFunctionReadiness = append(c.inters.WorkProgramTPMFunctionReadiness, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramTPMFunctionReadiness entity.
+func (c *WorkProgramTPMFunctionReadinessClient) Create() *WorkProgramTPMFunctionReadinessCreate {
+	mutation := newWorkProgramTPMFunctionReadinessMutation(c.config, OpCreate)
+	return &WorkProgramTPMFunctionReadinessCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramTPMFunctionReadiness entities.
+func (c *WorkProgramTPMFunctionReadinessClient) CreateBulk(builders ...*WorkProgramTPMFunctionReadinessCreate) *WorkProgramTPMFunctionReadinessCreateBulk {
+	return &WorkProgramTPMFunctionReadinessCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramTPMFunctionReadinessClient) MapCreateBulk(slice any, setFunc func(*WorkProgramTPMFunctionReadinessCreate, int)) *WorkProgramTPMFunctionReadinessCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramTPMFunctionReadinessCreateBulk{err: fmt.Errorf("calling to WorkProgramTPMFunctionReadinessClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramTPMFunctionReadinessCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramTPMFunctionReadinessCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramTPMFunctionReadiness.
+func (c *WorkProgramTPMFunctionReadinessClient) Update() *WorkProgramTPMFunctionReadinessUpdate {
+	mutation := newWorkProgramTPMFunctionReadinessMutation(c.config, OpUpdate)
+	return &WorkProgramTPMFunctionReadinessUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramTPMFunctionReadinessClient) UpdateOne(_m *WorkProgramTPMFunctionReadiness) *WorkProgramTPMFunctionReadinessUpdateOne {
+	mutation := newWorkProgramTPMFunctionReadinessMutation(c.config, OpUpdateOne, withWorkProgramTPMFunctionReadiness(_m))
+	return &WorkProgramTPMFunctionReadinessUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramTPMFunctionReadinessClient) UpdateOneID(id int) *WorkProgramTPMFunctionReadinessUpdateOne {
+	mutation := newWorkProgramTPMFunctionReadinessMutation(c.config, OpUpdateOne, withWorkProgramTPMFunctionReadinessID(id))
+	return &WorkProgramTPMFunctionReadinessUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramTPMFunctionReadiness.
+func (c *WorkProgramTPMFunctionReadinessClient) Delete() *WorkProgramTPMFunctionReadinessDelete {
+	mutation := newWorkProgramTPMFunctionReadinessMutation(c.config, OpDelete)
+	return &WorkProgramTPMFunctionReadinessDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramTPMFunctionReadinessClient) DeleteOne(_m *WorkProgramTPMFunctionReadiness) *WorkProgramTPMFunctionReadinessDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramTPMFunctionReadinessClient) DeleteOneID(id int) *WorkProgramTPMFunctionReadinessDeleteOne {
+	builder := c.Delete().Where(workprogramtpmfunctionreadiness.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramTPMFunctionReadinessDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramTPMFunctionReadiness.
+func (c *WorkProgramTPMFunctionReadinessClient) Query() *WorkProgramTPMFunctionReadinessQuery {
+	return &WorkProgramTPMFunctionReadinessQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramTPMFunctionReadiness},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramTPMFunctionReadiness entity by its id.
+func (c *WorkProgramTPMFunctionReadinessClient) Get(ctx context.Context, id int) (*WorkProgramTPMFunctionReadiness, error) {
+	return c.Query().Where(workprogramtpmfunctionreadiness.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramTPMFunctionReadinessClient) GetX(ctx context.Context, id int) *WorkProgramTPMFunctionReadiness {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkProgramTPMFunctionReadiness.
+func (c *WorkProgramTPMFunctionReadinessClient) QueryWorkstream(_m *WorkProgramTPMFunctionReadiness) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramtpmfunctionreadiness.Table, workprogramtpmfunctionreadiness.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramtpmfunctionreadiness.WorkstreamTable, workprogramtpmfunctionreadiness.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramTPMFunctionReadiness.
+func (c *WorkProgramTPMFunctionReadinessClient) QueryLatestEvidence(_m *WorkProgramTPMFunctionReadiness) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramtpmfunctionreadiness.Table, workprogramtpmfunctionreadiness.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramtpmfunctionreadiness.LatestEvidenceTable, workprogramtpmfunctionreadiness.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBlockingQualityGates queries the blocking_quality_gates edge of a WorkProgramTPMFunctionReadiness.
+func (c *WorkProgramTPMFunctionReadinessClient) QueryBlockingQualityGates(_m *WorkProgramTPMFunctionReadiness) *WorkProgramQualityGateQuery {
+	query := (&WorkProgramQualityGateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramtpmfunctionreadiness.Table, workprogramtpmfunctionreadiness.FieldID, id),
+			sqlgraph.To(workprogramqualitygate.Table, workprogramqualitygate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, workprogramtpmfunctionreadiness.BlockingQualityGatesTable, workprogramtpmfunctionreadiness.BlockingQualityGatesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramTPMFunctionReadinessClient) Hooks() []Hook {
+	return c.hooks.WorkProgramTPMFunctionReadiness
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramTPMFunctionReadinessClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramTPMFunctionReadiness
+}
+
+func (c *WorkProgramTPMFunctionReadinessClient) mutate(ctx context.Context, m *WorkProgramTPMFunctionReadinessMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramTPMFunctionReadinessCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramTPMFunctionReadinessUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramTPMFunctionReadinessUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramTPMFunctionReadinessDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramTPMFunctionReadiness mutation op: %q", m.Op())
+	}
+}
+
+// WorkResponsibilityClient is a client for the WorkResponsibility schema.
+type WorkResponsibilityClient struct {
+	config
+}
+
+// NewWorkResponsibilityClient returns a client for the WorkResponsibility from the given config.
+func NewWorkResponsibilityClient(c config) *WorkResponsibilityClient {
+	return &WorkResponsibilityClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workresponsibility.Hooks(f(g(h())))`.
+func (c *WorkResponsibilityClient) Use(hooks ...Hook) {
+	c.hooks.WorkResponsibility = append(c.hooks.WorkResponsibility, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workresponsibility.Intercept(f(g(h())))`.
+func (c *WorkResponsibilityClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkResponsibility = append(c.inters.WorkResponsibility, interceptors...)
+}
+
+// Create returns a builder for creating a WorkResponsibility entity.
+func (c *WorkResponsibilityClient) Create() *WorkResponsibilityCreate {
+	mutation := newWorkResponsibilityMutation(c.config, OpCreate)
+	return &WorkResponsibilityCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkResponsibility entities.
+func (c *WorkResponsibilityClient) CreateBulk(builders ...*WorkResponsibilityCreate) *WorkResponsibilityCreateBulk {
+	return &WorkResponsibilityCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkResponsibilityClient) MapCreateBulk(slice any, setFunc func(*WorkResponsibilityCreate, int)) *WorkResponsibilityCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkResponsibilityCreateBulk{err: fmt.Errorf("calling to WorkResponsibilityClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkResponsibilityCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkResponsibilityCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkResponsibility.
+func (c *WorkResponsibilityClient) Update() *WorkResponsibilityUpdate {
+	mutation := newWorkResponsibilityMutation(c.config, OpUpdate)
+	return &WorkResponsibilityUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkResponsibilityClient) UpdateOne(_m *WorkResponsibility) *WorkResponsibilityUpdateOne {
+	mutation := newWorkResponsibilityMutation(c.config, OpUpdateOne, withWorkResponsibility(_m))
+	return &WorkResponsibilityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkResponsibilityClient) UpdateOneID(id int) *WorkResponsibilityUpdateOne {
+	mutation := newWorkResponsibilityMutation(c.config, OpUpdateOne, withWorkResponsibilityID(id))
+	return &WorkResponsibilityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkResponsibility.
+func (c *WorkResponsibilityClient) Delete() *WorkResponsibilityDelete {
+	mutation := newWorkResponsibilityMutation(c.config, OpDelete)
+	return &WorkResponsibilityDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkResponsibilityClient) DeleteOne(_m *WorkResponsibility) *WorkResponsibilityDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkResponsibilityClient) DeleteOneID(id int) *WorkResponsibilityDeleteOne {
+	builder := c.Delete().Where(workresponsibility.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkResponsibilityDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkResponsibility.
+func (c *WorkResponsibilityClient) Query() *WorkResponsibilityQuery {
+	return &WorkResponsibilityQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkResponsibility},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkResponsibility entity by its id.
+func (c *WorkResponsibilityClient) Get(ctx context.Context, id int) (*WorkResponsibility, error) {
+	return c.Query().Where(workresponsibility.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkResponsibilityClient) GetX(ctx context.Context, id int) *WorkResponsibility {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryPerson queries the person edge of a WorkResponsibility.
+func (c *WorkResponsibilityClient) QueryPerson(_m *WorkResponsibility) *PersonQuery {
+	query := (&PersonClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workresponsibility.Table, workresponsibility.FieldID, id),
+			sqlgraph.To(person.Table, person.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workresponsibility.PersonTable, workresponsibility.PersonColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkstream queries the workstream edge of a WorkResponsibility.
+func (c *WorkResponsibilityClient) QueryWorkstream(_m *WorkResponsibility) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workresponsibility.Table, workresponsibility.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workresponsibility.WorkstreamTable, workresponsibility.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkResponsibility.
+func (c *WorkResponsibilityClient) QueryPullRequest(_m *WorkResponsibility) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workresponsibility.Table, workresponsibility.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workresponsibility.PullRequestTable, workresponsibility.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkResponsibility.
+func (c *WorkResponsibilityClient) QueryTicket(_m *WorkResponsibility) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workresponsibility.Table, workresponsibility.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workresponsibility.TicketTable, workresponsibility.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkAction queries the work_action edge of a WorkResponsibility.
+func (c *WorkResponsibilityClient) QueryWorkAction(_m *WorkResponsibility) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workresponsibility.Table, workresponsibility.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workresponsibility.WorkActionTable, workresponsibility.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkBlocker queries the work_blocker edge of a WorkResponsibility.
+func (c *WorkResponsibilityClient) QueryWorkBlocker(_m *WorkResponsibility) *WorkBlockerQuery {
+	query := (&WorkBlockerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workresponsibility.Table, workresponsibility.FieldID, id),
+			sqlgraph.To(workblocker.Table, workblocker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workresponsibility.WorkBlockerTable, workresponsibility.WorkBlockerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkProgramItem queries the work_program_item edge of a WorkResponsibility.
+func (c *WorkResponsibilityClient) QueryWorkProgramItem(_m *WorkResponsibility) *WorkProgramItemQuery {
+	query := (&WorkProgramItemClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workresponsibility.Table, workresponsibility.FieldID, id),
+			sqlgraph.To(workprogramitem.Table, workprogramitem.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workresponsibility.WorkProgramItemTable, workresponsibility.WorkProgramItemColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkProgramEvidenceNeed queries the work_program_evidence_need edge of a WorkResponsibility.
+func (c *WorkResponsibilityClient) QueryWorkProgramEvidenceNeed(_m *WorkResponsibility) *WorkProgramEvidenceNeedQuery {
+	query := (&WorkProgramEvidenceNeedClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workresponsibility.Table, workresponsibility.FieldID, id),
+			sqlgraph.To(workprogramevidenceneed.Table, workprogramevidenceneed.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workresponsibility.WorkProgramEvidenceNeedTable, workresponsibility.WorkProgramEvidenceNeedColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkResponsibility.
+func (c *WorkResponsibilityClient) QueryLatestEvidence(_m *WorkResponsibility) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workresponsibility.Table, workresponsibility.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workresponsibility.LatestEvidenceTable, workresponsibility.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkResponsibilityClient) Hooks() []Hook {
+	return c.hooks.WorkResponsibility
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkResponsibilityClient) Interceptors() []Interceptor {
+	return c.inters.WorkResponsibility
+}
+
+func (c *WorkResponsibilityClient) mutate(ctx context.Context, m *WorkResponsibilityMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkResponsibilityCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkResponsibilityUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkResponsibilityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkResponsibilityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkResponsibility mutation op: %q", m.Op())
+	}
+}
+
 // WorkstreamClient is a client for the Workstream schema.
 type WorkstreamClient struct {
 	config
@@ -6457,6 +13692,368 @@ func (c *WorkstreamClient) mutate(ctx context.Context, m *WorkstreamMutation) (V
 		return (&WorkstreamDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Workstream mutation op: %q", m.Op())
+	}
+}
+
+// WorkstreamHealthSnapshotClient is a client for the WorkstreamHealthSnapshot schema.
+type WorkstreamHealthSnapshotClient struct {
+	config
+}
+
+// NewWorkstreamHealthSnapshotClient returns a client for the WorkstreamHealthSnapshot from the given config.
+func NewWorkstreamHealthSnapshotClient(c config) *WorkstreamHealthSnapshotClient {
+	return &WorkstreamHealthSnapshotClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workstreamhealthsnapshot.Hooks(f(g(h())))`.
+func (c *WorkstreamHealthSnapshotClient) Use(hooks ...Hook) {
+	c.hooks.WorkstreamHealthSnapshot = append(c.hooks.WorkstreamHealthSnapshot, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workstreamhealthsnapshot.Intercept(f(g(h())))`.
+func (c *WorkstreamHealthSnapshotClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkstreamHealthSnapshot = append(c.inters.WorkstreamHealthSnapshot, interceptors...)
+}
+
+// Create returns a builder for creating a WorkstreamHealthSnapshot entity.
+func (c *WorkstreamHealthSnapshotClient) Create() *WorkstreamHealthSnapshotCreate {
+	mutation := newWorkstreamHealthSnapshotMutation(c.config, OpCreate)
+	return &WorkstreamHealthSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkstreamHealthSnapshot entities.
+func (c *WorkstreamHealthSnapshotClient) CreateBulk(builders ...*WorkstreamHealthSnapshotCreate) *WorkstreamHealthSnapshotCreateBulk {
+	return &WorkstreamHealthSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkstreamHealthSnapshotClient) MapCreateBulk(slice any, setFunc func(*WorkstreamHealthSnapshotCreate, int)) *WorkstreamHealthSnapshotCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkstreamHealthSnapshotCreateBulk{err: fmt.Errorf("calling to WorkstreamHealthSnapshotClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkstreamHealthSnapshotCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkstreamHealthSnapshotCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkstreamHealthSnapshot.
+func (c *WorkstreamHealthSnapshotClient) Update() *WorkstreamHealthSnapshotUpdate {
+	mutation := newWorkstreamHealthSnapshotMutation(c.config, OpUpdate)
+	return &WorkstreamHealthSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkstreamHealthSnapshotClient) UpdateOne(_m *WorkstreamHealthSnapshot) *WorkstreamHealthSnapshotUpdateOne {
+	mutation := newWorkstreamHealthSnapshotMutation(c.config, OpUpdateOne, withWorkstreamHealthSnapshot(_m))
+	return &WorkstreamHealthSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkstreamHealthSnapshotClient) UpdateOneID(id int) *WorkstreamHealthSnapshotUpdateOne {
+	mutation := newWorkstreamHealthSnapshotMutation(c.config, OpUpdateOne, withWorkstreamHealthSnapshotID(id))
+	return &WorkstreamHealthSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkstreamHealthSnapshot.
+func (c *WorkstreamHealthSnapshotClient) Delete() *WorkstreamHealthSnapshotDelete {
+	mutation := newWorkstreamHealthSnapshotMutation(c.config, OpDelete)
+	return &WorkstreamHealthSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkstreamHealthSnapshotClient) DeleteOne(_m *WorkstreamHealthSnapshot) *WorkstreamHealthSnapshotDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkstreamHealthSnapshotClient) DeleteOneID(id int) *WorkstreamHealthSnapshotDeleteOne {
+	builder := c.Delete().Where(workstreamhealthsnapshot.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkstreamHealthSnapshotDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkstreamHealthSnapshot.
+func (c *WorkstreamHealthSnapshotClient) Query() *WorkstreamHealthSnapshotQuery {
+	return &WorkstreamHealthSnapshotQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkstreamHealthSnapshot},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkstreamHealthSnapshot entity by its id.
+func (c *WorkstreamHealthSnapshotClient) Get(ctx context.Context, id int) (*WorkstreamHealthSnapshot, error) {
+	return c.Query().Where(workstreamhealthsnapshot.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkstreamHealthSnapshotClient) GetX(ctx context.Context, id int) *WorkstreamHealthSnapshot {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstream queries the workstream edge of a WorkstreamHealthSnapshot.
+func (c *WorkstreamHealthSnapshotClient) QueryWorkstream(_m *WorkstreamHealthSnapshot) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workstreamhealthsnapshot.Table, workstreamhealthsnapshot.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workstreamhealthsnapshot.WorkstreamTable, workstreamhealthsnapshot.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkstreamHealthSnapshot.
+func (c *WorkstreamHealthSnapshotClient) QueryLatestEvidence(_m *WorkstreamHealthSnapshot) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workstreamhealthsnapshot.Table, workstreamhealthsnapshot.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workstreamhealthsnapshot.LatestEvidenceTable, workstreamhealthsnapshot.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkstreamHealthSnapshotClient) Hooks() []Hook {
+	return c.hooks.WorkstreamHealthSnapshot
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkstreamHealthSnapshotClient) Interceptors() []Interceptor {
+	return c.inters.WorkstreamHealthSnapshot
+}
+
+func (c *WorkstreamHealthSnapshotClient) mutate(ctx context.Context, m *WorkstreamHealthSnapshotMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkstreamHealthSnapshotCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkstreamHealthSnapshotUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkstreamHealthSnapshotUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkstreamHealthSnapshotDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkstreamHealthSnapshot mutation op: %q", m.Op())
+	}
+}
+
+// WorkstreamStandupSectionClient is a client for the WorkstreamStandupSection schema.
+type WorkstreamStandupSectionClient struct {
+	config
+}
+
+// NewWorkstreamStandupSectionClient returns a client for the WorkstreamStandupSection from the given config.
+func NewWorkstreamStandupSectionClient(c config) *WorkstreamStandupSectionClient {
+	return &WorkstreamStandupSectionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workstreamstandupsection.Hooks(f(g(h())))`.
+func (c *WorkstreamStandupSectionClient) Use(hooks ...Hook) {
+	c.hooks.WorkstreamStandupSection = append(c.hooks.WorkstreamStandupSection, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workstreamstandupsection.Intercept(f(g(h())))`.
+func (c *WorkstreamStandupSectionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkstreamStandupSection = append(c.inters.WorkstreamStandupSection, interceptors...)
+}
+
+// Create returns a builder for creating a WorkstreamStandupSection entity.
+func (c *WorkstreamStandupSectionClient) Create() *WorkstreamStandupSectionCreate {
+	mutation := newWorkstreamStandupSectionMutation(c.config, OpCreate)
+	return &WorkstreamStandupSectionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkstreamStandupSection entities.
+func (c *WorkstreamStandupSectionClient) CreateBulk(builders ...*WorkstreamStandupSectionCreate) *WorkstreamStandupSectionCreateBulk {
+	return &WorkstreamStandupSectionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkstreamStandupSectionClient) MapCreateBulk(slice any, setFunc func(*WorkstreamStandupSectionCreate, int)) *WorkstreamStandupSectionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkstreamStandupSectionCreateBulk{err: fmt.Errorf("calling to WorkstreamStandupSectionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkstreamStandupSectionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkstreamStandupSectionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkstreamStandupSection.
+func (c *WorkstreamStandupSectionClient) Update() *WorkstreamStandupSectionUpdate {
+	mutation := newWorkstreamStandupSectionMutation(c.config, OpUpdate)
+	return &WorkstreamStandupSectionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkstreamStandupSectionClient) UpdateOne(_m *WorkstreamStandupSection) *WorkstreamStandupSectionUpdateOne {
+	mutation := newWorkstreamStandupSectionMutation(c.config, OpUpdateOne, withWorkstreamStandupSection(_m))
+	return &WorkstreamStandupSectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkstreamStandupSectionClient) UpdateOneID(id int) *WorkstreamStandupSectionUpdateOne {
+	mutation := newWorkstreamStandupSectionMutation(c.config, OpUpdateOne, withWorkstreamStandupSectionID(id))
+	return &WorkstreamStandupSectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkstreamStandupSection.
+func (c *WorkstreamStandupSectionClient) Delete() *WorkstreamStandupSectionDelete {
+	mutation := newWorkstreamStandupSectionMutation(c.config, OpDelete)
+	return &WorkstreamStandupSectionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkstreamStandupSectionClient) DeleteOne(_m *WorkstreamStandupSection) *WorkstreamStandupSectionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkstreamStandupSectionClient) DeleteOneID(id int) *WorkstreamStandupSectionDeleteOne {
+	builder := c.Delete().Where(workstreamstandupsection.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkstreamStandupSectionDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkstreamStandupSection.
+func (c *WorkstreamStandupSectionClient) Query() *WorkstreamStandupSectionQuery {
+	return &WorkstreamStandupSectionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkstreamStandupSection},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkstreamStandupSection entity by its id.
+func (c *WorkstreamStandupSectionClient) Get(ctx context.Context, id int) (*WorkstreamStandupSection, error) {
+	return c.Query().Where(workstreamstandupsection.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkstreamStandupSectionClient) GetX(ctx context.Context, id int) *WorkstreamStandupSection {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkstreamHealthSnapshot queries the workstream_health_snapshot edge of a WorkstreamStandupSection.
+func (c *WorkstreamStandupSectionClient) QueryWorkstreamHealthSnapshot(_m *WorkstreamStandupSection) *WorkstreamHealthSnapshotQuery {
+	query := (&WorkstreamHealthSnapshotClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workstreamstandupsection.Table, workstreamstandupsection.FieldID, id),
+			sqlgraph.To(workstreamhealthsnapshot.Table, workstreamhealthsnapshot.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workstreamstandupsection.WorkstreamHealthSnapshotTable, workstreamstandupsection.WorkstreamHealthSnapshotColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkstream queries the workstream edge of a WorkstreamStandupSection.
+func (c *WorkstreamStandupSectionClient) QueryWorkstream(_m *WorkstreamStandupSection) *WorkstreamQuery {
+	query := (&WorkstreamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workstreamstandupsection.Table, workstreamstandupsection.FieldID, id),
+			sqlgraph.To(workstream.Table, workstream.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workstreamstandupsection.WorkstreamTable, workstreamstandupsection.WorkstreamColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkAction queries the work_action edge of a WorkstreamStandupSection.
+func (c *WorkstreamStandupSectionClient) QueryWorkAction(_m *WorkstreamStandupSection) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workstreamstandupsection.Table, workstreamstandupsection.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workstreamstandupsection.WorkActionTable, workstreamstandupsection.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkstreamStandupSection.
+func (c *WorkstreamStandupSectionClient) QueryLatestEvidence(_m *WorkstreamStandupSection) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workstreamstandupsection.Table, workstreamstandupsection.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workstreamstandupsection.LatestEvidenceTable, workstreamstandupsection.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkstreamStandupSectionClient) Hooks() []Hook {
+	return c.hooks.WorkstreamStandupSection
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkstreamStandupSectionClient) Interceptors() []Interceptor {
+	return c.inters.WorkstreamStandupSection
+}
+
+func (c *WorkstreamStandupSectionClient) mutate(ctx context.Context, m *WorkstreamStandupSectionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkstreamStandupSectionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkstreamStandupSectionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkstreamStandupSectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkstreamStandupSectionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkstreamStandupSection mutation op: %q", m.Op())
 	}
 }
 
@@ -6645,22 +14242,47 @@ func (c *WorkstreamTicketClient) mutate(ctx context.Context, m *WorkstreamTicket
 type (
 	hooks struct {
 		Document, DocumentAuthorship, DocumentLensResult, DocumentLink, Evidence,
-		Message, MessageAuthorship, MessageLensResult, MessageMention, Person,
-		PersonIdentity, PullRequest, PullRequestAuthorship, PullRequestLensResult,
-		PullRequestReview, SourceAlias, SourceConnection, SourceScope,
-		SourceScopeState, SourceSyncIssue, SourceSyncRun, Ticket, TicketAssignment,
-		TicketDocument, TicketLensResult, TicketMention, TicketMessage,
-		TicketPullRequest, UnresolvedReference, WorkArea, WorkLens, WorkLensWindow,
-		Workstream, WorkstreamTicket []ent.Hook
+		EvidenceAttachment, Message, MessageAuthorship, MessageLensResult,
+		MessageMention, OpenGraphAssociation, OpenGraphObject, Person, PersonIdentity,
+		PullRequest, PullRequestAuthorship, PullRequestLensResult, PullRequestReview,
+		SourceAlias, SourceConnection, SourceScope, SourceScopeState, SourceSyncIssue,
+		SourceSyncRun, Ticket, TicketAssignment, TicketDocument, TicketLensResult,
+		TicketMention, TicketMessage, TicketPullRequest, UnresolvedReference,
+		WorkAction, WorkActionObservation, WorkArea, WorkBlocker, WorkBlockerImpact,
+		WorkDecisionTargetEvaluation, WorkDependencyEdge, WorkDependencyEndpoint,
+		WorkForecastEvaluation, WorkInsight, WorkInsightEvaluationSnapshot,
+		WorkInsightKindEvaluationSnapshot, WorkInsightReview, WorkItemForecast,
+		WorkItemStateSnapshot, WorkItemStateTransition, WorkLens, WorkLensWindow,
+		WorkOwnerLoadSnapshot, WorkProgramAdversarialCheck,
+		WorkProgramAutomationReadiness, WorkProgramBriefCaveat,
+		WorkProgramBriefSnapshot, WorkProgramEvidenceNeed, WorkProgramItem,
+		WorkProgramItemLink, WorkProgramMilestone, WorkProgramOwnerRollupSnapshot,
+		WorkProgramQualityGate, WorkProgramRiskDriver, WorkProgramRun,
+		WorkProgramRunMember, WorkProgramSummarySnapshot,
+		WorkProgramTPMFunctionReadiness, WorkResponsibility, Workstream,
+		WorkstreamHealthSnapshot, WorkstreamStandupSection, WorkstreamTicket []ent.Hook
 	}
 	inters struct {
 		Document, DocumentAuthorship, DocumentLensResult, DocumentLink, Evidence,
-		Message, MessageAuthorship, MessageLensResult, MessageMention, Person,
-		PersonIdentity, PullRequest, PullRequestAuthorship, PullRequestLensResult,
-		PullRequestReview, SourceAlias, SourceConnection, SourceScope,
-		SourceScopeState, SourceSyncIssue, SourceSyncRun, Ticket, TicketAssignment,
-		TicketDocument, TicketLensResult, TicketMention, TicketMessage,
-		TicketPullRequest, UnresolvedReference, WorkArea, WorkLens, WorkLensWindow,
-		Workstream, WorkstreamTicket []ent.Interceptor
+		EvidenceAttachment, Message, MessageAuthorship, MessageLensResult,
+		MessageMention, OpenGraphAssociation, OpenGraphObject, Person, PersonIdentity,
+		PullRequest, PullRequestAuthorship, PullRequestLensResult, PullRequestReview,
+		SourceAlias, SourceConnection, SourceScope, SourceScopeState, SourceSyncIssue,
+		SourceSyncRun, Ticket, TicketAssignment, TicketDocument, TicketLensResult,
+		TicketMention, TicketMessage, TicketPullRequest, UnresolvedReference,
+		WorkAction, WorkActionObservation, WorkArea, WorkBlocker, WorkBlockerImpact,
+		WorkDecisionTargetEvaluation, WorkDependencyEdge, WorkDependencyEndpoint,
+		WorkForecastEvaluation, WorkInsight, WorkInsightEvaluationSnapshot,
+		WorkInsightKindEvaluationSnapshot, WorkInsightReview, WorkItemForecast,
+		WorkItemStateSnapshot, WorkItemStateTransition, WorkLens, WorkLensWindow,
+		WorkOwnerLoadSnapshot, WorkProgramAdversarialCheck,
+		WorkProgramAutomationReadiness, WorkProgramBriefCaveat,
+		WorkProgramBriefSnapshot, WorkProgramEvidenceNeed, WorkProgramItem,
+		WorkProgramItemLink, WorkProgramMilestone, WorkProgramOwnerRollupSnapshot,
+		WorkProgramQualityGate, WorkProgramRiskDriver, WorkProgramRun,
+		WorkProgramRunMember, WorkProgramSummarySnapshot,
+		WorkProgramTPMFunctionReadiness, WorkResponsibility, Workstream,
+		WorkstreamHealthSnapshot, WorkstreamStandupSection,
+		WorkstreamTicket []ent.Interceptor
 	}
 )

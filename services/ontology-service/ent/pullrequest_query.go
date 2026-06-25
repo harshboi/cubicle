@@ -8,6 +8,11 @@ import (
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workinsight"
+	"cubicle/services/ontology-service/ent/workitemstatesnapshot"
+	"cubicle/services/ontology-service/ent/workitemstatetransition"
+	"cubicle/services/ontology-service/ent/workprogrammilestone"
 	"database/sql/driver"
 	"fmt"
 	"math"
@@ -21,12 +26,17 @@ import (
 // PullRequestQuery is the builder for querying PullRequest entities.
 type PullRequestQuery struct {
 	config
-	ctx                *QueryContext
-	order              []pullrequest.OrderOption
-	inters             []Interceptor
-	predicates         []predicate.PullRequest
-	withTickets        *TicketQuery
-	withLatestEvidence *EvidenceQuery
+	ctx                  *QueryContext
+	order                []pullrequest.OrderOption
+	inters               []Interceptor
+	predicates           []predicate.PullRequest
+	withTickets          *TicketQuery
+	withLatestEvidence   *EvidenceQuery
+	withInsights         *WorkInsightQuery
+	withActions          *WorkActionQuery
+	withStateSnapshots   *WorkItemStateSnapshotQuery
+	withStateTransitions *WorkItemStateTransitionQuery
+	withMilestones       *WorkProgramMilestoneQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -100,6 +110,116 @@ func (_q *PullRequestQuery) QueryLatestEvidence() *EvidenceQuery {
 			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, selector),
 			sqlgraph.To(evidence.Table, evidence.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, pullrequest.LatestEvidenceTable, pullrequest.LatestEvidenceColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryInsights chains the current query on the "insights" edge.
+func (_q *PullRequestQuery) QueryInsights() *WorkInsightQuery {
+	query := (&WorkInsightClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, selector),
+			sqlgraph.To(workinsight.Table, workinsight.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, pullrequest.InsightsTable, pullrequest.InsightsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryActions chains the current query on the "actions" edge.
+func (_q *PullRequestQuery) QueryActions() *WorkActionQuery {
+	query := (&WorkActionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, selector),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, pullrequest.ActionsTable, pullrequest.ActionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryStateSnapshots chains the current query on the "state_snapshots" edge.
+func (_q *PullRequestQuery) QueryStateSnapshots() *WorkItemStateSnapshotQuery {
+	query := (&WorkItemStateSnapshotClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, selector),
+			sqlgraph.To(workitemstatesnapshot.Table, workitemstatesnapshot.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, pullrequest.StateSnapshotsTable, pullrequest.StateSnapshotsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryStateTransitions chains the current query on the "state_transitions" edge.
+func (_q *PullRequestQuery) QueryStateTransitions() *WorkItemStateTransitionQuery {
+	query := (&WorkItemStateTransitionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, selector),
+			sqlgraph.To(workitemstatetransition.Table, workitemstatetransition.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, pullrequest.StateTransitionsTable, pullrequest.StateTransitionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryMilestones chains the current query on the "milestones" edge.
+func (_q *PullRequestQuery) QueryMilestones() *WorkProgramMilestoneQuery {
+	query := (&WorkProgramMilestoneClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, selector),
+			sqlgraph.To(workprogrammilestone.Table, workprogrammilestone.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, pullrequest.MilestonesTable, pullrequest.MilestonesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -294,13 +414,18 @@ func (_q *PullRequestQuery) Clone() *PullRequestQuery {
 		return nil
 	}
 	return &PullRequestQuery{
-		config:             _q.config,
-		ctx:                _q.ctx.Clone(),
-		order:              append([]pullrequest.OrderOption{}, _q.order...),
-		inters:             append([]Interceptor{}, _q.inters...),
-		predicates:         append([]predicate.PullRequest{}, _q.predicates...),
-		withTickets:        _q.withTickets.Clone(),
-		withLatestEvidence: _q.withLatestEvidence.Clone(),
+		config:               _q.config,
+		ctx:                  _q.ctx.Clone(),
+		order:                append([]pullrequest.OrderOption{}, _q.order...),
+		inters:               append([]Interceptor{}, _q.inters...),
+		predicates:           append([]predicate.PullRequest{}, _q.predicates...),
+		withTickets:          _q.withTickets.Clone(),
+		withLatestEvidence:   _q.withLatestEvidence.Clone(),
+		withInsights:         _q.withInsights.Clone(),
+		withActions:          _q.withActions.Clone(),
+		withStateSnapshots:   _q.withStateSnapshots.Clone(),
+		withStateTransitions: _q.withStateTransitions.Clone(),
+		withMilestones:       _q.withMilestones.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -326,6 +451,61 @@ func (_q *PullRequestQuery) WithLatestEvidence(opts ...func(*EvidenceQuery)) *Pu
 		opt(query)
 	}
 	_q.withLatestEvidence = query
+	return _q
+}
+
+// WithInsights tells the query-builder to eager-load the nodes that are connected to
+// the "insights" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PullRequestQuery) WithInsights(opts ...func(*WorkInsightQuery)) *PullRequestQuery {
+	query := (&WorkInsightClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withInsights = query
+	return _q
+}
+
+// WithActions tells the query-builder to eager-load the nodes that are connected to
+// the "actions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PullRequestQuery) WithActions(opts ...func(*WorkActionQuery)) *PullRequestQuery {
+	query := (&WorkActionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withActions = query
+	return _q
+}
+
+// WithStateSnapshots tells the query-builder to eager-load the nodes that are connected to
+// the "state_snapshots" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PullRequestQuery) WithStateSnapshots(opts ...func(*WorkItemStateSnapshotQuery)) *PullRequestQuery {
+	query := (&WorkItemStateSnapshotClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withStateSnapshots = query
+	return _q
+}
+
+// WithStateTransitions tells the query-builder to eager-load the nodes that are connected to
+// the "state_transitions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PullRequestQuery) WithStateTransitions(opts ...func(*WorkItemStateTransitionQuery)) *PullRequestQuery {
+	query := (&WorkItemStateTransitionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withStateTransitions = query
+	return _q
+}
+
+// WithMilestones tells the query-builder to eager-load the nodes that are connected to
+// the "milestones" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PullRequestQuery) WithMilestones(opts ...func(*WorkProgramMilestoneQuery)) *PullRequestQuery {
+	query := (&WorkProgramMilestoneClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withMilestones = query
 	return _q
 }
 
@@ -407,9 +587,14 @@ func (_q *PullRequestQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	var (
 		nodes       = []*PullRequest{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [7]bool{
 			_q.withTickets != nil,
 			_q.withLatestEvidence != nil,
+			_q.withInsights != nil,
+			_q.withActions != nil,
+			_q.withStateSnapshots != nil,
+			_q.withStateTransitions != nil,
+			_q.withMilestones != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -440,6 +625,45 @@ func (_q *PullRequestQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if query := _q.withLatestEvidence; query != nil {
 		if err := _q.loadLatestEvidence(ctx, query, nodes, nil,
 			func(n *PullRequest, e *Evidence) { n.Edges.LatestEvidence = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withInsights; query != nil {
+		if err := _q.loadInsights(ctx, query, nodes,
+			func(n *PullRequest) { n.Edges.Insights = []*WorkInsight{} },
+			func(n *PullRequest, e *WorkInsight) { n.Edges.Insights = append(n.Edges.Insights, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withActions; query != nil {
+		if err := _q.loadActions(ctx, query, nodes,
+			func(n *PullRequest) { n.Edges.Actions = []*WorkAction{} },
+			func(n *PullRequest, e *WorkAction) { n.Edges.Actions = append(n.Edges.Actions, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withStateSnapshots; query != nil {
+		if err := _q.loadStateSnapshots(ctx, query, nodes,
+			func(n *PullRequest) { n.Edges.StateSnapshots = []*WorkItemStateSnapshot{} },
+			func(n *PullRequest, e *WorkItemStateSnapshot) {
+				n.Edges.StateSnapshots = append(n.Edges.StateSnapshots, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withStateTransitions; query != nil {
+		if err := _q.loadStateTransitions(ctx, query, nodes,
+			func(n *PullRequest) { n.Edges.StateTransitions = []*WorkItemStateTransition{} },
+			func(n *PullRequest, e *WorkItemStateTransition) {
+				n.Edges.StateTransitions = append(n.Edges.StateTransitions, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withMilestones; query != nil {
+		if err := _q.loadMilestones(ctx, query, nodes,
+			func(n *PullRequest) { n.Edges.Milestones = []*WorkProgramMilestone{} },
+			func(n *PullRequest, e *WorkProgramMilestone) { n.Edges.Milestones = append(n.Edges.Milestones, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -533,6 +757,156 @@ func (_q *PullRequestQuery) loadLatestEvidence(ctx context.Context, query *Evide
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (_q *PullRequestQuery) loadInsights(ctx context.Context, query *WorkInsightQuery, nodes []*PullRequest, init func(*PullRequest), assign func(*PullRequest, *WorkInsight)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*PullRequest)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workinsight.FieldPullRequestID)
+	}
+	query.Where(predicate.WorkInsight(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(pullrequest.InsightsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.PullRequestID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "pull_request_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *PullRequestQuery) loadActions(ctx context.Context, query *WorkActionQuery, nodes []*PullRequest, init func(*PullRequest), assign func(*PullRequest, *WorkAction)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*PullRequest)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workaction.FieldPullRequestID)
+	}
+	query.Where(predicate.WorkAction(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(pullrequest.ActionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.PullRequestID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "pull_request_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *PullRequestQuery) loadStateSnapshots(ctx context.Context, query *WorkItemStateSnapshotQuery, nodes []*PullRequest, init func(*PullRequest), assign func(*PullRequest, *WorkItemStateSnapshot)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*PullRequest)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workitemstatesnapshot.FieldPullRequestID)
+	}
+	query.Where(predicate.WorkItemStateSnapshot(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(pullrequest.StateSnapshotsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.PullRequestID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "pull_request_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *PullRequestQuery) loadStateTransitions(ctx context.Context, query *WorkItemStateTransitionQuery, nodes []*PullRequest, init func(*PullRequest), assign func(*PullRequest, *WorkItemStateTransition)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*PullRequest)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workitemstatetransition.FieldPullRequestID)
+	}
+	query.Where(predicate.WorkItemStateTransition(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(pullrequest.StateTransitionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.PullRequestID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "pull_request_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *PullRequestQuery) loadMilestones(ctx context.Context, query *WorkProgramMilestoneQuery, nodes []*PullRequest, init func(*PullRequest), assign func(*PullRequest, *WorkProgramMilestone)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*PullRequest)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workprogrammilestone.FieldPullRequestID)
+	}
+	query.Where(predicate.WorkProgramMilestone(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(pullrequest.MilestonesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.PullRequestID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "pull_request_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

@@ -108,6 +108,16 @@ type TicketEdges struct {
 	Messages []*Message `json:"messages,omitempty"`
 	// Most recent evidence supporting this ticket state.
 	LatestEvidence *Evidence `json:"latest_evidence,omitempty"`
+	// Generated TPM/product insights about this ticket.
+	Insights []*WorkInsight `json:"insights,omitempty"`
+	// Gated TPM actions about this ticket.
+	Actions []*WorkAction `json:"actions,omitempty"`
+	// Observed state snapshots for this ticket.
+	StateSnapshots []*WorkItemStateSnapshot `json:"state_snapshots,omitempty"`
+	// Observed state transitions for this ticket.
+	StateTransitions []*WorkItemStateTransition `json:"state_transitions,omitempty"`
+	// Source-backed milestone and date signals for this ticket.
+	Milestones []*WorkProgramMilestone `json:"milestones,omitempty"`
 	// TicketPullRequests holds the value of the ticket_pull_requests edge.
 	TicketPullRequests []*TicketPullRequest `json:"ticket_pull_requests,omitempty"`
 	// TicketDocuments holds the value of the ticket_documents edge.
@@ -116,7 +126,7 @@ type TicketEdges struct {
 	TicketMessages []*TicketMessage `json:"ticket_messages,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [8]bool
+	loadedTypes [13]bool
 }
 
 // WorkstreamsOrErr returns the Workstreams value or an error if the edge
@@ -166,10 +176,55 @@ func (e TicketEdges) LatestEvidenceOrErr() (*Evidence, error) {
 	return nil, &NotLoadedError{edge: "latest_evidence"}
 }
 
+// InsightsOrErr returns the Insights value or an error if the edge
+// was not loaded in eager-loading.
+func (e TicketEdges) InsightsOrErr() ([]*WorkInsight, error) {
+	if e.loadedTypes[5] {
+		return e.Insights, nil
+	}
+	return nil, &NotLoadedError{edge: "insights"}
+}
+
+// ActionsOrErr returns the Actions value or an error if the edge
+// was not loaded in eager-loading.
+func (e TicketEdges) ActionsOrErr() ([]*WorkAction, error) {
+	if e.loadedTypes[6] {
+		return e.Actions, nil
+	}
+	return nil, &NotLoadedError{edge: "actions"}
+}
+
+// StateSnapshotsOrErr returns the StateSnapshots value or an error if the edge
+// was not loaded in eager-loading.
+func (e TicketEdges) StateSnapshotsOrErr() ([]*WorkItemStateSnapshot, error) {
+	if e.loadedTypes[7] {
+		return e.StateSnapshots, nil
+	}
+	return nil, &NotLoadedError{edge: "state_snapshots"}
+}
+
+// StateTransitionsOrErr returns the StateTransitions value or an error if the edge
+// was not loaded in eager-loading.
+func (e TicketEdges) StateTransitionsOrErr() ([]*WorkItemStateTransition, error) {
+	if e.loadedTypes[8] {
+		return e.StateTransitions, nil
+	}
+	return nil, &NotLoadedError{edge: "state_transitions"}
+}
+
+// MilestonesOrErr returns the Milestones value or an error if the edge
+// was not loaded in eager-loading.
+func (e TicketEdges) MilestonesOrErr() ([]*WorkProgramMilestone, error) {
+	if e.loadedTypes[9] {
+		return e.Milestones, nil
+	}
+	return nil, &NotLoadedError{edge: "milestones"}
+}
+
 // TicketPullRequestsOrErr returns the TicketPullRequests value or an error if the edge
 // was not loaded in eager-loading.
 func (e TicketEdges) TicketPullRequestsOrErr() ([]*TicketPullRequest, error) {
-	if e.loadedTypes[5] {
+	if e.loadedTypes[10] {
 		return e.TicketPullRequests, nil
 	}
 	return nil, &NotLoadedError{edge: "ticket_pull_requests"}
@@ -178,7 +233,7 @@ func (e TicketEdges) TicketPullRequestsOrErr() ([]*TicketPullRequest, error) {
 // TicketDocumentsOrErr returns the TicketDocuments value or an error if the edge
 // was not loaded in eager-loading.
 func (e TicketEdges) TicketDocumentsOrErr() ([]*TicketDocument, error) {
-	if e.loadedTypes[6] {
+	if e.loadedTypes[11] {
 		return e.TicketDocuments, nil
 	}
 	return nil, &NotLoadedError{edge: "ticket_documents"}
@@ -187,7 +242,7 @@ func (e TicketEdges) TicketDocumentsOrErr() ([]*TicketDocument, error) {
 // TicketMessagesOrErr returns the TicketMessages value or an error if the edge
 // was not loaded in eager-loading.
 func (e TicketEdges) TicketMessagesOrErr() ([]*TicketMessage, error) {
-	if e.loadedTypes[7] {
+	if e.loadedTypes[12] {
 		return e.TicketMessages, nil
 	}
 	return nil, &NotLoadedError{edge: "ticket_messages"}
@@ -479,6 +534,31 @@ func (_m *Ticket) QueryMessages() *MessageQuery {
 // QueryLatestEvidence queries the "latest_evidence" edge of the Ticket entity.
 func (_m *Ticket) QueryLatestEvidence() *EvidenceQuery {
 	return NewTicketClient(_m.config).QueryLatestEvidence(_m)
+}
+
+// QueryInsights queries the "insights" edge of the Ticket entity.
+func (_m *Ticket) QueryInsights() *WorkInsightQuery {
+	return NewTicketClient(_m.config).QueryInsights(_m)
+}
+
+// QueryActions queries the "actions" edge of the Ticket entity.
+func (_m *Ticket) QueryActions() *WorkActionQuery {
+	return NewTicketClient(_m.config).QueryActions(_m)
+}
+
+// QueryStateSnapshots queries the "state_snapshots" edge of the Ticket entity.
+func (_m *Ticket) QueryStateSnapshots() *WorkItemStateSnapshotQuery {
+	return NewTicketClient(_m.config).QueryStateSnapshots(_m)
+}
+
+// QueryStateTransitions queries the "state_transitions" edge of the Ticket entity.
+func (_m *Ticket) QueryStateTransitions() *WorkItemStateTransitionQuery {
+	return NewTicketClient(_m.config).QueryStateTransitions(_m)
+}
+
+// QueryMilestones queries the "milestones" edge of the Ticket entity.
+func (_m *Ticket) QueryMilestones() *WorkProgramMilestoneQuery {
+	return NewTicketClient(_m.config).QueryMilestones(_m)
 }
 
 // QueryTicketPullRequests queries the "ticket_pull_requests" edge of the Ticket entity.

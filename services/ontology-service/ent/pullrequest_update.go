@@ -8,6 +8,11 @@ import (
 	"cubicle/services/ontology-service/ent/predicate"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workinsight"
+	"cubicle/services/ontology-service/ent/workitemstatesnapshot"
+	"cubicle/services/ontology-service/ent/workitemstatetransition"
+	"cubicle/services/ontology-service/ent/workprogrammilestone"
 	"errors"
 	"fmt"
 	"time"
@@ -119,6 +124,26 @@ func (_u *PullRequestUpdate) SetNillableState(v *pullrequest.State) *PullRequest
 	return _u
 }
 
+// SetSourceCreatedAt sets the "source_created_at" field.
+func (_u *PullRequestUpdate) SetSourceCreatedAt(v time.Time) *PullRequestUpdate {
+	_u.mutation.SetSourceCreatedAt(v)
+	return _u
+}
+
+// SetNillableSourceCreatedAt sets the "source_created_at" field if the given value is not nil.
+func (_u *PullRequestUpdate) SetNillableSourceCreatedAt(v *time.Time) *PullRequestUpdate {
+	if v != nil {
+		_u.SetSourceCreatedAt(*v)
+	}
+	return _u
+}
+
+// ClearSourceCreatedAt clears the value of the "source_created_at" field.
+func (_u *PullRequestUpdate) ClearSourceCreatedAt() *PullRequestUpdate {
+	_u.mutation.ClearSourceCreatedAt()
+	return _u
+}
+
 // SetMergedAt sets the "merged_at" field.
 func (_u *PullRequestUpdate) SetMergedAt(v time.Time) *PullRequestUpdate {
 	_u.mutation.SetMergedAt(v)
@@ -136,6 +161,228 @@ func (_u *PullRequestUpdate) SetNillableMergedAt(v *time.Time) *PullRequestUpdat
 // ClearMergedAt clears the value of the "merged_at" field.
 func (_u *PullRequestUpdate) ClearMergedAt() *PullRequestUpdate {
 	_u.mutation.ClearMergedAt()
+	return _u
+}
+
+// SetClosedAt sets the "closed_at" field.
+func (_u *PullRequestUpdate) SetClosedAt(v time.Time) *PullRequestUpdate {
+	_u.mutation.SetClosedAt(v)
+	return _u
+}
+
+// SetNillableClosedAt sets the "closed_at" field if the given value is not nil.
+func (_u *PullRequestUpdate) SetNillableClosedAt(v *time.Time) *PullRequestUpdate {
+	if v != nil {
+		_u.SetClosedAt(*v)
+	}
+	return _u
+}
+
+// ClearClosedAt clears the value of the "closed_at" field.
+func (_u *PullRequestUpdate) ClearClosedAt() *PullRequestUpdate {
+	_u.mutation.ClearClosedAt()
+	return _u
+}
+
+// SetAdditions sets the "additions" field.
+func (_u *PullRequestUpdate) SetAdditions(v int) *PullRequestUpdate {
+	_u.mutation.ResetAdditions()
+	_u.mutation.SetAdditions(v)
+	return _u
+}
+
+// SetNillableAdditions sets the "additions" field if the given value is not nil.
+func (_u *PullRequestUpdate) SetNillableAdditions(v *int) *PullRequestUpdate {
+	if v != nil {
+		_u.SetAdditions(*v)
+	}
+	return _u
+}
+
+// AddAdditions adds value to the "additions" field.
+func (_u *PullRequestUpdate) AddAdditions(v int) *PullRequestUpdate {
+	_u.mutation.AddAdditions(v)
+	return _u
+}
+
+// ClearAdditions clears the value of the "additions" field.
+func (_u *PullRequestUpdate) ClearAdditions() *PullRequestUpdate {
+	_u.mutation.ClearAdditions()
+	return _u
+}
+
+// SetDeletions sets the "deletions" field.
+func (_u *PullRequestUpdate) SetDeletions(v int) *PullRequestUpdate {
+	_u.mutation.ResetDeletions()
+	_u.mutation.SetDeletions(v)
+	return _u
+}
+
+// SetNillableDeletions sets the "deletions" field if the given value is not nil.
+func (_u *PullRequestUpdate) SetNillableDeletions(v *int) *PullRequestUpdate {
+	if v != nil {
+		_u.SetDeletions(*v)
+	}
+	return _u
+}
+
+// AddDeletions adds value to the "deletions" field.
+func (_u *PullRequestUpdate) AddDeletions(v int) *PullRequestUpdate {
+	_u.mutation.AddDeletions(v)
+	return _u
+}
+
+// ClearDeletions clears the value of the "deletions" field.
+func (_u *PullRequestUpdate) ClearDeletions() *PullRequestUpdate {
+	_u.mutation.ClearDeletions()
+	return _u
+}
+
+// SetChangedFilesCount sets the "changed_files_count" field.
+func (_u *PullRequestUpdate) SetChangedFilesCount(v int) *PullRequestUpdate {
+	_u.mutation.ResetChangedFilesCount()
+	_u.mutation.SetChangedFilesCount(v)
+	return _u
+}
+
+// SetNillableChangedFilesCount sets the "changed_files_count" field if the given value is not nil.
+func (_u *PullRequestUpdate) SetNillableChangedFilesCount(v *int) *PullRequestUpdate {
+	if v != nil {
+		_u.SetChangedFilesCount(*v)
+	}
+	return _u
+}
+
+// AddChangedFilesCount adds value to the "changed_files_count" field.
+func (_u *PullRequestUpdate) AddChangedFilesCount(v int) *PullRequestUpdate {
+	_u.mutation.AddChangedFilesCount(v)
+	return _u
+}
+
+// ClearChangedFilesCount clears the value of the "changed_files_count" field.
+func (_u *PullRequestUpdate) ClearChangedFilesCount() *PullRequestUpdate {
+	_u.mutation.ClearChangedFilesCount()
+	return _u
+}
+
+// SetCommitCount sets the "commit_count" field.
+func (_u *PullRequestUpdate) SetCommitCount(v int) *PullRequestUpdate {
+	_u.mutation.ResetCommitCount()
+	_u.mutation.SetCommitCount(v)
+	return _u
+}
+
+// SetNillableCommitCount sets the "commit_count" field if the given value is not nil.
+func (_u *PullRequestUpdate) SetNillableCommitCount(v *int) *PullRequestUpdate {
+	if v != nil {
+		_u.SetCommitCount(*v)
+	}
+	return _u
+}
+
+// AddCommitCount adds value to the "commit_count" field.
+func (_u *PullRequestUpdate) AddCommitCount(v int) *PullRequestUpdate {
+	_u.mutation.AddCommitCount(v)
+	return _u
+}
+
+// ClearCommitCount clears the value of the "commit_count" field.
+func (_u *PullRequestUpdate) ClearCommitCount() *PullRequestUpdate {
+	_u.mutation.ClearCommitCount()
+	return _u
+}
+
+// SetIssueCommentCount sets the "issue_comment_count" field.
+func (_u *PullRequestUpdate) SetIssueCommentCount(v int) *PullRequestUpdate {
+	_u.mutation.ResetIssueCommentCount()
+	_u.mutation.SetIssueCommentCount(v)
+	return _u
+}
+
+// SetNillableIssueCommentCount sets the "issue_comment_count" field if the given value is not nil.
+func (_u *PullRequestUpdate) SetNillableIssueCommentCount(v *int) *PullRequestUpdate {
+	if v != nil {
+		_u.SetIssueCommentCount(*v)
+	}
+	return _u
+}
+
+// AddIssueCommentCount adds value to the "issue_comment_count" field.
+func (_u *PullRequestUpdate) AddIssueCommentCount(v int) *PullRequestUpdate {
+	_u.mutation.AddIssueCommentCount(v)
+	return _u
+}
+
+// ClearIssueCommentCount clears the value of the "issue_comment_count" field.
+func (_u *PullRequestUpdate) ClearIssueCommentCount() *PullRequestUpdate {
+	_u.mutation.ClearIssueCommentCount()
+	return _u
+}
+
+// SetReviewCommentCount sets the "review_comment_count" field.
+func (_u *PullRequestUpdate) SetReviewCommentCount(v int) *PullRequestUpdate {
+	_u.mutation.ResetReviewCommentCount()
+	_u.mutation.SetReviewCommentCount(v)
+	return _u
+}
+
+// SetNillableReviewCommentCount sets the "review_comment_count" field if the given value is not nil.
+func (_u *PullRequestUpdate) SetNillableReviewCommentCount(v *int) *PullRequestUpdate {
+	if v != nil {
+		_u.SetReviewCommentCount(*v)
+	}
+	return _u
+}
+
+// AddReviewCommentCount adds value to the "review_comment_count" field.
+func (_u *PullRequestUpdate) AddReviewCommentCount(v int) *PullRequestUpdate {
+	_u.mutation.AddReviewCommentCount(v)
+	return _u
+}
+
+// ClearReviewCommentCount clears the value of the "review_comment_count" field.
+func (_u *PullRequestUpdate) ClearReviewCommentCount() *PullRequestUpdate {
+	_u.mutation.ClearReviewCommentCount()
+	return _u
+}
+
+// SetIsDraft sets the "is_draft" field.
+func (_u *PullRequestUpdate) SetIsDraft(v bool) *PullRequestUpdate {
+	_u.mutation.SetIsDraft(v)
+	return _u
+}
+
+// SetNillableIsDraft sets the "is_draft" field if the given value is not nil.
+func (_u *PullRequestUpdate) SetNillableIsDraft(v *bool) *PullRequestUpdate {
+	if v != nil {
+		_u.SetIsDraft(*v)
+	}
+	return _u
+}
+
+// ClearIsDraft clears the value of the "is_draft" field.
+func (_u *PullRequestUpdate) ClearIsDraft() *PullRequestUpdate {
+	_u.mutation.ClearIsDraft()
+	return _u
+}
+
+// SetIsMergeable sets the "is_mergeable" field.
+func (_u *PullRequestUpdate) SetIsMergeable(v bool) *PullRequestUpdate {
+	_u.mutation.SetIsMergeable(v)
+	return _u
+}
+
+// SetNillableIsMergeable sets the "is_mergeable" field if the given value is not nil.
+func (_u *PullRequestUpdate) SetNillableIsMergeable(v *bool) *PullRequestUpdate {
+	if v != nil {
+		_u.SetIsMergeable(*v)
+	}
+	return _u
+}
+
+// ClearIsMergeable clears the value of the "is_mergeable" field.
+func (_u *PullRequestUpdate) ClearIsMergeable() *PullRequestUpdate {
+	_u.mutation.ClearIsMergeable()
 	return _u
 }
 
@@ -732,6 +979,81 @@ func (_u *PullRequestUpdate) SetLatestEvidence(v *Evidence) *PullRequestUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
 }
 
+// AddInsightIDs adds the "insights" edge to the WorkInsight entity by IDs.
+func (_u *PullRequestUpdate) AddInsightIDs(ids ...int) *PullRequestUpdate {
+	_u.mutation.AddInsightIDs(ids...)
+	return _u
+}
+
+// AddInsights adds the "insights" edges to the WorkInsight entity.
+func (_u *PullRequestUpdate) AddInsights(v ...*WorkInsight) *PullRequestUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddInsightIDs(ids...)
+}
+
+// AddActionIDs adds the "actions" edge to the WorkAction entity by IDs.
+func (_u *PullRequestUpdate) AddActionIDs(ids ...int) *PullRequestUpdate {
+	_u.mutation.AddActionIDs(ids...)
+	return _u
+}
+
+// AddActions adds the "actions" edges to the WorkAction entity.
+func (_u *PullRequestUpdate) AddActions(v ...*WorkAction) *PullRequestUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddActionIDs(ids...)
+}
+
+// AddStateSnapshotIDs adds the "state_snapshots" edge to the WorkItemStateSnapshot entity by IDs.
+func (_u *PullRequestUpdate) AddStateSnapshotIDs(ids ...int) *PullRequestUpdate {
+	_u.mutation.AddStateSnapshotIDs(ids...)
+	return _u
+}
+
+// AddStateSnapshots adds the "state_snapshots" edges to the WorkItemStateSnapshot entity.
+func (_u *PullRequestUpdate) AddStateSnapshots(v ...*WorkItemStateSnapshot) *PullRequestUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddStateSnapshotIDs(ids...)
+}
+
+// AddStateTransitionIDs adds the "state_transitions" edge to the WorkItemStateTransition entity by IDs.
+func (_u *PullRequestUpdate) AddStateTransitionIDs(ids ...int) *PullRequestUpdate {
+	_u.mutation.AddStateTransitionIDs(ids...)
+	return _u
+}
+
+// AddStateTransitions adds the "state_transitions" edges to the WorkItemStateTransition entity.
+func (_u *PullRequestUpdate) AddStateTransitions(v ...*WorkItemStateTransition) *PullRequestUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddStateTransitionIDs(ids...)
+}
+
+// AddMilestoneIDs adds the "milestones" edge to the WorkProgramMilestone entity by IDs.
+func (_u *PullRequestUpdate) AddMilestoneIDs(ids ...int) *PullRequestUpdate {
+	_u.mutation.AddMilestoneIDs(ids...)
+	return _u
+}
+
+// AddMilestones adds the "milestones" edges to the WorkProgramMilestone entity.
+func (_u *PullRequestUpdate) AddMilestones(v ...*WorkProgramMilestone) *PullRequestUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddMilestoneIDs(ids...)
+}
+
 // Mutation returns the PullRequestMutation object of the builder.
 func (_u *PullRequestUpdate) Mutation() *PullRequestMutation {
 	return _u.mutation
@@ -762,6 +1084,111 @@ func (_u *PullRequestUpdate) RemoveTickets(v ...*Ticket) *PullRequestUpdate {
 func (_u *PullRequestUpdate) ClearLatestEvidence() *PullRequestUpdate {
 	_u.mutation.ClearLatestEvidence()
 	return _u
+}
+
+// ClearInsights clears all "insights" edges to the WorkInsight entity.
+func (_u *PullRequestUpdate) ClearInsights() *PullRequestUpdate {
+	_u.mutation.ClearInsights()
+	return _u
+}
+
+// RemoveInsightIDs removes the "insights" edge to WorkInsight entities by IDs.
+func (_u *PullRequestUpdate) RemoveInsightIDs(ids ...int) *PullRequestUpdate {
+	_u.mutation.RemoveInsightIDs(ids...)
+	return _u
+}
+
+// RemoveInsights removes "insights" edges to WorkInsight entities.
+func (_u *PullRequestUpdate) RemoveInsights(v ...*WorkInsight) *PullRequestUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveInsightIDs(ids...)
+}
+
+// ClearActions clears all "actions" edges to the WorkAction entity.
+func (_u *PullRequestUpdate) ClearActions() *PullRequestUpdate {
+	_u.mutation.ClearActions()
+	return _u
+}
+
+// RemoveActionIDs removes the "actions" edge to WorkAction entities by IDs.
+func (_u *PullRequestUpdate) RemoveActionIDs(ids ...int) *PullRequestUpdate {
+	_u.mutation.RemoveActionIDs(ids...)
+	return _u
+}
+
+// RemoveActions removes "actions" edges to WorkAction entities.
+func (_u *PullRequestUpdate) RemoveActions(v ...*WorkAction) *PullRequestUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveActionIDs(ids...)
+}
+
+// ClearStateSnapshots clears all "state_snapshots" edges to the WorkItemStateSnapshot entity.
+func (_u *PullRequestUpdate) ClearStateSnapshots() *PullRequestUpdate {
+	_u.mutation.ClearStateSnapshots()
+	return _u
+}
+
+// RemoveStateSnapshotIDs removes the "state_snapshots" edge to WorkItemStateSnapshot entities by IDs.
+func (_u *PullRequestUpdate) RemoveStateSnapshotIDs(ids ...int) *PullRequestUpdate {
+	_u.mutation.RemoveStateSnapshotIDs(ids...)
+	return _u
+}
+
+// RemoveStateSnapshots removes "state_snapshots" edges to WorkItemStateSnapshot entities.
+func (_u *PullRequestUpdate) RemoveStateSnapshots(v ...*WorkItemStateSnapshot) *PullRequestUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveStateSnapshotIDs(ids...)
+}
+
+// ClearStateTransitions clears all "state_transitions" edges to the WorkItemStateTransition entity.
+func (_u *PullRequestUpdate) ClearStateTransitions() *PullRequestUpdate {
+	_u.mutation.ClearStateTransitions()
+	return _u
+}
+
+// RemoveStateTransitionIDs removes the "state_transitions" edge to WorkItemStateTransition entities by IDs.
+func (_u *PullRequestUpdate) RemoveStateTransitionIDs(ids ...int) *PullRequestUpdate {
+	_u.mutation.RemoveStateTransitionIDs(ids...)
+	return _u
+}
+
+// RemoveStateTransitions removes "state_transitions" edges to WorkItemStateTransition entities.
+func (_u *PullRequestUpdate) RemoveStateTransitions(v ...*WorkItemStateTransition) *PullRequestUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveStateTransitionIDs(ids...)
+}
+
+// ClearMilestones clears all "milestones" edges to the WorkProgramMilestone entity.
+func (_u *PullRequestUpdate) ClearMilestones() *PullRequestUpdate {
+	_u.mutation.ClearMilestones()
+	return _u
+}
+
+// RemoveMilestoneIDs removes the "milestones" edge to WorkProgramMilestone entities by IDs.
+func (_u *PullRequestUpdate) RemoveMilestoneIDs(ids ...int) *PullRequestUpdate {
+	_u.mutation.RemoveMilestoneIDs(ids...)
+	return _u
+}
+
+// RemoveMilestones removes "milestones" edges to WorkProgramMilestone entities.
+func (_u *PullRequestUpdate) RemoveMilestones(v ...*WorkProgramMilestone) *PullRequestUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveMilestoneIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -876,11 +1303,89 @@ func (_u *PullRequestUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.State(); ok {
 		_spec.SetField(pullrequest.FieldState, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.SourceCreatedAt(); ok {
+		_spec.SetField(pullrequest.FieldSourceCreatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SourceCreatedAtCleared() {
+		_spec.ClearField(pullrequest.FieldSourceCreatedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.MergedAt(); ok {
 		_spec.SetField(pullrequest.FieldMergedAt, field.TypeTime, value)
 	}
 	if _u.mutation.MergedAtCleared() {
 		_spec.ClearField(pullrequest.FieldMergedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.ClosedAt(); ok {
+		_spec.SetField(pullrequest.FieldClosedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ClosedAtCleared() {
+		_spec.ClearField(pullrequest.FieldClosedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Additions(); ok {
+		_spec.SetField(pullrequest.FieldAdditions, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedAdditions(); ok {
+		_spec.AddField(pullrequest.FieldAdditions, field.TypeInt, value)
+	}
+	if _u.mutation.AdditionsCleared() {
+		_spec.ClearField(pullrequest.FieldAdditions, field.TypeInt)
+	}
+	if value, ok := _u.mutation.Deletions(); ok {
+		_spec.SetField(pullrequest.FieldDeletions, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedDeletions(); ok {
+		_spec.AddField(pullrequest.FieldDeletions, field.TypeInt, value)
+	}
+	if _u.mutation.DeletionsCleared() {
+		_spec.ClearField(pullrequest.FieldDeletions, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ChangedFilesCount(); ok {
+		_spec.SetField(pullrequest.FieldChangedFilesCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedChangedFilesCount(); ok {
+		_spec.AddField(pullrequest.FieldChangedFilesCount, field.TypeInt, value)
+	}
+	if _u.mutation.ChangedFilesCountCleared() {
+		_spec.ClearField(pullrequest.FieldChangedFilesCount, field.TypeInt)
+	}
+	if value, ok := _u.mutation.CommitCount(); ok {
+		_spec.SetField(pullrequest.FieldCommitCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedCommitCount(); ok {
+		_spec.AddField(pullrequest.FieldCommitCount, field.TypeInt, value)
+	}
+	if _u.mutation.CommitCountCleared() {
+		_spec.ClearField(pullrequest.FieldCommitCount, field.TypeInt)
+	}
+	if value, ok := _u.mutation.IssueCommentCount(); ok {
+		_spec.SetField(pullrequest.FieldIssueCommentCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedIssueCommentCount(); ok {
+		_spec.AddField(pullrequest.FieldIssueCommentCount, field.TypeInt, value)
+	}
+	if _u.mutation.IssueCommentCountCleared() {
+		_spec.ClearField(pullrequest.FieldIssueCommentCount, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ReviewCommentCount(); ok {
+		_spec.SetField(pullrequest.FieldReviewCommentCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedReviewCommentCount(); ok {
+		_spec.AddField(pullrequest.FieldReviewCommentCount, field.TypeInt, value)
+	}
+	if _u.mutation.ReviewCommentCountCleared() {
+		_spec.ClearField(pullrequest.FieldReviewCommentCount, field.TypeInt)
+	}
+	if value, ok := _u.mutation.IsDraft(); ok {
+		_spec.SetField(pullrequest.FieldIsDraft, field.TypeBool, value)
+	}
+	if _u.mutation.IsDraftCleared() {
+		_spec.ClearField(pullrequest.FieldIsDraft, field.TypeBool)
+	}
+	if value, ok := _u.mutation.IsMergeable(); ok {
+		_spec.SetField(pullrequest.FieldIsMergeable, field.TypeBool, value)
+	}
+	if _u.mutation.IsMergeableCleared() {
+		_spec.ClearField(pullrequest.FieldIsMergeable, field.TypeBool)
 	}
 	if value, ok := _u.mutation.Summary(); ok {
 		_spec.SetField(pullrequest.FieldSummary, field.TypeString, value)
@@ -1118,6 +1623,231 @@ func (_u *PullRequestUpdate) sqlSave(ctx context.Context) (_node int, err error)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.InsightsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.InsightsTable,
+			Columns: []string{pullrequest.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedInsightsIDs(); len(nodes) > 0 && !_u.mutation.InsightsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.InsightsTable,
+			Columns: []string{pullrequest.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.InsightsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.InsightsTable,
+			Columns: []string{pullrequest.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.ActionsTable,
+			Columns: []string{pullrequest.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedActionsIDs(); len(nodes) > 0 && !_u.mutation.ActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.ActionsTable,
+			Columns: []string{pullrequest.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.ActionsTable,
+			Columns: []string{pullrequest.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StateSnapshotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateSnapshotsTable,
+			Columns: []string{pullrequest.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedStateSnapshotsIDs(); len(nodes) > 0 && !_u.mutation.StateSnapshotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateSnapshotsTable,
+			Columns: []string{pullrequest.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StateSnapshotsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateSnapshotsTable,
+			Columns: []string{pullrequest.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StateTransitionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateTransitionsTable,
+			Columns: []string{pullrequest.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedStateTransitionsIDs(); len(nodes) > 0 && !_u.mutation.StateTransitionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateTransitionsTable,
+			Columns: []string{pullrequest.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StateTransitionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateTransitionsTable,
+			Columns: []string{pullrequest.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.MilestonesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.MilestonesTable,
+			Columns: []string{pullrequest.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedMilestonesIDs(); len(nodes) > 0 && !_u.mutation.MilestonesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.MilestonesTable,
+			Columns: []string{pullrequest.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MilestonesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.MilestonesTable,
+			Columns: []string{pullrequest.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{pullrequest.Label}
@@ -1227,6 +1957,26 @@ func (_u *PullRequestUpdateOne) SetNillableState(v *pullrequest.State) *PullRequ
 	return _u
 }
 
+// SetSourceCreatedAt sets the "source_created_at" field.
+func (_u *PullRequestUpdateOne) SetSourceCreatedAt(v time.Time) *PullRequestUpdateOne {
+	_u.mutation.SetSourceCreatedAt(v)
+	return _u
+}
+
+// SetNillableSourceCreatedAt sets the "source_created_at" field if the given value is not nil.
+func (_u *PullRequestUpdateOne) SetNillableSourceCreatedAt(v *time.Time) *PullRequestUpdateOne {
+	if v != nil {
+		_u.SetSourceCreatedAt(*v)
+	}
+	return _u
+}
+
+// ClearSourceCreatedAt clears the value of the "source_created_at" field.
+func (_u *PullRequestUpdateOne) ClearSourceCreatedAt() *PullRequestUpdateOne {
+	_u.mutation.ClearSourceCreatedAt()
+	return _u
+}
+
 // SetMergedAt sets the "merged_at" field.
 func (_u *PullRequestUpdateOne) SetMergedAt(v time.Time) *PullRequestUpdateOne {
 	_u.mutation.SetMergedAt(v)
@@ -1244,6 +1994,228 @@ func (_u *PullRequestUpdateOne) SetNillableMergedAt(v *time.Time) *PullRequestUp
 // ClearMergedAt clears the value of the "merged_at" field.
 func (_u *PullRequestUpdateOne) ClearMergedAt() *PullRequestUpdateOne {
 	_u.mutation.ClearMergedAt()
+	return _u
+}
+
+// SetClosedAt sets the "closed_at" field.
+func (_u *PullRequestUpdateOne) SetClosedAt(v time.Time) *PullRequestUpdateOne {
+	_u.mutation.SetClosedAt(v)
+	return _u
+}
+
+// SetNillableClosedAt sets the "closed_at" field if the given value is not nil.
+func (_u *PullRequestUpdateOne) SetNillableClosedAt(v *time.Time) *PullRequestUpdateOne {
+	if v != nil {
+		_u.SetClosedAt(*v)
+	}
+	return _u
+}
+
+// ClearClosedAt clears the value of the "closed_at" field.
+func (_u *PullRequestUpdateOne) ClearClosedAt() *PullRequestUpdateOne {
+	_u.mutation.ClearClosedAt()
+	return _u
+}
+
+// SetAdditions sets the "additions" field.
+func (_u *PullRequestUpdateOne) SetAdditions(v int) *PullRequestUpdateOne {
+	_u.mutation.ResetAdditions()
+	_u.mutation.SetAdditions(v)
+	return _u
+}
+
+// SetNillableAdditions sets the "additions" field if the given value is not nil.
+func (_u *PullRequestUpdateOne) SetNillableAdditions(v *int) *PullRequestUpdateOne {
+	if v != nil {
+		_u.SetAdditions(*v)
+	}
+	return _u
+}
+
+// AddAdditions adds value to the "additions" field.
+func (_u *PullRequestUpdateOne) AddAdditions(v int) *PullRequestUpdateOne {
+	_u.mutation.AddAdditions(v)
+	return _u
+}
+
+// ClearAdditions clears the value of the "additions" field.
+func (_u *PullRequestUpdateOne) ClearAdditions() *PullRequestUpdateOne {
+	_u.mutation.ClearAdditions()
+	return _u
+}
+
+// SetDeletions sets the "deletions" field.
+func (_u *PullRequestUpdateOne) SetDeletions(v int) *PullRequestUpdateOne {
+	_u.mutation.ResetDeletions()
+	_u.mutation.SetDeletions(v)
+	return _u
+}
+
+// SetNillableDeletions sets the "deletions" field if the given value is not nil.
+func (_u *PullRequestUpdateOne) SetNillableDeletions(v *int) *PullRequestUpdateOne {
+	if v != nil {
+		_u.SetDeletions(*v)
+	}
+	return _u
+}
+
+// AddDeletions adds value to the "deletions" field.
+func (_u *PullRequestUpdateOne) AddDeletions(v int) *PullRequestUpdateOne {
+	_u.mutation.AddDeletions(v)
+	return _u
+}
+
+// ClearDeletions clears the value of the "deletions" field.
+func (_u *PullRequestUpdateOne) ClearDeletions() *PullRequestUpdateOne {
+	_u.mutation.ClearDeletions()
+	return _u
+}
+
+// SetChangedFilesCount sets the "changed_files_count" field.
+func (_u *PullRequestUpdateOne) SetChangedFilesCount(v int) *PullRequestUpdateOne {
+	_u.mutation.ResetChangedFilesCount()
+	_u.mutation.SetChangedFilesCount(v)
+	return _u
+}
+
+// SetNillableChangedFilesCount sets the "changed_files_count" field if the given value is not nil.
+func (_u *PullRequestUpdateOne) SetNillableChangedFilesCount(v *int) *PullRequestUpdateOne {
+	if v != nil {
+		_u.SetChangedFilesCount(*v)
+	}
+	return _u
+}
+
+// AddChangedFilesCount adds value to the "changed_files_count" field.
+func (_u *PullRequestUpdateOne) AddChangedFilesCount(v int) *PullRequestUpdateOne {
+	_u.mutation.AddChangedFilesCount(v)
+	return _u
+}
+
+// ClearChangedFilesCount clears the value of the "changed_files_count" field.
+func (_u *PullRequestUpdateOne) ClearChangedFilesCount() *PullRequestUpdateOne {
+	_u.mutation.ClearChangedFilesCount()
+	return _u
+}
+
+// SetCommitCount sets the "commit_count" field.
+func (_u *PullRequestUpdateOne) SetCommitCount(v int) *PullRequestUpdateOne {
+	_u.mutation.ResetCommitCount()
+	_u.mutation.SetCommitCount(v)
+	return _u
+}
+
+// SetNillableCommitCount sets the "commit_count" field if the given value is not nil.
+func (_u *PullRequestUpdateOne) SetNillableCommitCount(v *int) *PullRequestUpdateOne {
+	if v != nil {
+		_u.SetCommitCount(*v)
+	}
+	return _u
+}
+
+// AddCommitCount adds value to the "commit_count" field.
+func (_u *PullRequestUpdateOne) AddCommitCount(v int) *PullRequestUpdateOne {
+	_u.mutation.AddCommitCount(v)
+	return _u
+}
+
+// ClearCommitCount clears the value of the "commit_count" field.
+func (_u *PullRequestUpdateOne) ClearCommitCount() *PullRequestUpdateOne {
+	_u.mutation.ClearCommitCount()
+	return _u
+}
+
+// SetIssueCommentCount sets the "issue_comment_count" field.
+func (_u *PullRequestUpdateOne) SetIssueCommentCount(v int) *PullRequestUpdateOne {
+	_u.mutation.ResetIssueCommentCount()
+	_u.mutation.SetIssueCommentCount(v)
+	return _u
+}
+
+// SetNillableIssueCommentCount sets the "issue_comment_count" field if the given value is not nil.
+func (_u *PullRequestUpdateOne) SetNillableIssueCommentCount(v *int) *PullRequestUpdateOne {
+	if v != nil {
+		_u.SetIssueCommentCount(*v)
+	}
+	return _u
+}
+
+// AddIssueCommentCount adds value to the "issue_comment_count" field.
+func (_u *PullRequestUpdateOne) AddIssueCommentCount(v int) *PullRequestUpdateOne {
+	_u.mutation.AddIssueCommentCount(v)
+	return _u
+}
+
+// ClearIssueCommentCount clears the value of the "issue_comment_count" field.
+func (_u *PullRequestUpdateOne) ClearIssueCommentCount() *PullRequestUpdateOne {
+	_u.mutation.ClearIssueCommentCount()
+	return _u
+}
+
+// SetReviewCommentCount sets the "review_comment_count" field.
+func (_u *PullRequestUpdateOne) SetReviewCommentCount(v int) *PullRequestUpdateOne {
+	_u.mutation.ResetReviewCommentCount()
+	_u.mutation.SetReviewCommentCount(v)
+	return _u
+}
+
+// SetNillableReviewCommentCount sets the "review_comment_count" field if the given value is not nil.
+func (_u *PullRequestUpdateOne) SetNillableReviewCommentCount(v *int) *PullRequestUpdateOne {
+	if v != nil {
+		_u.SetReviewCommentCount(*v)
+	}
+	return _u
+}
+
+// AddReviewCommentCount adds value to the "review_comment_count" field.
+func (_u *PullRequestUpdateOne) AddReviewCommentCount(v int) *PullRequestUpdateOne {
+	_u.mutation.AddReviewCommentCount(v)
+	return _u
+}
+
+// ClearReviewCommentCount clears the value of the "review_comment_count" field.
+func (_u *PullRequestUpdateOne) ClearReviewCommentCount() *PullRequestUpdateOne {
+	_u.mutation.ClearReviewCommentCount()
+	return _u
+}
+
+// SetIsDraft sets the "is_draft" field.
+func (_u *PullRequestUpdateOne) SetIsDraft(v bool) *PullRequestUpdateOne {
+	_u.mutation.SetIsDraft(v)
+	return _u
+}
+
+// SetNillableIsDraft sets the "is_draft" field if the given value is not nil.
+func (_u *PullRequestUpdateOne) SetNillableIsDraft(v *bool) *PullRequestUpdateOne {
+	if v != nil {
+		_u.SetIsDraft(*v)
+	}
+	return _u
+}
+
+// ClearIsDraft clears the value of the "is_draft" field.
+func (_u *PullRequestUpdateOne) ClearIsDraft() *PullRequestUpdateOne {
+	_u.mutation.ClearIsDraft()
+	return _u
+}
+
+// SetIsMergeable sets the "is_mergeable" field.
+func (_u *PullRequestUpdateOne) SetIsMergeable(v bool) *PullRequestUpdateOne {
+	_u.mutation.SetIsMergeable(v)
+	return _u
+}
+
+// SetNillableIsMergeable sets the "is_mergeable" field if the given value is not nil.
+func (_u *PullRequestUpdateOne) SetNillableIsMergeable(v *bool) *PullRequestUpdateOne {
+	if v != nil {
+		_u.SetIsMergeable(*v)
+	}
+	return _u
+}
+
+// ClearIsMergeable clears the value of the "is_mergeable" field.
+func (_u *PullRequestUpdateOne) ClearIsMergeable() *PullRequestUpdateOne {
+	_u.mutation.ClearIsMergeable()
 	return _u
 }
 
@@ -1840,6 +2812,81 @@ func (_u *PullRequestUpdateOne) SetLatestEvidence(v *Evidence) *PullRequestUpdat
 	return _u.SetLatestEvidenceID(v.ID)
 }
 
+// AddInsightIDs adds the "insights" edge to the WorkInsight entity by IDs.
+func (_u *PullRequestUpdateOne) AddInsightIDs(ids ...int) *PullRequestUpdateOne {
+	_u.mutation.AddInsightIDs(ids...)
+	return _u
+}
+
+// AddInsights adds the "insights" edges to the WorkInsight entity.
+func (_u *PullRequestUpdateOne) AddInsights(v ...*WorkInsight) *PullRequestUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddInsightIDs(ids...)
+}
+
+// AddActionIDs adds the "actions" edge to the WorkAction entity by IDs.
+func (_u *PullRequestUpdateOne) AddActionIDs(ids ...int) *PullRequestUpdateOne {
+	_u.mutation.AddActionIDs(ids...)
+	return _u
+}
+
+// AddActions adds the "actions" edges to the WorkAction entity.
+func (_u *PullRequestUpdateOne) AddActions(v ...*WorkAction) *PullRequestUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddActionIDs(ids...)
+}
+
+// AddStateSnapshotIDs adds the "state_snapshots" edge to the WorkItemStateSnapshot entity by IDs.
+func (_u *PullRequestUpdateOne) AddStateSnapshotIDs(ids ...int) *PullRequestUpdateOne {
+	_u.mutation.AddStateSnapshotIDs(ids...)
+	return _u
+}
+
+// AddStateSnapshots adds the "state_snapshots" edges to the WorkItemStateSnapshot entity.
+func (_u *PullRequestUpdateOne) AddStateSnapshots(v ...*WorkItemStateSnapshot) *PullRequestUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddStateSnapshotIDs(ids...)
+}
+
+// AddStateTransitionIDs adds the "state_transitions" edge to the WorkItemStateTransition entity by IDs.
+func (_u *PullRequestUpdateOne) AddStateTransitionIDs(ids ...int) *PullRequestUpdateOne {
+	_u.mutation.AddStateTransitionIDs(ids...)
+	return _u
+}
+
+// AddStateTransitions adds the "state_transitions" edges to the WorkItemStateTransition entity.
+func (_u *PullRequestUpdateOne) AddStateTransitions(v ...*WorkItemStateTransition) *PullRequestUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddStateTransitionIDs(ids...)
+}
+
+// AddMilestoneIDs adds the "milestones" edge to the WorkProgramMilestone entity by IDs.
+func (_u *PullRequestUpdateOne) AddMilestoneIDs(ids ...int) *PullRequestUpdateOne {
+	_u.mutation.AddMilestoneIDs(ids...)
+	return _u
+}
+
+// AddMilestones adds the "milestones" edges to the WorkProgramMilestone entity.
+func (_u *PullRequestUpdateOne) AddMilestones(v ...*WorkProgramMilestone) *PullRequestUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddMilestoneIDs(ids...)
+}
+
 // Mutation returns the PullRequestMutation object of the builder.
 func (_u *PullRequestUpdateOne) Mutation() *PullRequestMutation {
 	return _u.mutation
@@ -1870,6 +2917,111 @@ func (_u *PullRequestUpdateOne) RemoveTickets(v ...*Ticket) *PullRequestUpdateOn
 func (_u *PullRequestUpdateOne) ClearLatestEvidence() *PullRequestUpdateOne {
 	_u.mutation.ClearLatestEvidence()
 	return _u
+}
+
+// ClearInsights clears all "insights" edges to the WorkInsight entity.
+func (_u *PullRequestUpdateOne) ClearInsights() *PullRequestUpdateOne {
+	_u.mutation.ClearInsights()
+	return _u
+}
+
+// RemoveInsightIDs removes the "insights" edge to WorkInsight entities by IDs.
+func (_u *PullRequestUpdateOne) RemoveInsightIDs(ids ...int) *PullRequestUpdateOne {
+	_u.mutation.RemoveInsightIDs(ids...)
+	return _u
+}
+
+// RemoveInsights removes "insights" edges to WorkInsight entities.
+func (_u *PullRequestUpdateOne) RemoveInsights(v ...*WorkInsight) *PullRequestUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveInsightIDs(ids...)
+}
+
+// ClearActions clears all "actions" edges to the WorkAction entity.
+func (_u *PullRequestUpdateOne) ClearActions() *PullRequestUpdateOne {
+	_u.mutation.ClearActions()
+	return _u
+}
+
+// RemoveActionIDs removes the "actions" edge to WorkAction entities by IDs.
+func (_u *PullRequestUpdateOne) RemoveActionIDs(ids ...int) *PullRequestUpdateOne {
+	_u.mutation.RemoveActionIDs(ids...)
+	return _u
+}
+
+// RemoveActions removes "actions" edges to WorkAction entities.
+func (_u *PullRequestUpdateOne) RemoveActions(v ...*WorkAction) *PullRequestUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveActionIDs(ids...)
+}
+
+// ClearStateSnapshots clears all "state_snapshots" edges to the WorkItemStateSnapshot entity.
+func (_u *PullRequestUpdateOne) ClearStateSnapshots() *PullRequestUpdateOne {
+	_u.mutation.ClearStateSnapshots()
+	return _u
+}
+
+// RemoveStateSnapshotIDs removes the "state_snapshots" edge to WorkItemStateSnapshot entities by IDs.
+func (_u *PullRequestUpdateOne) RemoveStateSnapshotIDs(ids ...int) *PullRequestUpdateOne {
+	_u.mutation.RemoveStateSnapshotIDs(ids...)
+	return _u
+}
+
+// RemoveStateSnapshots removes "state_snapshots" edges to WorkItemStateSnapshot entities.
+func (_u *PullRequestUpdateOne) RemoveStateSnapshots(v ...*WorkItemStateSnapshot) *PullRequestUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveStateSnapshotIDs(ids...)
+}
+
+// ClearStateTransitions clears all "state_transitions" edges to the WorkItemStateTransition entity.
+func (_u *PullRequestUpdateOne) ClearStateTransitions() *PullRequestUpdateOne {
+	_u.mutation.ClearStateTransitions()
+	return _u
+}
+
+// RemoveStateTransitionIDs removes the "state_transitions" edge to WorkItemStateTransition entities by IDs.
+func (_u *PullRequestUpdateOne) RemoveStateTransitionIDs(ids ...int) *PullRequestUpdateOne {
+	_u.mutation.RemoveStateTransitionIDs(ids...)
+	return _u
+}
+
+// RemoveStateTransitions removes "state_transitions" edges to WorkItemStateTransition entities.
+func (_u *PullRequestUpdateOne) RemoveStateTransitions(v ...*WorkItemStateTransition) *PullRequestUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveStateTransitionIDs(ids...)
+}
+
+// ClearMilestones clears all "milestones" edges to the WorkProgramMilestone entity.
+func (_u *PullRequestUpdateOne) ClearMilestones() *PullRequestUpdateOne {
+	_u.mutation.ClearMilestones()
+	return _u
+}
+
+// RemoveMilestoneIDs removes the "milestones" edge to WorkProgramMilestone entities by IDs.
+func (_u *PullRequestUpdateOne) RemoveMilestoneIDs(ids ...int) *PullRequestUpdateOne {
+	_u.mutation.RemoveMilestoneIDs(ids...)
+	return _u
+}
+
+// RemoveMilestones removes "milestones" edges to WorkProgramMilestone entities.
+func (_u *PullRequestUpdateOne) RemoveMilestones(v ...*WorkProgramMilestone) *PullRequestUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveMilestoneIDs(ids...)
 }
 
 // Where appends a list predicates to the PullRequestUpdate builder.
@@ -2014,11 +3166,89 @@ func (_u *PullRequestUpdateOne) sqlSave(ctx context.Context) (_node *PullRequest
 	if value, ok := _u.mutation.State(); ok {
 		_spec.SetField(pullrequest.FieldState, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.SourceCreatedAt(); ok {
+		_spec.SetField(pullrequest.FieldSourceCreatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SourceCreatedAtCleared() {
+		_spec.ClearField(pullrequest.FieldSourceCreatedAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.MergedAt(); ok {
 		_spec.SetField(pullrequest.FieldMergedAt, field.TypeTime, value)
 	}
 	if _u.mutation.MergedAtCleared() {
 		_spec.ClearField(pullrequest.FieldMergedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.ClosedAt(); ok {
+		_spec.SetField(pullrequest.FieldClosedAt, field.TypeTime, value)
+	}
+	if _u.mutation.ClosedAtCleared() {
+		_spec.ClearField(pullrequest.FieldClosedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Additions(); ok {
+		_spec.SetField(pullrequest.FieldAdditions, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedAdditions(); ok {
+		_spec.AddField(pullrequest.FieldAdditions, field.TypeInt, value)
+	}
+	if _u.mutation.AdditionsCleared() {
+		_spec.ClearField(pullrequest.FieldAdditions, field.TypeInt)
+	}
+	if value, ok := _u.mutation.Deletions(); ok {
+		_spec.SetField(pullrequest.FieldDeletions, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedDeletions(); ok {
+		_spec.AddField(pullrequest.FieldDeletions, field.TypeInt, value)
+	}
+	if _u.mutation.DeletionsCleared() {
+		_spec.ClearField(pullrequest.FieldDeletions, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ChangedFilesCount(); ok {
+		_spec.SetField(pullrequest.FieldChangedFilesCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedChangedFilesCount(); ok {
+		_spec.AddField(pullrequest.FieldChangedFilesCount, field.TypeInt, value)
+	}
+	if _u.mutation.ChangedFilesCountCleared() {
+		_spec.ClearField(pullrequest.FieldChangedFilesCount, field.TypeInt)
+	}
+	if value, ok := _u.mutation.CommitCount(); ok {
+		_spec.SetField(pullrequest.FieldCommitCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedCommitCount(); ok {
+		_spec.AddField(pullrequest.FieldCommitCount, field.TypeInt, value)
+	}
+	if _u.mutation.CommitCountCleared() {
+		_spec.ClearField(pullrequest.FieldCommitCount, field.TypeInt)
+	}
+	if value, ok := _u.mutation.IssueCommentCount(); ok {
+		_spec.SetField(pullrequest.FieldIssueCommentCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedIssueCommentCount(); ok {
+		_spec.AddField(pullrequest.FieldIssueCommentCount, field.TypeInt, value)
+	}
+	if _u.mutation.IssueCommentCountCleared() {
+		_spec.ClearField(pullrequest.FieldIssueCommentCount, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ReviewCommentCount(); ok {
+		_spec.SetField(pullrequest.FieldReviewCommentCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedReviewCommentCount(); ok {
+		_spec.AddField(pullrequest.FieldReviewCommentCount, field.TypeInt, value)
+	}
+	if _u.mutation.ReviewCommentCountCleared() {
+		_spec.ClearField(pullrequest.FieldReviewCommentCount, field.TypeInt)
+	}
+	if value, ok := _u.mutation.IsDraft(); ok {
+		_spec.SetField(pullrequest.FieldIsDraft, field.TypeBool, value)
+	}
+	if _u.mutation.IsDraftCleared() {
+		_spec.ClearField(pullrequest.FieldIsDraft, field.TypeBool)
+	}
+	if value, ok := _u.mutation.IsMergeable(); ok {
+		_spec.SetField(pullrequest.FieldIsMergeable, field.TypeBool, value)
+	}
+	if _u.mutation.IsMergeableCleared() {
+		_spec.ClearField(pullrequest.FieldIsMergeable, field.TypeBool)
 	}
 	if value, ok := _u.mutation.Summary(); ok {
 		_spec.SetField(pullrequest.FieldSummary, field.TypeString, value)
@@ -2249,6 +3479,231 @@ func (_u *PullRequestUpdateOne) sqlSave(ctx context.Context) (_node *PullRequest
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(evidence.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.InsightsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.InsightsTable,
+			Columns: []string{pullrequest.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedInsightsIDs(); len(nodes) > 0 && !_u.mutation.InsightsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.InsightsTable,
+			Columns: []string{pullrequest.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.InsightsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.InsightsTable,
+			Columns: []string{pullrequest.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.ActionsTable,
+			Columns: []string{pullrequest.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedActionsIDs(); len(nodes) > 0 && !_u.mutation.ActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.ActionsTable,
+			Columns: []string{pullrequest.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.ActionsTable,
+			Columns: []string{pullrequest.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StateSnapshotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateSnapshotsTable,
+			Columns: []string{pullrequest.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedStateSnapshotsIDs(); len(nodes) > 0 && !_u.mutation.StateSnapshotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateSnapshotsTable,
+			Columns: []string{pullrequest.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StateSnapshotsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateSnapshotsTable,
+			Columns: []string{pullrequest.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StateTransitionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateTransitionsTable,
+			Columns: []string{pullrequest.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedStateTransitionsIDs(); len(nodes) > 0 && !_u.mutation.StateTransitionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateTransitionsTable,
+			Columns: []string{pullrequest.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StateTransitionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateTransitionsTable,
+			Columns: []string{pullrequest.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.MilestonesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.MilestonesTable,
+			Columns: []string{pullrequest.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedMilestonesIDs(); len(nodes) > 0 && !_u.mutation.MilestonesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.MilestonesTable,
+			Columns: []string{pullrequest.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MilestonesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.MilestonesTable,
+			Columns: []string{pullrequest.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

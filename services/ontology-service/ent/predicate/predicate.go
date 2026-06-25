@@ -21,6 +21,9 @@ type DocumentLink func(*sql.Selector)
 // Evidence is the predicate function for evidence builders.
 type Evidence func(*sql.Selector)
 
+// EvidenceAttachment is the predicate function for evidenceattachment builders.
+type EvidenceAttachment func(*sql.Selector)
+
 // Message is the predicate function for message builders.
 type Message func(*sql.Selector)
 
@@ -32,6 +35,12 @@ type MessageLensResult func(*sql.Selector)
 
 // MessageMention is the predicate function for messagemention builders.
 type MessageMention func(*sql.Selector)
+
+// OpenGraphAssociation is the predicate function for opengraphassociation builders.
+type OpenGraphAssociation func(*sql.Selector)
+
+// OpenGraphObject is the predicate function for opengraphobject builders.
+type OpenGraphObject func(*sql.Selector)
 
 // Person is the predicate function for person builders.
 type Person func(*sql.Selector)
@@ -93,8 +102,53 @@ type TicketPullRequest func(*sql.Selector)
 // UnresolvedReference is the predicate function for unresolvedreference builders.
 type UnresolvedReference func(*sql.Selector)
 
+// WorkAction is the predicate function for workaction builders.
+type WorkAction func(*sql.Selector)
+
+// WorkActionObservation is the predicate function for workactionobservation builders.
+type WorkActionObservation func(*sql.Selector)
+
 // WorkArea is the predicate function for workarea builders.
 type WorkArea func(*sql.Selector)
+
+// WorkBlocker is the predicate function for workblocker builders.
+type WorkBlocker func(*sql.Selector)
+
+// WorkBlockerImpact is the predicate function for workblockerimpact builders.
+type WorkBlockerImpact func(*sql.Selector)
+
+// WorkDecisionTargetEvaluation is the predicate function for workdecisiontargetevaluation builders.
+type WorkDecisionTargetEvaluation func(*sql.Selector)
+
+// WorkDependencyEdge is the predicate function for workdependencyedge builders.
+type WorkDependencyEdge func(*sql.Selector)
+
+// WorkDependencyEndpoint is the predicate function for workdependencyendpoint builders.
+type WorkDependencyEndpoint func(*sql.Selector)
+
+// WorkForecastEvaluation is the predicate function for workforecastevaluation builders.
+type WorkForecastEvaluation func(*sql.Selector)
+
+// WorkInsight is the predicate function for workinsight builders.
+type WorkInsight func(*sql.Selector)
+
+// WorkInsightEvaluationSnapshot is the predicate function for workinsightevaluationsnapshot builders.
+type WorkInsightEvaluationSnapshot func(*sql.Selector)
+
+// WorkInsightKindEvaluationSnapshot is the predicate function for workinsightkindevaluationsnapshot builders.
+type WorkInsightKindEvaluationSnapshot func(*sql.Selector)
+
+// WorkInsightReview is the predicate function for workinsightreview builders.
+type WorkInsightReview func(*sql.Selector)
+
+// WorkItemForecast is the predicate function for workitemforecast builders.
+type WorkItemForecast func(*sql.Selector)
+
+// WorkItemStateSnapshot is the predicate function for workitemstatesnapshot builders.
+type WorkItemStateSnapshot func(*sql.Selector)
+
+// WorkItemStateTransition is the predicate function for workitemstatetransition builders.
+type WorkItemStateTransition func(*sql.Selector)
 
 // WorkLens is the predicate function for worklens builders.
 type WorkLens func(*sql.Selector)
@@ -102,8 +156,65 @@ type WorkLens func(*sql.Selector)
 // WorkLensWindow is the predicate function for worklenswindow builders.
 type WorkLensWindow func(*sql.Selector)
 
+// WorkOwnerLoadSnapshot is the predicate function for workownerloadsnapshot builders.
+type WorkOwnerLoadSnapshot func(*sql.Selector)
+
+// WorkProgramAdversarialCheck is the predicate function for workprogramadversarialcheck builders.
+type WorkProgramAdversarialCheck func(*sql.Selector)
+
+// WorkProgramAutomationReadiness is the predicate function for workprogramautomationreadiness builders.
+type WorkProgramAutomationReadiness func(*sql.Selector)
+
+// WorkProgramBriefCaveat is the predicate function for workprogrambriefcaveat builders.
+type WorkProgramBriefCaveat func(*sql.Selector)
+
+// WorkProgramBriefSnapshot is the predicate function for workprogrambriefsnapshot builders.
+type WorkProgramBriefSnapshot func(*sql.Selector)
+
+// WorkProgramEvidenceNeed is the predicate function for workprogramevidenceneed builders.
+type WorkProgramEvidenceNeed func(*sql.Selector)
+
+// WorkProgramItem is the predicate function for workprogramitem builders.
+type WorkProgramItem func(*sql.Selector)
+
+// WorkProgramItemLink is the predicate function for workprogramitemlink builders.
+type WorkProgramItemLink func(*sql.Selector)
+
+// WorkProgramMilestone is the predicate function for workprogrammilestone builders.
+type WorkProgramMilestone func(*sql.Selector)
+
+// WorkProgramOwnerRollupSnapshot is the predicate function for workprogramownerrollupsnapshot builders.
+type WorkProgramOwnerRollupSnapshot func(*sql.Selector)
+
+// WorkProgramQualityGate is the predicate function for workprogramqualitygate builders.
+type WorkProgramQualityGate func(*sql.Selector)
+
+// WorkProgramRiskDriver is the predicate function for workprogramriskdriver builders.
+type WorkProgramRiskDriver func(*sql.Selector)
+
+// WorkProgramRun is the predicate function for workprogramrun builders.
+type WorkProgramRun func(*sql.Selector)
+
+// WorkProgramRunMember is the predicate function for workprogramrunmember builders.
+type WorkProgramRunMember func(*sql.Selector)
+
+// WorkProgramSummarySnapshot is the predicate function for workprogramsummarysnapshot builders.
+type WorkProgramSummarySnapshot func(*sql.Selector)
+
+// WorkProgramTPMFunctionReadiness is the predicate function for workprogramtpmfunctionreadiness builders.
+type WorkProgramTPMFunctionReadiness func(*sql.Selector)
+
+// WorkResponsibility is the predicate function for workresponsibility builders.
+type WorkResponsibility func(*sql.Selector)
+
 // Workstream is the predicate function for workstream builders.
 type Workstream func(*sql.Selector)
+
+// WorkstreamHealthSnapshot is the predicate function for workstreamhealthsnapshot builders.
+type WorkstreamHealthSnapshot func(*sql.Selector)
+
+// WorkstreamStandupSection is the predicate function for workstreamstandupsection builders.
+type WorkstreamStandupSection func(*sql.Selector)
 
 // WorkstreamTicket is the predicate function for workstreamticket builders.
 type WorkstreamTicket func(*sql.Selector)

@@ -75,9 +75,59 @@ func Title(v string) predicate.PullRequest {
 	return predicate.PullRequest(sql.FieldEQ(FieldTitle, v))
 }
 
+// SourceCreatedAt applies equality check predicate on the "source_created_at" field. It's identical to SourceCreatedAtEQ.
+func SourceCreatedAt(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldSourceCreatedAt, v))
+}
+
 // MergedAt applies equality check predicate on the "merged_at" field. It's identical to MergedAtEQ.
 func MergedAt(v time.Time) predicate.PullRequest {
 	return predicate.PullRequest(sql.FieldEQ(FieldMergedAt, v))
+}
+
+// ClosedAt applies equality check predicate on the "closed_at" field. It's identical to ClosedAtEQ.
+func ClosedAt(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldClosedAt, v))
+}
+
+// Additions applies equality check predicate on the "additions" field. It's identical to AdditionsEQ.
+func Additions(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldAdditions, v))
+}
+
+// Deletions applies equality check predicate on the "deletions" field. It's identical to DeletionsEQ.
+func Deletions(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldDeletions, v))
+}
+
+// ChangedFilesCount applies equality check predicate on the "changed_files_count" field. It's identical to ChangedFilesCountEQ.
+func ChangedFilesCount(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldChangedFilesCount, v))
+}
+
+// CommitCount applies equality check predicate on the "commit_count" field. It's identical to CommitCountEQ.
+func CommitCount(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldCommitCount, v))
+}
+
+// IssueCommentCount applies equality check predicate on the "issue_comment_count" field. It's identical to IssueCommentCountEQ.
+func IssueCommentCount(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldIssueCommentCount, v))
+}
+
+// ReviewCommentCount applies equality check predicate on the "review_comment_count" field. It's identical to ReviewCommentCountEQ.
+func ReviewCommentCount(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldReviewCommentCount, v))
+}
+
+// IsDraft applies equality check predicate on the "is_draft" field. It's identical to IsDraftEQ.
+func IsDraft(v bool) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldIsDraft, v))
+}
+
+// IsMergeable applies equality check predicate on the "is_mergeable" field. It's identical to IsMergeableEQ.
+func IsMergeable(v bool) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldIsMergeable, v))
 }
 
 // Summary applies equality check predicate on the "summary" field. It's identical to SummaryEQ.
@@ -490,6 +540,56 @@ func StateNotIn(vs ...State) predicate.PullRequest {
 	return predicate.PullRequest(sql.FieldNotIn(FieldState, vs...))
 }
 
+// SourceCreatedAtEQ applies the EQ predicate on the "source_created_at" field.
+func SourceCreatedAtEQ(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldSourceCreatedAt, v))
+}
+
+// SourceCreatedAtNEQ applies the NEQ predicate on the "source_created_at" field.
+func SourceCreatedAtNEQ(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNEQ(FieldSourceCreatedAt, v))
+}
+
+// SourceCreatedAtIn applies the In predicate on the "source_created_at" field.
+func SourceCreatedAtIn(vs ...time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIn(FieldSourceCreatedAt, vs...))
+}
+
+// SourceCreatedAtNotIn applies the NotIn predicate on the "source_created_at" field.
+func SourceCreatedAtNotIn(vs ...time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotIn(FieldSourceCreatedAt, vs...))
+}
+
+// SourceCreatedAtGT applies the GT predicate on the "source_created_at" field.
+func SourceCreatedAtGT(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGT(FieldSourceCreatedAt, v))
+}
+
+// SourceCreatedAtGTE applies the GTE predicate on the "source_created_at" field.
+func SourceCreatedAtGTE(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGTE(FieldSourceCreatedAt, v))
+}
+
+// SourceCreatedAtLT applies the LT predicate on the "source_created_at" field.
+func SourceCreatedAtLT(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLT(FieldSourceCreatedAt, v))
+}
+
+// SourceCreatedAtLTE applies the LTE predicate on the "source_created_at" field.
+func SourceCreatedAtLTE(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLTE(FieldSourceCreatedAt, v))
+}
+
+// SourceCreatedAtIsNil applies the IsNil predicate on the "source_created_at" field.
+func SourceCreatedAtIsNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIsNull(FieldSourceCreatedAt))
+}
+
+// SourceCreatedAtNotNil applies the NotNil predicate on the "source_created_at" field.
+func SourceCreatedAtNotNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotNull(FieldSourceCreatedAt))
+}
+
 // MergedAtEQ applies the EQ predicate on the "merged_at" field.
 func MergedAtEQ(v time.Time) predicate.PullRequest {
 	return predicate.PullRequest(sql.FieldEQ(FieldMergedAt, v))
@@ -538,6 +638,396 @@ func MergedAtIsNil() predicate.PullRequest {
 // MergedAtNotNil applies the NotNil predicate on the "merged_at" field.
 func MergedAtNotNil() predicate.PullRequest {
 	return predicate.PullRequest(sql.FieldNotNull(FieldMergedAt))
+}
+
+// ClosedAtEQ applies the EQ predicate on the "closed_at" field.
+func ClosedAtEQ(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldClosedAt, v))
+}
+
+// ClosedAtNEQ applies the NEQ predicate on the "closed_at" field.
+func ClosedAtNEQ(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNEQ(FieldClosedAt, v))
+}
+
+// ClosedAtIn applies the In predicate on the "closed_at" field.
+func ClosedAtIn(vs ...time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIn(FieldClosedAt, vs...))
+}
+
+// ClosedAtNotIn applies the NotIn predicate on the "closed_at" field.
+func ClosedAtNotIn(vs ...time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotIn(FieldClosedAt, vs...))
+}
+
+// ClosedAtGT applies the GT predicate on the "closed_at" field.
+func ClosedAtGT(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGT(FieldClosedAt, v))
+}
+
+// ClosedAtGTE applies the GTE predicate on the "closed_at" field.
+func ClosedAtGTE(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGTE(FieldClosedAt, v))
+}
+
+// ClosedAtLT applies the LT predicate on the "closed_at" field.
+func ClosedAtLT(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLT(FieldClosedAt, v))
+}
+
+// ClosedAtLTE applies the LTE predicate on the "closed_at" field.
+func ClosedAtLTE(v time.Time) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLTE(FieldClosedAt, v))
+}
+
+// ClosedAtIsNil applies the IsNil predicate on the "closed_at" field.
+func ClosedAtIsNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIsNull(FieldClosedAt))
+}
+
+// ClosedAtNotNil applies the NotNil predicate on the "closed_at" field.
+func ClosedAtNotNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotNull(FieldClosedAt))
+}
+
+// AdditionsEQ applies the EQ predicate on the "additions" field.
+func AdditionsEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldAdditions, v))
+}
+
+// AdditionsNEQ applies the NEQ predicate on the "additions" field.
+func AdditionsNEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNEQ(FieldAdditions, v))
+}
+
+// AdditionsIn applies the In predicate on the "additions" field.
+func AdditionsIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIn(FieldAdditions, vs...))
+}
+
+// AdditionsNotIn applies the NotIn predicate on the "additions" field.
+func AdditionsNotIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotIn(FieldAdditions, vs...))
+}
+
+// AdditionsGT applies the GT predicate on the "additions" field.
+func AdditionsGT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGT(FieldAdditions, v))
+}
+
+// AdditionsGTE applies the GTE predicate on the "additions" field.
+func AdditionsGTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGTE(FieldAdditions, v))
+}
+
+// AdditionsLT applies the LT predicate on the "additions" field.
+func AdditionsLT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLT(FieldAdditions, v))
+}
+
+// AdditionsLTE applies the LTE predicate on the "additions" field.
+func AdditionsLTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLTE(FieldAdditions, v))
+}
+
+// AdditionsIsNil applies the IsNil predicate on the "additions" field.
+func AdditionsIsNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIsNull(FieldAdditions))
+}
+
+// AdditionsNotNil applies the NotNil predicate on the "additions" field.
+func AdditionsNotNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotNull(FieldAdditions))
+}
+
+// DeletionsEQ applies the EQ predicate on the "deletions" field.
+func DeletionsEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldDeletions, v))
+}
+
+// DeletionsNEQ applies the NEQ predicate on the "deletions" field.
+func DeletionsNEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNEQ(FieldDeletions, v))
+}
+
+// DeletionsIn applies the In predicate on the "deletions" field.
+func DeletionsIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIn(FieldDeletions, vs...))
+}
+
+// DeletionsNotIn applies the NotIn predicate on the "deletions" field.
+func DeletionsNotIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotIn(FieldDeletions, vs...))
+}
+
+// DeletionsGT applies the GT predicate on the "deletions" field.
+func DeletionsGT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGT(FieldDeletions, v))
+}
+
+// DeletionsGTE applies the GTE predicate on the "deletions" field.
+func DeletionsGTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGTE(FieldDeletions, v))
+}
+
+// DeletionsLT applies the LT predicate on the "deletions" field.
+func DeletionsLT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLT(FieldDeletions, v))
+}
+
+// DeletionsLTE applies the LTE predicate on the "deletions" field.
+func DeletionsLTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLTE(FieldDeletions, v))
+}
+
+// DeletionsIsNil applies the IsNil predicate on the "deletions" field.
+func DeletionsIsNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIsNull(FieldDeletions))
+}
+
+// DeletionsNotNil applies the NotNil predicate on the "deletions" field.
+func DeletionsNotNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotNull(FieldDeletions))
+}
+
+// ChangedFilesCountEQ applies the EQ predicate on the "changed_files_count" field.
+func ChangedFilesCountEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldChangedFilesCount, v))
+}
+
+// ChangedFilesCountNEQ applies the NEQ predicate on the "changed_files_count" field.
+func ChangedFilesCountNEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNEQ(FieldChangedFilesCount, v))
+}
+
+// ChangedFilesCountIn applies the In predicate on the "changed_files_count" field.
+func ChangedFilesCountIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIn(FieldChangedFilesCount, vs...))
+}
+
+// ChangedFilesCountNotIn applies the NotIn predicate on the "changed_files_count" field.
+func ChangedFilesCountNotIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotIn(FieldChangedFilesCount, vs...))
+}
+
+// ChangedFilesCountGT applies the GT predicate on the "changed_files_count" field.
+func ChangedFilesCountGT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGT(FieldChangedFilesCount, v))
+}
+
+// ChangedFilesCountGTE applies the GTE predicate on the "changed_files_count" field.
+func ChangedFilesCountGTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGTE(FieldChangedFilesCount, v))
+}
+
+// ChangedFilesCountLT applies the LT predicate on the "changed_files_count" field.
+func ChangedFilesCountLT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLT(FieldChangedFilesCount, v))
+}
+
+// ChangedFilesCountLTE applies the LTE predicate on the "changed_files_count" field.
+func ChangedFilesCountLTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLTE(FieldChangedFilesCount, v))
+}
+
+// ChangedFilesCountIsNil applies the IsNil predicate on the "changed_files_count" field.
+func ChangedFilesCountIsNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIsNull(FieldChangedFilesCount))
+}
+
+// ChangedFilesCountNotNil applies the NotNil predicate on the "changed_files_count" field.
+func ChangedFilesCountNotNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotNull(FieldChangedFilesCount))
+}
+
+// CommitCountEQ applies the EQ predicate on the "commit_count" field.
+func CommitCountEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldCommitCount, v))
+}
+
+// CommitCountNEQ applies the NEQ predicate on the "commit_count" field.
+func CommitCountNEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNEQ(FieldCommitCount, v))
+}
+
+// CommitCountIn applies the In predicate on the "commit_count" field.
+func CommitCountIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIn(FieldCommitCount, vs...))
+}
+
+// CommitCountNotIn applies the NotIn predicate on the "commit_count" field.
+func CommitCountNotIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotIn(FieldCommitCount, vs...))
+}
+
+// CommitCountGT applies the GT predicate on the "commit_count" field.
+func CommitCountGT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGT(FieldCommitCount, v))
+}
+
+// CommitCountGTE applies the GTE predicate on the "commit_count" field.
+func CommitCountGTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGTE(FieldCommitCount, v))
+}
+
+// CommitCountLT applies the LT predicate on the "commit_count" field.
+func CommitCountLT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLT(FieldCommitCount, v))
+}
+
+// CommitCountLTE applies the LTE predicate on the "commit_count" field.
+func CommitCountLTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLTE(FieldCommitCount, v))
+}
+
+// CommitCountIsNil applies the IsNil predicate on the "commit_count" field.
+func CommitCountIsNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIsNull(FieldCommitCount))
+}
+
+// CommitCountNotNil applies the NotNil predicate on the "commit_count" field.
+func CommitCountNotNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotNull(FieldCommitCount))
+}
+
+// IssueCommentCountEQ applies the EQ predicate on the "issue_comment_count" field.
+func IssueCommentCountEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldIssueCommentCount, v))
+}
+
+// IssueCommentCountNEQ applies the NEQ predicate on the "issue_comment_count" field.
+func IssueCommentCountNEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNEQ(FieldIssueCommentCount, v))
+}
+
+// IssueCommentCountIn applies the In predicate on the "issue_comment_count" field.
+func IssueCommentCountIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIn(FieldIssueCommentCount, vs...))
+}
+
+// IssueCommentCountNotIn applies the NotIn predicate on the "issue_comment_count" field.
+func IssueCommentCountNotIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotIn(FieldIssueCommentCount, vs...))
+}
+
+// IssueCommentCountGT applies the GT predicate on the "issue_comment_count" field.
+func IssueCommentCountGT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGT(FieldIssueCommentCount, v))
+}
+
+// IssueCommentCountGTE applies the GTE predicate on the "issue_comment_count" field.
+func IssueCommentCountGTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGTE(FieldIssueCommentCount, v))
+}
+
+// IssueCommentCountLT applies the LT predicate on the "issue_comment_count" field.
+func IssueCommentCountLT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLT(FieldIssueCommentCount, v))
+}
+
+// IssueCommentCountLTE applies the LTE predicate on the "issue_comment_count" field.
+func IssueCommentCountLTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLTE(FieldIssueCommentCount, v))
+}
+
+// IssueCommentCountIsNil applies the IsNil predicate on the "issue_comment_count" field.
+func IssueCommentCountIsNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIsNull(FieldIssueCommentCount))
+}
+
+// IssueCommentCountNotNil applies the NotNil predicate on the "issue_comment_count" field.
+func IssueCommentCountNotNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotNull(FieldIssueCommentCount))
+}
+
+// ReviewCommentCountEQ applies the EQ predicate on the "review_comment_count" field.
+func ReviewCommentCountEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldReviewCommentCount, v))
+}
+
+// ReviewCommentCountNEQ applies the NEQ predicate on the "review_comment_count" field.
+func ReviewCommentCountNEQ(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNEQ(FieldReviewCommentCount, v))
+}
+
+// ReviewCommentCountIn applies the In predicate on the "review_comment_count" field.
+func ReviewCommentCountIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIn(FieldReviewCommentCount, vs...))
+}
+
+// ReviewCommentCountNotIn applies the NotIn predicate on the "review_comment_count" field.
+func ReviewCommentCountNotIn(vs ...int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotIn(FieldReviewCommentCount, vs...))
+}
+
+// ReviewCommentCountGT applies the GT predicate on the "review_comment_count" field.
+func ReviewCommentCountGT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGT(FieldReviewCommentCount, v))
+}
+
+// ReviewCommentCountGTE applies the GTE predicate on the "review_comment_count" field.
+func ReviewCommentCountGTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldGTE(FieldReviewCommentCount, v))
+}
+
+// ReviewCommentCountLT applies the LT predicate on the "review_comment_count" field.
+func ReviewCommentCountLT(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLT(FieldReviewCommentCount, v))
+}
+
+// ReviewCommentCountLTE applies the LTE predicate on the "review_comment_count" field.
+func ReviewCommentCountLTE(v int) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldLTE(FieldReviewCommentCount, v))
+}
+
+// ReviewCommentCountIsNil applies the IsNil predicate on the "review_comment_count" field.
+func ReviewCommentCountIsNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIsNull(FieldReviewCommentCount))
+}
+
+// ReviewCommentCountNotNil applies the NotNil predicate on the "review_comment_count" field.
+func ReviewCommentCountNotNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotNull(FieldReviewCommentCount))
+}
+
+// IsDraftEQ applies the EQ predicate on the "is_draft" field.
+func IsDraftEQ(v bool) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldIsDraft, v))
+}
+
+// IsDraftNEQ applies the NEQ predicate on the "is_draft" field.
+func IsDraftNEQ(v bool) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNEQ(FieldIsDraft, v))
+}
+
+// IsDraftIsNil applies the IsNil predicate on the "is_draft" field.
+func IsDraftIsNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIsNull(FieldIsDraft))
+}
+
+// IsDraftNotNil applies the NotNil predicate on the "is_draft" field.
+func IsDraftNotNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotNull(FieldIsDraft))
+}
+
+// IsMergeableEQ applies the EQ predicate on the "is_mergeable" field.
+func IsMergeableEQ(v bool) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldEQ(FieldIsMergeable, v))
+}
+
+// IsMergeableNEQ applies the NEQ predicate on the "is_mergeable" field.
+func IsMergeableNEQ(v bool) predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNEQ(FieldIsMergeable, v))
+}
+
+// IsMergeableIsNil applies the IsNil predicate on the "is_mergeable" field.
+func IsMergeableIsNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldIsNull(FieldIsMergeable))
+}
+
+// IsMergeableNotNil applies the NotNil predicate on the "is_mergeable" field.
+func IsMergeableNotNil() predicate.PullRequest {
+	return predicate.PullRequest(sql.FieldNotNull(FieldIsMergeable))
 }
 
 // SummaryEQ applies the EQ predicate on the "summary" field.
@@ -2203,6 +2693,121 @@ func HasLatestEvidence() predicate.PullRequest {
 func HasLatestEvidenceWith(preds ...predicate.Evidence) predicate.PullRequest {
 	return predicate.PullRequest(func(s *sql.Selector) {
 		step := newLatestEvidenceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasInsights applies the HasEdge predicate on the "insights" edge.
+func HasInsights() predicate.PullRequest {
+	return predicate.PullRequest(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, InsightsTable, InsightsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasInsightsWith applies the HasEdge predicate on the "insights" edge with a given conditions (other predicates).
+func HasInsightsWith(preds ...predicate.WorkInsight) predicate.PullRequest {
+	return predicate.PullRequest(func(s *sql.Selector) {
+		step := newInsightsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasActions applies the HasEdge predicate on the "actions" edge.
+func HasActions() predicate.PullRequest {
+	return predicate.PullRequest(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ActionsTable, ActionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasActionsWith applies the HasEdge predicate on the "actions" edge with a given conditions (other predicates).
+func HasActionsWith(preds ...predicate.WorkAction) predicate.PullRequest {
+	return predicate.PullRequest(func(s *sql.Selector) {
+		step := newActionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasStateSnapshots applies the HasEdge predicate on the "state_snapshots" edge.
+func HasStateSnapshots() predicate.PullRequest {
+	return predicate.PullRequest(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, StateSnapshotsTable, StateSnapshotsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasStateSnapshotsWith applies the HasEdge predicate on the "state_snapshots" edge with a given conditions (other predicates).
+func HasStateSnapshotsWith(preds ...predicate.WorkItemStateSnapshot) predicate.PullRequest {
+	return predicate.PullRequest(func(s *sql.Selector) {
+		step := newStateSnapshotsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasStateTransitions applies the HasEdge predicate on the "state_transitions" edge.
+func HasStateTransitions() predicate.PullRequest {
+	return predicate.PullRequest(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, StateTransitionsTable, StateTransitionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasStateTransitionsWith applies the HasEdge predicate on the "state_transitions" edge with a given conditions (other predicates).
+func HasStateTransitionsWith(preds ...predicate.WorkItemStateTransition) predicate.PullRequest {
+	return predicate.PullRequest(func(s *sql.Selector) {
+		step := newStateTransitionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasMilestones applies the HasEdge predicate on the "milestones" edge.
+func HasMilestones() predicate.PullRequest {
+	return predicate.PullRequest(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, MilestonesTable, MilestonesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMilestonesWith applies the HasEdge predicate on the "milestones" edge with a given conditions (other predicates).
+func HasMilestonesWith(preds ...predicate.WorkProgramMilestone) predicate.PullRequest {
+	return predicate.PullRequest(func(s *sql.Selector) {
+		step := newMilestonesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

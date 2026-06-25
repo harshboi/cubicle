@@ -342,7 +342,7 @@ var (
 	EvidencesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "key", Type: field.TypeString, Unique: true},
-		{Name: "claim_kind", Type: field.TypeEnum, Enums: []string{"object_state", "relationship", "identity", "candidate"}, Default: "object_state"},
+		{Name: "claim_kind", Type: field.TypeEnum, Enums: []string{"object_state", "relationship", "identity", "candidate", "generated_summary"}, Default: "object_state"},
 		{Name: "claim_target_kind", Type: field.TypeString, Nullable: true},
 		{Name: "claim_target_id", Type: field.TypeInt, Nullable: true},
 		{Name: "claim_field", Type: field.TypeString, Nullable: true},
@@ -358,7 +358,7 @@ var (
 		{Name: "excerpt_truncated", Type: field.TypeBool, Default: false},
 		{Name: "text_hash", Type: field.TypeString, Nullable: true},
 		{Name: "lexical_fingerprint", Type: field.TypeString, Nullable: true},
-		{Name: "proof_state", Type: field.TypeEnum, Enums: []string{"current", "stale", "superseded", "deleted", "permission_blocked", "locator_failed"}, Default: "current"},
+		{Name: "proof_state", Type: field.TypeEnum, Enums: []string{"current", "stale", "superseded", "deleted", "permission_blocked", "locator_failed", "generated"}, Default: "current"},
 		{Name: "acl_policy_key_snapshot", Type: field.TypeString, Nullable: true},
 		{Name: "visibility_hash_snapshot", Type: field.TypeString, Nullable: true},
 		{Name: "observed_at", Type: field.TypeTime, Nullable: true},
@@ -430,6 +430,204 @@ var (
 				Name:    "evidence_acl_policy_key_snapshot_visibility_hash_snapshot_proof_state",
 				Unique:  false,
 				Columns: []*schema.Column{EvidencesColumns[19], EvidencesColumns[20], EvidencesColumns[18]},
+			},
+		},
+	}
+	// EvidenceAttachmentsColumns holds the columns for the "evidence_attachments" table.
+	EvidenceAttachmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "claim_kind", Type: field.TypeEnum, Enums: []string{"object_state", "relationship", "identity", "candidate", "generated_summary"}, Default: "object_state"},
+		{Name: "target_kind", Type: field.TypeString},
+		{Name: "target_key", Type: field.TypeString},
+		{Name: "target_table", Type: field.TypeString, Nullable: true},
+		{Name: "target_id", Type: field.TypeInt, Nullable: true},
+		{Name: "claim_field", Type: field.TypeString, Nullable: true},
+		{Name: "relationship_kind", Type: field.TypeString, Nullable: true},
+		{Name: "relationship_id", Type: field.TypeInt, Nullable: true},
+		{Name: "attachment_state", Type: field.TypeEnum, Enums: []string{"current", "candidate", "superseded", "rejected"}, Default: "current"},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "evidence_id", Type: field.TypeInt},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "open_graph_object_id", Type: field.TypeInt, Nullable: true},
+		{Name: "open_graph_association_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_insight_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_blocker_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_dependency_edge_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_item_forecast_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_responsibility_id", Type: field.TypeInt, Nullable: true},
+	}
+	// EvidenceAttachmentsTable holds the schema information for the "evidence_attachments" table.
+	EvidenceAttachmentsTable = &schema.Table{
+		Name:       "evidence_attachments",
+		Columns:    EvidenceAttachmentsColumns,
+		PrimaryKey: []*schema.Column{EvidenceAttachmentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "evidence_attachments_evidences_evidence",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[21]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "evidence_attachments_tickets_ticket",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[22]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_pull_requests_pull_request",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[23]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_ticket_pull_requests_ticket_pull_request",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[24]},
+				RefColumns: []*schema.Column{TicketPullRequestsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_open_graph_objects_open_graph_object",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[25]},
+				RefColumns: []*schema.Column{OpenGraphObjectsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_open_graph_associations_open_graph_association",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[26]},
+				RefColumns: []*schema.Column{OpenGraphAssociationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_actions_work_action",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[27]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_insights_work_insight",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[28]},
+				RefColumns: []*schema.Column{WorkInsightsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_blockers_work_blocker",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[29]},
+				RefColumns: []*schema.Column{WorkBlockersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_dependency_edges_work_dependency_edge",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[30]},
+				RefColumns: []*schema.Column{WorkDependencyEdgesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_item_forecasts_work_item_forecast",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[31]},
+				RefColumns: []*schema.Column{WorkItemForecastsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_responsibilities_work_responsibility",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[32]},
+				RefColumns: []*schema.Column{WorkResponsibilitiesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "evidenceattachment_target_kind_target_key_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[3], EvidenceAttachmentsColumns[4], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_target_kind_target_key_claim_field_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[3], EvidenceAttachmentsColumns[4], EvidenceAttachmentsColumns[7], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_relationship_kind_relationship_id_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[8], EvidenceAttachmentsColumns[9], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_evidence_id_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[21], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_ticket_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[22], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_pull_request_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[23], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_ticket_pull_request_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[24], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_open_graph_object_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[25], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_open_graph_association_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[26], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_action_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[27], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_insight_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[28], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_blocker_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[29], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_dependency_edge_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[30], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_item_forecast_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[31], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_responsibility_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[32], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_source_system_source_instance_external_kind_external_id",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[11], EvidenceAttachmentsColumns[12], EvidenceAttachmentsColumns[13], EvidenceAttachmentsColumns[14]},
 			},
 		},
 	}
@@ -779,6 +977,166 @@ var (
 			},
 		},
 	}
+	// OpenGraphAssociationsColumns holds the columns for the "open_graph_associations" table.
+	OpenGraphAssociationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "association_type", Type: field.TypeString},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "properties_json", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "source_version", Type: field.TypeString, Nullable: true},
+		{Name: "source_updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "content_hash", Type: field.TypeString, Nullable: true},
+		{Name: "deletion_state", Type: field.TypeEnum, Enums: []string{"present", "deleted", "unknown"}, Default: "present"},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "acl_policy_key", Type: field.TypeString, Nullable: true},
+		{Name: "visibility_hash", Type: field.TypeString, Nullable: true},
+		{Name: "acl_state", Type: field.TypeEnum, Enums: []string{"unknown", "current", "stale", "blocked", "unavailable"}, Default: "unknown"},
+		{Name: "acl_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "freshness_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_scope_state_id", Type: field.TypeInt, Nullable: true},
+		{Name: "last_confirmed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_changed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "from_object_id", Type: field.TypeInt},
+		{Name: "to_object_id", Type: field.TypeInt},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// OpenGraphAssociationsTable holds the schema information for the "open_graph_associations" table.
+	OpenGraphAssociationsTable = &schema.Table{
+		Name:       "open_graph_associations",
+		Columns:    OpenGraphAssociationsColumns,
+		PrimaryKey: []*schema.Column{OpenGraphAssociationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "open_graph_associations_open_graph_objects_from_object",
+				Columns:    []*schema.Column{OpenGraphAssociationsColumns[31]},
+				RefColumns: []*schema.Column{OpenGraphObjectsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "open_graph_associations_open_graph_objects_to_object",
+				Columns:    []*schema.Column{OpenGraphAssociationsColumns[32]},
+				RefColumns: []*schema.Column{OpenGraphObjectsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "open_graph_associations_evidences_latest_evidence",
+				Columns:    []*schema.Column{OpenGraphAssociationsColumns[33]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "opengraphassociation_from_object_id_to_object_id_association_type",
+				Unique:  true,
+				Columns: []*schema.Column{OpenGraphAssociationsColumns[31], OpenGraphAssociationsColumns[32], OpenGraphAssociationsColumns[1]},
+			},
+			{
+				Name:    "opengraphassociation_from_object_id_freshness_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{OpenGraphAssociationsColumns[31], OpenGraphAssociationsColumns[26], OpenGraphAssociationsColumns[7], OpenGraphAssociationsColumns[6]},
+			},
+			{
+				Name:    "opengraphassociation_to_object_id_freshness_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{OpenGraphAssociationsColumns[32], OpenGraphAssociationsColumns[26], OpenGraphAssociationsColumns[7], OpenGraphAssociationsColumns[6]},
+			},
+			{
+				Name:    "opengraphassociation_association_type_freshness_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{OpenGraphAssociationsColumns[1], OpenGraphAssociationsColumns[26], OpenGraphAssociationsColumns[7], OpenGraphAssociationsColumns[6]},
+			},
+			{
+				Name:    "opengraphassociation_source_system_source_instance_external_kind_external_id",
+				Unique:  false,
+				Columns: []*schema.Column{OpenGraphAssociationsColumns[8], OpenGraphAssociationsColumns[9], OpenGraphAssociationsColumns[10], OpenGraphAssociationsColumns[11]},
+			},
+		},
+	}
+	// OpenGraphObjectsColumns holds the columns for the "open_graph_objects" table.
+	OpenGraphObjectsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "object_type", Type: field.TypeString},
+		{Name: "key", Type: field.TypeString},
+		{Name: "title", Type: field.TypeString},
+		{Name: "properties_json", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "summary", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "search_text", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "source_version", Type: field.TypeString, Nullable: true},
+		{Name: "source_updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "content_hash", Type: field.TypeString, Nullable: true},
+		{Name: "deletion_state", Type: field.TypeEnum, Enums: []string{"present", "deleted", "unknown"}, Default: "present"},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "acl_policy_key", Type: field.TypeString, Nullable: true},
+		{Name: "visibility_hash", Type: field.TypeString, Nullable: true},
+		{Name: "acl_state", Type: field.TypeEnum, Enums: []string{"unknown", "current", "stale", "blocked", "unavailable"}, Default: "unknown"},
+		{Name: "acl_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "freshness_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_scope_state_id", Type: field.TypeInt, Nullable: true},
+		{Name: "last_confirmed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_changed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// OpenGraphObjectsTable holds the schema information for the "open_graph_objects" table.
+	OpenGraphObjectsTable = &schema.Table{
+		Name:       "open_graph_objects",
+		Columns:    OpenGraphObjectsColumns,
+		PrimaryKey: []*schema.Column{OpenGraphObjectsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "open_graph_objects_evidences_latest_evidence",
+				Columns:    []*schema.Column{OpenGraphObjectsColumns[35]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "opengraphobject_object_type_key",
+				Unique:  true,
+				Columns: []*schema.Column{OpenGraphObjectsColumns[1], OpenGraphObjectsColumns[2]},
+			},
+			{
+				Name:    "opengraphobject_object_type_freshness_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{OpenGraphObjectsColumns[1], OpenGraphObjectsColumns[26], OpenGraphObjectsColumns[32], OpenGraphObjectsColumns[31]},
+			},
+			{
+				Name:    "opengraphobject_source_system_source_instance_external_kind_external_id",
+				Unique:  false,
+				Columns: []*schema.Column{OpenGraphObjectsColumns[7], OpenGraphObjectsColumns[8], OpenGraphObjectsColumns[9], OpenGraphObjectsColumns[10]},
+			},
+		},
+	}
 	// PersonsColumns holds the columns for the "persons" table.
 	PersonsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -906,7 +1264,17 @@ var (
 		{Name: "number", Type: field.TypeInt, Nullable: true},
 		{Name: "title", Type: field.TypeString},
 		{Name: "state", Type: field.TypeEnum, Enums: []string{"unknown", "open", "merged", "closed"}, Default: "unknown"},
+		{Name: "source_created_at", Type: field.TypeTime, Nullable: true},
 		{Name: "merged_at", Type: field.TypeTime, Nullable: true},
+		{Name: "closed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "additions", Type: field.TypeInt, Nullable: true},
+		{Name: "deletions", Type: field.TypeInt, Nullable: true},
+		{Name: "changed_files_count", Type: field.TypeInt, Nullable: true},
+		{Name: "commit_count", Type: field.TypeInt, Nullable: true},
+		{Name: "issue_comment_count", Type: field.TypeInt, Nullable: true},
+		{Name: "review_comment_count", Type: field.TypeInt, Nullable: true},
+		{Name: "is_draft", Type: field.TypeBool, Nullable: true},
+		{Name: "is_mergeable", Type: field.TypeBool, Nullable: true},
 		{Name: "summary", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "search_text", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "source_system", Type: field.TypeString, Nullable: true},
@@ -947,7 +1315,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "pull_requests_evidences_latest_evidence",
-				Columns:    []*schema.Column{PullRequestsColumns[37]},
+				Columns:    []*schema.Column{PullRequestsColumns[47]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -961,12 +1329,12 @@ var (
 			{
 				Name:    "pullrequest_state_last_activity_at",
 				Unique:  false,
-				Columns: []*schema.Column{PullRequestsColumns[5], PullRequestsColumns[33]},
+				Columns: []*schema.Column{PullRequestsColumns[5], PullRequestsColumns[43]},
 			},
 			{
 				Name:    "pullrequest_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{PullRequestsColumns[9], PullRequestsColumns[10], PullRequestsColumns[11], PullRequestsColumns[12]},
+				Columns: []*schema.Column{PullRequestsColumns[19], PullRequestsColumns[20], PullRequestsColumns[21], PullRequestsColumns[22]},
 			},
 		},
 	}
@@ -2148,6 +2516,187 @@ var (
 			},
 		},
 	}
+	// WorkActionsColumns holds the columns for the "work_actions" table.
+	WorkActionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "action_type", Type: field.TypeEnum, Enums: []string{"decision_or_owner_followup", "validate_signal", "ci_check_followup", "review_wait_followup", "verify_resolution", "model_quality_review", "refresh_source", "dismissed_signal", "clear_blocker", "coordinate_workstream", "review_insight"}},
+		{Name: "action_state", Type: field.TypeEnum, Enums: []string{"open", "decided", "closed", "superseded"}, Default: "open"},
+		{Name: "decision_state", Type: field.TypeEnum, Enums: []string{"product_action", "validation_lead", "source_repair", "closeout_review", "source_resolved", "model_or_rule_qa", "suppressed_signal", "pending_review"}, Default: "pending_review"},
+		{Name: "decision", Type: field.TypeString, Nullable: true},
+		{Name: "decision_reason", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString},
+		{Name: "owner_key", Type: field.TypeString, Nullable: true},
+		{Name: "owner_source", Type: field.TypeString, Nullable: true},
+		{Name: "due_bucket", Type: field.TypeEnum, Enums: []string{"now", "this_week", "watch", "unscheduled"}, Default: "unscheduled"},
+		{Name: "created_from_run_key", Type: field.TypeString, Nullable: true},
+		{Name: "opened_at", Type: field.TypeTime, Nullable: true},
+		{Name: "decided_at", Type: field.TypeTime, Nullable: true},
+		{Name: "closed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkActionsTable holds the schema information for the "work_actions" table.
+	WorkActionsTable = &schema.Table{
+		Name:       "work_actions",
+		Columns:    WorkActionsColumns,
+		PrimaryKey: []*schema.Column{WorkActionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_actions_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkActionsColumns[32]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_actions_tickets_ticket",
+				Columns:    []*schema.Column{WorkActionsColumns[33]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_actions_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkActionsColumns[34]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workaction_decision_state_action_state_due_bucket_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkActionsColumns[4], WorkActionsColumns[3], WorkActionsColumns[12], WorkActionsColumns[29], WorkActionsColumns[28]},
+			},
+			{
+				Name:    "workaction_subject_kind_subject_key_decision_state_action_state",
+				Unique:  false,
+				Columns: []*schema.Column{WorkActionsColumns[7], WorkActionsColumns[9], WorkActionsColumns[4], WorkActionsColumns[3]},
+			},
+			{
+				Name:    "workaction_owner_key_action_state_due_bucket_rank_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkActionsColumns[10], WorkActionsColumns[3], WorkActionsColumns[12], WorkActionsColumns[29]},
+			},
+			{
+				Name:    "workaction_pull_request_id_decision_state_action_state_rank_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkActionsColumns[32], WorkActionsColumns[4], WorkActionsColumns[3], WorkActionsColumns[29]},
+			},
+			{
+				Name:    "workaction_ticket_id_decision_state_action_state_rank_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkActionsColumns[33], WorkActionsColumns[4], WorkActionsColumns[3], WorkActionsColumns[29]},
+			},
+			{
+				Name:    "workaction_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkActionsColumns[17], WorkActionsColumns[18], WorkActionsColumns[19], WorkActionsColumns[20]},
+			},
+		},
+	}
+	// WorkActionObservationsColumns holds the columns for the "work_action_observations" table.
+	WorkActionObservationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "observation_kind", Type: field.TypeEnum, Enums: []string{"source_state", "ci_signal", "model_or_rule_qa", "suppressed_signal", "source_repair", "closeout_review"}, Default: "source_state"},
+		{Name: "source_coverage_state", Type: field.TypeString, Nullable: true},
+		{Name: "auth_state", Type: field.TypeString, Nullable: true},
+		{Name: "current_state", Type: field.TypeString, Nullable: true},
+		{Name: "ci_signal", Type: field.TypeString, Nullable: true},
+		{Name: "ci_required_check_coverage_state", Type: field.TypeString, Nullable: true},
+		{Name: "ci_required_check_match_state", Type: field.TypeString, Nullable: true},
+		{Name: "ci_required_context_count", Type: field.TypeInt, Default: 0},
+		{Name: "ci_failing_required_context_count", Type: field.TypeInt, Default: 0},
+		{Name: "ci_pending_required_context_count", Type: field.TypeInt, Default: 0},
+		{Name: "ci_missing_required_context_count", Type: field.TypeInt, Default: 0},
+		{Name: "ci_failing_required_contexts", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "ci_pending_required_contexts", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "ci_missing_required_contexts", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "ci_failing_context_count", Type: field.TypeInt, Default: 0},
+		{Name: "ci_pending_context_count", Type: field.TypeInt, Default: 0},
+		{Name: "ci_failing_contexts", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "ci_pending_contexts", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "supports_action", Type: field.TypeBool, Default: false},
+		{Name: "observed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_action_id", Type: field.TypeInt},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkActionObservationsTable holds the schema information for the "work_action_observations" table.
+	WorkActionObservationsTable = &schema.Table{
+		Name:       "work_action_observations",
+		Columns:    WorkActionObservationsColumns,
+		PrimaryKey: []*schema.Column{WorkActionObservationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_action_observations_work_actions_observations",
+				Columns:    []*schema.Column{WorkActionObservationsColumns[33]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "work_action_observations_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkActionObservationsColumns[34]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workactionobservation_work_action_id_observation_kind_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkActionObservationsColumns[33], WorkActionObservationsColumns[2], WorkActionObservationsColumns[21]},
+			},
+			{
+				Name:    "workactionobservation_observation_kind_supports_action_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkActionObservationsColumns[2], WorkActionObservationsColumns[20], WorkActionObservationsColumns[21]},
+			},
+			{
+				Name:    "workactionobservation_source_coverage_state_auth_state",
+				Unique:  false,
+				Columns: []*schema.Column{WorkActionObservationsColumns[3], WorkActionObservationsColumns[4]},
+			},
+			{
+				Name:    "workactionobservation_ci_required_check_match_state_ci_required_check_coverage_state",
+				Unique:  false,
+				Columns: []*schema.Column{WorkActionObservationsColumns[8], WorkActionObservationsColumns[7]},
+			},
+			{
+				Name:    "workactionobservation_source_system_source_instance_external_kind_external_id",
+				Unique:  false,
+				Columns: []*schema.Column{WorkActionObservationsColumns[22], WorkActionObservationsColumns[23], WorkActionObservationsColumns[24], WorkActionObservationsColumns[25]},
+			},
+		},
+	}
 	// WorkAreasColumns holds the columns for the "work_areas" table.
 	WorkAreasColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -2191,6 +2740,1394 @@ var (
 				Name:    "workarea_person_id_rank_score_last_activity_at",
 				Unique:  false,
 				Columns: []*schema.Column{WorkAreasColumns[16], WorkAreasColumns[10], WorkAreasColumns[9]},
+			},
+		},
+	}
+	// WorkBlockersColumns holds the columns for the "work_blockers" table.
+	WorkBlockersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "blocker_kind", Type: field.TypeEnum, Enums: []string{"source_signal", "dependency", "decision", "ci", "review"}, Default: "source_signal"},
+		{Name: "blocker_state", Type: field.TypeEnum, Enums: []string{"unknown", "active", "validating", "resolved", "dismissed"}, Default: "unknown"},
+		{Name: "severity", Type: field.TypeEnum, Enums: []string{"info", "low", "medium", "high", "critical"}, Default: "info"},
+		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString},
+		{Name: "owner_key", Type: field.TypeString, Nullable: true},
+		{Name: "owner_source", Type: field.TypeString, Nullable: true},
+		{Name: "decision_state", Type: field.TypeEnum, Enums: []string{"product_action", "validation_lead", "source_repair", "closeout_review", "source_resolved", "model_or_rule_qa", "suppressed_signal", "pending_review"}, Default: "pending_review"},
+		{Name: "source_coverage_state", Type: field.TypeString, Nullable: true},
+		{Name: "review_state", Type: field.TypeEnum, Enums: []string{"requested", "needs_more_data", "accepted", "dismissed", "resolved"}, Default: "requested"},
+		{Name: "truth_label", Type: field.TypeEnum, Enums: []string{"unknown", "true_positive", "false_positive", "partial"}, Default: "unknown"},
+		{Name: "actionability_label", Type: field.TypeEnum, Enums: []string{"unknown", "actionable", "not_actionable", "needs_owner"}, Default: "unknown"},
+		{Name: "label_quality", Type: field.TypeEnum, Enums: []string{"unknown", "candidate", "gold", "smoke"}, Default: "unknown"},
+		{Name: "measurement_eligible", Type: field.TypeBool, Default: false},
+		{Name: "reviewer_kind", Type: field.TypeEnum, Enums: []string{"system", "human", "imported"}, Default: "system"},
+		{Name: "reviewer_key", Type: field.TypeString, Nullable: true},
+		{Name: "label_set", Type: field.TypeString, Nullable: true},
+		{Name: "title", Type: field.TypeString},
+		{Name: "recommended_action", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "summary", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "search_text", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "source_version", Type: field.TypeString, Nullable: true},
+		{Name: "source_updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "content_hash", Type: field.TypeString, Nullable: true},
+		{Name: "deletion_state", Type: field.TypeEnum, Enums: []string{"present", "deleted", "unknown"}, Default: "present"},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "acl_policy_key", Type: field.TypeString, Nullable: true},
+		{Name: "visibility_hash", Type: field.TypeString, Nullable: true},
+		{Name: "acl_state", Type: field.TypeEnum, Enums: []string{"unknown", "current", "stale", "blocked", "unavailable"}, Default: "unknown"},
+		{Name: "acl_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "freshness_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_scope_state_id", Type: field.TypeInt, Nullable: true},
+		{Name: "last_confirmed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_changed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_insight_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkBlockersTable holds the schema information for the "work_blockers" table.
+	WorkBlockersTable = &schema.Table{
+		Name:       "work_blockers",
+		Columns:    WorkBlockersColumns,
+		PrimaryKey: []*schema.Column{WorkBlockersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_blockers_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkBlockersColumns[52]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_blockers_tickets_ticket",
+				Columns:    []*schema.Column{WorkBlockersColumns[53]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_blockers_work_actions_work_action",
+				Columns:    []*schema.Column{WorkBlockersColumns[54]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_blockers_work_insights_work_insight",
+				Columns:    []*schema.Column{WorkBlockersColumns[55]},
+				RefColumns: []*schema.Column{WorkInsightsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_blockers_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkBlockersColumns[56]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workblocker_blocker_state_decision_state_severity_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkBlockersColumns[3], WorkBlockersColumns[10], WorkBlockersColumns[4], WorkBlockersColumns[49], WorkBlockersColumns[48]},
+			},
+			{
+				Name:    "workblocker_subject_kind_subject_key_blocker_state_decision_state",
+				Unique:  false,
+				Columns: []*schema.Column{WorkBlockersColumns[5], WorkBlockersColumns[7], WorkBlockersColumns[3], WorkBlockersColumns[10]},
+			},
+			{
+				Name:    "workblocker_owner_key_blocker_state_severity_rank_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkBlockersColumns[8], WorkBlockersColumns[3], WorkBlockersColumns[4], WorkBlockersColumns[49]},
+			},
+			{
+				Name:    "workblocker_pull_request_id_blocker_state_severity_rank_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkBlockersColumns[52], WorkBlockersColumns[3], WorkBlockersColumns[4], WorkBlockersColumns[49]},
+			},
+			{
+				Name:    "workblocker_ticket_id_blocker_state_severity_rank_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkBlockersColumns[53], WorkBlockersColumns[3], WorkBlockersColumns[4], WorkBlockersColumns[49]},
+			},
+			{
+				Name:    "workblocker_work_action_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkBlockersColumns[54]},
+			},
+			{
+				Name:    "workblocker_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkBlockersColumns[24], WorkBlockersColumns[25], WorkBlockersColumns[26], WorkBlockersColumns[27]},
+			},
+		},
+	}
+	// WorkBlockerImpactsColumns holds the columns for the "work_blocker_impacts" table.
+	WorkBlockerImpactsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "impact_kind", Type: field.TypeEnum, Enums: []string{"direct_subject", "workstream", "dependency_chain"}},
+		{Name: "impact_state", Type: field.TypeEnum, Enums: []string{"unknown", "active", "validating", "resolved", "dismissed"}, Default: "unknown"},
+		{Name: "impact_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "severity", Type: field.TypeEnum, Enums: []string{"info", "low", "medium", "high", "critical"}, Default: "info"},
+		{Name: "blocker_kind", Type: field.TypeEnum, Enums: []string{"source_signal", "dependency", "decision", "ci", "review"}, Default: "source_signal"},
+		{Name: "affected_kind", Type: field.TypeEnum, Enums: []string{"workstream", "ticket", "pull_request", "blocker", "action", "component"}},
+		{Name: "affected_key", Type: field.TypeString},
+		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString},
+		{Name: "path_length", Type: field.TypeInt, Default: 0},
+		{Name: "source_coverage_state", Type: field.TypeString, Nullable: true},
+		{Name: "title", Type: field.TypeString},
+		{Name: "recommended_action", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "summary", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "search_text", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_blocker_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkBlockerImpactsTable holds the schema information for the "work_blocker_impacts" table.
+	WorkBlockerImpactsTable = &schema.Table{
+		Name:       "work_blocker_impacts",
+		Columns:    WorkBlockerImpactsColumns,
+		PrimaryKey: []*schema.Column{WorkBlockerImpactsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_blocker_impacts_work_blockers_work_blocker",
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[33]},
+				RefColumns: []*schema.Column{WorkBlockersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_blocker_impacts_work_actions_work_action",
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[34]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_blocker_impacts_workstreams_workstream",
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[35]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_blocker_impacts_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[36]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_blocker_impacts_tickets_ticket",
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[37]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_blocker_impacts_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[38]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workblockerimpact_impact_state_impact_score_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4], WorkBlockerImpactsColumns[30], WorkBlockerImpactsColumns[29]},
+			},
+			{
+				Name:    "workblockerimpact_affected_kind_affected_key_impact_state_impact_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[7], WorkBlockerImpactsColumns[8], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
+			},
+			{
+				Name:    "workblockerimpact_subject_kind_subject_key_impact_state_impact_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[9], WorkBlockerImpactsColumns[11], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
+			},
+			{
+				Name:    "workblockerimpact_work_blocker_id_impact_kind_affected_kind_affected_key",
+				Unique:  true,
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[33], WorkBlockerImpactsColumns[2], WorkBlockerImpactsColumns[7], WorkBlockerImpactsColumns[8]},
+			},
+			{
+				Name:    "workblockerimpact_workstream_id_impact_state_impact_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[35], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
+			},
+			{
+				Name:    "workblockerimpact_pull_request_id_impact_state_impact_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[36], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
+			},
+			{
+				Name:    "workblockerimpact_ticket_id_impact_state_impact_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[37], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
+			},
+			{
+				Name:    "workblockerimpact_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[18], WorkBlockerImpactsColumns[19], WorkBlockerImpactsColumns[20], WorkBlockerImpactsColumns[21]},
+			},
+		},
+	}
+	// WorkDecisionTargetEvaluationsColumns holds the columns for the "work_decision_target_evaluations" table.
+	WorkDecisionTargetEvaluationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "target_kind", Type: field.TypeString},
+		{Name: "evaluation_kind", Type: field.TypeString},
+		{Name: "model_name", Type: field.TypeString},
+		{Name: "fold", Type: field.TypeInt, Default: 0},
+		{Name: "train_count", Type: field.TypeInt, Default: 0},
+		{Name: "test_count", Type: field.TypeInt, Default: 0},
+		{Name: "positive_count", Type: field.TypeInt, Default: 0},
+		{Name: "baseline_positive_rate", Type: field.TypeFloat64, Nullable: true},
+		{Name: "precision_at_10pct", Type: field.TypeFloat64, Nullable: true},
+		{Name: "lift_at_10pct", Type: field.TypeFloat64, Nullable: true},
+		{Name: "roc_auc", Type: field.TypeFloat64, Nullable: true},
+		{Name: "average_precision", Type: field.TypeFloat64, Nullable: true},
+		{Name: "coverage_stratum", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "ready_for_product_action", Type: field.TypeBool, Default: false},
+		{Name: "product_action_gate_state", Type: field.TypeString},
+		{Name: "product_action_gate_reason", Type: field.TypeString, Size: 2147483647},
+		{Name: "note", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "evaluated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkDecisionTargetEvaluationsTable holds the schema information for the "work_decision_target_evaluations" table.
+	WorkDecisionTargetEvaluationsTable = &schema.Table{
+		Name:       "work_decision_target_evaluations",
+		Columns:    WorkDecisionTargetEvaluationsColumns,
+		PrimaryKey: []*schema.Column{WorkDecisionTargetEvaluationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_decision_target_evaluations_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkDecisionTargetEvaluationsColumns[35]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workdecisiontargetevaluation_target_kind_evaluation_kind_model_name_fold",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDecisionTargetEvaluationsColumns[2], WorkDecisionTargetEvaluationsColumns[3], WorkDecisionTargetEvaluationsColumns[4], WorkDecisionTargetEvaluationsColumns[5]},
+			},
+			{
+				Name:    "workdecisiontargetevaluation_ready_for_product_action_product_action_gate_state_evaluated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDecisionTargetEvaluationsColumns[15], WorkDecisionTargetEvaluationsColumns[16], WorkDecisionTargetEvaluationsColumns[19]},
+			},
+			{
+				Name:    "workdecisiontargetevaluation_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkDecisionTargetEvaluationsColumns[20], WorkDecisionTargetEvaluationsColumns[21], WorkDecisionTargetEvaluationsColumns[22], WorkDecisionTargetEvaluationsColumns[23]},
+			},
+		},
+	}
+	// WorkDependencyEdgesColumns holds the columns for the "work_dependency_edges" table.
+	WorkDependencyEdgesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "edge_kind", Type: field.TypeEnum, Enums: []string{"ticket_pr", "workstream_member", "workstream_cluster", "blocked_by", "needs_action", "related_work"}},
+		{Name: "relationship_authority", Type: field.TypeEnum, Enums: []string{"operating_projection", "canonical_mirror"}, Default: "operating_projection"},
+		{Name: "canonical_relationship_kind", Type: field.TypeEnum, Nullable: true, Enums: []string{"ticket_pull_request"}},
+		{Name: "from_kind", Type: field.TypeEnum, Enums: []string{"workstream", "ticket", "pull_request", "blocker", "action", "component"}},
+		{Name: "from_key", Type: field.TypeString},
+		{Name: "to_kind", Type: field.TypeEnum, Enums: []string{"workstream", "ticket", "pull_request", "blocker", "action", "component"}},
+		{Name: "to_key", Type: field.TypeString},
+		{Name: "risk_signal", Type: field.TypeString, Nullable: true},
+		{Name: "source_coverage_state", Type: field.TypeString, Nullable: true},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "source_version", Type: field.TypeString, Nullable: true},
+		{Name: "source_updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "content_hash", Type: field.TypeString, Nullable: true},
+		{Name: "deletion_state", Type: field.TypeEnum, Enums: []string{"present", "deleted", "unknown"}, Default: "present"},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "acl_policy_key", Type: field.TypeString, Nullable: true},
+		{Name: "visibility_hash", Type: field.TypeString, Nullable: true},
+		{Name: "acl_state", Type: field.TypeEnum, Enums: []string{"unknown", "current", "stale", "blocked", "unavailable"}, Default: "unknown"},
+		{Name: "acl_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "freshness_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_scope_state_id", Type: field.TypeInt, Nullable: true},
+		{Name: "last_confirmed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_changed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_blocker_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkDependencyEdgesTable holds the schema information for the "work_dependency_edges" table.
+	WorkDependencyEdgesTable = &schema.Table{
+		Name:       "work_dependency_edges",
+		Columns:    WorkDependencyEdgesColumns,
+		PrimaryKey: []*schema.Column{WorkDependencyEdgesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_dependency_edges_work_blockers_work_blocker",
+				Columns:    []*schema.Column{WorkDependencyEdgesColumns[42]},
+				RefColumns: []*schema.Column{WorkBlockersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_dependency_edges_work_actions_work_action",
+				Columns:    []*schema.Column{WorkDependencyEdgesColumns[43]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_dependency_edges_ticket_pull_requests_ticket_pull_request",
+				Columns:    []*schema.Column{WorkDependencyEdgesColumns[44]},
+				RefColumns: []*schema.Column{TicketPullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_dependency_edges_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkDependencyEdgesColumns[45]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workdependencyedge_edge_kind_from_kind_from_key_to_kind_to_key",
+				Unique:  true,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[2], WorkDependencyEdgesColumns[5], WorkDependencyEdgesColumns[6], WorkDependencyEdgesColumns[7], WorkDependencyEdgesColumns[8]},
+			},
+			{
+				Name:    "workdependencyedge_relationship_authority_edge_kind_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[3], WorkDependencyEdgesColumns[2], WorkDependencyEdgesColumns[39], WorkDependencyEdgesColumns[38]},
+			},
+			{
+				Name:    "workdependencyedge_canonical_relationship_kind_edge_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[4], WorkDependencyEdgesColumns[2]},
+			},
+			{
+				Name:    "workdependencyedge_workstream_id_edge_kind_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[11], WorkDependencyEdgesColumns[2], WorkDependencyEdgesColumns[39], WorkDependencyEdgesColumns[38]},
+			},
+			{
+				Name:    "workdependencyedge_work_blocker_id_edge_kind_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[42], WorkDependencyEdgesColumns[2], WorkDependencyEdgesColumns[39], WorkDependencyEdgesColumns[38]},
+			},
+			{
+				Name:    "workdependencyedge_work_action_id_edge_kind_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[43], WorkDependencyEdgesColumns[2], WorkDependencyEdgesColumns[39], WorkDependencyEdgesColumns[38]},
+			},
+			{
+				Name:    "workdependencyedge_ticket_id_edge_kind_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[12], WorkDependencyEdgesColumns[2], WorkDependencyEdgesColumns[39], WorkDependencyEdgesColumns[38]},
+			},
+			{
+				Name:    "workdependencyedge_pull_request_id_edge_kind_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[13], WorkDependencyEdgesColumns[2], WorkDependencyEdgesColumns[39], WorkDependencyEdgesColumns[38]},
+			},
+			{
+				Name:    "workdependencyedge_ticket_pull_request_id_relationship_authority_edge_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[44], WorkDependencyEdgesColumns[3], WorkDependencyEdgesColumns[2]},
+			},
+			{
+				Name:    "workdependencyedge_from_kind_from_key_edge_kind_rank_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[5], WorkDependencyEdgesColumns[6], WorkDependencyEdgesColumns[2], WorkDependencyEdgesColumns[39]},
+			},
+			{
+				Name:    "workdependencyedge_to_kind_to_key_edge_kind_rank_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[7], WorkDependencyEdgesColumns[8], WorkDependencyEdgesColumns[2], WorkDependencyEdgesColumns[39]},
+			},
+			{
+				Name:    "workdependencyedge_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[14], WorkDependencyEdgesColumns[15], WorkDependencyEdgesColumns[16], WorkDependencyEdgesColumns[17]},
+			},
+		},
+	}
+	// WorkDependencyEndpointsColumns holds the columns for the "work_dependency_endpoints" table.
+	WorkDependencyEndpointsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "endpoint_role", Type: field.TypeEnum, Enums: []string{"from", "to"}},
+		{Name: "node_kind", Type: field.TypeEnum, Enums: []string{"workstream", "ticket", "pull_request", "blocker", "action", "component"}},
+		{Name: "node_key", Type: field.TypeString},
+		{Name: "resolution_state", Type: field.TypeEnum, Enums: []string{"resolved", "key_only", "missing"}, Default: "missing"},
+		{Name: "resolution_reason", Type: field.TypeString, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "source_version", Type: field.TypeString, Nullable: true},
+		{Name: "source_updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "content_hash", Type: field.TypeString, Nullable: true},
+		{Name: "deletion_state", Type: field.TypeEnum, Enums: []string{"present", "deleted", "unknown"}, Default: "present"},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "acl_policy_key", Type: field.TypeString, Nullable: true},
+		{Name: "visibility_hash", Type: field.TypeString, Nullable: true},
+		{Name: "acl_state", Type: field.TypeEnum, Enums: []string{"unknown", "current", "stale", "blocked", "unavailable"}, Default: "unknown"},
+		{Name: "acl_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "freshness_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_scope_state_id", Type: field.TypeInt, Nullable: true},
+		{Name: "last_confirmed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_changed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_dependency_edge_id", Type: field.TypeInt},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_blocker_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkDependencyEndpointsTable holds the schema information for the "work_dependency_endpoints" table.
+	WorkDependencyEndpointsTable = &schema.Table{
+		Name:       "work_dependency_endpoints",
+		Columns:    WorkDependencyEndpointsColumns,
+		PrimaryKey: []*schema.Column{WorkDependencyEndpointsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_dependency_endpoints_work_dependency_edges_work_dependency_edge",
+				Columns:    []*schema.Column{WorkDependencyEndpointsColumns[35]},
+				RefColumns: []*schema.Column{WorkDependencyEdgesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_dependency_endpoints_workstreams_workstream",
+				Columns:    []*schema.Column{WorkDependencyEndpointsColumns[36]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_dependency_endpoints_work_blockers_work_blocker",
+				Columns:    []*schema.Column{WorkDependencyEndpointsColumns[37]},
+				RefColumns: []*schema.Column{WorkBlockersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_dependency_endpoints_work_actions_work_action",
+				Columns:    []*schema.Column{WorkDependencyEndpointsColumns[38]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_dependency_endpoints_tickets_ticket",
+				Columns:    []*schema.Column{WorkDependencyEndpointsColumns[39]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_dependency_endpoints_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkDependencyEndpointsColumns[40]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_dependency_endpoints_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkDependencyEndpointsColumns[41]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workdependencyendpoint_work_dependency_edge_id_endpoint_role",
+				Unique:  true,
+				Columns: []*schema.Column{WorkDependencyEndpointsColumns[35], WorkDependencyEndpointsColumns[2]},
+			},
+			{
+				Name:    "workdependencyendpoint_endpoint_role_node_kind_node_key",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEndpointsColumns[2], WorkDependencyEndpointsColumns[3], WorkDependencyEndpointsColumns[4]},
+			},
+			{
+				Name:    "workdependencyendpoint_node_kind_node_key_resolution_state",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEndpointsColumns[3], WorkDependencyEndpointsColumns[4], WorkDependencyEndpointsColumns[5]},
+			},
+			{
+				Name:    "workdependencyendpoint_workstream_id_endpoint_role",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEndpointsColumns[36], WorkDependencyEndpointsColumns[2]},
+			},
+			{
+				Name:    "workdependencyendpoint_work_blocker_id_endpoint_role",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEndpointsColumns[37], WorkDependencyEndpointsColumns[2]},
+			},
+			{
+				Name:    "workdependencyendpoint_work_action_id_endpoint_role",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEndpointsColumns[38], WorkDependencyEndpointsColumns[2]},
+			},
+			{
+				Name:    "workdependencyendpoint_ticket_id_endpoint_role",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEndpointsColumns[39], WorkDependencyEndpointsColumns[2]},
+			},
+			{
+				Name:    "workdependencyendpoint_pull_request_id_endpoint_role",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEndpointsColumns[40], WorkDependencyEndpointsColumns[2]},
+			},
+			{
+				Name:    "workdependencyendpoint_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkDependencyEndpointsColumns[7], WorkDependencyEndpointsColumns[8], WorkDependencyEndpointsColumns[9], WorkDependencyEndpointsColumns[10]},
+			},
+		},
+	}
+	// WorkForecastEvaluationsColumns holds the columns for the "work_forecast_evaluations" table.
+	WorkForecastEvaluationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "evaluation_kind", Type: field.TypeEnum, Enums: []string{"summary", "kfold", "chronological_holdout", "source_event_as_of_kfold", "source_event_as_of_chronological_holdout", "lifecycle_as_of_baseline", "survival_time_to_merge", "insufficient_sample"}, Default: "summary"},
+		{Name: "model_name", Type: field.TypeString, Nullable: true},
+		{Name: "forecast_method", Type: field.TypeString, Nullable: true},
+		{Name: "best_model_name", Type: field.TypeString, Nullable: true},
+		{Name: "fold", Type: field.TypeInt, Nullable: true},
+		{Name: "train_count", Type: field.TypeInt, Default: 0},
+		{Name: "test_count", Type: field.TypeInt, Default: 0},
+		{Name: "baseline_sample_count", Type: field.TypeInt, Default: 0},
+		{Name: "open_candidate_count", Type: field.TypeInt, Default: 0},
+		{Name: "closed_unmerged_count", Type: field.TypeInt, Default: 0},
+		{Name: "observed_snapshot_time_count", Type: field.TypeInt, Default: 0},
+		{Name: "transition_candidate_count", Type: field.TypeInt, Default: 0},
+		{Name: "terminal_transition_candidate_count", Type: field.TypeInt, Default: 0},
+		{Name: "transition_history_ready", Type: field.TypeBool, Default: false},
+		{Name: "median_cycle_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "p75_cycle_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "avg_closed_unmerged_cycle_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "mae_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "median_error_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "p75_error_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "max_error_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "improvement_vs_median_pct", Type: field.TypeFloat64, Nullable: true},
+		{Name: "ready_for_eta", Type: field.TypeBool, Default: false},
+		{Name: "readiness_state", Type: field.TypeEnum, Enums: []string{"unknown", "insufficient_sample", "gated", "ready"}, Default: "unknown"},
+		{Name: "readiness_reason", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "note", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "evaluated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkForecastEvaluationsTable holds the schema information for the "work_forecast_evaluations" table.
+	WorkForecastEvaluationsTable = &schema.Table{
+		Name:       "work_forecast_evaluations",
+		Columns:    WorkForecastEvaluationsColumns,
+		PrimaryKey: []*schema.Column{WorkForecastEvaluationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_forecast_evaluations_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkForecastEvaluationsColumns[44]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workforecastevaluation_evaluation_kind_model_name_fold",
+				Unique:  false,
+				Columns: []*schema.Column{WorkForecastEvaluationsColumns[2], WorkForecastEvaluationsColumns[3], WorkForecastEvaluationsColumns[6]},
+			},
+			{
+				Name:    "workforecastevaluation_readiness_state_ready_for_eta_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkForecastEvaluationsColumns[25], WorkForecastEvaluationsColumns[24], WorkForecastEvaluationsColumns[43]},
+			},
+			{
+				Name:    "workforecastevaluation_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkForecastEvaluationsColumns[29], WorkForecastEvaluationsColumns[30], WorkForecastEvaluationsColumns[31], WorkForecastEvaluationsColumns[32]},
+			},
+		},
+	}
+	// WorkInsightsColumns holds the columns for the "work_insights" table.
+	WorkInsightsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "insight_kind", Type: field.TypeEnum, Enums: []string{"forecast_risk", "blocker_candidate", "dependency_cluster", "status_summary", "developer_correlation", "model_quality", "ai_graph_brief"}},
+		{Name: "severity", Type: field.TypeEnum, Enums: []string{"info", "low", "medium", "high", "critical"}, Default: "info"},
+		{Name: "producer_state", Type: field.TypeEnum, Enums: []string{"current", "stale", "superseded"}, Default: "current"},
+		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString},
+		{Name: "title", Type: field.TypeString},
+		{Name: "details", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "recommended_action", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "model_name", Type: field.TypeString, Nullable: true},
+		{Name: "model_version", Type: field.TypeString, Nullable: true},
+		{Name: "model_method", Type: field.TypeString, Nullable: true},
+		{Name: "score", Type: field.TypeFloat64, Default: 0},
+		{Name: "score_explanation", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "source_version", Type: field.TypeString, Nullable: true},
+		{Name: "source_updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "content_hash", Type: field.TypeString, Nullable: true},
+		{Name: "deletion_state", Type: field.TypeEnum, Enums: []string{"present", "deleted", "unknown"}, Default: "present"},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "acl_policy_key", Type: field.TypeString, Nullable: true},
+		{Name: "visibility_hash", Type: field.TypeString, Nullable: true},
+		{Name: "acl_state", Type: field.TypeEnum, Enums: []string{"unknown", "current", "stale", "blocked", "unavailable"}, Default: "unknown"},
+		{Name: "acl_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "freshness_checked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_scope_state_id", Type: field.TypeInt, Nullable: true},
+		{Name: "last_confirmed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_changed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkInsightsTable holds the schema information for the "work_insights" table.
+	WorkInsightsTable = &schema.Table{
+		Name:       "work_insights",
+		Columns:    WorkInsightsColumns,
+		PrimaryKey: []*schema.Column{WorkInsightsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_insights_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkInsightsColumns[44]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_insights_tickets_ticket",
+				Columns:    []*schema.Column{WorkInsightsColumns[45]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_insights_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkInsightsColumns[46]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workinsight_insight_kind_severity_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightsColumns[2], WorkInsightsColumns[3], WorkInsightsColumns[41], WorkInsightsColumns[40]},
+			},
+			{
+				Name:    "workinsight_subject_kind_subject_key_producer_state",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightsColumns[5], WorkInsightsColumns[7], WorkInsightsColumns[4]},
+			},
+			{
+				Name:    "workinsight_producer_state_severity_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightsColumns[4], WorkInsightsColumns[3], WorkInsightsColumns[41], WorkInsightsColumns[40]},
+			},
+			{
+				Name:    "workinsight_pull_request_id_producer_state_severity_rank_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightsColumns[44], WorkInsightsColumns[4], WorkInsightsColumns[3], WorkInsightsColumns[41]},
+			},
+			{
+				Name:    "workinsight_ticket_id_producer_state_severity_rank_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightsColumns[45], WorkInsightsColumns[4], WorkInsightsColumns[3], WorkInsightsColumns[41]},
+			},
+			{
+				Name:    "workinsight_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkInsightsColumns[17], WorkInsightsColumns[18], WorkInsightsColumns[19], WorkInsightsColumns[20]},
+			},
+		},
+	}
+	// WorkInsightEvaluationSnapshotsColumns holds the columns for the "work_insight_evaluation_snapshots" table.
+	WorkInsightEvaluationSnapshotsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "current_insight_count", Type: field.TypeInt, Default: 0},
+		{Name: "review_row_count", Type: field.TypeInt, Default: 0},
+		{Name: "measurement_label_count", Type: field.TypeInt, Default: 0},
+		{Name: "open_review_request_count", Type: field.TypeInt, Default: 0},
+		{Name: "min_labeled_total_required", Type: field.TypeInt, Default: 0},
+		{Name: "min_labeled_per_kind_required", Type: field.TypeInt, Default: 0},
+		{Name: "min_precision_rate_for_product_action", Type: field.TypeFloat64, Default: 0},
+		{Name: "min_useful_signal_rate_for_product_action", Type: field.TypeFloat64, Default: 0},
+		{Name: "min_actionability_rate_for_product_action", Type: field.TypeFloat64, Default: 0},
+		{Name: "precision_rate", Type: field.TypeFloat64, Default: 0},
+		{Name: "useful_signal_rate", Type: field.TypeFloat64, Default: 0},
+		{Name: "actionability_rate", Type: field.TypeFloat64, Default: 0},
+		{Name: "false_positive_rate", Type: field.TypeFloat64, Default: 0},
+		{Name: "measurement_coverage_rate", Type: field.TypeFloat64, Default: 0},
+		{Name: "ready_to_measure_precision", Type: field.TypeBool, Default: false},
+		{Name: "ready_to_measure_actionability", Type: field.TypeBool, Default: false},
+		{Name: "ready_insight_kind_count", Type: field.TypeInt, Default: 0},
+		{Name: "product_action_ready_kind_count", Type: field.TypeInt, Default: 0},
+		{Name: "quality_gated_insight_kind_count", Type: field.TypeInt, Default: 0},
+		{Name: "gated_insight_kind_count", Type: field.TypeInt, Default: 0},
+		{Name: "recommended_next_step", Type: field.TypeString, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkInsightEvaluationSnapshotsTable holds the schema information for the "work_insight_evaluation_snapshots" table.
+	WorkInsightEvaluationSnapshotsTable = &schema.Table{
+		Name:       "work_insight_evaluation_snapshots",
+		Columns:    WorkInsightEvaluationSnapshotsColumns,
+		PrimaryKey: []*schema.Column{WorkInsightEvaluationSnapshotsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_insight_evaluation_snapshots_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkInsightEvaluationSnapshotsColumns[39]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workinsightevaluationsnapshot_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightEvaluationSnapshotsColumns[2]},
+			},
+			{
+				Name:    "workinsightevaluationsnapshot_source_system_source_instance_external_kind_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightEvaluationSnapshotsColumns[24], WorkInsightEvaluationSnapshotsColumns[25], WorkInsightEvaluationSnapshotsColumns[26], WorkInsightEvaluationSnapshotsColumns[2]},
+			},
+			{
+				Name:    "workinsightevaluationsnapshot_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkInsightEvaluationSnapshotsColumns[24], WorkInsightEvaluationSnapshotsColumns[25], WorkInsightEvaluationSnapshotsColumns[26], WorkInsightEvaluationSnapshotsColumns[27]},
+			},
+		},
+	}
+	// WorkInsightKindEvaluationSnapshotsColumns holds the columns for the "work_insight_kind_evaluation_snapshots" table.
+	WorkInsightKindEvaluationSnapshotsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "insight_kind", Type: field.TypeString},
+		{Name: "measurement_scope", Type: field.TypeString, Nullable: true, Default: ""},
+		{Name: "current_insight_count", Type: field.TypeInt, Default: 0},
+		{Name: "review_row_count", Type: field.TypeInt, Default: 0},
+		{Name: "measurement_label_count", Type: field.TypeInt, Default: 0},
+		{Name: "open_review_request_count", Type: field.TypeInt, Default: 0},
+		{Name: "truth_labeled_count", Type: field.TypeInt, Default: 0},
+		{Name: "actionability_labeled_count", Type: field.TypeInt, Default: 0},
+		{Name: "true_positive_count", Type: field.TypeInt, Default: 0},
+		{Name: "false_positive_count", Type: field.TypeInt, Default: 0},
+		{Name: "partial_count", Type: field.TypeInt, Default: 0},
+		{Name: "actionable_count", Type: field.TypeInt, Default: 0},
+		{Name: "needs_owner_count", Type: field.TypeInt, Default: 0},
+		{Name: "precision_rate", Type: field.TypeFloat64, Default: 0},
+		{Name: "useful_signal_rate", Type: field.TypeFloat64, Default: 0},
+		{Name: "actionability_rate", Type: field.TypeFloat64, Default: 0},
+		{Name: "false_positive_rate", Type: field.TypeFloat64, Default: 0},
+		{Name: "measurement_coverage_rate", Type: field.TypeFloat64, Default: 0},
+		{Name: "required_label_count", Type: field.TypeInt, Default: 0},
+		{Name: "ready_to_measure", Type: field.TypeBool, Default: false},
+		{Name: "ready_for_product_action", Type: field.TypeBool, Default: false},
+		{Name: "product_action_gate_state", Type: field.TypeString},
+		{Name: "product_action_gate_reason", Type: field.TypeString, Size: 2147483647},
+		{Name: "recommended_action", Type: field.TypeString, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_insight_evaluation_snapshot_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkInsightKindEvaluationSnapshotsTable holds the schema information for the "work_insight_kind_evaluation_snapshots" table.
+	WorkInsightKindEvaluationSnapshotsTable = &schema.Table{
+		Name:       "work_insight_kind_evaluation_snapshots",
+		Columns:    WorkInsightKindEvaluationSnapshotsColumns,
+		PrimaryKey: []*schema.Column{WorkInsightKindEvaluationSnapshotsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_insight_kind_evaluation_snapshots_work_insight_evaluation_snapshots_kind_evaluations",
+				Columns:    []*schema.Column{WorkInsightKindEvaluationSnapshotsColumns[42]},
+				RefColumns: []*schema.Column{WorkInsightEvaluationSnapshotsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_insight_kind_evaluation_snapshots_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkInsightKindEvaluationSnapshotsColumns[43]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workinsightkindevaluationsnapshot_insight_kind_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightKindEvaluationSnapshotsColumns[3], WorkInsightKindEvaluationSnapshotsColumns[2]},
+			},
+			{
+				Name:    "workinsightkindevaluationsnapshot_ready_to_measure_ready_for_product_action_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightKindEvaluationSnapshotsColumns[22], WorkInsightKindEvaluationSnapshotsColumns[23], WorkInsightKindEvaluationSnapshotsColumns[2]},
+			},
+			{
+				Name:    "workinsightkindevaluationsnapshot_work_insight_evaluation_snapshot_id_insight_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightKindEvaluationSnapshotsColumns[42], WorkInsightKindEvaluationSnapshotsColumns[3]},
+			},
+			{
+				Name:    "workinsightkindevaluationsnapshot_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkInsightKindEvaluationSnapshotsColumns[27], WorkInsightKindEvaluationSnapshotsColumns[28], WorkInsightKindEvaluationSnapshotsColumns[29], WorkInsightKindEvaluationSnapshotsColumns[30]},
+			},
+		},
+	}
+	// WorkInsightReviewsColumns holds the columns for the "work_insight_reviews" table.
+	WorkInsightReviewsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "review_kind", Type: field.TypeEnum, Enums: []string{"triage_request", "human_assessment", "evaluation_label"}, Default: "triage_request"},
+		{Name: "review_state", Type: field.TypeEnum, Enums: []string{"requested", "needs_more_data", "accepted", "dismissed", "resolved"}, Default: "requested"},
+		{Name: "truth_label", Type: field.TypeEnum, Enums: []string{"unknown", "true_positive", "false_positive", "partial"}, Default: "unknown"},
+		{Name: "actionability_label", Type: field.TypeEnum, Enums: []string{"unknown", "actionable", "not_actionable", "needs_owner"}, Default: "unknown"},
+		{Name: "label_set", Type: field.TypeString, Nullable: true},
+		{Name: "label_quality", Type: field.TypeEnum, Enums: []string{"unknown", "candidate", "gold", "smoke"}, Default: "unknown"},
+		{Name: "measurement_eligible", Type: field.TypeBool, Default: false},
+		{Name: "reviewer_kind", Type: field.TypeEnum, Enums: []string{"system", "human", "imported"}, Default: "system"},
+		{Name: "reviewer_key", Type: field.TypeString, Nullable: true},
+		{Name: "owner_key", Type: field.TypeString, Nullable: true},
+		{Name: "next_action", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "rationale", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "reviewed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_insight_id", Type: field.TypeInt},
+	}
+	// WorkInsightReviewsTable holds the schema information for the "work_insight_reviews" table.
+	WorkInsightReviewsTable = &schema.Table{
+		Name:       "work_insight_reviews",
+		Columns:    WorkInsightReviewsColumns,
+		PrimaryKey: []*schema.Column{WorkInsightReviewsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_insight_reviews_work_insights_reviews",
+				Columns:    []*schema.Column{WorkInsightReviewsColumns[22]},
+				RefColumns: []*schema.Column{WorkInsightsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workinsightreview_work_insight_id_review_kind_reviewer_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightReviewsColumns[22], WorkInsightReviewsColumns[2], WorkInsightReviewsColumns[9]},
+			},
+			{
+				Name:    "workinsightreview_review_kind_label_quality_review_state",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightReviewsColumns[2], WorkInsightReviewsColumns[7], WorkInsightReviewsColumns[3]},
+			},
+			{
+				Name:    "workinsightreview_review_state_review_kind_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightReviewsColumns[3], WorkInsightReviewsColumns[2], WorkInsightReviewsColumns[20]},
+			},
+			{
+				Name:    "workinsightreview_truth_label_actionability_label_review_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightReviewsColumns[4], WorkInsightReviewsColumns[5], WorkInsightReviewsColumns[2]},
+			},
+			{
+				Name:    "workinsightreview_reviewer_kind_reviewer_key_review_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkInsightReviewsColumns[9], WorkInsightReviewsColumns[10], WorkInsightReviewsColumns[2]},
+			},
+			{
+				Name:    "workinsightreview_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkInsightReviewsColumns[15], WorkInsightReviewsColumns[16], WorkInsightReviewsColumns[17], WorkInsightReviewsColumns[18]},
+			},
+		},
+	}
+	// WorkItemForecastsColumns holds the columns for the "work_item_forecasts" table.
+	WorkItemForecastsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "forecast_kind", Type: field.TypeEnum, Enums: []string{"cycle_time"}, Default: "cycle_time"},
+		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString},
+		{Name: "subject_state", Type: field.TypeString, Nullable: true},
+		{Name: "forecast_method", Type: field.TypeString, Nullable: true},
+		{Name: "model_name", Type: field.TypeString, Nullable: true},
+		{Name: "age_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "predicted_total_cycle_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "predicted_remaining_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "overdue_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "risk_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "risk_band", Type: field.TypeEnum, Enums: []string{"unknown", "low", "medium", "high", "critical"}, Default: "unknown"},
+		{Name: "readiness_state", Type: field.TypeEnum, Enums: []string{"unknown", "insufficient_sample", "gated", "ready"}, Default: "unknown"},
+		{Name: "ready_for_eta", Type: field.TypeBool, Default: false},
+		{Name: "readiness_reason", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "forecasted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "forecast_evaluation_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkItemForecastsTable holds the schema information for the "work_item_forecasts" table.
+	WorkItemForecastsTable = &schema.Table{
+		Name:       "work_item_forecasts",
+		Columns:    WorkItemForecastsColumns,
+		PrimaryKey: []*schema.Column{WorkItemForecastsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_item_forecasts_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkItemForecastsColumns[34]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_item_forecasts_tickets_ticket",
+				Columns:    []*schema.Column{WorkItemForecastsColumns[35]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_item_forecasts_work_actions_work_action",
+				Columns:    []*schema.Column{WorkItemForecastsColumns[36]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_item_forecasts_work_forecast_evaluations_forecast_evaluation",
+				Columns:    []*schema.Column{WorkItemForecastsColumns[37]},
+				RefColumns: []*schema.Column{WorkForecastEvaluationsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_item_forecasts_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkItemForecastsColumns[38]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workitemforecast_forecast_kind_subject_kind_subject_key",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemForecastsColumns[2], WorkItemForecastsColumns[3], WorkItemForecastsColumns[5]},
+			},
+			{
+				Name:    "workitemforecast_risk_band_risk_score_overdue_days",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemForecastsColumns[14], WorkItemForecastsColumns[13], WorkItemForecastsColumns[12]},
+			},
+			{
+				Name:    "workitemforecast_subject_state_risk_band_risk_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemForecastsColumns[6], WorkItemForecastsColumns[14], WorkItemForecastsColumns[13]},
+			},
+			{
+				Name:    "workitemforecast_pull_request_id_forecast_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemForecastsColumns[34], WorkItemForecastsColumns[2]},
+			},
+			{
+				Name:    "workitemforecast_ticket_id_forecast_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemForecastsColumns[35], WorkItemForecastsColumns[2]},
+			},
+			{
+				Name:    "workitemforecast_work_action_id",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemForecastsColumns[36]},
+			},
+			{
+				Name:    "workitemforecast_forecast_evaluation_id_readiness_state_ready_for_eta",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemForecastsColumns[37], WorkItemForecastsColumns[15], WorkItemForecastsColumns[16]},
+			},
+			{
+				Name:    "workitemforecast_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkItemForecastsColumns[19], WorkItemForecastsColumns[20], WorkItemForecastsColumns[21], WorkItemForecastsColumns[22]},
+			},
+		},
+	}
+	// WorkItemStateSnapshotsColumns holds the columns for the "work_item_state_snapshots" table.
+	WorkItemStateSnapshotsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString},
+		{Name: "state", Type: field.TypeString, Nullable: true},
+		{Name: "title", Type: field.TypeString, Nullable: true},
+		{Name: "observed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "captured_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_created_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "closed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "merged_at", Type: field.TypeTime, Nullable: true},
+		{Name: "age_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "stale_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "cycle_time_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "risk_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "risk_band", Type: field.TypeEnum, Enums: []string{"unknown", "low", "medium", "high", "critical"}, Default: "unknown"},
+		{Name: "forecast_method", Type: field.TypeString, Nullable: true},
+		{Name: "source_current_coverage_state", Type: field.TypeString, Nullable: true},
+		{Name: "source_current_detail_state", Type: field.TypeString, Nullable: true},
+		{Name: "source_current_issue_codes", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_current_issue_kinds", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "lifecycle_fields_source", Type: field.TypeString, Nullable: true},
+		{Name: "churn_fields_source", Type: field.TypeString, Nullable: true},
+		{Name: "mergeability_fields_source", Type: field.TypeString, Nullable: true},
+		{Name: "priority", Type: field.TypeString, Nullable: true},
+		{Name: "linked_pr_count", Type: field.TypeInt, Nullable: true},
+		{Name: "fresh_pr_link_count", Type: field.TypeInt, Nullable: true},
+		{Name: "partial_pr_link_count", Type: field.TypeInt, Nullable: true},
+		{Name: "comment_count", Type: field.TypeInt, Nullable: true},
+		{Name: "participant_count", Type: field.TypeInt, Nullable: true},
+		{Name: "blocker_keyword_count", Type: field.TypeInt, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkItemStateSnapshotsTable holds the schema information for the "work_item_state_snapshots" table.
+	WorkItemStateSnapshotsTable = &schema.Table{
+		Name:       "work_item_state_snapshots",
+		Columns:    WorkItemStateSnapshotsColumns,
+		PrimaryKey: []*schema.Column{WorkItemStateSnapshotsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_item_state_snapshots_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkItemStateSnapshotsColumns[48]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_item_state_snapshots_tickets_ticket",
+				Columns:    []*schema.Column{WorkItemStateSnapshotsColumns[49]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_item_state_snapshots_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkItemStateSnapshotsColumns[50]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workitemstatesnapshot_subject_kind_subject_key_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[2], WorkItemStateSnapshotsColumns[4], WorkItemStateSnapshotsColumns[7]},
+			},
+			{
+				Name:    "workitemstatesnapshot_pull_request_id_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[48], WorkItemStateSnapshotsColumns[7]},
+			},
+			{
+				Name:    "workitemstatesnapshot_ticket_id_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[49], WorkItemStateSnapshotsColumns[7]},
+			},
+			{
+				Name:    "workitemstatesnapshot_state_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[5], WorkItemStateSnapshotsColumns[7]},
+			},
+			{
+				Name:    "workitemstatesnapshot_risk_band_risk_score_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[17], WorkItemStateSnapshotsColumns[16], WorkItemStateSnapshotsColumns[7]},
+			},
+			{
+				Name:    "workitemstatesnapshot_source_current_coverage_state_source_current_detail_state",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[19], WorkItemStateSnapshotsColumns[20]},
+			},
+			{
+				Name:    "workitemstatesnapshot_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[33], WorkItemStateSnapshotsColumns[34], WorkItemStateSnapshotsColumns[35], WorkItemStateSnapshotsColumns[36]},
+			},
+		},
+	}
+	// WorkItemStateTransitionsColumns holds the columns for the "work_item_state_transitions" table.
+	WorkItemStateTransitionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString},
+		{Name: "from_observed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "to_observed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "from_state", Type: field.TypeString, Nullable: true},
+		{Name: "to_state", Type: field.TypeString, Nullable: true},
+		{Name: "transition_kind", Type: field.TypeEnum, Enums: []string{"state_change", "terminal_state_change", "coverage_state_change", "state_refresh"}, Default: "state_change"},
+		{Name: "transition_confidence", Type: field.TypeFloat64, Default: 0},
+		{Name: "confidence_basis", Type: field.TypeEnum, Enums: []string{"unknown", "adjacent_snapshot_detection", "source_verified", "human_verified"}, Default: "unknown"},
+		{Name: "verification_state", Type: field.TypeEnum, Enums: []string{"candidate", "closeout_required", "source_verified", "human_verified"}, Default: "candidate"},
+		{Name: "terminal", Type: field.TypeBool, Default: false},
+		{Name: "requires_closeout", Type: field.TypeBool, Default: false},
+		{Name: "note", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "from_snapshot_id", Type: field.TypeInt, Nullable: true},
+		{Name: "to_snapshot_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkItemStateTransitionsTable holds the schema information for the "work_item_state_transitions" table.
+	WorkItemStateTransitionsTable = &schema.Table{
+		Name:       "work_item_state_transitions",
+		Columns:    WorkItemStateTransitionsColumns,
+		PrimaryKey: []*schema.Column{WorkItemStateTransitionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_item_state_transitions_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[31]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_item_state_transitions_tickets_ticket",
+				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[32]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_item_state_transitions_work_item_state_snapshots_from_snapshot",
+				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[33]},
+				RefColumns: []*schema.Column{WorkItemStateSnapshotsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_item_state_transitions_work_item_state_snapshots_to_snapshot",
+				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[34]},
+				RefColumns: []*schema.Column{WorkItemStateSnapshotsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_item_state_transitions_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[35]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workitemstatetransition_subject_kind_subject_key_to_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[2], WorkItemStateTransitionsColumns[4], WorkItemStateTransitionsColumns[6]},
+			},
+			{
+				Name:    "workitemstatetransition_transition_kind_terminal_requires_closeout_to_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[9], WorkItemStateTransitionsColumns[13], WorkItemStateTransitionsColumns[14], WorkItemStateTransitionsColumns[6]},
+			},
+			{
+				Name:    "workitemstatetransition_verification_state_requires_closeout_to_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[12], WorkItemStateTransitionsColumns[14], WorkItemStateTransitionsColumns[6]},
+			},
+			{
+				Name:    "workitemstatetransition_pull_request_id_to_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[31], WorkItemStateTransitionsColumns[6]},
+			},
+			{
+				Name:    "workitemstatetransition_ticket_id_to_observed_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[32], WorkItemStateTransitionsColumns[6]},
+			},
+			{
+				Name:    "workitemstatetransition_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[16], WorkItemStateTransitionsColumns[17], WorkItemStateTransitionsColumns[18], WorkItemStateTransitionsColumns[19]},
 			},
 		},
 	}
@@ -2298,6 +4235,1638 @@ var (
 			},
 		},
 	}
+	// WorkOwnerLoadSnapshotsColumns holds the columns for the "work_owner_load_snapshots" table.
+	WorkOwnerLoadSnapshotsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "owner_key", Type: field.TypeString},
+		{Name: "owner_display_name", Type: field.TypeString, Nullable: true},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "load_status", Type: field.TypeEnum, Enums: []string{"unknown", "clear", "watch", "attention_required", "overloaded"}, Default: "unknown"},
+		{Name: "action_count", Type: field.TypeInt, Default: 0},
+		{Name: "product_action_count", Type: field.TypeInt, Default: 0},
+		{Name: "validation_lead_count", Type: field.TypeInt, Default: 0},
+		{Name: "model_or_rule_qa_count", Type: field.TypeInt, Default: 0},
+		{Name: "critical_or_high_count", Type: field.TypeInt, Default: 0},
+		{Name: "max_priority_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "avg_priority_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "decision_followup_count", Type: field.TypeInt, Default: 0},
+		{Name: "validate_signal_count", Type: field.TypeInt, Default: 0},
+		{Name: "ci_check_followup_count", Type: field.TypeInt, Default: 0},
+		{Name: "review_wait_followup_count", Type: field.TypeInt, Default: 0},
+		{Name: "coverage_limited_count", Type: field.TypeInt, Default: 0},
+		{Name: "anonymous_observation_count", Type: field.TypeInt, Default: 0},
+		{Name: "needs_human_review_count", Type: field.TypeInt, Default: 0},
+		{Name: "top_action_type", Type: field.TypeString, Nullable: true},
+		{Name: "top_subjects", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "recommended_focus", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "person_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkOwnerLoadSnapshotsTable holds the schema information for the "work_owner_load_snapshots" table.
+	WorkOwnerLoadSnapshotsTable = &schema.Table{
+		Name:       "work_owner_load_snapshots",
+		Columns:    WorkOwnerLoadSnapshotsColumns,
+		PrimaryKey: []*schema.Column{WorkOwnerLoadSnapshotsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_owner_load_snapshots_workstreams_workstream",
+				Columns:    []*schema.Column{WorkOwnerLoadSnapshotsColumns[39]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_owner_load_snapshots_persons_person",
+				Columns:    []*schema.Column{WorkOwnerLoadSnapshotsColumns[40]},
+				RefColumns: []*schema.Column{PersonsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_owner_load_snapshots_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkOwnerLoadSnapshotsColumns[41]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workownerloadsnapshot_workstream_key_generated_at_load_status_action_count",
+				Unique:  false,
+				Columns: []*schema.Column{WorkOwnerLoadSnapshotsColumns[2], WorkOwnerLoadSnapshotsColumns[5], WorkOwnerLoadSnapshotsColumns[6], WorkOwnerLoadSnapshotsColumns[7]},
+			},
+			{
+				Name:    "workownerloadsnapshot_owner_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkOwnerLoadSnapshotsColumns[3], WorkOwnerLoadSnapshotsColumns[5]},
+			},
+			{
+				Name:    "workownerloadsnapshot_person_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkOwnerLoadSnapshotsColumns[40], WorkOwnerLoadSnapshotsColumns[5]},
+			},
+			{
+				Name:    "workownerloadsnapshot_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkOwnerLoadSnapshotsColumns[39], WorkOwnerLoadSnapshotsColumns[5]},
+			},
+			{
+				Name:    "workownerloadsnapshot_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkOwnerLoadSnapshotsColumns[24], WorkOwnerLoadSnapshotsColumns[25], WorkOwnerLoadSnapshotsColumns[26], WorkOwnerLoadSnapshotsColumns[27]},
+			},
+		},
+	}
+	// WorkProgramAdversarialChecksColumns holds the columns for the "work_program_adversarial_checks" table.
+	WorkProgramAdversarialChecksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "check_kind", Type: field.TypeString},
+		{Name: "check_state", Type: field.TypeEnum, Enums: []string{"pass", "warning", "fail"}, Default: "warning"},
+		{Name: "severity", Type: field.TypeEnum, Enums: []string{"info", "low", "medium", "high", "critical"}, Default: "medium"},
+		{Name: "title", Type: field.TypeString, Size: 2147483647},
+		{Name: "detail", Type: field.TypeString, Size: 2147483647},
+		{Name: "recommended_action", Type: field.TypeString, Size: 2147483647},
+		{Name: "blocking_gate_keys", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "evidence_refs", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramAdversarialChecksTable holds the schema information for the "work_program_adversarial_checks" table.
+	WorkProgramAdversarialChecksTable = &schema.Table{
+		Name:       "work_program_adversarial_checks",
+		Columns:    WorkProgramAdversarialChecksColumns,
+		PrimaryKey: []*schema.Column{WorkProgramAdversarialChecksColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_adversarial_checks_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramAdversarialChecksColumns[27]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_adversarial_checks_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramAdversarialChecksColumns[28]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramadversarialcheck_workstream_key_generated_at_check_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramAdversarialChecksColumns[2], WorkProgramAdversarialChecksColumns[3], WorkProgramAdversarialChecksColumns[4]},
+			},
+			{
+				Name:    "workprogramadversarialcheck_check_state_severity_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramAdversarialChecksColumns[5], WorkProgramAdversarialChecksColumns[6], WorkProgramAdversarialChecksColumns[3]},
+			},
+			{
+				Name:    "workprogramadversarialcheck_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramAdversarialChecksColumns[27], WorkProgramAdversarialChecksColumns[3]},
+			},
+			{
+				Name:    "workprogramadversarialcheck_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramAdversarialChecksColumns[12], WorkProgramAdversarialChecksColumns[13], WorkProgramAdversarialChecksColumns[14], WorkProgramAdversarialChecksColumns[15]},
+			},
+		},
+	}
+	// WorkProgramAutomationReadinessesColumns holds the columns for the "work_program_automation_readinesses" table.
+	WorkProgramAutomationReadinessesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "readiness_state", Type: field.TypeString},
+		{Name: "readiness_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "autonomous_action_ready", Type: field.TypeBool, Default: false},
+		{Name: "human_review_required", Type: field.TypeBool, Default: true},
+		{Name: "safe_automation_areas", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "human_required_areas", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "rationale", Type: field.TypeString, Size: 2147483647},
+		{Name: "required_evidence", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "blocking_gate_keys", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "quality_gate_count", Type: field.TypeInt, Default: 0},
+		{Name: "blocking_gate_count", Type: field.TypeInt, Default: 0},
+		{Name: "evidence_need_count", Type: field.TypeInt, Default: 0},
+		{Name: "tpm_function_count", Type: field.TypeInt, Default: 0},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramAutomationReadinessesTable holds the schema information for the "work_program_automation_readinesses" table.
+	WorkProgramAutomationReadinessesTable = &schema.Table{
+		Name:       "work_program_automation_readinesses",
+		Columns:    WorkProgramAutomationReadinessesColumns,
+		PrimaryKey: []*schema.Column{WorkProgramAutomationReadinessesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_automation_readinesses_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramAutomationReadinessesColumns[32]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_automation_readinesses_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramAutomationReadinessesColumns[33]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramautomationreadiness_workstream_key_generated_at_readiness_state",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramAutomationReadinessesColumns[2], WorkProgramAutomationReadinessesColumns[3], WorkProgramAutomationReadinessesColumns[4]},
+			},
+			{
+				Name:    "workprogramautomationreadiness_readiness_state_human_review_required_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramAutomationReadinessesColumns[4], WorkProgramAutomationReadinessesColumns[7], WorkProgramAutomationReadinessesColumns[3]},
+			},
+			{
+				Name:    "workprogramautomationreadiness_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramAutomationReadinessesColumns[32], WorkProgramAutomationReadinessesColumns[3]},
+			},
+			{
+				Name:    "workprogramautomationreadiness_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramAutomationReadinessesColumns[17], WorkProgramAutomationReadinessesColumns[18], WorkProgramAutomationReadinessesColumns[19], WorkProgramAutomationReadinessesColumns[20]},
+			},
+		},
+	}
+	// WorkProgramBriefCaveatsColumns holds the columns for the "work_program_brief_caveats" table.
+	WorkProgramBriefCaveatsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "caveat_key", Type: field.TypeString},
+		{Name: "severity", Type: field.TypeString},
+		{Name: "title", Type: field.TypeString, Size: 2147483647},
+		{Name: "detail", Type: field.TypeString, Size: 2147483647},
+		{Name: "recommended_action", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "evidence_ref", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramBriefCaveatsTable holds the schema information for the "work_program_brief_caveats" table.
+	WorkProgramBriefCaveatsTable = &schema.Table{
+		Name:       "work_program_brief_caveats",
+		Columns:    WorkProgramBriefCaveatsColumns,
+		PrimaryKey: []*schema.Column{WorkProgramBriefCaveatsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_brief_caveats_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramBriefCaveatsColumns[25]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_brief_caveats_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramBriefCaveatsColumns[26]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogrambriefcaveat_workstream_key_generated_at_caveat_key",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramBriefCaveatsColumns[2], WorkProgramBriefCaveatsColumns[3], WorkProgramBriefCaveatsColumns[4]},
+			},
+			{
+				Name:    "workprogrambriefcaveat_severity_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramBriefCaveatsColumns[5], WorkProgramBriefCaveatsColumns[3]},
+			},
+			{
+				Name:    "workprogrambriefcaveat_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramBriefCaveatsColumns[25], WorkProgramBriefCaveatsColumns[3]},
+			},
+			{
+				Name:    "workprogrambriefcaveat_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramBriefCaveatsColumns[10], WorkProgramBriefCaveatsColumns[11], WorkProgramBriefCaveatsColumns[12], WorkProgramBriefCaveatsColumns[13]},
+			},
+		},
+	}
+	// WorkProgramBriefSnapshotsColumns holds the columns for the "work_program_brief_snapshots" table.
+	WorkProgramBriefSnapshotsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "operating_status", Type: field.TypeString},
+		{Name: "decision_pressure", Type: field.TypeString},
+		{Name: "forecast_state", Type: field.TypeString},
+		{Name: "primary_risk", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "executive_summary", Type: field.TypeString, Size: 2147483647},
+		{Name: "recommended_focus", Type: field.TypeString, Size: 2147483647},
+		{Name: "next_cadence_focus", Type: field.TypeString, Size: 2147483647},
+		{Name: "capability_gaps", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "total_count", Type: field.TypeInt, Default: 0},
+		{Name: "product_action_count", Type: field.TypeInt, Default: 0},
+		{Name: "validation_lead_count", Type: field.TypeInt, Default: 0},
+		{Name: "source_coverage_limited_count", Type: field.TypeInt, Default: 0},
+		{Name: "active_blocker_count", Type: field.TypeInt, Default: 0},
+		{Name: "active_blocker_impact_count", Type: field.TypeInt, Default: 0},
+		{Name: "needs_action_dependency_count", Type: field.TypeInt, Default: 0},
+		{Name: "overloaded_owner_count", Type: field.TypeInt, Default: 0},
+		{Name: "unassigned_action_count", Type: field.TypeInt, Default: 0},
+		{Name: "quality_gate_count", Type: field.TypeInt, Default: 0},
+		{Name: "blocking_gate_count", Type: field.TypeInt, Default: 0},
+		{Name: "caveat_count", Type: field.TypeInt, Default: 0},
+		{Name: "risk_driver_count", Type: field.TypeInt, Default: 0},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramBriefSnapshotsTable holds the schema information for the "work_program_brief_snapshots" table.
+	WorkProgramBriefSnapshotsTable = &schema.Table{
+		Name:       "work_program_brief_snapshots",
+		Columns:    WorkProgramBriefSnapshotsColumns,
+		PrimaryKey: []*schema.Column{WorkProgramBriefSnapshotsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_brief_snapshots_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramBriefSnapshotsColumns[40]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_brief_snapshots_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramBriefSnapshotsColumns[41]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogrambriefsnapshot_workstream_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramBriefSnapshotsColumns[2], WorkProgramBriefSnapshotsColumns[3]},
+			},
+			{
+				Name:    "workprogrambriefsnapshot_operating_status_decision_pressure_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramBriefSnapshotsColumns[4], WorkProgramBriefSnapshotsColumns[5], WorkProgramBriefSnapshotsColumns[3]},
+			},
+			{
+				Name:    "workprogrambriefsnapshot_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramBriefSnapshotsColumns[40], WorkProgramBriefSnapshotsColumns[3]},
+			},
+			{
+				Name:    "workprogrambriefsnapshot_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramBriefSnapshotsColumns[25], WorkProgramBriefSnapshotsColumns[26], WorkProgramBriefSnapshotsColumns[27], WorkProgramBriefSnapshotsColumns[28]},
+			},
+		},
+	}
+	// WorkProgramEvidenceNeedsColumns holds the columns for the "work_program_evidence_needs" table.
+	WorkProgramEvidenceNeedsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "gate_key", Type: field.TypeString},
+		{Name: "evidence_kind", Type: field.TypeString},
+		{Name: "priority", Type: field.TypeEnum, Enums: []string{"info", "low", "medium", "high", "critical"}, Default: "medium"},
+		{Name: "target_kind", Type: field.TypeString},
+		{Name: "target_key", Type: field.TypeString, Nullable: true},
+		{Name: "owner_key", Type: field.TypeString, Nullable: true},
+		{Name: "action_key", Type: field.TypeString, Nullable: true},
+		{Name: "action_state", Type: field.TypeString, Nullable: true},
+		{Name: "metric_key", Type: field.TypeString, Nullable: true},
+		{Name: "execution_state", Type: field.TypeString},
+		{Name: "backing_action_count", Type: field.TypeInt, Default: 0},
+		{Name: "current_count", Type: field.TypeInt, Default: 0},
+		{Name: "required_count", Type: field.TypeInt, Default: 0},
+		{Name: "missing_count", Type: field.TypeInt, Default: 0},
+		{Name: "current_rate", Type: field.TypeFloat64, Nullable: true},
+		{Name: "required_rate", Type: field.TypeFloat64, Nullable: true},
+		{Name: "recommended_action", Type: field.TypeString, Size: 2147483647},
+		{Name: "next_execution_step", Type: field.TypeString, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "quality_gate_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramEvidenceNeedsTable holds the schema information for the "work_program_evidence_needs" table.
+	WorkProgramEvidenceNeedsTable = &schema.Table{
+		Name:       "work_program_evidence_needs",
+		Columns:    WorkProgramEvidenceNeedsColumns,
+		PrimaryKey: []*schema.Column{WorkProgramEvidenceNeedsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_evidence_needs_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramEvidenceNeedsColumns[37]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_evidence_needs_work_actions_work_action",
+				Columns:    []*schema.Column{WorkProgramEvidenceNeedsColumns[38]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_evidence_needs_work_program_quality_gates_quality_gate",
+				Columns:    []*schema.Column{WorkProgramEvidenceNeedsColumns[39]},
+				RefColumns: []*schema.Column{WorkProgramQualityGatesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_evidence_needs_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramEvidenceNeedsColumns[40]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramevidenceneed_workstream_key_generated_at_priority",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramEvidenceNeedsColumns[2], WorkProgramEvidenceNeedsColumns[3], WorkProgramEvidenceNeedsColumns[6]},
+			},
+			{
+				Name:    "workprogramevidenceneed_gate_key_evidence_kind_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramEvidenceNeedsColumns[4], WorkProgramEvidenceNeedsColumns[5], WorkProgramEvidenceNeedsColumns[3]},
+			},
+			{
+				Name:    "workprogramevidenceneed_execution_state_priority_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramEvidenceNeedsColumns[13], WorkProgramEvidenceNeedsColumns[6], WorkProgramEvidenceNeedsColumns[3]},
+			},
+			{
+				Name:    "workprogramevidenceneed_workstream_key_action_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramEvidenceNeedsColumns[2], WorkProgramEvidenceNeedsColumns[10], WorkProgramEvidenceNeedsColumns[3]},
+			},
+			{
+				Name:    "workprogramevidenceneed_work_action_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramEvidenceNeedsColumns[38], WorkProgramEvidenceNeedsColumns[3]},
+			},
+			{
+				Name:    "workprogramevidenceneed_quality_gate_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramEvidenceNeedsColumns[39], WorkProgramEvidenceNeedsColumns[3]},
+			},
+			{
+				Name:    "workprogramevidenceneed_workstream_key_target_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramEvidenceNeedsColumns[2], WorkProgramEvidenceNeedsColumns[8], WorkProgramEvidenceNeedsColumns[3]},
+			},
+			{
+				Name:    "workprogramevidenceneed_source_instance_workstream_key_action_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramEvidenceNeedsColumns[23], WorkProgramEvidenceNeedsColumns[2], WorkProgramEvidenceNeedsColumns[10], WorkProgramEvidenceNeedsColumns[3]},
+			},
+			{
+				Name:    "workprogramevidenceneed_source_instance_workstream_key_target_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramEvidenceNeedsColumns[23], WorkProgramEvidenceNeedsColumns[2], WorkProgramEvidenceNeedsColumns[8], WorkProgramEvidenceNeedsColumns[3]},
+			},
+			{
+				Name:    "workprogramevidenceneed_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramEvidenceNeedsColumns[37], WorkProgramEvidenceNeedsColumns[3]},
+			},
+			{
+				Name:    "workprogramevidenceneed_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramEvidenceNeedsColumns[22], WorkProgramEvidenceNeedsColumns[23], WorkProgramEvidenceNeedsColumns[24], WorkProgramEvidenceNeedsColumns[25]},
+			},
+		},
+	}
+	// WorkProgramItemsColumns holds the columns for the "work_program_items" table.
+	WorkProgramItemsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString},
+		{Name: "linked_ticket_keys", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "linked_pull_request_keys", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "title", Type: field.TypeString, Size: 2147483647},
+		{Name: "program_status", Type: field.TypeEnum, Enums: []string{"unknown", "needs_decision", "validate_signal", "ci_failing", "waiting_review", "source_repair", "closed_pending_review", "model_quality", "dismissed", "closure_candidate", "needs_review"}, Default: "unknown"},
+		{Name: "tpm_bucket", Type: field.TypeEnum, Enums: []string{"unknown", "risk", "risk_validation", "blocker", "ci", "ci_validation", "reviewer_wait", "closure", "dismissal", "model_quality", "source_repair", "review"}, Default: "unknown"},
+		{Name: "owner_key", Type: field.TypeString, Nullable: true},
+		{Name: "owner_source", Type: field.TypeString, Nullable: true},
+		{Name: "author_dri", Type: field.TypeString, Nullable: true},
+		{Name: "requested_reviewer_keys", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "reviewer_or_approver", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "next_action", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "decision_needed", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "decision_state", Type: field.TypeEnum, Enums: []string{"product_action", "validation_lead", "source_repair", "closeout_review", "source_resolved", "model_or_rule_qa", "suppressed_signal", "pending_review"}, Default: "pending_review"},
+		{Name: "decision_gate_reason", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "due_bucket", Type: field.TypeEnum, Enums: []string{"now", "this_week", "watch", "unscheduled"}, Default: "unscheduled"},
+		{Name: "last_source_update_at", Type: field.TypeTime, Nullable: true},
+		{Name: "age_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "stale_days", Type: field.TypeFloat64, Nullable: true},
+		{Name: "risk_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "blocker_label_state", Type: field.TypeString, Nullable: true},
+		{Name: "ci_signal", Type: field.TypeString, Nullable: true},
+		{Name: "transition_state", Type: field.TypeString, Nullable: true},
+		{Name: "dependency_summary", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_coverage_state", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "label_quality", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "register_updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramItemsTable holds the schema information for the "work_program_items" table.
+	WorkProgramItemsTable = &schema.Table{
+		Name:       "work_program_items",
+		Columns:    WorkProgramItemsColumns,
+		PrimaryKey: []*schema.Column{WorkProgramItemsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_items_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramItemsColumns[47]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_items_work_actions_work_action",
+				Columns:    []*schema.Column{WorkProgramItemsColumns[48]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_items_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkProgramItemsColumns[49]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_program_items_tickets_ticket",
+				Columns:    []*schema.Column{WorkProgramItemsColumns[50]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_program_items_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramItemsColumns[51]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramitem_workstream_key_program_status_due_bucket_risk_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemsColumns[2], WorkProgramItemsColumns[9], WorkProgramItemsColumns[20], WorkProgramItemsColumns[24], WorkProgramItemsColumns[43]},
+			},
+			{
+				Name:    "workprogramitem_workstream_id_program_status_due_bucket_risk_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemsColumns[47], WorkProgramItemsColumns[9], WorkProgramItemsColumns[20], WorkProgramItemsColumns[24]},
+			},
+			{
+				Name:    "workprogramitem_subject_kind_subject_key_program_status",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemsColumns[3], WorkProgramItemsColumns[5], WorkProgramItemsColumns[9]},
+			},
+			{
+				Name:    "workprogramitem_subject_object_type_subject_key_program_status",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemsColumns[4], WorkProgramItemsColumns[5], WorkProgramItemsColumns[9]},
+			},
+			{
+				Name:    "workprogramitem_owner_key_program_status_due_bucket_risk_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemsColumns[11], WorkProgramItemsColumns[9], WorkProgramItemsColumns[20], WorkProgramItemsColumns[24]},
+			},
+			{
+				Name:    "workprogramitem_work_action_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramItemsColumns[48]},
+			},
+			{
+				Name:    "workprogramitem_pull_request_id_program_status_risk_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemsColumns[49], WorkProgramItemsColumns[9], WorkProgramItemsColumns[24]},
+			},
+			{
+				Name:    "workprogramitem_ticket_id_program_status_risk_score",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemsColumns[50], WorkProgramItemsColumns[9], WorkProgramItemsColumns[24]},
+			},
+			{
+				Name:    "workprogramitem_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramItemsColumns[32], WorkProgramItemsColumns[33], WorkProgramItemsColumns[34], WorkProgramItemsColumns[35]},
+			},
+		},
+	}
+	// WorkProgramItemLinksColumns holds the columns for the "work_program_item_links" table.
+	WorkProgramItemLinksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "link_kind", Type: field.TypeEnum, Enums: []string{"related", "implements", "blocks", "depends_on", "evidence", "discussion", "documentation", "source_reference"}, Default: "related"},
+		{Name: "target_object_type", Type: field.TypeString},
+		{Name: "target_key", Type: field.TypeString},
+		{Name: "target_resolution_state", Type: field.TypeEnum, Enums: []string{"resolved", "key_only", "missing"}, Default: "key_only"},
+		{Name: "link_summary", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "link_source", Type: field.TypeString, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_program_item_id", Type: field.TypeInt},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "open_graph_object_id", Type: field.TypeInt, Nullable: true},
+		{Name: "evidence_attachment_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramItemLinksTable holds the schema information for the "work_program_item_links" table.
+	WorkProgramItemLinksTable = &schema.Table{
+		Name:       "work_program_item_links",
+		Columns:    WorkProgramItemLinksColumns,
+		PrimaryKey: []*schema.Column{WorkProgramItemLinksColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_item_links_work_program_items_work_program_item",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[23]},
+				RefColumns: []*schema.Column{WorkProgramItemsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_program_item_links_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[24]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_program_item_links_tickets_ticket",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[25]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_program_item_links_open_graph_objects_open_graph_object",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[26]},
+				RefColumns: []*schema.Column{OpenGraphObjectsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_program_item_links_evidence_attachments_evidence_attachment",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[27]},
+				RefColumns: []*schema.Column{EvidenceAttachmentsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_item_links_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[28]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramitemlink_work_program_item_id_link_kind_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[23], WorkProgramItemLinksColumns[2], WorkProgramItemLinksColumns[20], WorkProgramItemLinksColumns[19]},
+			},
+			{
+				Name:    "workprogramitemlink_target_object_type_target_key_link_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[3], WorkProgramItemLinksColumns[4], WorkProgramItemLinksColumns[2]},
+			},
+			{
+				Name:    "workprogramitemlink_pull_request_id_link_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[24], WorkProgramItemLinksColumns[2]},
+			},
+			{
+				Name:    "workprogramitemlink_ticket_id_link_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[25], WorkProgramItemLinksColumns[2]},
+			},
+			{
+				Name:    "workprogramitemlink_open_graph_object_id_link_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[26], WorkProgramItemLinksColumns[2]},
+			},
+			{
+				Name:    "workprogramitemlink_evidence_attachment_id",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[27]},
+			},
+			{
+				Name:    "workprogramitemlink_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[8], WorkProgramItemLinksColumns[9], WorkProgramItemLinksColumns[10], WorkProgramItemLinksColumns[11]},
+			},
+		},
+	}
+	// WorkProgramMilestonesColumns holds the columns for the "work_program_milestones" table.
+	WorkProgramMilestonesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString},
+		{Name: "milestone_kind", Type: field.TypeEnum, Enums: []string{"release_target", "explicit_due_date", "resolution_outcome"}, Default: "release_target"},
+		{Name: "milestone_name", Type: field.TypeString, Size: 2147483647},
+		{Name: "target_date", Type: field.TypeTime, Nullable: true},
+		{Name: "outcome_date", Type: field.TypeTime, Nullable: true},
+		{Name: "milestone_state", Type: field.TypeEnum, Enums: []string{"unknown", "planned", "past_target_unresolved", "resolved_before_target", "resolved_after_target", "no_target_date", "outcome_only"}, Default: "unknown"},
+		{Name: "commitment_strength", Type: field.TypeEnum, Enums: []string{"unknown", "release_signal", "explicit_commitment", "outcome_evidence"}, Default: "unknown"},
+		{Name: "date_claim_allowed", Type: field.TypeBool, Default: false},
+		{Name: "delivery_commitment_allowed", Type: field.TypeBool, Default: false},
+		{Name: "claim_gate_reason", Type: field.TypeString, Size: 2147483647},
+		{Name: "source_field", Type: field.TypeString},
+		{Name: "source_payload_key", Type: field.TypeString, Nullable: true},
+		{Name: "captured_at", Type: field.TypeTime, Nullable: true},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramMilestonesTable holds the schema information for the "work_program_milestones" table.
+	WorkProgramMilestonesTable = &schema.Table{
+		Name:       "work_program_milestones",
+		Columns:    WorkProgramMilestonesColumns,
+		PrimaryKey: []*schema.Column{WorkProgramMilestonesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_milestones_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramMilestonesColumns[34]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_milestones_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkProgramMilestonesColumns[35]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_program_milestones_tickets_ticket",
+				Columns:    []*schema.Column{WorkProgramMilestonesColumns[36]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_program_milestones_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramMilestonesColumns[37]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogrammilestone_workstream_key_generated_at_milestone_kind_target_date",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[2], WorkProgramMilestonesColumns[18], WorkProgramMilestonesColumns[6], WorkProgramMilestonesColumns[8]},
+			},
+			{
+				Name:    "workprogrammilestone_subject_kind_subject_key_milestone_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[3], WorkProgramMilestonesColumns[5], WorkProgramMilestonesColumns[6]},
+			},
+			{
+				Name:    "workprogrammilestone_subject_object_type_subject_key_milestone_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[4], WorkProgramMilestonesColumns[5], WorkProgramMilestonesColumns[6]},
+			},
+			{
+				Name:    "workprogrammilestone_commitment_strength_date_claim_allowed_target_date",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[11], WorkProgramMilestonesColumns[12], WorkProgramMilestonesColumns[8]},
+			},
+			{
+				Name:    "workprogrammilestone_ticket_id_milestone_kind_target_date",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[36], WorkProgramMilestonesColumns[6], WorkProgramMilestonesColumns[8]},
+			},
+			{
+				Name:    "workprogrammilestone_pull_request_id_milestone_kind_target_date",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[35], WorkProgramMilestonesColumns[6], WorkProgramMilestonesColumns[8]},
+			},
+			{
+				Name:    "workprogrammilestone_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[19], WorkProgramMilestonesColumns[20], WorkProgramMilestonesColumns[21], WorkProgramMilestonesColumns[22]},
+			},
+		},
+	}
+	// WorkProgramOwnerRollupSnapshotsColumns holds the columns for the "work_program_owner_rollup_snapshots" table.
+	WorkProgramOwnerRollupSnapshotsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "owner_key", Type: field.TypeString},
+		{Name: "owner_source", Type: field.TypeString, Nullable: true},
+		{Name: "item_count", Type: field.TypeInt, Default: 0},
+		{Name: "needs_decision_count", Type: field.TypeInt, Default: 0},
+		{Name: "validate_signal_count", Type: field.TypeInt, Default: 0},
+		{Name: "ci_failing_count", Type: field.TypeInt, Default: 0},
+		{Name: "waiting_review_count", Type: field.TypeInt, Default: 0},
+		{Name: "source_repair_count", Type: field.TypeInt, Default: 0},
+		{Name: "closure_candidate_count", Type: field.TypeInt, Default: 0},
+		{Name: "now_count", Type: field.TypeInt, Default: 0},
+		{Name: "high_risk_count", Type: field.TypeInt, Default: 0},
+		{Name: "max_risk_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "top_item_keys", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramOwnerRollupSnapshotsTable holds the schema information for the "work_program_owner_rollup_snapshots" table.
+	WorkProgramOwnerRollupSnapshotsTable = &schema.Table{
+		Name:       "work_program_owner_rollup_snapshots",
+		Columns:    WorkProgramOwnerRollupSnapshotsColumns,
+		PrimaryKey: []*schema.Column{WorkProgramOwnerRollupSnapshotsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_owner_rollup_snapshots_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramOwnerRollupSnapshotsColumns[32]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_owner_rollup_snapshots_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramOwnerRollupSnapshotsColumns[33]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramownerrollupsnapshot_workstream_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramOwnerRollupSnapshotsColumns[2], WorkProgramOwnerRollupSnapshotsColumns[3]},
+			},
+			{
+				Name:    "workprogramownerrollupsnapshot_owner_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramOwnerRollupSnapshotsColumns[4], WorkProgramOwnerRollupSnapshotsColumns[3]},
+			},
+			{
+				Name:    "workprogramownerrollupsnapshot_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramOwnerRollupSnapshotsColumns[32], WorkProgramOwnerRollupSnapshotsColumns[3]},
+			},
+			{
+				Name:    "workprogramownerrollupsnapshot_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramOwnerRollupSnapshotsColumns[17], WorkProgramOwnerRollupSnapshotsColumns[18], WorkProgramOwnerRollupSnapshotsColumns[19], WorkProgramOwnerRollupSnapshotsColumns[20]},
+			},
+		},
+	}
+	// WorkProgramQualityGatesColumns holds the columns for the "work_program_quality_gates" table.
+	WorkProgramQualityGatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "gate_key", Type: field.TypeString},
+		{Name: "gate_state", Type: field.TypeString},
+		{Name: "blocking", Type: field.TypeBool, Default: false},
+		{Name: "detail", Type: field.TypeString, Size: 2147483647},
+		{Name: "recommended_action", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramQualityGatesTable holds the schema information for the "work_program_quality_gates" table.
+	WorkProgramQualityGatesTable = &schema.Table{
+		Name:       "work_program_quality_gates",
+		Columns:    WorkProgramQualityGatesColumns,
+		PrimaryKey: []*schema.Column{WorkProgramQualityGatesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_quality_gates_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramQualityGatesColumns[24]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_quality_gates_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramQualityGatesColumns[25]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramqualitygate_workstream_key_generated_at_gate_key",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramQualityGatesColumns[2], WorkProgramQualityGatesColumns[3], WorkProgramQualityGatesColumns[4]},
+			},
+			{
+				Name:    "workprogramqualitygate_gate_state_blocking_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramQualityGatesColumns[5], WorkProgramQualityGatesColumns[6], WorkProgramQualityGatesColumns[3]},
+			},
+			{
+				Name:    "workprogramqualitygate_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramQualityGatesColumns[24], WorkProgramQualityGatesColumns[3]},
+			},
+			{
+				Name:    "workprogramqualitygate_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramQualityGatesColumns[9], WorkProgramQualityGatesColumns[10], WorkProgramQualityGatesColumns[11], WorkProgramQualityGatesColumns[12]},
+			},
+		},
+	}
+	// WorkProgramRiskDriversColumns holds the columns for the "work_program_risk_drivers" table.
+	WorkProgramRiskDriversColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "driver_key", Type: field.TypeString},
+		{Name: "driver_kind", Type: field.TypeString},
+		{Name: "subject_kind", Type: field.TypeString, Nullable: true},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString, Nullable: true},
+		{Name: "title", Type: field.TypeString, Size: 2147483647},
+		{Name: "status", Type: field.TypeString},
+		{Name: "recommended_action", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "evidence_ref", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "badge_keys", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "badge_labels", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "badge_tones", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "badge_details", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramRiskDriversTable holds the schema information for the "work_program_risk_drivers" table.
+	WorkProgramRiskDriversTable = &schema.Table{
+		Name:       "work_program_risk_drivers",
+		Columns:    WorkProgramRiskDriversColumns,
+		PrimaryKey: []*schema.Column{WorkProgramRiskDriversColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_risk_drivers_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramRiskDriversColumns[32]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_risk_drivers_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramRiskDriversColumns[33]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramriskdriver_workstream_key_generated_at_driver_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRiskDriversColumns[2], WorkProgramRiskDriversColumns[3], WorkProgramRiskDriversColumns[5]},
+			},
+			{
+				Name:    "workprogramriskdriver_driver_kind_rank_score_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRiskDriversColumns[5], WorkProgramRiskDriversColumns[29], WorkProgramRiskDriversColumns[3]},
+			},
+			{
+				Name:    "workprogramriskdriver_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRiskDriversColumns[32], WorkProgramRiskDriversColumns[3]},
+			},
+			{
+				Name:    "workprogramriskdriver_subject_object_type_subject_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRiskDriversColumns[7], WorkProgramRiskDriversColumns[8], WorkProgramRiskDriversColumns[3]},
+			},
+			{
+				Name:    "workprogramriskdriver_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramRiskDriversColumns[17], WorkProgramRiskDriversColumns[18], WorkProgramRiskDriversColumns[19], WorkProgramRiskDriversColumns[20]},
+			},
+		},
+	}
+	// WorkProgramRunsColumns holds the columns for the "work_program_runs" table.
+	WorkProgramRunsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "run_key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "readiness_state", Type: field.TypeString},
+		{Name: "readiness_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "autonomous_action_ready", Type: field.TypeBool, Default: false},
+		{Name: "human_review_required", Type: field.TypeBool, Default: true},
+		{Name: "blocking_gate_count", Type: field.TypeInt, Default: 0},
+		{Name: "evidence_need_count", Type: field.TypeInt, Default: 0},
+		{Name: "tpm_function_count", Type: field.TypeInt, Default: 0},
+		{Name: "quality_gate_count", Type: field.TypeInt, Default: 0},
+		{Name: "adversarial_check_count", Type: field.TypeInt, Default: 0},
+		{Name: "owner_load_snapshot_count", Type: field.TypeInt, Default: 0},
+		{Name: "summary_snapshot_count", Type: field.TypeInt, Default: 0},
+		{Name: "brief_snapshot_count", Type: field.TypeInt, Default: 0},
+		{Name: "member_count", Type: field.TypeInt, Default: 0},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramRunsTable holds the schema information for the "work_program_runs" table.
+	WorkProgramRunsTable = &schema.Table{
+		Name:       "work_program_runs",
+		Columns:    WorkProgramRunsColumns,
+		PrimaryKey: []*schema.Column{WorkProgramRunsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_runs_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramRunsColumns[32]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_runs_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramRunsColumns[33]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramrun_source_instance_workstream_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRunsColumns[18], WorkProgramRunsColumns[2], WorkProgramRunsColumns[3]},
+			},
+			{
+				Name:    "workprogramrun_workstream_key_generated_at_readiness_state",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRunsColumns[2], WorkProgramRunsColumns[3], WorkProgramRunsColumns[4]},
+			},
+			{
+				Name:    "workprogramrun_readiness_state_human_review_required_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRunsColumns[4], WorkProgramRunsColumns[7], WorkProgramRunsColumns[3]},
+			},
+			{
+				Name:    "workprogramrun_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRunsColumns[32], WorkProgramRunsColumns[3]},
+			},
+			{
+				Name:    "workprogramrun_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramRunsColumns[17], WorkProgramRunsColumns[18], WorkProgramRunsColumns[19], WorkProgramRunsColumns[20]},
+			},
+		},
+	}
+	// WorkProgramRunMembersColumns holds the columns for the "work_program_run_members" table.
+	WorkProgramRunMembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "run_key", Type: field.TypeString},
+		{Name: "member_table", Type: field.TypeString},
+		{Name: "member_id", Type: field.TypeInt},
+		{Name: "member_key", Type: field.TypeString, Nullable: true},
+		{Name: "member_external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "member_external_id", Type: field.TypeString, Nullable: true},
+		{Name: "member_rank_score", Type: field.TypeFloat64, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "work_program_run_members", Type: field.TypeInt, Nullable: true},
+		{Name: "work_program_run_id", Type: field.TypeInt},
+	}
+	// WorkProgramRunMembersTable holds the schema information for the "work_program_run_members" table.
+	WorkProgramRunMembersTable = &schema.Table{
+		Name:       "work_program_run_members",
+		Columns:    WorkProgramRunMembersColumns,
+		PrimaryKey: []*schema.Column{WorkProgramRunMembersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_run_members_work_program_runs_members",
+				Columns:    []*schema.Column{WorkProgramRunMembersColumns[9]},
+				RefColumns: []*schema.Column{WorkProgramRunsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_run_members_work_program_runs_work_program_run",
+				Columns:    []*schema.Column{WorkProgramRunMembersColumns[10]},
+				RefColumns: []*schema.Column{WorkProgramRunsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramrunmember_run_key_member_table_member_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramRunMembersColumns[1], WorkProgramRunMembersColumns[2], WorkProgramRunMembersColumns[3]},
+			},
+			{
+				Name:    "workprogramrunmember_run_key_member_table",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRunMembersColumns[1], WorkProgramRunMembersColumns[2]},
+			},
+			{
+				Name:    "workprogramrunmember_member_table_member_key",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRunMembersColumns[2], WorkProgramRunMembersColumns[4]},
+			},
+			{
+				Name:    "workprogramrunmember_work_program_run_id_member_table",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRunMembersColumns[10], WorkProgramRunMembersColumns[2]},
+			},
+		},
+	}
+	// WorkProgramSummarySnapshotsColumns holds the columns for the "work_program_summary_snapshots" table.
+	WorkProgramSummarySnapshotsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "total_count", Type: field.TypeInt, Default: 0},
+		{Name: "needs_decision_count", Type: field.TypeInt, Default: 0},
+		{Name: "validate_signal_count", Type: field.TypeInt, Default: 0},
+		{Name: "ci_failing_count", Type: field.TypeInt, Default: 0},
+		{Name: "waiting_review_count", Type: field.TypeInt, Default: 0},
+		{Name: "source_repair_count", Type: field.TypeInt, Default: 0},
+		{Name: "closed_pending_review_count", Type: field.TypeInt, Default: 0},
+		{Name: "model_quality_count", Type: field.TypeInt, Default: 0},
+		{Name: "closure_candidate_count", Type: field.TypeInt, Default: 0},
+		{Name: "dismissed_count", Type: field.TypeInt, Default: 0},
+		{Name: "now_count", Type: field.TypeInt, Default: 0},
+		{Name: "high_risk_count", Type: field.TypeInt, Default: 0},
+		{Name: "unassigned_count", Type: field.TypeInt, Default: 0},
+		{Name: "product_action_count", Type: field.TypeInt, Default: 0},
+		{Name: "validation_lead_count", Type: field.TypeInt, Default: 0},
+		{Name: "source_coverage_limited_count", Type: field.TypeInt, Default: 0},
+		{Name: "owner_load_status", Type: field.TypeString},
+		{Name: "owner_load_action_count", Type: field.TypeInt, Default: 0},
+		{Name: "overloaded_owner_count", Type: field.TypeInt, Default: 0},
+		{Name: "attention_owner_count", Type: field.TypeInt, Default: 0},
+		{Name: "unassigned_action_count", Type: field.TypeInt, Default: 0},
+		{Name: "blocker_count", Type: field.TypeInt, Default: 0},
+		{Name: "active_blocker_count", Type: field.TypeInt, Default: 0},
+		{Name: "validating_blocker_count", Type: field.TypeInt, Default: 0},
+		{Name: "blocker_impact_count", Type: field.TypeInt, Default: 0},
+		{Name: "active_blocker_impact_count", Type: field.TypeInt, Default: 0},
+		{Name: "dependency_edge_count", Type: field.TypeInt, Default: 0},
+		{Name: "blocking_dependency_count", Type: field.TypeInt, Default: 0},
+		{Name: "needs_action_dependency_count", Type: field.TypeInt, Default: 0},
+		{Name: "operating_status", Type: field.TypeString},
+		{Name: "decision_pressure", Type: field.TypeString},
+		{Name: "forecast_state", Type: field.TypeString},
+		{Name: "primary_risk", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "recommended_focus", Type: field.TypeString, Size: 2147483647},
+		{Name: "capability_gaps", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "breakdown_dimensions", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "breakdown_keys", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "breakdown_counts", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramSummarySnapshotsTable holds the schema information for the "work_program_summary_snapshots" table.
+	WorkProgramSummarySnapshotsTable = &schema.Table{
+		Name:       "work_program_summary_snapshots",
+		Columns:    WorkProgramSummarySnapshotsColumns,
+		PrimaryKey: []*schema.Column{WorkProgramSummarySnapshotsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_summary_snapshots_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramSummarySnapshotsColumns[57]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_summary_snapshots_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramSummarySnapshotsColumns[58]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramsummarysnapshot_workstream_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramSummarySnapshotsColumns[2], WorkProgramSummarySnapshotsColumns[3]},
+			},
+			{
+				Name:    "workprogramsummarysnapshot_operating_status_decision_pressure_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramSummarySnapshotsColumns[33], WorkProgramSummarySnapshotsColumns[34], WorkProgramSummarySnapshotsColumns[3]},
+			},
+			{
+				Name:    "workprogramsummarysnapshot_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramSummarySnapshotsColumns[57], WorkProgramSummarySnapshotsColumns[3]},
+			},
+			{
+				Name:    "workprogramsummarysnapshot_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramSummarySnapshotsColumns[42], WorkProgramSummarySnapshotsColumns[43], WorkProgramSummarySnapshotsColumns[44], WorkProgramSummarySnapshotsColumns[45]},
+			},
+		},
+	}
+	// WorkProgramTpmFunctionReadinessesColumns holds the columns for the "work_program_tpm_function_readinesses" table.
+	WorkProgramTpmFunctionReadinessesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "function_key", Type: field.TypeString},
+		{Name: "function_name", Type: field.TypeString},
+		{Name: "readiness_state", Type: field.TypeString},
+		{Name: "automation_state", Type: field.TypeString},
+		{Name: "human_required", Type: field.TypeBool, Default: true},
+		{Name: "supporting_signal_count", Type: field.TypeInt, Default: 0},
+		{Name: "blocking_gate_keys", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "detail", Type: field.TypeString, Size: 2147483647},
+		{Name: "recommended_action", Type: field.TypeString, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramTpmFunctionReadinessesTable holds the schema information for the "work_program_tpm_function_readinesses" table.
+	WorkProgramTpmFunctionReadinessesTable = &schema.Table{
+		Name:       "work_program_tpm_function_readinesses",
+		Columns:    WorkProgramTpmFunctionReadinessesColumns,
+		PrimaryKey: []*schema.Column{WorkProgramTpmFunctionReadinessesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_tpm_function_readinesses_workstreams_workstream",
+				Columns:    []*schema.Column{WorkProgramTpmFunctionReadinessesColumns[28]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_tpm_function_readinesses_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramTpmFunctionReadinessesColumns[29]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramtpmfunctionreadiness_workstream_key_generated_at_function_key",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramTpmFunctionReadinessesColumns[2], WorkProgramTpmFunctionReadinessesColumns[3], WorkProgramTpmFunctionReadinessesColumns[4]},
+			},
+			{
+				Name:    "workprogramtpmfunctionreadiness_readiness_state_human_required_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramTpmFunctionReadinessesColumns[6], WorkProgramTpmFunctionReadinessesColumns[8], WorkProgramTpmFunctionReadinessesColumns[3]},
+			},
+			{
+				Name:    "workprogramtpmfunctionreadiness_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramTpmFunctionReadinessesColumns[28], WorkProgramTpmFunctionReadinessesColumns[3]},
+			},
+			{
+				Name:    "workprogramtpmfunctionreadiness_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramTpmFunctionReadinessesColumns[13], WorkProgramTpmFunctionReadinessesColumns[14], WorkProgramTpmFunctionReadinessesColumns[15], WorkProgramTpmFunctionReadinessesColumns[16]},
+			},
+		},
+	}
+	// WorkResponsibilitiesColumns holds the columns for the "work_responsibilities" table.
+	WorkResponsibilitiesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString, Nullable: true},
+		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"pull_request", "ticket", "workstream", "work_action", "work_blocker", "work_program_evidence_need"}},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString},
+		{Name: "party_kind", Type: field.TypeEnum, Enums: []string{"person", "team", "unresolved", "unassigned"}},
+		{Name: "party_key", Type: field.TypeString},
+		{Name: "party_source", Type: field.TypeString, Nullable: true},
+		{Name: "responsibility_kind", Type: field.TypeEnum, Enums: []string{"accountable", "assignee", "author", "reviewer", "approver", "reporter", "coordinator", "validation_owner", "observer"}},
+		{Name: "basis_kind", Type: field.TypeEnum, Enums: []string{"source_native", "derived_from_relationship", "generated_candidate", "human_override", "imported_label"}, Default: "generated_candidate"},
+		{Name: "basis_detail", Type: field.TypeString, Nullable: true},
+		{Name: "responsibility_state", Type: field.TypeEnum, Enums: []string{"active", "candidate", "superseded", "rejected", "resolved"}, Default: "candidate"},
+		{Name: "responsibility_state_reason", Type: field.TypeString, Nullable: true},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "valid_from", Type: field.TypeTime, Nullable: true},
+		{Name: "valid_until", Type: field.TypeTime, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "person_id", Type: field.TypeInt, Nullable: true},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_blocker_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_program_item_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_program_evidence_need_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkResponsibilitiesTable holds the schema information for the "work_responsibilities" table.
+	WorkResponsibilitiesTable = &schema.Table{
+		Name:       "work_responsibilities",
+		Columns:    WorkResponsibilitiesColumns,
+		PrimaryKey: []*schema.Column{WorkResponsibilitiesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_responsibilities_persons_person",
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[32]},
+				RefColumns: []*schema.Column{PersonsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_responsibilities_workstreams_workstream",
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[33]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_responsibilities_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[34]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_responsibilities_tickets_ticket",
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[35]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_responsibilities_work_actions_work_action",
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[36]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_responsibilities_work_blockers_work_blocker",
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[37]},
+				RefColumns: []*schema.Column{WorkBlockersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_responsibilities_work_program_items_work_program_item",
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[38]},
+				RefColumns: []*schema.Column{WorkProgramItemsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_responsibilities_work_program_evidence_needs_work_program_evidence_need",
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[39]},
+				RefColumns: []*schema.Column{WorkProgramEvidenceNeedsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_responsibilities_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[40]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workresponsibility_party_key_responsibility_kind_responsibility_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[7], WorkResponsibilitiesColumns[9], WorkResponsibilitiesColumns[12], WorkResponsibilitiesColumns[29], WorkResponsibilitiesColumns[28]},
+			},
+			{
+				Name:    "workresponsibility_person_id_responsibility_kind_responsibility_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[32], WorkResponsibilitiesColumns[9], WorkResponsibilitiesColumns[12], WorkResponsibilitiesColumns[29], WorkResponsibilitiesColumns[28]},
+			},
+			{
+				Name:    "workresponsibility_party_kind_party_key",
+				Unique:  false,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[6], WorkResponsibilitiesColumns[7]},
+			},
+			{
+				Name:    "workresponsibility_subject_kind_subject_key_party_key_responsibility_kind_basis_kind",
+				Unique:  true,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[3], WorkResponsibilitiesColumns[5], WorkResponsibilitiesColumns[7], WorkResponsibilitiesColumns[9], WorkResponsibilitiesColumns[10]},
+			},
+			{
+				Name:    "workresponsibility_workstream_key_responsibility_kind_responsibility_state_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[2], WorkResponsibilitiesColumns[9], WorkResponsibilitiesColumns[12], WorkResponsibilitiesColumns[29], WorkResponsibilitiesColumns[28]},
+			},
+			{
+				Name:    "workresponsibility_workstream_id_responsibility_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[33], WorkResponsibilitiesColumns[9]},
+			},
+			{
+				Name:    "workresponsibility_pull_request_id_responsibility_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[34], WorkResponsibilitiesColumns[9]},
+			},
+			{
+				Name:    "workresponsibility_ticket_id_responsibility_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[35], WorkResponsibilitiesColumns[9]},
+			},
+			{
+				Name:    "workresponsibility_work_action_id_responsibility_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[36], WorkResponsibilitiesColumns[9]},
+			},
+			{
+				Name:    "workresponsibility_work_blocker_id_responsibility_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[37], WorkResponsibilitiesColumns[9]},
+			},
+			{
+				Name:    "workresponsibility_work_program_item_id_responsibility_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[38], WorkResponsibilitiesColumns[9]},
+			},
+			{
+				Name:    "workresponsibility_work_program_evidence_need_id_responsibility_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[39], WorkResponsibilitiesColumns[9]},
+			},
+			{
+				Name:    "workresponsibility_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[17], WorkResponsibilitiesColumns[18], WorkResponsibilitiesColumns[19], WorkResponsibilitiesColumns[20]},
+			},
+		},
+	}
 	// WorkstreamsColumns holds the columns for the "workstreams" table.
 	WorkstreamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -2359,6 +5928,199 @@ var (
 				Name:    "workstream_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
 				Columns: []*schema.Column{WorkstreamsColumns[6], WorkstreamsColumns[7], WorkstreamsColumns[8], WorkstreamsColumns[9]},
+			},
+		},
+	}
+	// WorkstreamHealthSnapshotsColumns holds the columns for the "workstream_health_snapshots" table.
+	WorkstreamHealthSnapshotsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "operating_status", Type: field.TypeEnum, Enums: []string{"unknown", "clear", "watch", "validation_required", "attention_required"}, Default: "unknown"},
+		{Name: "action_item_count", Type: field.TypeInt, Default: 0},
+		{Name: "product_action_count", Type: field.TypeInt, Default: 0},
+		{Name: "validation_lead_count", Type: field.TypeInt, Default: 0},
+		{Name: "critical_or_high_validation_lead_count", Type: field.TypeInt, Default: 0},
+		{Name: "model_or_rule_qa_count", Type: field.TypeInt, Default: 0},
+		{Name: "closeout_review_count", Type: field.TypeInt, Default: 0},
+		{Name: "owner_count", Type: field.TypeInt, Default: 0},
+		{Name: "top_owner_action_count", Type: field.TypeInt, Default: 0},
+		{Name: "failing_check_pr_count", Type: field.TypeInt, Default: 0},
+		{Name: "open_failing_check_pr_count", Type: field.TypeInt, Default: 0},
+		{Name: "source_repair_count", Type: field.TypeInt, Default: 0},
+		{Name: "coverage_limited_count", Type: field.TypeInt, Default: 0},
+		{Name: "anonymous_observation_count", Type: field.TypeInt, Default: 0},
+		{Name: "terminal_transition_count", Type: field.TypeInt, Default: 0},
+		{Name: "terminal_transition_subjects", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "eta_forecast_ready", Type: field.TypeBool, Default: false},
+		{Name: "truth_label_coverage", Type: field.TypeString, Nullable: true},
+		{Name: "actionability_label_coverage", Type: field.TypeString, Nullable: true},
+		{Name: "recommended_cadence_focus", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkstreamHealthSnapshotsTable holds the schema information for the "workstream_health_snapshots" table.
+	WorkstreamHealthSnapshotsTable = &schema.Table{
+		Name:       "workstream_health_snapshots",
+		Columns:    WorkstreamHealthSnapshotsColumns,
+		PrimaryKey: []*schema.Column{WorkstreamHealthSnapshotsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "workstream_health_snapshots_workstreams_workstream",
+				Columns:    []*schema.Column{WorkstreamHealthSnapshotsColumns[39]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "workstream_health_snapshots_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkstreamHealthSnapshotsColumns[40]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workstreamhealthsnapshot_workstream_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamHealthSnapshotsColumns[2], WorkstreamHealthSnapshotsColumns[3]},
+			},
+			{
+				Name:    "workstreamhealthsnapshot_operating_status_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamHealthSnapshotsColumns[4], WorkstreamHealthSnapshotsColumns[3]},
+			},
+			{
+				Name:    "workstreamhealthsnapshot_workstream_id_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamHealthSnapshotsColumns[39], WorkstreamHealthSnapshotsColumns[3]},
+			},
+			{
+				Name:    "workstreamhealthsnapshot_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkstreamHealthSnapshotsColumns[24], WorkstreamHealthSnapshotsColumns[25], WorkstreamHealthSnapshotsColumns[26], WorkstreamHealthSnapshotsColumns[27]},
+			},
+		},
+	}
+	// WorkstreamStandupSectionsColumns holds the columns for the "workstream_standup_sections" table.
+	WorkstreamStandupSectionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "workstream_key", Type: field.TypeString},
+		{Name: "generated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "section_rank", Type: field.TypeInt},
+		{Name: "section_kind", Type: field.TypeEnum, Enums: []string{"top_action", "product_action", "validation_lead", "source_repair", "closeout_review", "model_or_rule_qa", "suppressed_signal", "model_quality", "owner_load", "resolved_change"}, Default: "top_action"},
+		{Name: "urgency", Type: field.TypeEnum, Enums: []string{"unknown", "critical", "high", "medium", "low"}, Default: "unknown"},
+		{Name: "owner_key", Type: field.TypeString, Nullable: true},
+		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
+		{Name: "subject_key", Type: field.TypeString, Nullable: true},
+		{Name: "action_type", Type: field.TypeString, Nullable: true},
+		{Name: "status_signal", Type: field.TypeString, Nullable: true},
+		{Name: "summary", Type: field.TypeString, Size: 2147483647},
+		{Name: "recommended_action", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "evidence_ref", Type: field.TypeString, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "workstream_health_snapshot_id", Type: field.TypeInt, Nullable: true},
+		{Name: "workstream_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkstreamStandupSectionsTable holds the schema information for the "workstream_standup_sections" table.
+	WorkstreamStandupSectionsTable = &schema.Table{
+		Name:       "workstream_standup_sections",
+		Columns:    WorkstreamStandupSectionsColumns,
+		PrimaryKey: []*schema.Column{WorkstreamStandupSectionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "workstream_standup_sections_workstream_health_snapshots_workstream_health_snapshot",
+				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[31]},
+				RefColumns: []*schema.Column{WorkstreamHealthSnapshotsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "workstream_standup_sections_workstreams_workstream",
+				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[32]},
+				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "workstream_standup_sections_work_actions_work_action",
+				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[33]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "workstream_standup_sections_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[34]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workstreamstandupsection_workstream_key_generated_at_section_rank",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[2], WorkstreamStandupSectionsColumns[3], WorkstreamStandupSectionsColumns[4]},
+			},
+			{
+				Name:    "workstreamstandupsection_workstream_health_snapshot_id_section_rank",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[31], WorkstreamStandupSectionsColumns[4]},
+			},
+			{
+				Name:    "workstreamstandupsection_workstream_id_generated_at_section_rank",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[32], WorkstreamStandupSectionsColumns[3], WorkstreamStandupSectionsColumns[4]},
+			},
+			{
+				Name:    "workstreamstandupsection_section_kind_urgency_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[5], WorkstreamStandupSectionsColumns[6], WorkstreamStandupSectionsColumns[3]},
+			},
+			{
+				Name:    "workstreamstandupsection_work_action_id",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[33]},
+			},
+			{
+				Name:    "workstreamstandupsection_subject_object_type_subject_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[9], WorkstreamStandupSectionsColumns[10], WorkstreamStandupSectionsColumns[3]},
+			},
+			{
+				Name:    "workstreamstandupsection_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[16], WorkstreamStandupSectionsColumns[17], WorkstreamStandupSectionsColumns[18], WorkstreamStandupSectionsColumns[19]},
 			},
 		},
 	}
@@ -2446,6 +6208,56 @@ var (
 			},
 		},
 	}
+	// WorkActionSourceInsightsColumns holds the columns for the "work_action_source_insights" table.
+	WorkActionSourceInsightsColumns = []*schema.Column{
+		{Name: "work_action_id", Type: field.TypeInt},
+		{Name: "work_insight_id", Type: field.TypeInt},
+	}
+	// WorkActionSourceInsightsTable holds the schema information for the "work_action_source_insights" table.
+	WorkActionSourceInsightsTable = &schema.Table{
+		Name:       "work_action_source_insights",
+		Columns:    WorkActionSourceInsightsColumns,
+		PrimaryKey: []*schema.Column{WorkActionSourceInsightsColumns[0], WorkActionSourceInsightsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_action_source_insights_work_action_id",
+				Columns:    []*schema.Column{WorkActionSourceInsightsColumns[0]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_action_source_insights_work_insight_id",
+				Columns:    []*schema.Column{WorkActionSourceInsightsColumns[1]},
+				RefColumns: []*schema.Column{WorkInsightsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// WorkProgramTpmFunctionReadinessBlockingQualityGatesColumns holds the columns for the "work_program_tpm_function_readiness_blocking_quality_gates" table.
+	WorkProgramTpmFunctionReadinessBlockingQualityGatesColumns = []*schema.Column{
+		{Name: "work_program_tpm_function_readiness_id", Type: field.TypeInt},
+		{Name: "work_program_quality_gate_id", Type: field.TypeInt},
+	}
+	// WorkProgramTpmFunctionReadinessBlockingQualityGatesTable holds the schema information for the "work_program_tpm_function_readiness_blocking_quality_gates" table.
+	WorkProgramTpmFunctionReadinessBlockingQualityGatesTable = &schema.Table{
+		Name:       "work_program_tpm_function_readiness_blocking_quality_gates",
+		Columns:    WorkProgramTpmFunctionReadinessBlockingQualityGatesColumns,
+		PrimaryKey: []*schema.Column{WorkProgramTpmFunctionReadinessBlockingQualityGatesColumns[0], WorkProgramTpmFunctionReadinessBlockingQualityGatesColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_tpm_function_readiness_blocking_quality_gates_work_program_tpm_function_readiness_id",
+				Columns:    []*schema.Column{WorkProgramTpmFunctionReadinessBlockingQualityGatesColumns[0]},
+				RefColumns: []*schema.Column{WorkProgramTpmFunctionReadinessesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_program_tpm_function_readiness_blocking_quality_gates_work_program_quality_gate_id",
+				Columns:    []*schema.Column{WorkProgramTpmFunctionReadinessBlockingQualityGatesColumns[1]},
+				RefColumns: []*schema.Column{WorkProgramQualityGatesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		DocumentsTable,
@@ -2453,10 +6265,13 @@ var (
 		DocumentLensResultsTable,
 		DocumentLinksTable,
 		EvidencesTable,
+		EvidenceAttachmentsTable,
 		MessagesTable,
 		MessageAuthorshipsTable,
 		MessageLensResultsTable,
 		MessageMentionsTable,
+		OpenGraphAssociationsTable,
+		OpenGraphObjectsTable,
 		PersonsTable,
 		PersonIdentitiesTable,
 		PullRequestsTable,
@@ -2477,11 +6292,47 @@ var (
 		TicketMessagesTable,
 		TicketPullRequestsTable,
 		UnresolvedReferencesTable,
+		WorkActionsTable,
+		WorkActionObservationsTable,
 		WorkAreasTable,
+		WorkBlockersTable,
+		WorkBlockerImpactsTable,
+		WorkDecisionTargetEvaluationsTable,
+		WorkDependencyEdgesTable,
+		WorkDependencyEndpointsTable,
+		WorkForecastEvaluationsTable,
+		WorkInsightsTable,
+		WorkInsightEvaluationSnapshotsTable,
+		WorkInsightKindEvaluationSnapshotsTable,
+		WorkInsightReviewsTable,
+		WorkItemForecastsTable,
+		WorkItemStateSnapshotsTable,
+		WorkItemStateTransitionsTable,
 		WorkLensesTable,
 		WorkLensWindowsTable,
+		WorkOwnerLoadSnapshotsTable,
+		WorkProgramAdversarialChecksTable,
+		WorkProgramAutomationReadinessesTable,
+		WorkProgramBriefCaveatsTable,
+		WorkProgramBriefSnapshotsTable,
+		WorkProgramEvidenceNeedsTable,
+		WorkProgramItemsTable,
+		WorkProgramItemLinksTable,
+		WorkProgramMilestonesTable,
+		WorkProgramOwnerRollupSnapshotsTable,
+		WorkProgramQualityGatesTable,
+		WorkProgramRiskDriversTable,
+		WorkProgramRunsTable,
+		WorkProgramRunMembersTable,
+		WorkProgramSummarySnapshotsTable,
+		WorkProgramTpmFunctionReadinessesTable,
+		WorkResponsibilitiesTable,
 		WorkstreamsTable,
+		WorkstreamHealthSnapshotsTable,
+		WorkstreamStandupSectionsTable,
 		WorkstreamTicketsTable,
+		WorkActionSourceInsightsTable,
+		WorkProgramTpmFunctionReadinessBlockingQualityGatesTable,
 	}
 )
 
@@ -2498,6 +6349,22 @@ func init() {
 	DocumentLinksTable.ForeignKeys[1].RefTable = DocumentsTable
 	DocumentLinksTable.ForeignKeys[2].RefTable = EvidencesTable
 	EvidencesTable.ForeignKeys[0].RefTable = EvidencesTable
+	EvidenceAttachmentsTable.ForeignKeys[0].RefTable = EvidencesTable
+	EvidenceAttachmentsTable.ForeignKeys[1].RefTable = TicketsTable
+	EvidenceAttachmentsTable.ForeignKeys[2].RefTable = PullRequestsTable
+	EvidenceAttachmentsTable.ForeignKeys[3].RefTable = TicketPullRequestsTable
+	EvidenceAttachmentsTable.ForeignKeys[4].RefTable = OpenGraphObjectsTable
+	EvidenceAttachmentsTable.ForeignKeys[5].RefTable = OpenGraphAssociationsTable
+	EvidenceAttachmentsTable.ForeignKeys[6].RefTable = WorkActionsTable
+	EvidenceAttachmentsTable.ForeignKeys[7].RefTable = WorkInsightsTable
+	EvidenceAttachmentsTable.ForeignKeys[8].RefTable = WorkBlockersTable
+	EvidenceAttachmentsTable.ForeignKeys[9].RefTable = WorkDependencyEdgesTable
+	EvidenceAttachmentsTable.ForeignKeys[10].RefTable = WorkItemForecastsTable
+	EvidenceAttachmentsTable.ForeignKeys[11].RefTable = WorkResponsibilitiesTable
+	EvidenceAttachmentsTable.Annotation = &entsql.Annotation{}
+	EvidenceAttachmentsTable.Annotation.Checks = map[string]string{
+		"evidence_attachments_relationship_claim_has_relationship": "claim_kind != 'relationship' OR relationship_kind IS NOT NULL OR relationship_id IS NOT NULL",
+	}
 	MessagesTable.ForeignKeys[0].RefTable = EvidencesTable
 	MessageAuthorshipsTable.ForeignKeys[0].RefTable = PersonsTable
 	MessageAuthorshipsTable.ForeignKeys[1].RefTable = MessagesTable
@@ -2509,6 +6376,10 @@ func init() {
 	MessageMentionsTable.ForeignKeys[0].RefTable = PersonsTable
 	MessageMentionsTable.ForeignKeys[1].RefTable = MessagesTable
 	MessageMentionsTable.ForeignKeys[2].RefTable = EvidencesTable
+	OpenGraphAssociationsTable.ForeignKeys[0].RefTable = OpenGraphObjectsTable
+	OpenGraphAssociationsTable.ForeignKeys[1].RefTable = OpenGraphObjectsTable
+	OpenGraphAssociationsTable.ForeignKeys[2].RefTable = EvidencesTable
+	OpenGraphObjectsTable.ForeignKeys[0].RefTable = EvidencesTable
 	PersonIdentitiesTable.ForeignKeys[0].RefTable = PersonsTable
 	PersonIdentitiesTable.ForeignKeys[1].RefTable = PersonIdentitiesTable
 	PersonIdentitiesTable.ForeignKeys[2].RefTable = EvidencesTable
@@ -2551,7 +6422,102 @@ func init() {
 	TicketPullRequestsTable.ForeignKeys[1].RefTable = PullRequestsTable
 	TicketPullRequestsTable.ForeignKeys[2].RefTable = EvidencesTable
 	UnresolvedReferencesTable.ForeignKeys[0].RefTable = EvidencesTable
+	WorkActionsTable.ForeignKeys[0].RefTable = PullRequestsTable
+	WorkActionsTable.ForeignKeys[1].RefTable = TicketsTable
+	WorkActionsTable.ForeignKeys[2].RefTable = EvidencesTable
+	WorkActionsTable.Annotation = &entsql.Annotation{}
+	WorkActionsTable.Annotation.Checks = map[string]string{
+		"work_actions_closed_has_closed_at":         "action_state != 'closed' OR closed_at IS NOT NULL",
+		"work_actions_subject_pointer_matches_kind": "((subject_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL) OR (subject_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL) OR (subject_kind = 'unknown' AND pull_request_id IS NULL AND ticket_id IS NULL))",
+	}
+	WorkActionObservationsTable.ForeignKeys[0].RefTable = WorkActionsTable
+	WorkActionObservationsTable.ForeignKeys[1].RefTable = EvidencesTable
 	WorkAreasTable.ForeignKeys[0].RefTable = PersonsTable
+	WorkBlockersTable.ForeignKeys[0].RefTable = PullRequestsTable
+	WorkBlockersTable.ForeignKeys[1].RefTable = TicketsTable
+	WorkBlockersTable.ForeignKeys[2].RefTable = WorkActionsTable
+	WorkBlockersTable.ForeignKeys[3].RefTable = WorkInsightsTable
+	WorkBlockersTable.ForeignKeys[4].RefTable = EvidencesTable
+	WorkBlockersTable.Annotation = &entsql.Annotation{}
+	WorkBlockersTable.Annotation.Checks = map[string]string{
+		"work_blockers_subject_pointer_matches_kind": "((subject_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL) OR (subject_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL) OR (subject_kind = 'unknown' AND pull_request_id IS NULL AND ticket_id IS NULL))",
+	}
+	WorkBlockerImpactsTable.ForeignKeys[0].RefTable = WorkBlockersTable
+	WorkBlockerImpactsTable.ForeignKeys[1].RefTable = WorkActionsTable
+	WorkBlockerImpactsTable.ForeignKeys[2].RefTable = WorkstreamsTable
+	WorkBlockerImpactsTable.ForeignKeys[3].RefTable = PullRequestsTable
+	WorkBlockerImpactsTable.ForeignKeys[4].RefTable = TicketsTable
+	WorkBlockerImpactsTable.ForeignKeys[5].RefTable = EvidencesTable
+	WorkBlockerImpactsTable.Annotation = &entsql.Annotation{}
+	WorkBlockerImpactsTable.Annotation.Checks = map[string]string{
+		"work_blocker_impacts_score_range": "impact_score >= 0",
+	}
+	WorkDecisionTargetEvaluationsTable.ForeignKeys[0].RefTable = EvidencesTable
+	WorkDependencyEdgesTable.ForeignKeys[0].RefTable = WorkBlockersTable
+	WorkDependencyEdgesTable.ForeignKeys[1].RefTable = WorkActionsTable
+	WorkDependencyEdgesTable.ForeignKeys[2].RefTable = TicketPullRequestsTable
+	WorkDependencyEdgesTable.ForeignKeys[3].RefTable = EvidencesTable
+	WorkDependencyEdgesTable.Annotation = &entsql.Annotation{}
+	WorkDependencyEdgesTable.Annotation.Checks = map[string]string{
+		"work_dependency_edges_canonical_mirror_requires_typed_kind": "relationship_authority != 'canonical_mirror' OR canonical_relationship_kind IS NOT NULL",
+		"work_dependency_edges_no_self_edge":                         "from_kind != to_kind OR from_key != to_key",
+		"work_dependency_edges_projection_has_no_canonical_kind":     "relationship_authority = 'canonical_mirror' OR canonical_relationship_kind IS NULL",
+		"work_dependency_edges_ticket_pr_mirror_shape":               "relationship_authority != 'canonical_mirror' OR (edge_kind = 'ticket_pr' AND canonical_relationship_kind = 'ticket_pull_request' AND from_kind = 'ticket' AND to_kind = 'pull_request' AND ticket_id IS NOT NULL AND pull_request_id IS NOT NULL AND ticket_pull_request_id IS NOT NULL)",
+	}
+	WorkDependencyEndpointsTable.ForeignKeys[0].RefTable = WorkDependencyEdgesTable
+	WorkDependencyEndpointsTable.ForeignKeys[1].RefTable = WorkstreamsTable
+	WorkDependencyEndpointsTable.ForeignKeys[2].RefTable = WorkBlockersTable
+	WorkDependencyEndpointsTable.ForeignKeys[3].RefTable = WorkActionsTable
+	WorkDependencyEndpointsTable.ForeignKeys[4].RefTable = TicketsTable
+	WorkDependencyEndpointsTable.ForeignKeys[5].RefTable = PullRequestsTable
+	WorkDependencyEndpointsTable.ForeignKeys[6].RefTable = EvidencesTable
+	WorkDependencyEndpointsTable.Annotation = &entsql.Annotation{}
+	WorkDependencyEndpointsTable.Annotation.Checks = map[string]string{
+		"work_dependency_endpoint_resolved_pointer_matches_kind": "(resolution_state != 'resolved' OR ((node_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL AND workstream_id IS NULL AND work_blocker_id IS NULL AND work_action_id IS NULL) OR (node_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL AND workstream_id IS NULL AND work_blocker_id IS NULL AND work_action_id IS NULL) OR (node_kind = 'workstream' AND workstream_id IS NOT NULL AND ticket_id IS NULL AND pull_request_id IS NULL AND work_blocker_id IS NULL AND work_action_id IS NULL) OR (node_kind = 'blocker' AND work_blocker_id IS NOT NULL AND ticket_id IS NULL AND pull_request_id IS NULL AND workstream_id IS NULL AND work_action_id IS NULL) OR (node_kind = 'action' AND work_action_id IS NOT NULL AND ticket_id IS NULL AND pull_request_id IS NULL AND workstream_id IS NULL AND work_blocker_id IS NULL)))",
+	}
+	WorkForecastEvaluationsTable.ForeignKeys[0].RefTable = EvidencesTable
+	WorkInsightsTable.ForeignKeys[0].RefTable = PullRequestsTable
+	WorkInsightsTable.ForeignKeys[1].RefTable = TicketsTable
+	WorkInsightsTable.ForeignKeys[2].RefTable = EvidencesTable
+	WorkInsightsTable.Annotation = &entsql.Annotation{}
+	WorkInsightsTable.Annotation.Checks = map[string]string{
+		"work_insights_score_range":                  "score >= 0 AND score <= 100",
+		"work_insights_subject_pointer_matches_kind": "((subject_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL) OR (subject_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL) OR (subject_kind = 'unknown' AND pull_request_id IS NULL AND ticket_id IS NULL))",
+	}
+	WorkInsightEvaluationSnapshotsTable.ForeignKeys[0].RefTable = EvidencesTable
+	WorkInsightKindEvaluationSnapshotsTable.ForeignKeys[0].RefTable = WorkInsightEvaluationSnapshotsTable
+	WorkInsightKindEvaluationSnapshotsTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkInsightReviewsTable.ForeignKeys[0].RefTable = WorkInsightsTable
+	WorkInsightReviewsTable.Annotation = &entsql.Annotation{}
+	WorkInsightReviewsTable.Annotation.Checks = map[string]string{
+		"work_insight_reviews_measurement_kind": "measurement_eligible = false OR review_kind IN ('human_assessment', 'evaluation_label')",
+		"work_insight_reviews_triage_unlabeled": "review_kind != 'triage_request' OR (truth_label = 'unknown' AND actionability_label = 'unknown')",
+	}
+	WorkItemForecastsTable.ForeignKeys[0].RefTable = PullRequestsTable
+	WorkItemForecastsTable.ForeignKeys[1].RefTable = TicketsTable
+	WorkItemForecastsTable.ForeignKeys[2].RefTable = WorkActionsTable
+	WorkItemForecastsTable.ForeignKeys[3].RefTable = WorkForecastEvaluationsTable
+	WorkItemForecastsTable.ForeignKeys[4].RefTable = EvidencesTable
+	WorkItemForecastsTable.Annotation = &entsql.Annotation{}
+	WorkItemForecastsTable.Annotation.Checks = map[string]string{
+		"work_item_forecasts_subject_pointer_matches_kind": "((subject_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL) OR (subject_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL) OR (subject_kind = 'unknown' AND pull_request_id IS NULL AND ticket_id IS NULL))",
+	}
+	WorkItemStateSnapshotsTable.ForeignKeys[0].RefTable = PullRequestsTable
+	WorkItemStateSnapshotsTable.ForeignKeys[1].RefTable = TicketsTable
+	WorkItemStateSnapshotsTable.ForeignKeys[2].RefTable = EvidencesTable
+	WorkItemStateSnapshotsTable.Annotation = &entsql.Annotation{}
+	WorkItemStateSnapshotsTable.Annotation.Checks = map[string]string{
+		"work_item_state_snapshots_subject_pointer_matches_kind": "((subject_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL) OR (subject_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL) OR (subject_kind = 'unknown' AND pull_request_id IS NULL AND ticket_id IS NULL))",
+	}
+	WorkItemStateTransitionsTable.ForeignKeys[0].RefTable = PullRequestsTable
+	WorkItemStateTransitionsTable.ForeignKeys[1].RefTable = TicketsTable
+	WorkItemStateTransitionsTable.ForeignKeys[2].RefTable = WorkItemStateSnapshotsTable
+	WorkItemStateTransitionsTable.ForeignKeys[3].RefTable = WorkItemStateSnapshotsTable
+	WorkItemStateTransitionsTable.ForeignKeys[4].RefTable = EvidencesTable
+	WorkItemStateTransitionsTable.Annotation = &entsql.Annotation{}
+	WorkItemStateTransitionsTable.Annotation.Checks = map[string]string{
+		"work_item_state_transitions_subject_pointer_matches_kind": "((subject_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL) OR (subject_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL) OR (subject_kind = 'unknown' AND pull_request_id IS NULL AND ticket_id IS NULL))",
+	}
 	WorkLensesTable.ForeignKeys[0].RefTable = WorkAreasTable
 	WorkLensesTable.Annotation = &entsql.Annotation{
 		Table: "work_lenses",
@@ -2560,8 +6526,93 @@ func init() {
 	WorkLensWindowsTable.Annotation = &entsql.Annotation{
 		Table: "work_lens_windows",
 	}
+	WorkOwnerLoadSnapshotsTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkOwnerLoadSnapshotsTable.ForeignKeys[1].RefTable = PersonsTable
+	WorkOwnerLoadSnapshotsTable.ForeignKeys[2].RefTable = EvidencesTable
+	WorkProgramAdversarialChecksTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramAdversarialChecksTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkProgramAutomationReadinessesTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramAutomationReadinessesTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkProgramBriefCaveatsTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramBriefCaveatsTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkProgramBriefSnapshotsTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramBriefSnapshotsTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkProgramEvidenceNeedsTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramEvidenceNeedsTable.ForeignKeys[1].RefTable = WorkActionsTable
+	WorkProgramEvidenceNeedsTable.ForeignKeys[2].RefTable = WorkProgramQualityGatesTable
+	WorkProgramEvidenceNeedsTable.ForeignKeys[3].RefTable = EvidencesTable
+	WorkProgramItemsTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramItemsTable.ForeignKeys[1].RefTable = WorkActionsTable
+	WorkProgramItemsTable.ForeignKeys[2].RefTable = PullRequestsTable
+	WorkProgramItemsTable.ForeignKeys[3].RefTable = TicketsTable
+	WorkProgramItemsTable.ForeignKeys[4].RefTable = EvidencesTable
+	WorkProgramItemsTable.Annotation = &entsql.Annotation{}
+	WorkProgramItemsTable.Annotation.Checks = map[string]string{
+		"work_program_items_subject_pointer_matches_kind": "((subject_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL) OR (subject_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL) OR (subject_kind = 'unknown' AND pull_request_id IS NULL AND ticket_id IS NULL))",
+	}
+	WorkProgramItemLinksTable.ForeignKeys[0].RefTable = WorkProgramItemsTable
+	WorkProgramItemLinksTable.ForeignKeys[1].RefTable = PullRequestsTable
+	WorkProgramItemLinksTable.ForeignKeys[2].RefTable = TicketsTable
+	WorkProgramItemLinksTable.ForeignKeys[3].RefTable = OpenGraphObjectsTable
+	WorkProgramItemLinksTable.ForeignKeys[4].RefTable = EvidenceAttachmentsTable
+	WorkProgramItemLinksTable.ForeignKeys[5].RefTable = EvidencesTable
+	WorkProgramItemLinksTable.Annotation = &entsql.Annotation{}
+	WorkProgramItemLinksTable.Annotation.Checks = map[string]string{
+		"work_program_item_links_one_typed_target": "((pull_request_id IS NULL OR ticket_id IS NULL) AND (open_graph_object_id IS NULL OR (pull_request_id IS NULL AND ticket_id IS NULL)))",
+	}
+	WorkProgramMilestonesTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramMilestonesTable.ForeignKeys[1].RefTable = PullRequestsTable
+	WorkProgramMilestonesTable.ForeignKeys[2].RefTable = TicketsTable
+	WorkProgramMilestonesTable.ForeignKeys[3].RefTable = EvidencesTable
+	WorkProgramMilestonesTable.Annotation = &entsql.Annotation{}
+	WorkProgramMilestonesTable.Annotation.Checks = map[string]string{
+		"work_program_milestones_date_claim_requires_source_date":       "date_claim_allowed = false OR target_date IS NOT NULL OR outcome_date IS NOT NULL",
+		"work_program_milestones_delivery_requires_explicit_due_target": "delivery_commitment_allowed = false OR (milestone_kind = 'explicit_due_date' AND commitment_strength = 'explicit_commitment' AND target_date IS NOT NULL)",
+		"work_program_milestones_explicit_commitment_requires_due_kind": "commitment_strength != 'explicit_commitment' OR milestone_kind = 'explicit_due_date'",
+		"work_program_milestones_release_target_is_not_delivery_commit": "milestone_kind != 'release_target' OR delivery_commitment_allowed = false",
+		"work_program_milestones_resolution_outcome_is_not_commitment":  "milestone_kind != 'resolution_outcome' OR (commitment_strength = 'outcome_evidence' AND delivery_commitment_allowed = false AND target_date IS NULL AND outcome_date IS NOT NULL)",
+		"work_program_milestones_subject_pointer_matches_kind":          "((subject_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL) OR (subject_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL) OR (subject_kind = 'unknown' AND pull_request_id IS NULL AND ticket_id IS NULL))",
+	}
+	WorkProgramOwnerRollupSnapshotsTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramOwnerRollupSnapshotsTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkProgramQualityGatesTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramQualityGatesTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkProgramRiskDriversTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramRiskDriversTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkProgramRunsTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramRunsTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkProgramRunMembersTable.ForeignKeys[0].RefTable = WorkProgramRunsTable
+	WorkProgramRunMembersTable.ForeignKeys[1].RefTable = WorkProgramRunsTable
+	WorkProgramSummarySnapshotsTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramSummarySnapshotsTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkProgramTpmFunctionReadinessesTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkProgramTpmFunctionReadinessesTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkResponsibilitiesTable.ForeignKeys[0].RefTable = PersonsTable
+	WorkResponsibilitiesTable.ForeignKeys[1].RefTable = WorkstreamsTable
+	WorkResponsibilitiesTable.ForeignKeys[2].RefTable = PullRequestsTable
+	WorkResponsibilitiesTable.ForeignKeys[3].RefTable = TicketsTable
+	WorkResponsibilitiesTable.ForeignKeys[4].RefTable = WorkActionsTable
+	WorkResponsibilitiesTable.ForeignKeys[5].RefTable = WorkBlockersTable
+	WorkResponsibilitiesTable.ForeignKeys[6].RefTable = WorkProgramItemsTable
+	WorkResponsibilitiesTable.ForeignKeys[7].RefTable = WorkProgramEvidenceNeedsTable
+	WorkResponsibilitiesTable.ForeignKeys[8].RefTable = EvidencesTable
+	WorkResponsibilitiesTable.Annotation = &entsql.Annotation{}
+	WorkResponsibilitiesTable.Annotation.Checks = map[string]string{
+		"work_responsibilities_person_party_consistent":      "((party_kind = 'person' AND person_id IS NOT NULL) OR (party_kind != 'person' AND person_id IS NULL))",
+		"work_responsibilities_subject_pointer_matches_kind": "((subject_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL AND workstream_id IS NULL AND work_action_id IS NULL AND work_blocker_id IS NULL AND work_program_evidence_need_id IS NULL) OR (subject_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL AND workstream_id IS NULL AND work_action_id IS NULL AND work_blocker_id IS NULL AND work_program_evidence_need_id IS NULL) OR (subject_kind = 'workstream' AND workstream_id IS NOT NULL AND pull_request_id IS NULL AND ticket_id IS NULL AND work_action_id IS NULL AND work_blocker_id IS NULL AND work_program_evidence_need_id IS NULL) OR (subject_kind = 'work_action' AND work_action_id IS NOT NULL AND pull_request_id IS NULL AND ticket_id IS NULL AND workstream_id IS NULL AND work_blocker_id IS NULL AND work_program_evidence_need_id IS NULL) OR (subject_kind = 'work_blocker' AND work_blocker_id IS NOT NULL AND pull_request_id IS NULL AND ticket_id IS NULL AND workstream_id IS NULL AND work_action_id IS NULL AND work_program_evidence_need_id IS NULL) OR (subject_kind = 'work_program_evidence_need' AND work_program_evidence_need_id IS NOT NULL AND pull_request_id IS NULL AND ticket_id IS NULL AND workstream_id IS NULL AND work_action_id IS NULL AND work_blocker_id IS NULL))",
+	}
 	WorkstreamsTable.ForeignKeys[0].RefTable = EvidencesTable
+	WorkstreamHealthSnapshotsTable.ForeignKeys[0].RefTable = WorkstreamsTable
+	WorkstreamHealthSnapshotsTable.ForeignKeys[1].RefTable = EvidencesTable
+	WorkstreamStandupSectionsTable.ForeignKeys[0].RefTable = WorkstreamHealthSnapshotsTable
+	WorkstreamStandupSectionsTable.ForeignKeys[1].RefTable = WorkstreamsTable
+	WorkstreamStandupSectionsTable.ForeignKeys[2].RefTable = WorkActionsTable
+	WorkstreamStandupSectionsTable.ForeignKeys[3].RefTable = EvidencesTable
 	WorkstreamTicketsTable.ForeignKeys[0].RefTable = WorkstreamsTable
 	WorkstreamTicketsTable.ForeignKeys[1].RefTable = TicketsTable
 	WorkstreamTicketsTable.ForeignKeys[2].RefTable = EvidencesTable
+	WorkActionSourceInsightsTable.ForeignKeys[0].RefTable = WorkActionsTable
+	WorkActionSourceInsightsTable.ForeignKeys[1].RefTable = WorkInsightsTable
+	WorkProgramTpmFunctionReadinessBlockingQualityGatesTable.ForeignKeys[0].RefTable = WorkProgramTpmFunctionReadinessesTable
+	WorkProgramTpmFunctionReadinessBlockingQualityGatesTable.ForeignKeys[1].RefTable = WorkProgramQualityGatesTable
 }

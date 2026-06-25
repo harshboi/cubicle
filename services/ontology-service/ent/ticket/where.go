@@ -2250,6 +2250,121 @@ func HasLatestEvidenceWith(preds ...predicate.Evidence) predicate.Ticket {
 	})
 }
 
+// HasInsights applies the HasEdge predicate on the "insights" edge.
+func HasInsights() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, InsightsTable, InsightsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasInsightsWith applies the HasEdge predicate on the "insights" edge with a given conditions (other predicates).
+func HasInsightsWith(preds ...predicate.WorkInsight) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newInsightsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasActions applies the HasEdge predicate on the "actions" edge.
+func HasActions() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ActionsTable, ActionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasActionsWith applies the HasEdge predicate on the "actions" edge with a given conditions (other predicates).
+func HasActionsWith(preds ...predicate.WorkAction) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newActionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasStateSnapshots applies the HasEdge predicate on the "state_snapshots" edge.
+func HasStateSnapshots() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, StateSnapshotsTable, StateSnapshotsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasStateSnapshotsWith applies the HasEdge predicate on the "state_snapshots" edge with a given conditions (other predicates).
+func HasStateSnapshotsWith(preds ...predicate.WorkItemStateSnapshot) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newStateSnapshotsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasStateTransitions applies the HasEdge predicate on the "state_transitions" edge.
+func HasStateTransitions() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, StateTransitionsTable, StateTransitionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasStateTransitionsWith applies the HasEdge predicate on the "state_transitions" edge with a given conditions (other predicates).
+func HasStateTransitionsWith(preds ...predicate.WorkItemStateTransition) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newStateTransitionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasMilestones applies the HasEdge predicate on the "milestones" edge.
+func HasMilestones() predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, MilestonesTable, MilestonesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMilestonesWith applies the HasEdge predicate on the "milestones" edge with a given conditions (other predicates).
+func HasMilestonesWith(preds ...predicate.WorkProgramMilestone) predicate.Ticket {
+	return predicate.Ticket(func(s *sql.Selector) {
+		step := newMilestonesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasTicketPullRequests applies the HasEdge predicate on the "ticket_pull_requests" edge.
 func HasTicketPullRequests() predicate.Ticket {
 	return predicate.Ticket(func(s *sql.Selector) {

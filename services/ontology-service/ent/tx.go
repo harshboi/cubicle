@@ -22,6 +22,8 @@ type Tx struct {
 	DocumentLink *DocumentLinkClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
+	// EvidenceAttachment is the client for interacting with the EvidenceAttachment builders.
+	EvidenceAttachment *EvidenceAttachmentClient
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
 	// MessageAuthorship is the client for interacting with the MessageAuthorship builders.
@@ -30,6 +32,10 @@ type Tx struct {
 	MessageLensResult *MessageLensResultClient
 	// MessageMention is the client for interacting with the MessageMention builders.
 	MessageMention *MessageMentionClient
+	// OpenGraphAssociation is the client for interacting with the OpenGraphAssociation builders.
+	OpenGraphAssociation *OpenGraphAssociationClient
+	// OpenGraphObject is the client for interacting with the OpenGraphObject builders.
+	OpenGraphObject *OpenGraphObjectClient
 	// Person is the client for interacting with the Person builders.
 	Person *PersonClient
 	// PersonIdentity is the client for interacting with the PersonIdentity builders.
@@ -70,14 +76,82 @@ type Tx struct {
 	TicketPullRequest *TicketPullRequestClient
 	// UnresolvedReference is the client for interacting with the UnresolvedReference builders.
 	UnresolvedReference *UnresolvedReferenceClient
+	// WorkAction is the client for interacting with the WorkAction builders.
+	WorkAction *WorkActionClient
+	// WorkActionObservation is the client for interacting with the WorkActionObservation builders.
+	WorkActionObservation *WorkActionObservationClient
 	// WorkArea is the client for interacting with the WorkArea builders.
 	WorkArea *WorkAreaClient
+	// WorkBlocker is the client for interacting with the WorkBlocker builders.
+	WorkBlocker *WorkBlockerClient
+	// WorkBlockerImpact is the client for interacting with the WorkBlockerImpact builders.
+	WorkBlockerImpact *WorkBlockerImpactClient
+	// WorkDecisionTargetEvaluation is the client for interacting with the WorkDecisionTargetEvaluation builders.
+	WorkDecisionTargetEvaluation *WorkDecisionTargetEvaluationClient
+	// WorkDependencyEdge is the client for interacting with the WorkDependencyEdge builders.
+	WorkDependencyEdge *WorkDependencyEdgeClient
+	// WorkDependencyEndpoint is the client for interacting with the WorkDependencyEndpoint builders.
+	WorkDependencyEndpoint *WorkDependencyEndpointClient
+	// WorkForecastEvaluation is the client for interacting with the WorkForecastEvaluation builders.
+	WorkForecastEvaluation *WorkForecastEvaluationClient
+	// WorkInsight is the client for interacting with the WorkInsight builders.
+	WorkInsight *WorkInsightClient
+	// WorkInsightEvaluationSnapshot is the client for interacting with the WorkInsightEvaluationSnapshot builders.
+	WorkInsightEvaluationSnapshot *WorkInsightEvaluationSnapshotClient
+	// WorkInsightKindEvaluationSnapshot is the client for interacting with the WorkInsightKindEvaluationSnapshot builders.
+	WorkInsightKindEvaluationSnapshot *WorkInsightKindEvaluationSnapshotClient
+	// WorkInsightReview is the client for interacting with the WorkInsightReview builders.
+	WorkInsightReview *WorkInsightReviewClient
+	// WorkItemForecast is the client for interacting with the WorkItemForecast builders.
+	WorkItemForecast *WorkItemForecastClient
+	// WorkItemStateSnapshot is the client for interacting with the WorkItemStateSnapshot builders.
+	WorkItemStateSnapshot *WorkItemStateSnapshotClient
+	// WorkItemStateTransition is the client for interacting with the WorkItemStateTransition builders.
+	WorkItemStateTransition *WorkItemStateTransitionClient
 	// WorkLens is the client for interacting with the WorkLens builders.
 	WorkLens *WorkLensClient
 	// WorkLensWindow is the client for interacting with the WorkLensWindow builders.
 	WorkLensWindow *WorkLensWindowClient
+	// WorkOwnerLoadSnapshot is the client for interacting with the WorkOwnerLoadSnapshot builders.
+	WorkOwnerLoadSnapshot *WorkOwnerLoadSnapshotClient
+	// WorkProgramAdversarialCheck is the client for interacting with the WorkProgramAdversarialCheck builders.
+	WorkProgramAdversarialCheck *WorkProgramAdversarialCheckClient
+	// WorkProgramAutomationReadiness is the client for interacting with the WorkProgramAutomationReadiness builders.
+	WorkProgramAutomationReadiness *WorkProgramAutomationReadinessClient
+	// WorkProgramBriefCaveat is the client for interacting with the WorkProgramBriefCaveat builders.
+	WorkProgramBriefCaveat *WorkProgramBriefCaveatClient
+	// WorkProgramBriefSnapshot is the client for interacting with the WorkProgramBriefSnapshot builders.
+	WorkProgramBriefSnapshot *WorkProgramBriefSnapshotClient
+	// WorkProgramEvidenceNeed is the client for interacting with the WorkProgramEvidenceNeed builders.
+	WorkProgramEvidenceNeed *WorkProgramEvidenceNeedClient
+	// WorkProgramItem is the client for interacting with the WorkProgramItem builders.
+	WorkProgramItem *WorkProgramItemClient
+	// WorkProgramItemLink is the client for interacting with the WorkProgramItemLink builders.
+	WorkProgramItemLink *WorkProgramItemLinkClient
+	// WorkProgramMilestone is the client for interacting with the WorkProgramMilestone builders.
+	WorkProgramMilestone *WorkProgramMilestoneClient
+	// WorkProgramOwnerRollupSnapshot is the client for interacting with the WorkProgramOwnerRollupSnapshot builders.
+	WorkProgramOwnerRollupSnapshot *WorkProgramOwnerRollupSnapshotClient
+	// WorkProgramQualityGate is the client for interacting with the WorkProgramQualityGate builders.
+	WorkProgramQualityGate *WorkProgramQualityGateClient
+	// WorkProgramRiskDriver is the client for interacting with the WorkProgramRiskDriver builders.
+	WorkProgramRiskDriver *WorkProgramRiskDriverClient
+	// WorkProgramRun is the client for interacting with the WorkProgramRun builders.
+	WorkProgramRun *WorkProgramRunClient
+	// WorkProgramRunMember is the client for interacting with the WorkProgramRunMember builders.
+	WorkProgramRunMember *WorkProgramRunMemberClient
+	// WorkProgramSummarySnapshot is the client for interacting with the WorkProgramSummarySnapshot builders.
+	WorkProgramSummarySnapshot *WorkProgramSummarySnapshotClient
+	// WorkProgramTPMFunctionReadiness is the client for interacting with the WorkProgramTPMFunctionReadiness builders.
+	WorkProgramTPMFunctionReadiness *WorkProgramTPMFunctionReadinessClient
+	// WorkResponsibility is the client for interacting with the WorkResponsibility builders.
+	WorkResponsibility *WorkResponsibilityClient
 	// Workstream is the client for interacting with the Workstream builders.
 	Workstream *WorkstreamClient
+	// WorkstreamHealthSnapshot is the client for interacting with the WorkstreamHealthSnapshot builders.
+	WorkstreamHealthSnapshot *WorkstreamHealthSnapshotClient
+	// WorkstreamStandupSection is the client for interacting with the WorkstreamStandupSection builders.
+	WorkstreamStandupSection *WorkstreamStandupSectionClient
 	// WorkstreamTicket is the client for interacting with the WorkstreamTicket builders.
 	WorkstreamTicket *WorkstreamTicketClient
 
@@ -216,10 +290,13 @@ func (tx *Tx) init() {
 	tx.DocumentLensResult = NewDocumentLensResultClient(tx.config)
 	tx.DocumentLink = NewDocumentLinkClient(tx.config)
 	tx.Evidence = NewEvidenceClient(tx.config)
+	tx.EvidenceAttachment = NewEvidenceAttachmentClient(tx.config)
 	tx.Message = NewMessageClient(tx.config)
 	tx.MessageAuthorship = NewMessageAuthorshipClient(tx.config)
 	tx.MessageLensResult = NewMessageLensResultClient(tx.config)
 	tx.MessageMention = NewMessageMentionClient(tx.config)
+	tx.OpenGraphAssociation = NewOpenGraphAssociationClient(tx.config)
+	tx.OpenGraphObject = NewOpenGraphObjectClient(tx.config)
 	tx.Person = NewPersonClient(tx.config)
 	tx.PersonIdentity = NewPersonIdentityClient(tx.config)
 	tx.PullRequest = NewPullRequestClient(tx.config)
@@ -240,10 +317,44 @@ func (tx *Tx) init() {
 	tx.TicketMessage = NewTicketMessageClient(tx.config)
 	tx.TicketPullRequest = NewTicketPullRequestClient(tx.config)
 	tx.UnresolvedReference = NewUnresolvedReferenceClient(tx.config)
+	tx.WorkAction = NewWorkActionClient(tx.config)
+	tx.WorkActionObservation = NewWorkActionObservationClient(tx.config)
 	tx.WorkArea = NewWorkAreaClient(tx.config)
+	tx.WorkBlocker = NewWorkBlockerClient(tx.config)
+	tx.WorkBlockerImpact = NewWorkBlockerImpactClient(tx.config)
+	tx.WorkDecisionTargetEvaluation = NewWorkDecisionTargetEvaluationClient(tx.config)
+	tx.WorkDependencyEdge = NewWorkDependencyEdgeClient(tx.config)
+	tx.WorkDependencyEndpoint = NewWorkDependencyEndpointClient(tx.config)
+	tx.WorkForecastEvaluation = NewWorkForecastEvaluationClient(tx.config)
+	tx.WorkInsight = NewWorkInsightClient(tx.config)
+	tx.WorkInsightEvaluationSnapshot = NewWorkInsightEvaluationSnapshotClient(tx.config)
+	tx.WorkInsightKindEvaluationSnapshot = NewWorkInsightKindEvaluationSnapshotClient(tx.config)
+	tx.WorkInsightReview = NewWorkInsightReviewClient(tx.config)
+	tx.WorkItemForecast = NewWorkItemForecastClient(tx.config)
+	tx.WorkItemStateSnapshot = NewWorkItemStateSnapshotClient(tx.config)
+	tx.WorkItemStateTransition = NewWorkItemStateTransitionClient(tx.config)
 	tx.WorkLens = NewWorkLensClient(tx.config)
 	tx.WorkLensWindow = NewWorkLensWindowClient(tx.config)
+	tx.WorkOwnerLoadSnapshot = NewWorkOwnerLoadSnapshotClient(tx.config)
+	tx.WorkProgramAdversarialCheck = NewWorkProgramAdversarialCheckClient(tx.config)
+	tx.WorkProgramAutomationReadiness = NewWorkProgramAutomationReadinessClient(tx.config)
+	tx.WorkProgramBriefCaveat = NewWorkProgramBriefCaveatClient(tx.config)
+	tx.WorkProgramBriefSnapshot = NewWorkProgramBriefSnapshotClient(tx.config)
+	tx.WorkProgramEvidenceNeed = NewWorkProgramEvidenceNeedClient(tx.config)
+	tx.WorkProgramItem = NewWorkProgramItemClient(tx.config)
+	tx.WorkProgramItemLink = NewWorkProgramItemLinkClient(tx.config)
+	tx.WorkProgramMilestone = NewWorkProgramMilestoneClient(tx.config)
+	tx.WorkProgramOwnerRollupSnapshot = NewWorkProgramOwnerRollupSnapshotClient(tx.config)
+	tx.WorkProgramQualityGate = NewWorkProgramQualityGateClient(tx.config)
+	tx.WorkProgramRiskDriver = NewWorkProgramRiskDriverClient(tx.config)
+	tx.WorkProgramRun = NewWorkProgramRunClient(tx.config)
+	tx.WorkProgramRunMember = NewWorkProgramRunMemberClient(tx.config)
+	tx.WorkProgramSummarySnapshot = NewWorkProgramSummarySnapshotClient(tx.config)
+	tx.WorkProgramTPMFunctionReadiness = NewWorkProgramTPMFunctionReadinessClient(tx.config)
+	tx.WorkResponsibility = NewWorkResponsibilityClient(tx.config)
 	tx.Workstream = NewWorkstreamClient(tx.config)
+	tx.WorkstreamHealthSnapshot = NewWorkstreamHealthSnapshotClient(tx.config)
+	tx.WorkstreamStandupSection = NewWorkstreamStandupSectionClient(tx.config)
 	tx.WorkstreamTicket = NewWorkstreamTicketClient(tx.config)
 }
 

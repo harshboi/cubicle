@@ -2,10 +2,1549 @@
 
 package model
 
+// Association rows are candidate context until claimAllowed is true.
+// This keeps high-rank but private/stale/generated links from becoming facts.
+type BoundedGraphAssociation struct {
+	Key             string           `json:"key"`
+	AssociationType string           `json:"associationType"`
+	From            *BoundedGraphRef `json:"from"`
+	To              *BoundedGraphRef `json:"to"`
+	EvidenceKey     *string          `json:"evidenceKey,omitempty"`
+	Confidence      float64          `json:"confidence"`
+	Visibility      *string          `json:"visibility,omitempty"`
+	FreshnessState  *string          `json:"freshnessState,omitempty"`
+	ProofState      string           `json:"proofState"`
+	ClaimAllowed    bool             `json:"claimAllowed"`
+	ClaimGateReason string           `json:"claimGateReason"`
+}
+
+// Generic bounded traversal output for connectors that have not earned typed schemas.
+// Callers must inspect coverage and evidence before making product claims.
+type BoundedGraphContext struct {
+	ContextHash    string                     `json:"contextHash"`
+	Seed           *BoundedGraphRef           `json:"seed"`
+	Depth          int                        `json:"depth"`
+	LimitPerObject int                        `json:"limitPerObject"`
+	ScopeMode      string                     `json:"scopeMode"`
+	Coverage       *BoundedGraphCoverage      `json:"coverage"`
+	Guardrails     []string                   `json:"guardrails"`
+	Objects        []*BoundedGraphObject      `json:"objects"`
+	Associations   []*BoundedGraphAssociation `json:"associations"`
+	Evidence       []*BoundedGraphEvidence    `json:"evidence"`
+}
+
+// Coverage explains what the traversal was allowed to see.
+// Sparse or stale coverage keeps absence claims out of product answers.
+type BoundedGraphCoverage struct {
+	CoverageState                string   `json:"coverageState"`
+	AbsenceClaimsAllowed         bool     `json:"absenceClaimsAllowed"`
+	AbsenceClaimGateReason       string   `json:"absenceClaimGateReason"`
+	AbsenceClaimAssociationTypes []string `json:"absenceClaimAssociationTypes"`
+	SourceSystem                 *string  `json:"sourceSystem,omitempty"`
+	SourceInstance               *string  `json:"sourceInstance,omitempty"`
+	CoverageWindowStart          *string  `json:"coverageWindowStart,omitempty"`
+	CoverageWindowEnd            *string  `json:"coverageWindowEnd,omitempty"`
+	Summary                      *string  `json:"summary,omitempty"`
+}
+
+type BoundedGraphEvidence struct {
+	Key            string  `json:"key"`
+	Source         *string `json:"source,omitempty"`
+	SourceInstance *string `json:"sourceInstance,omitempty"`
+	LocatorKind    *string `json:"locatorKind,omitempty"`
+	Visibility     *string `json:"visibility,omitempty"`
+	FreshnessState *string `json:"freshnessState,omitempty"`
+	Confidence     float64 `json:"confidence"`
+}
+
+type BoundedGraphObject struct {
+	ObjectType          string  `json:"objectType"`
+	Key                 string  `json:"key"`
+	Title               string  `json:"title"`
+	Source              *string `json:"source,omitempty"`
+	SourceInstance      *string `json:"sourceInstance,omitempty"`
+	ExternalID          *string `json:"externalID,omitempty"`
+	Visibility          *string `json:"visibility,omitempty"`
+	FreshnessState      *string `json:"freshnessState,omitempty"`
+	ProofState          string  `json:"proofState"`
+	ClaimAllowed        bool    `json:"claimAllowed"`
+	ClaimGateReason     string  `json:"claimGateReason"`
+	SourceCoverageState *string `json:"sourceCoverageState,omitempty"`
+	RankScore           float64 `json:"rankScore"`
+}
+
+type BoundedGraphRef struct {
+	ObjectType string `json:"objectType"`
+	Key        string `json:"key"`
+}
+
 type Health struct {
 	Ok      bool   `json:"ok"`
 	Service string `json:"service"`
 }
 
+// Cubicle serves bounded product packets, not raw Ent table dumps.
+// Each query keeps freshness, evidence, and claim gates visible at the API boundary.
 type Query struct {
+}
+
+type SourceSyncIssue struct {
+	Key            string  `json:"key"`
+	SourceInstance *string `json:"sourceInstance,omitempty"`
+	SourceSystem   *string `json:"sourceSystem,omitempty"`
+	ExternalKind   *string `json:"externalKind,omitempty"`
+	ExternalID     *string `json:"externalId,omitempty"`
+	IssueCode      string  `json:"issueCode"`
+	Severity       string  `json:"severity"`
+	Message        *string `json:"message,omitempty"`
+	SourceURL      *string `json:"sourceUrl,omitempty"`
+}
+
+// Durable follow-up ledger for generated and source-backed operating signals.
+// Actions carry decision gates so an insight does not become product action by accident.
+type WorkAction struct {
+	Key                    string                   `json:"key"`
+	SourceInstance         *string                  `json:"sourceInstance,omitempty"`
+	ActionType             string                   `json:"actionType"`
+	ActionState            string                   `json:"actionState"`
+	DecisionState          string                   `json:"decisionState"`
+	Decision               *string                  `json:"decision,omitempty"`
+	DecisionReason         *string                  `json:"decisionReason,omitempty"`
+	SubjectKind            string                   `json:"subjectKind"`
+	SubjectKey             string                   `json:"subjectKey"`
+	SubjectTitle           *string                  `json:"subjectTitle,omitempty"`
+	SubjectURL             *string                  `json:"subjectUrl,omitempty"`
+	RelatedTicketKeys      []string                 `json:"relatedTicketKeys"`
+	RelatedPullRequestKeys []string                 `json:"relatedPullRequestKeys"`
+	OwnerKey               *string                  `json:"ownerKey,omitempty"`
+	OwnerSource            *string                  `json:"ownerSource,omitempty"`
+	DueBucket              string                   `json:"dueBucket"`
+	RankScore              float64                  `json:"rankScore"`
+	SourceURL              *string                  `json:"sourceUrl,omitempty"`
+	DecisionNeeded         *string                  `json:"decisionNeeded,omitempty"`
+	RecommendedAction      *string                  `json:"recommendedAction,omitempty"`
+	ClaimUse               string                   `json:"claimUse"`
+	ClaimGateReason        string                   `json:"claimGateReason"`
+	ProductActionAllowed   bool                     `json:"productActionAllowed"`
+	AbsenceClaimAllowed    bool                     `json:"absenceClaimAllowed"`
+	EtaClaimAllowed        bool                     `json:"etaClaimAllowed"`
+	EvidenceRef            *string                  `json:"evidenceRef,omitempty"`
+	Evidence               *WorkEvidenceSummary     `json:"evidence,omitempty"`
+	Badges                 []*WorkActionBadge       `json:"badges"`
+	Observations           []*WorkActionObservation `json:"observations"`
+	SourceInsights         []*WorkInsightSummary    `json:"sourceInsights"`
+}
+
+type WorkActionBadge struct {
+	Key    string  `json:"key"`
+	Label  string  `json:"label"`
+	Tone   string  `json:"tone"`
+	Detail *string `json:"detail,omitempty"`
+}
+
+type WorkActionBreakdown struct {
+	Dimension string `json:"dimension"`
+	Key       string `json:"key"`
+	Count     int    `json:"count"`
+}
+
+type WorkActionObservation struct {
+	Key                           string  `json:"key"`
+	ObservationKind               string  `json:"observationKind"`
+	SourceCoverageState           *string `json:"sourceCoverageState,omitempty"`
+	AuthState                     *string `json:"authState,omitempty"`
+	CurrentState                  *string `json:"currentState,omitempty"`
+	CiSignal                      *string `json:"ciSignal,omitempty"`
+	CiRequiredCheckCoverageState  *string `json:"ciRequiredCheckCoverageState,omitempty"`
+	CiRequiredCheckMatchState     *string `json:"ciRequiredCheckMatchState,omitempty"`
+	CiRequiredContextCount        int     `json:"ciRequiredContextCount"`
+	CiFailingRequiredContextCount int     `json:"ciFailingRequiredContextCount"`
+	CiPendingRequiredContextCount int     `json:"ciPendingRequiredContextCount"`
+	CiMissingRequiredContextCount int     `json:"ciMissingRequiredContextCount"`
+	CiFailingRequiredContexts     *string `json:"ciFailingRequiredContexts,omitempty"`
+	CiPendingRequiredContexts     *string `json:"ciPendingRequiredContexts,omitempty"`
+	CiMissingRequiredContexts     *string `json:"ciMissingRequiredContexts,omitempty"`
+	CiFailingContextCount         int     `json:"ciFailingContextCount"`
+	CiPendingContextCount         int     `json:"ciPendingContextCount"`
+	CiFailingContexts             *string `json:"ciFailingContexts,omitempty"`
+	CiPendingContexts             *string `json:"ciPendingContexts,omitempty"`
+	SupportsAction                bool    `json:"supportsAction"`
+	ObservedAt                    *string `json:"observedAt,omitempty"`
+	SourceURL                     *string `json:"sourceUrl,omitempty"`
+}
+
+type WorkActionOwnerRollup struct {
+	OwnerKey            string             `json:"ownerKey"`
+	OwnerSource         *string            `json:"ownerSource,omitempty"`
+	ActionCount         int                `json:"actionCount"`
+	ProductActionCount  int                `json:"productActionCount"`
+	ValidationLeadCount int                `json:"validationLeadCount"`
+	NowCount            int                `json:"nowCount"`
+	HighPriorityCount   int                `json:"highPriorityCount"`
+	MaxRankScore        float64            `json:"maxRankScore"`
+	Badges              []*WorkActionBadge `json:"badges"`
+	TopActions          []*WorkAction      `json:"topActions"`
+}
+
+type WorkActionSummary struct {
+	SourceInstance                 *string                  `json:"sourceInstance,omitempty"`
+	ActionState                    string                   `json:"actionState"`
+	TotalCount                     int                      `json:"totalCount"`
+	ProductActionCount             int                      `json:"productActionCount"`
+	ValidationLeadCount            int                      `json:"validationLeadCount"`
+	SourceRepairCount              int                      `json:"sourceRepairCount"`
+	CloseoutReviewCount            int                      `json:"closeoutReviewCount"`
+	ModelOrRuleQaCount             int                      `json:"modelOrRuleQaCount"`
+	SuppressedSignalCount          int                      `json:"suppressedSignalCount"`
+	NowCount                       int                      `json:"nowCount"`
+	ThisWeekCount                  int                      `json:"thisWeekCount"`
+	WatchCount                     int                      `json:"watchCount"`
+	UnscheduledCount               int                      `json:"unscheduledCount"`
+	HighPriorityCount              int                      `json:"highPriorityCount"`
+	SupportsActionObservationCount int                      `json:"supportsActionObservationCount"`
+	Badges                         []*WorkActionBadge       `json:"badges"`
+	Breakdowns                     []*WorkActionBreakdown   `json:"breakdowns"`
+	OwnerRollups                   []*WorkActionOwnerRollup `json:"ownerRollups"`
+	ForecastReadiness              *WorkForecastReadiness   `json:"forecastReadiness"`
+	TopActions                     []*WorkAction            `json:"topActions"`
+}
+
+type WorkBlocker struct {
+	Key                  string               `json:"key"`
+	SourceInstance       *string              `json:"sourceInstance,omitempty"`
+	BlockerKind          string               `json:"blockerKind"`
+	BlockerState         string               `json:"blockerState"`
+	Severity             string               `json:"severity"`
+	SubjectKind          string               `json:"subjectKind"`
+	SubjectKey           string               `json:"subjectKey"`
+	Title                string               `json:"title"`
+	Summary              *string              `json:"summary,omitempty"`
+	RecommendedAction    *string              `json:"recommendedAction,omitempty"`
+	OwnerKey             *string              `json:"ownerKey,omitempty"`
+	OwnerSource          *string              `json:"ownerSource,omitempty"`
+	DecisionState        string               `json:"decisionState"`
+	SourceCoverageState  *string              `json:"sourceCoverageState,omitempty"`
+	ReviewState          string               `json:"reviewState"`
+	TruthLabel           string               `json:"truthLabel"`
+	ActionabilityLabel   string               `json:"actionabilityLabel"`
+	LabelQuality         string               `json:"labelQuality"`
+	MeasurementEligible  bool                 `json:"measurementEligible"`
+	ReviewerKind         string               `json:"reviewerKind"`
+	ReviewerKey          *string              `json:"reviewerKey,omitempty"`
+	LabelSet             *string              `json:"labelSet,omitempty"`
+	ClaimUse             string               `json:"claimUse"`
+	ClaimGateReason      string               `json:"claimGateReason"`
+	ProductActionAllowed bool                 `json:"productActionAllowed"`
+	BlockerClaimAllowed  bool                 `json:"blockerClaimAllowed"`
+	AbsenceClaimAllowed  bool                 `json:"absenceClaimAllowed"`
+	ActionKey            *string              `json:"actionKey,omitempty"`
+	SourceInsightKey     *string              `json:"sourceInsightKey,omitempty"`
+	SourceURL            *string              `json:"sourceUrl,omitempty"`
+	EvidenceRef          *string              `json:"evidenceRef,omitempty"`
+	Evidence             *WorkEvidenceSummary `json:"evidence,omitempty"`
+	RankScore            float64              `json:"rankScore"`
+	FreshnessState       string               `json:"freshnessState"`
+	Visibility           string               `json:"visibility"`
+	Confidence           float64              `json:"confidence"`
+	Badges               []*WorkActionBadge   `json:"badges"`
+}
+
+type WorkBlockerImpact struct {
+	Key                 string               `json:"key"`
+	SourceInstance      *string              `json:"sourceInstance,omitempty"`
+	ImpactKind          string               `json:"impactKind"`
+	ImpactState         string               `json:"impactState"`
+	ImpactScore         float64              `json:"impactScore"`
+	Severity            string               `json:"severity"`
+	BlockerKind         string               `json:"blockerKind"`
+	BlockerKey          *string              `json:"blockerKey,omitempty"`
+	BlockerState        string               `json:"blockerState"`
+	ActionKey           *string              `json:"actionKey,omitempty"`
+	WorkstreamKey       *string              `json:"workstreamKey,omitempty"`
+	AffectedKind        string               `json:"affectedKind"`
+	AffectedKey         string               `json:"affectedKey"`
+	SubjectKind         string               `json:"subjectKind"`
+	SubjectKey          string               `json:"subjectKey"`
+	PathLength          int                  `json:"pathLength"`
+	Title               string               `json:"title"`
+	Summary             *string              `json:"summary,omitempty"`
+	RecommendedAction   *string              `json:"recommendedAction,omitempty"`
+	SourceCoverageState *string              `json:"sourceCoverageState,omitempty"`
+	ClaimUse            string               `json:"claimUse"`
+	ClaimGateReason     string               `json:"claimGateReason"`
+	ImpactClaimAllowed  bool                 `json:"impactClaimAllowed"`
+	SourceURL           *string              `json:"sourceUrl,omitempty"`
+	EvidenceRef         *string              `json:"evidenceRef,omitempty"`
+	Evidence            *WorkEvidenceSummary `json:"evidence,omitempty"`
+	RankScore           float64              `json:"rankScore"`
+	FreshnessState      string               `json:"freshnessState"`
+	Visibility          string               `json:"visibility"`
+	Confidence          float64              `json:"confidence"`
+	Badges              []*WorkActionBadge   `json:"badges"`
+}
+
+type WorkDecisionTargetEvaluation struct {
+	Key                     string               `json:"key"`
+	SourceInstance          *string              `json:"sourceInstance,omitempty"`
+	TargetKind              string               `json:"targetKind"`
+	EvaluationKind          string               `json:"evaluationKind"`
+	ModelName               string               `json:"modelName"`
+	Fold                    int                  `json:"fold"`
+	TrainCount              int                  `json:"trainCount"`
+	TestCount               int                  `json:"testCount"`
+	PositiveCount           int                  `json:"positiveCount"`
+	BaselinePositiveRate    *float64             `json:"baselinePositiveRate,omitempty"`
+	PrecisionAt10pct        *float64             `json:"precisionAt10pct,omitempty"`
+	LiftAt10pct             *float64             `json:"liftAt10pct,omitempty"`
+	RocAuc                  *float64             `json:"rocAuc,omitempty"`
+	AveragePrecision        *float64             `json:"averagePrecision,omitempty"`
+	CoverageStratum         *string              `json:"coverageStratum,omitempty"`
+	ReadyForProductAction   bool                 `json:"readyForProductAction"`
+	ProductActionAllowed    bool                 `json:"productActionAllowed"`
+	ProductActionGateState  string               `json:"productActionGateState"`
+	ProductActionGateReason string               `json:"productActionGateReason"`
+	DecisionClaimUse        string               `json:"decisionClaimUse"`
+	DecisionClaimGateReason string               `json:"decisionClaimGateReason"`
+	Note                    *string              `json:"note,omitempty"`
+	EvaluatedAt             *string              `json:"evaluatedAt,omitempty"`
+	EvidenceCount           int                  `json:"evidenceCount"`
+	FreshnessState          string               `json:"freshnessState"`
+	Visibility              string               `json:"visibility"`
+	Confidence              float64              `json:"confidence"`
+	RankScore               float64              `json:"rankScore"`
+	EvidenceRef             *string              `json:"evidenceRef,omitempty"`
+	Evidence                *WorkEvidenceSummary `json:"evidence,omitempty"`
+	Badges                  []*WorkActionBadge   `json:"badges"`
+}
+
+type WorkDecisionTargetReadiness struct {
+	SourceInstance                 *string                         `json:"sourceInstance,omitempty"`
+	EvaluatedAt                    *string                         `json:"evaluatedAt,omitempty"`
+	EvaluationState                string                          `json:"evaluationState"`
+	ProductActionReady             bool                            `json:"productActionReady"`
+	EvaluationCount                int                             `json:"evaluationCount"`
+	ProductReadyEvaluationCount    int                             `json:"productReadyEvaluationCount"`
+	ValidationGatedEvaluationCount int                             `json:"validationGatedEvaluationCount"`
+	CoverageGateState              string                          `json:"coverageGateState"`
+	CoverageGateReason             string                          `json:"coverageGateReason"`
+	CoverageStratum                *string                         `json:"coverageStratum,omitempty"`
+	GeneratedEvidenceOnly          bool                            `json:"generatedEvidenceOnly"`
+	AutomationSummary              string                          `json:"automationSummary"`
+	RecommendedFocus               *string                         `json:"recommendedFocus,omitempty"`
+	Evaluations                    []*WorkDecisionTargetEvaluation `json:"evaluations"`
+	Badges                         []*WorkActionBadge              `json:"badges"`
+}
+
+type WorkDependencyEdge struct {
+	Key                       string                    `json:"key"`
+	SourceInstance            *string                   `json:"sourceInstance,omitempty"`
+	EdgeKind                  string                    `json:"edgeKind"`
+	RelationshipAuthority     string                    `json:"relationshipAuthority"`
+	CanonicalRelationshipKind *string                   `json:"canonicalRelationshipKind,omitempty"`
+	FromKind                  string                    `json:"fromKind"`
+	FromKey                   string                    `json:"fromKey"`
+	ToKind                    string                    `json:"toKind"`
+	ToKey                     string                    `json:"toKey"`
+	FromEndpoint              *WorkDependencyEndpoint   `json:"fromEndpoint,omitempty"`
+	ToEndpoint                *WorkDependencyEndpoint   `json:"toEndpoint,omitempty"`
+	Endpoints                 []*WorkDependencyEndpoint `json:"endpoints"`
+	RiskSignal                *string                   `json:"riskSignal,omitempty"`
+	SourceCoverageState       *string                   `json:"sourceCoverageState,omitempty"`
+	ClaimUse                  string                    `json:"claimUse"`
+	ClaimGateReason           string                    `json:"claimGateReason"`
+	RelationshipClaimAllowed  bool                      `json:"relationshipClaimAllowed"`
+	SourceURL                 *string                   `json:"sourceUrl,omitempty"`
+	EvidenceRef               *string                   `json:"evidenceRef,omitempty"`
+	Evidence                  *WorkEvidenceSummary      `json:"evidence,omitempty"`
+	RankScore                 float64                   `json:"rankScore"`
+	FreshnessState            string                    `json:"freshnessState"`
+	Visibility                string                    `json:"visibility"`
+	Confidence                float64                   `json:"confidence"`
+	Badges                    []*WorkActionBadge        `json:"badges"`
+}
+
+type WorkDependencyEndpoint struct {
+	Key              string               `json:"key"`
+	EndpointRole     string               `json:"endpointRole"`
+	NodeKind         string               `json:"nodeKind"`
+	NodeKey          string               `json:"nodeKey"`
+	ResolutionState  string               `json:"resolutionState"`
+	ResolutionReason *string              `json:"resolutionReason,omitempty"`
+	SourceURL        *string              `json:"sourceUrl,omitempty"`
+	EvidenceRef      *string              `json:"evidenceRef,omitempty"`
+	Evidence         *WorkEvidenceSummary `json:"evidence,omitempty"`
+	RankScore        float64              `json:"rankScore"`
+	FreshnessState   string               `json:"freshnessState"`
+	Visibility       string               `json:"visibility"`
+	Confidence       float64              `json:"confidence"`
+}
+
+// Evidence summaries are compact citations for product packets.
+// They point back to source-backed proof without exposing raw connector payloads.
+type WorkEvidenceSummary struct {
+	Key              string  `json:"key"`
+	Ref              string  `json:"ref"`
+	ClaimKind        string  `json:"claimKind"`
+	ClaimTargetKind  *string `json:"claimTargetKind,omitempty"`
+	ClaimField       *string `json:"claimField,omitempty"`
+	RelationshipKind *string `json:"relationshipKind,omitempty"`
+	LocatorKind      *string `json:"locatorKind,omitempty"`
+	Locator          *string `json:"locator,omitempty"`
+	SourceSpanKey    *string `json:"sourceSpanKey,omitempty"`
+	Ordinal          int     `json:"ordinal"`
+	SpanStart        int     `json:"spanStart"`
+	SpanEnd          int     `json:"spanEnd"`
+	SourceSystem     *string `json:"sourceSystem,omitempty"`
+	SourceInstance   *string `json:"sourceInstance,omitempty"`
+	ExternalKind     *string `json:"externalKind,omitempty"`
+	ExternalID       *string `json:"externalId,omitempty"`
+	SourceURL        *string `json:"sourceUrl,omitempty"`
+	ProofState       string  `json:"proofState"`
+	FreshnessState   string  `json:"freshnessState"`
+	Visibility       string  `json:"visibility"`
+	Confidence       float64 `json:"confidence"`
+	ObservedAt       *string `json:"observedAt,omitempty"`
+	Excerpt          *string `json:"excerpt,omitempty"`
+	ExcerptTruncated bool    `json:"excerptTruncated"`
+}
+
+type WorkForecastReadiness struct {
+	SourceInstance                             *string              `json:"sourceInstance,omitempty"`
+	EvaluatedAt                                *string              `json:"evaluatedAt,omitempty"`
+	EtaForecastReady                           bool                 `json:"etaForecastReady"`
+	ReadinessState                             string               `json:"readinessState"`
+	ForecastMethod                             *string              `json:"forecastMethod,omitempty"`
+	BestBacktestModel                          *string              `json:"bestBacktestModel,omitempty"`
+	MedianBaselineMaeDays                      *float64             `json:"medianBaselineMaeDays,omitempty"`
+	HeuristicMaeDays                           *float64             `json:"heuristicMaeDays,omitempty"`
+	RandomForestMaeDays                        *float64             `json:"randomForestMaeDays,omitempty"`
+	BestKfoldModel                             *string              `json:"bestKfoldModel,omitempty"`
+	BestKfoldMaeDays                           *float64             `json:"bestKfoldMaeDays,omitempty"`
+	BestChronologicalHoldoutModel              *string              `json:"bestChronologicalHoldoutModel,omitempty"`
+	BestChronologicalHoldoutMaeDays            *float64             `json:"bestChronologicalHoldoutMaeDays,omitempty"`
+	SourceEventAsOfKfoldModel                  *string              `json:"sourceEventAsOfKfoldModel,omitempty"`
+	SourceEventAsOfKfoldMaeDays                *float64             `json:"sourceEventAsOfKfoldMaeDays,omitempty"`
+	SourceEventAsOfChronologicalHoldoutModel   *string              `json:"sourceEventAsOfChronologicalHoldoutModel,omitempty"`
+	SourceEventAsOfChronologicalHoldoutMaeDays *float64             `json:"sourceEventAsOfChronologicalHoldoutMaeDays,omitempty"`
+	SurvivalModel                              *string              `json:"survivalModel,omitempty"`
+	SurvivalMaeDays                            *float64             `json:"survivalMaeDays,omitempty"`
+	EtaReadinessBlockingReason                 *string              `json:"etaReadinessBlockingReason,omitempty"`
+	BaselineSampleCount                        int                  `json:"baselineSampleCount"`
+	OpenCandidateCount                         int                  `json:"openCandidateCount"`
+	ClosedUnmergedCount                        int                  `json:"closedUnmergedCount"`
+	ObservedSnapshotTimeCount                  int                  `json:"observedSnapshotTimeCount"`
+	TransitionCandidateCount                   int                  `json:"transitionCandidateCount"`
+	TerminalTransitionCandidateCount           int                  `json:"terminalTransitionCandidateCount"`
+	TransitionHistoryReady                     bool                 `json:"transitionHistoryReady"`
+	MedianCycleDays                            *float64             `json:"medianCycleDays,omitempty"`
+	P75CycleDays                               *float64             `json:"p75CycleDays,omitempty"`
+	TypedEvaluationCount                       int                  `json:"typedEvaluationCount"`
+	GatedForecastLeadCount                     int                  `json:"gatedForecastLeadCount"`
+	Badges                                     []*WorkActionBadge   `json:"badges"`
+	QualityAction                              *WorkAction          `json:"qualityAction,omitempty"`
+	Detail                                     *string              `json:"detail,omitempty"`
+	ReadinessReason                            *string              `json:"readinessReason,omitempty"`
+	EvidenceRef                                *string              `json:"evidenceRef,omitempty"`
+	Evidence                                   *WorkEvidenceSummary `json:"evidence,omitempty"`
+}
+
+type WorkGraphCitation struct {
+	Ref              string  `json:"ref"`
+	CitationKind     string  `json:"citationKind"`
+	NodeKind         string  `json:"nodeKind"`
+	NodeKey          string  `json:"nodeKey"`
+	SourceInstance   *string `json:"sourceInstance,omitempty"`
+	EvidenceRef      *string `json:"evidenceRef,omitempty"`
+	ProofState       string  `json:"proofState"`
+	FreshnessState   string  `json:"freshnessState"`
+	Visibility       string  `json:"visibility"`
+	ClaimUse         *string `json:"claimUse,omitempty"`
+	ClaimGateReason  *string `json:"claimGateReason,omitempty"`
+	ClaimAllowed     bool    `json:"claimAllowed"`
+	ExcerptAllowed   bool    `json:"excerptAllowed"`
+	SourceURLAllowed bool    `json:"sourceUrlAllowed"`
+	Detail           *string `json:"detail,omitempty"`
+}
+
+type WorkInsightEvaluation struct {
+	SourceInstance                       *string                      `json:"sourceInstance,omitempty"`
+	CurrentInsightCount                  int                          `json:"currentInsightCount"`
+	ReviewRowCount                       int                          `json:"reviewRowCount"`
+	MeasurementLabelCount                int                          `json:"measurementLabelCount"`
+	OpenReviewRequestCount               int                          `json:"openReviewRequestCount"`
+	MinLabeledTotalRequired              int                          `json:"minLabeledTotalRequired"`
+	MinLabeledPerKindRequired            int                          `json:"minLabeledPerKindRequired"`
+	MinPrecisionRateForProductAction     float64                      `json:"minPrecisionRateForProductAction"`
+	MinUsefulSignalRateForProductAction  float64                      `json:"minUsefulSignalRateForProductAction"`
+	MinActionabilityRateForProductAction float64                      `json:"minActionabilityRateForProductAction"`
+	PrecisionRate                        float64                      `json:"precisionRate"`
+	UsefulSignalRate                     float64                      `json:"usefulSignalRate"`
+	ActionabilityRate                    float64                      `json:"actionabilityRate"`
+	FalsePositiveRate                    float64                      `json:"falsePositiveRate"`
+	MeasurementCoverageRate              float64                      `json:"measurementCoverageRate"`
+	ReadyToMeasurePrecision              bool                         `json:"readyToMeasurePrecision"`
+	ReadyToMeasureActionability          bool                         `json:"readyToMeasureActionability"`
+	ReadyInsightKindCount                int                          `json:"readyInsightKindCount"`
+	ProductActionReadyKindCount          int                          `json:"productActionReadyKindCount"`
+	QualityGatedInsightKindCount         int                          `json:"qualityGatedInsightKindCount"`
+	GatedInsightKindCount                int                          `json:"gatedInsightKindCount"`
+	RecommendedNextStep                  string                       `json:"recommendedNextStep"`
+	Badges                               []*WorkActionBadge           `json:"badges"`
+	Kinds                                []*WorkInsightKindEvaluation `json:"kinds"`
+}
+
+type WorkInsightKindEvaluation struct {
+	InsightKind               string             `json:"insightKind"`
+	MeasurementScope          string             `json:"measurementScope"`
+	CurrentInsightCount       int                `json:"currentInsightCount"`
+	ReviewRowCount            int                `json:"reviewRowCount"`
+	MeasurementLabelCount     int                `json:"measurementLabelCount"`
+	OpenReviewRequestCount    int                `json:"openReviewRequestCount"`
+	TruthLabeledCount         int                `json:"truthLabeledCount"`
+	ActionabilityLabeledCount int                `json:"actionabilityLabeledCount"`
+	TruePositiveCount         int                `json:"truePositiveCount"`
+	FalsePositiveCount        int                `json:"falsePositiveCount"`
+	PartialCount              int                `json:"partialCount"`
+	ActionableCount           int                `json:"actionableCount"`
+	NeedsOwnerCount           int                `json:"needsOwnerCount"`
+	PrecisionRate             float64            `json:"precisionRate"`
+	UsefulSignalRate          float64            `json:"usefulSignalRate"`
+	ActionabilityRate         float64            `json:"actionabilityRate"`
+	FalsePositiveRate         float64            `json:"falsePositiveRate"`
+	MeasurementCoverageRate   float64            `json:"measurementCoverageRate"`
+	RequiredLabelCount        int                `json:"requiredLabelCount"`
+	ReadyToMeasure            bool               `json:"readyToMeasure"`
+	ReadyForProductAction     bool               `json:"readyForProductAction"`
+	ProductActionGateState    string             `json:"productActionGateState"`
+	ProductActionGateReason   string             `json:"productActionGateReason"`
+	RecommendedAction         string             `json:"recommendedAction"`
+	Badges                    []*WorkActionBadge `json:"badges"`
+}
+
+type WorkInsightMeasurementPacket struct {
+	SourceInstance                      *string                      `json:"sourceInstance,omitempty"`
+	GeneratedAt                         *string                      `json:"generatedAt,omitempty"`
+	InsightKind                         *string                      `json:"insightKind,omitempty"`
+	MeasurementState                    string                       `json:"measurementState"`
+	ReadyToMeasure                      bool                         `json:"readyToMeasure"`
+	ProductActionReady                  bool                         `json:"productActionReady"`
+	CurrentInsightCount                 int                          `json:"currentInsightCount"`
+	MeasurementLabelCount               int                          `json:"measurementLabelCount"`
+	OpenReviewRequestCount              int                          `json:"openReviewRequestCount"`
+	ReviewQueueCount                    int                          `json:"reviewQueueCount"`
+	ReviewQueueTotalCount               int                          `json:"reviewQueueTotalCount"`
+	ReadyInsightKindCount               int                          `json:"readyInsightKindCount"`
+	ProductActionReadyKindCount         int                          `json:"productActionReadyKindCount"`
+	QualityGatedInsightKindCount        int                          `json:"qualityGatedInsightKindCount"`
+	GatedInsightKindCount               int                          `json:"gatedInsightKindCount"`
+	MeasurementGapCount                 int                          `json:"measurementGapCount"`
+	MeasurementMissingLabelCount        int                          `json:"measurementMissingLabelCount"`
+	MeasurementGapReviewQueueCount      int                          `json:"measurementGapReviewQueueCount"`
+	MeasurementGapReviewQueueTotalCount int                          `json:"measurementGapReviewQueueTotalCount"`
+	PrecisionRate                       float64                      `json:"precisionRate"`
+	UsefulSignalRate                    float64                      `json:"usefulSignalRate"`
+	ActionabilityRate                   float64                      `json:"actionabilityRate"`
+	MeasurementCoverageRate             float64                      `json:"measurementCoverageRate"`
+	AutomationSummary                   string                       `json:"automationSummary"`
+	RecommendedFocus                    *string                      `json:"recommendedFocus,omitempty"`
+	Evaluation                          *WorkInsightEvaluation       `json:"evaluation"`
+	MeasurementGaps                     []*WorkInsightKindEvaluation `json:"measurementGaps"`
+	MeasurementGapReviewQueue           []*WorkInsightReview         `json:"measurementGapReviewQueue"`
+	ReviewQueue                         []*WorkInsightReview         `json:"reviewQueue"`
+}
+
+// Review rows are the feedback loop for generated insights.
+// Measurement gates should use reviewed labels, not producer confidence alone.
+type WorkInsightReview struct {
+	Key                 string              `json:"key"`
+	SourceInstance      *string             `json:"sourceInstance,omitempty"`
+	SourceSystem        string              `json:"sourceSystem"`
+	ExternalKind        string              `json:"externalKind"`
+	ReviewKind          string              `json:"reviewKind"`
+	ReviewState         string              `json:"reviewState"`
+	TruthLabel          string              `json:"truthLabel"`
+	ActionabilityLabel  string              `json:"actionabilityLabel"`
+	LabelQuality        string              `json:"labelQuality"`
+	MeasurementEligible bool                `json:"measurementEligible"`
+	ReviewerKind        string              `json:"reviewerKind"`
+	ReviewerKey         *string             `json:"reviewerKey,omitempty"`
+	OwnerKey            *string             `json:"ownerKey,omitempty"`
+	LabelSet            *string             `json:"labelSet,omitempty"`
+	ReviewNextAction    *string             `json:"reviewNextAction,omitempty"`
+	ReviewRationale     *string             `json:"reviewRationale,omitempty"`
+	ReviewedAt          *string             `json:"reviewedAt,omitempty"`
+	Insight             *WorkInsightSummary `json:"insight"`
+	Badges              []*WorkActionBadge  `json:"badges"`
+}
+
+type WorkInsightSummary struct {
+	Key                 string               `json:"key"`
+	InsightKind         string               `json:"insightKind"`
+	Severity            string               `json:"severity"`
+	SubjectKind         string               `json:"subjectKind"`
+	SubjectKey          string               `json:"subjectKey"`
+	Title               string               `json:"title"`
+	Details             *string              `json:"details,omitempty"`
+	RecommendedAction   *string              `json:"recommendedAction,omitempty"`
+	ModelMethod         *string              `json:"modelMethod,omitempty"`
+	Score               float64              `json:"score"`
+	ScoreExplanation    *string              `json:"scoreExplanation,omitempty"`
+	Confidence          float64              `json:"confidence"`
+	SourceURL           *string              `json:"sourceUrl,omitempty"`
+	EvidenceRef         *string              `json:"evidenceRef,omitempty"`
+	Evidence            *WorkEvidenceSummary `json:"evidence,omitempty"`
+	EvidenceExcerpt     *string              `json:"evidenceExcerpt,omitempty"`
+	ReviewKind          *string              `json:"reviewKind,omitempty"`
+	ReviewState         *string              `json:"reviewState,omitempty"`
+	TruthLabel          *string              `json:"truthLabel,omitempty"`
+	ActionabilityLabel  *string              `json:"actionabilityLabel,omitempty"`
+	LabelQuality        *string              `json:"labelQuality,omitempty"`
+	MeasurementEligible bool                 `json:"measurementEligible"`
+	ReviewerKind        *string              `json:"reviewerKind,omitempty"`
+	ReviewerKey         *string              `json:"reviewerKey,omitempty"`
+	LabelSet            *string              `json:"labelSet,omitempty"`
+	ReviewNextAction    *string              `json:"reviewNextAction,omitempty"`
+	ReviewRationale     *string              `json:"reviewRationale,omitempty"`
+	Badges              []*WorkActionBadge   `json:"badges"`
+}
+
+type WorkItemForecast struct {
+	Key                     string               `json:"key"`
+	SourceInstance          string               `json:"sourceInstance"`
+	ForecastKind            string               `json:"forecastKind"`
+	SubjectKind             string               `json:"subjectKind"`
+	SubjectKey              string               `json:"subjectKey"`
+	SubjectTitle            *string              `json:"subjectTitle,omitempty"`
+	SubjectURL              *string              `json:"subjectUrl,omitempty"`
+	SubjectState            *string              `json:"subjectState,omitempty"`
+	ForecastMethod          *string              `json:"forecastMethod,omitempty"`
+	ModelName               *string              `json:"modelName,omitempty"`
+	AgeDays                 *float64             `json:"ageDays,omitempty"`
+	PredictedTotalCycleDays *float64             `json:"predictedTotalCycleDays,omitempty"`
+	PredictedRemainingDays  *float64             `json:"predictedRemainingDays,omitempty"`
+	OverdueDays             *float64             `json:"overdueDays,omitempty"`
+	RiskScore               float64              `json:"riskScore"`
+	RiskBand                string               `json:"riskBand"`
+	ReadinessState          string               `json:"readinessState"`
+	EtaForecastReady        bool                 `json:"etaForecastReady"`
+	EtaClaimAllowed         bool                 `json:"etaClaimAllowed"`
+	ForecastClaimUse        string               `json:"forecastClaimUse"`
+	ForecastClaimGateReason string               `json:"forecastClaimGateReason"`
+	ReadinessReason         *string              `json:"readinessReason,omitempty"`
+	ActionabilityState      string               `json:"actionabilityState"`
+	RecommendedAction       string               `json:"recommendedAction"`
+	Interpretation          string               `json:"interpretation"`
+	EvidenceRef             *string              `json:"evidenceRef,omitempty"`
+	Evidence                *WorkEvidenceSummary `json:"evidence,omitempty"`
+	Action                  *WorkAction          `json:"action,omitempty"`
+	Badges                  []*WorkActionBadge   `json:"badges"`
+}
+
+type WorkItemStateSnapshot struct {
+	Key                         string               `json:"key"`
+	SourceInstance              *string              `json:"sourceInstance,omitempty"`
+	SubjectKind                 string               `json:"subjectKind"`
+	SubjectKey                  string               `json:"subjectKey"`
+	SubjectTitle                *string              `json:"subjectTitle,omitempty"`
+	SubjectURL                  *string              `json:"subjectUrl,omitempty"`
+	State                       *string              `json:"state,omitempty"`
+	ObservedAt                  *string              `json:"observedAt,omitempty"`
+	CapturedAt                  *string              `json:"capturedAt,omitempty"`
+	SourceUpdatedAt             *string              `json:"sourceUpdatedAt,omitempty"`
+	AgeDays                     *float64             `json:"ageDays,omitempty"`
+	StaleDays                   *float64             `json:"staleDays,omitempty"`
+	CycleTimeDays               *float64             `json:"cycleTimeDays,omitempty"`
+	RiskScore                   float64              `json:"riskScore"`
+	RiskBand                    string               `json:"riskBand"`
+	ForecastMethod              *string              `json:"forecastMethod,omitempty"`
+	SourceCurrentCoverageState  *string              `json:"sourceCurrentCoverageState,omitempty"`
+	SourceCurrentDetailState    *string              `json:"sourceCurrentDetailState,omitempty"`
+	SourceCurrentIssueCodes     *string              `json:"sourceCurrentIssueCodes,omitempty"`
+	SourceCurrentIssueKinds     *string              `json:"sourceCurrentIssueKinds,omitempty"`
+	Priority                    *string              `json:"priority,omitempty"`
+	LinkedPullRequestCount      int                  `json:"linkedPullRequestCount"`
+	FreshPullRequestLinkCount   int                  `json:"freshPullRequestLinkCount"`
+	PartialPullRequestLinkCount int                  `json:"partialPullRequestLinkCount"`
+	CommentCount                int                  `json:"commentCount"`
+	ParticipantCount            int                  `json:"participantCount"`
+	BlockerKeywordCount         int                  `json:"blockerKeywordCount"`
+	EvidenceRef                 *string              `json:"evidenceRef,omitempty"`
+	Evidence                    *WorkEvidenceSummary `json:"evidence,omitempty"`
+	Badges                      []*WorkActionBadge   `json:"badges"`
+}
+
+type WorkItemStateTransition struct {
+	Key                  string                 `json:"key"`
+	SourceInstance       *string                `json:"sourceInstance,omitempty"`
+	SubjectKind          string                 `json:"subjectKind"`
+	SubjectKey           string                 `json:"subjectKey"`
+	SubjectTitle         *string                `json:"subjectTitle,omitempty"`
+	SubjectURL           *string                `json:"subjectUrl,omitempty"`
+	FromObservedAt       *string                `json:"fromObservedAt,omitempty"`
+	ToObservedAt         *string                `json:"toObservedAt,omitempty"`
+	FromState            *string                `json:"fromState,omitempty"`
+	ToState              *string                `json:"toState,omitempty"`
+	TransitionKind       string                 `json:"transitionKind"`
+	TransitionConfidence float64                `json:"transitionConfidence"`
+	ConfidenceBasis      string                 `json:"confidenceBasis"`
+	VerificationState    string                 `json:"verificationState"`
+	Terminal             bool                   `json:"terminal"`
+	RequiresCloseout     bool                   `json:"requiresCloseout"`
+	Note                 *string                `json:"note,omitempty"`
+	FromSnapshot         *WorkItemStateSnapshot `json:"fromSnapshot,omitempty"`
+	ToSnapshot           *WorkItemStateSnapshot `json:"toSnapshot,omitempty"`
+	EvidenceRef          *string                `json:"evidenceRef,omitempty"`
+	Evidence             *WorkEvidenceSummary   `json:"evidence,omitempty"`
+	Badges               []*WorkActionBadge     `json:"badges"`
+}
+
+type WorkLensPullRequestResult struct {
+	Key               string             `json:"key"`
+	RelationKind      string             `json:"relationKind"`
+	RankScore         float64            `json:"rankScore"`
+	FreshnessState    string             `json:"freshnessState"`
+	Visibility        string             `json:"visibility"`
+	Confidence        float64            `json:"confidence"`
+	SubjectKey        string             `json:"subjectKey"`
+	Title             *string            `json:"title,omitempty"`
+	State             *string            `json:"state,omitempty"`
+	SourceURL         *string            `json:"sourceUrl,omitempty"`
+	RelatedTicketKeys []string           `json:"relatedTicketKeys"`
+	Badges            []*WorkActionBadge `json:"badges"`
+}
+
+type WorkLensTicketResult struct {
+	Key                    string             `json:"key"`
+	RelationKind           string             `json:"relationKind"`
+	RankScore              float64            `json:"rankScore"`
+	FreshnessState         string             `json:"freshnessState"`
+	Visibility             string             `json:"visibility"`
+	Confidence             float64            `json:"confidence"`
+	SubjectKey             string             `json:"subjectKey"`
+	Title                  *string            `json:"title,omitempty"`
+	State                  *string            `json:"state,omitempty"`
+	SourceURL              *string            `json:"sourceUrl,omitempty"`
+	RelatedPullRequestKeys []string           `json:"relatedPullRequestKeys"`
+	Badges                 []*WorkActionBadge `json:"badges"`
+}
+
+type WorkLensWindow struct {
+	Key                string                       `json:"key"`
+	LensKey            string                       `json:"lensKey"`
+	LensKind           string                       `json:"lensKind"`
+	LensTargetKind     string                       `json:"lensTargetKind"`
+	DisplayName        string                       `json:"displayName"`
+	WindowKind         string                       `json:"windowKind"`
+	ResultCount        int                          `json:"resultCount"`
+	IsComplete         bool                         `json:"isComplete"`
+	LastIndexedAt      *string                      `json:"lastIndexedAt,omitempty"`
+	FreshnessState     string                       `json:"freshnessState"`
+	Visibility         string                       `json:"visibility"`
+	Confidence         float64                      `json:"confidence"`
+	Badges             []*WorkActionBadge           `json:"badges"`
+	PullRequestResults []*WorkLensPullRequestResult `json:"pullRequestResults"`
+	TicketResults      []*WorkLensTicketResult      `json:"ticketResults"`
+}
+
+type WorkOwnerLoadSnapshot struct {
+	Key                       string               `json:"key"`
+	WorkstreamKey             string               `json:"workstreamKey"`
+	SourceInstance            string               `json:"sourceInstance"`
+	OwnerKey                  string               `json:"ownerKey"`
+	OwnerDisplayName          *string              `json:"ownerDisplayName,omitempty"`
+	PersonKey                 *string              `json:"personKey,omitempty"`
+	GeneratedAt               *string              `json:"generatedAt,omitempty"`
+	LoadStatus                string               `json:"loadStatus"`
+	ActionCount               int                  `json:"actionCount"`
+	ProductActionCount        int                  `json:"productActionCount"`
+	ValidationLeadCount       int                  `json:"validationLeadCount"`
+	ModelOrRuleQaCount        int                  `json:"modelOrRuleQaCount"`
+	CriticalOrHighCount       int                  `json:"criticalOrHighCount"`
+	MaxPriorityScore          float64              `json:"maxPriorityScore"`
+	AvgPriorityScore          float64              `json:"avgPriorityScore"`
+	DecisionFollowupCount     int                  `json:"decisionFollowupCount"`
+	ValidateSignalCount       int                  `json:"validateSignalCount"`
+	CiCheckFollowupCount      int                  `json:"ciCheckFollowupCount"`
+	ReviewWaitFollowupCount   int                  `json:"reviewWaitFollowupCount"`
+	CoverageLimitedCount      int                  `json:"coverageLimitedCount"`
+	AnonymousObservationCount int                  `json:"anonymousObservationCount"`
+	NeedsHumanReviewCount     int                  `json:"needsHumanReviewCount"`
+	TopActionType             *string              `json:"topActionType,omitempty"`
+	TopSubjects               *string              `json:"topSubjects,omitempty"`
+	TopActions                []*WorkAction        `json:"topActions"`
+	RecommendedFocus          *string              `json:"recommendedFocus,omitempty"`
+	FreshnessState            string               `json:"freshnessState"`
+	Confidence                float64              `json:"confidence"`
+	EvidenceRef               *string              `json:"evidenceRef,omitempty"`
+	Evidence                  *WorkEvidenceSummary `json:"evidence,omitempty"`
+	Badges                    []*WorkActionBadge   `json:"badges"`
+}
+
+type WorkProgramAdversarialCheck struct {
+	Key               string   `json:"key"`
+	CheckKind         string   `json:"checkKind"`
+	CheckState        string   `json:"checkState"`
+	Severity          string   `json:"severity"`
+	Title             string   `json:"title"`
+	Detail            string   `json:"detail"`
+	RecommendedAction string   `json:"recommendedAction"`
+	BlockingGateKeys  []string `json:"blockingGateKeys"`
+	EvidenceRefs      []string `json:"evidenceRefs"`
+}
+
+type WorkProgramAttentionPacket struct {
+	SourceInstance     *string                              `json:"sourceInstance,omitempty"`
+	GeneratedAt        *string                              `json:"generatedAt,omitempty"`
+	WorkstreamKey      string                               `json:"workstreamKey"`
+	AttentionState     string                               `json:"attentionState"`
+	PriorityCount      int                                  `json:"priorityCount"`
+	UrgentCount        int                                  `json:"urgentCount"`
+	HumanRequiredCount int                                  `json:"humanRequiredCount"`
+	EvidenceNeedCount  int                                  `json:"evidenceNeedCount"`
+	AutomationSummary  string                               `json:"automationSummary"`
+	RecommendedFocus   *string                              `json:"recommendedFocus,omitempty"`
+	TpmReadiness       *WorkProgramTpmReadinessPacket       `json:"tpmReadiness"`
+	Priorities         []*WorkProgramAttentionPriority      `json:"priorities"`
+	EvidenceNeeds      []*WorkProgramAutomationEvidenceNeed `json:"evidenceNeeds"`
+}
+
+type WorkProgramAttentionPriority struct {
+	Key                  string                             `json:"key"`
+	PriorityKind         string                             `json:"priorityKind"`
+	PriorityState        string                             `json:"priorityState"`
+	SubjectKind          *string                            `json:"subjectKind,omitempty"`
+	SubjectKey           *string                            `json:"subjectKey,omitempty"`
+	Title                string                             `json:"title"`
+	Reason               string                             `json:"reason"`
+	RecommendedAction    *string                            `json:"recommendedAction,omitempty"`
+	Urgency              string                             `json:"urgency"`
+	RankScore            float64                            `json:"rankScore"`
+	ClaimUse             *string                            `json:"claimUse,omitempty"`
+	ClaimGateReason      *string                            `json:"claimGateReason,omitempty"`
+	ProductActionAllowed bool                               `json:"productActionAllowed"`
+	HumanRequired        bool                               `json:"humanRequired"`
+	SourceURL            *string                            `json:"sourceUrl,omitempty"`
+	EvidenceRef          *string                            `json:"evidenceRef,omitempty"`
+	Evidence             *WorkEvidenceSummary               `json:"evidence,omitempty"`
+	Action               *WorkAction                        `json:"action,omitempty"`
+	Blocker              *WorkBlocker                       `json:"blocker,omitempty"`
+	BlockerImpact        *WorkBlockerImpact                 `json:"blockerImpact,omitempty"`
+	Forecast             *WorkItemForecast                  `json:"forecast,omitempty"`
+	EvidenceNeed         *WorkProgramAutomationEvidenceNeed `json:"evidenceNeed,omitempty"`
+	Responsibility       *WorkResponsibility                `json:"responsibility,omitempty"`
+}
+
+type WorkProgramAutomationActionPlan struct {
+	Action            *WorkAction                          `json:"action"`
+	Disposition       string                               `json:"disposition"`
+	AutonomyLevel     string                               `json:"autonomyLevel"`
+	Reason            string                               `json:"reason"`
+	BlockingAreas     []string                             `json:"blockingAreas"`
+	EvidenceNeeds     []*WorkProgramAutomationEvidenceNeed `json:"evidenceNeeds"`
+	RecommendedAction *string                              `json:"recommendedAction,omitempty"`
+}
+
+type WorkProgramAutomationEvidenceNeed struct {
+	Key                string                       `json:"key"`
+	GateKey            string                       `json:"gateKey"`
+	EvidenceKind       string                       `json:"evidenceKind"`
+	Priority           string                       `json:"priority"`
+	TargetKind         string                       `json:"targetKind"`
+	TargetKey          *string                      `json:"targetKey,omitempty"`
+	OwnerKey           *string                      `json:"ownerKey,omitempty"`
+	ActionKey          *string                      `json:"actionKey,omitempty"`
+	ActionState        *string                      `json:"actionState,omitempty"`
+	MetricKey          *string                      `json:"metricKey,omitempty"`
+	ExecutionState     string                       `json:"executionState"`
+	BackingActionCount int                          `json:"backingActionCount"`
+	CurrentCount       int                          `json:"currentCount"`
+	RequiredCount      int                          `json:"requiredCount"`
+	MissingCount       int                          `json:"missingCount"`
+	CurrentRate        *float64                     `json:"currentRate,omitempty"`
+	RequiredRate       *float64                     `json:"requiredRate,omitempty"`
+	RecommendedAction  string                       `json:"recommendedAction"`
+	NextExecutionStep  string                       `json:"nextExecutionStep"`
+	SourceURL          *string                      `json:"sourceUrl,omitempty"`
+	Evidence           *WorkEvidenceSummary         `json:"evidence,omitempty"`
+	QualityGate        *WorkProgramBriefQualityGate `json:"qualityGate,omitempty"`
+	Action             *WorkAction                  `json:"action,omitempty"`
+}
+
+type WorkProgramAutomationPlanPacket struct {
+	SourceInstance                *string                              `json:"sourceInstance,omitempty"`
+	GeneratedAt                   *string                              `json:"generatedAt,omitempty"`
+	WorkstreamKey                 string                               `json:"workstreamKey"`
+	ActionState                   string                               `json:"actionState"`
+	PlanState                     string                               `json:"planState"`
+	AutonomyLevel                 string                               `json:"autonomyLevel"`
+	AutonomousActionReady         bool                                 `json:"autonomousActionReady"`
+	HumanReviewRequired           bool                                 `json:"humanReviewRequired"`
+	AbsenceClaimsAllowed          bool                                 `json:"absenceClaimsAllowed"`
+	SafeAutomationAreas           []string                             `json:"safeAutomationAreas"`
+	HumanRequiredAreas            []string                             `json:"humanRequiredAreas"`
+	BlockedAutomationAreas        []string                             `json:"blockedAutomationAreas"`
+	AutonomousActionCount         int                                  `json:"autonomousActionCount"`
+	HumanReviewActionCount        int                                  `json:"humanReviewActionCount"`
+	BlockedActionCount            int                                  `json:"blockedActionCount"`
+	EvidenceNeedCount             int                                  `json:"evidenceNeedCount"`
+	ResponsibilityValidationCount int                                  `json:"responsibilityValidationCount"`
+	ReadyFunctionCount            int                                  `json:"readyFunctionCount"`
+	SupervisedFunctionCount       int                                  `json:"supervisedFunctionCount"`
+	BlockedFunctionCount          int                                  `json:"blockedFunctionCount"`
+	AutomationSummary             string                               `json:"automationSummary"`
+	RecommendedFocus              *string                              `json:"recommendedFocus,omitempty"`
+	ExecutionPacket               *WorkProgramExecutionPacket          `json:"executionPacket"`
+	AutonomousActions             []*WorkAction                        `json:"autonomousActions"`
+	HumanReviewActions            []*WorkAction                        `json:"humanReviewActions"`
+	BlockedActions                []*WorkAction                        `json:"blockedActions"`
+	SafeFunctions                 []*WorkProgramTpmFunctionReadiness   `json:"safeFunctions"`
+	SupervisedFunctions           []*WorkProgramTpmFunctionReadiness   `json:"supervisedFunctions"`
+	BlockedFunctions              []*WorkProgramTpmFunctionReadiness   `json:"blockedFunctions"`
+	EvidenceNeeds                 []*WorkProgramAutomationEvidenceNeed `json:"evidenceNeeds"`
+	Responsibilities              []*WorkResponsibility                `json:"responsibilities"`
+	ActionPlans                   []*WorkProgramAutomationActionPlan   `json:"actionPlans"`
+}
+
+type WorkProgramAutomationReadiness struct {
+	ReadinessState        string                               `json:"readinessState"`
+	ReadinessScore        float64                              `json:"readinessScore"`
+	AutonomousActionReady bool                                 `json:"autonomousActionReady"`
+	HumanReviewRequired   bool                                 `json:"humanReviewRequired"`
+	SafeAutomationAreas   []string                             `json:"safeAutomationAreas"`
+	HumanRequiredAreas    []string                             `json:"humanRequiredAreas"`
+	Rationale             string                               `json:"rationale"`
+	RequiredEvidence      []string                             `json:"requiredEvidence"`
+	EvidenceWorkQueue     []*WorkProgramAutomationEvidenceNeed `json:"evidenceWorkQueue"`
+	Gates                 []*WorkProgramBriefQualityGate       `json:"gates"`
+}
+
+type WorkProgramBlockerPacket struct {
+	SourceInstance        *string                              `json:"sourceInstance,omitempty"`
+	GeneratedAt           *string                              `json:"generatedAt,omitempty"`
+	WorkstreamKey         string                               `json:"workstreamKey"`
+	BlockerState          string                               `json:"blockerState"`
+	BlockerCount          int                                  `json:"blockerCount"`
+	ImpactCount           int                                  `json:"impactCount"`
+	HighRiskForecastCount int                                  `json:"highRiskForecastCount"`
+	EvidenceNeedCount     int                                  `json:"evidenceNeedCount"`
+	HumanRequired         bool                                 `json:"humanRequired"`
+	AutomationSummary     string                               `json:"automationSummary"`
+	RecommendedFocus      *string                              `json:"recommendedFocus,omitempty"`
+	Blockers              []*WorkBlocker                       `json:"blockers"`
+	Impacts               []*WorkBlockerImpact                 `json:"impacts"`
+	Forecasts             []*WorkItemForecast                  `json:"forecasts"`
+	EvidenceNeeds         []*WorkProgramAutomationEvidenceNeed `json:"evidenceNeeds"`
+}
+
+type WorkProgramBrief struct {
+	SourceInstance       *string                             `json:"sourceInstance,omitempty"`
+	WorkstreamKey        *string                             `json:"workstreamKey,omitempty"`
+	GeneratedAt          *string                             `json:"generatedAt,omitempty"`
+	OperatingStatus      string                              `json:"operatingStatus"`
+	DecisionPressure     string                              `json:"decisionPressure"`
+	ForecastState        string                              `json:"forecastState"`
+	PrimaryRisk          *string                             `json:"primaryRisk,omitempty"`
+	ExecutiveSummary     string                              `json:"executiveSummary"`
+	RecommendedFocus     string                              `json:"recommendedFocus"`
+	NextCadenceFocus     string                              `json:"nextCadenceFocus"`
+	CapabilityGaps       []string                            `json:"capabilityGaps"`
+	Summary              *WorkProgramSummary                 `json:"summary"`
+	StandupSections      []*WorkstreamStandupSection         `json:"standupSections"`
+	ImmediateActions     []*WorkstreamStandupSection         `json:"immediateActions"`
+	ValidationQueue      []*WorkstreamStandupSection         `json:"validationQueue"`
+	RiskDrivers          []*WorkProgramBriefRiskDriver       `json:"riskDrivers"`
+	RiskDriverBuckets    []*WorkProgramBriefRiskDriverBucket `json:"riskDriverBuckets"`
+	ForecastReadiness    *WorkForecastReadiness              `json:"forecastReadiness"`
+	InsightEvaluation    *WorkInsightEvaluation              `json:"insightEvaluation"`
+	AutomationReadiness  *WorkProgramAutomationReadiness     `json:"automationReadiness"`
+	TpmFunctionReadiness []*WorkProgramTpmFunctionReadiness  `json:"tpmFunctionReadiness"`
+	AdversarialChecks    []*WorkProgramAdversarialCheck      `json:"adversarialChecks"`
+	QualityGates         []*WorkProgramBriefQualityGate      `json:"qualityGates"`
+	Caveats              []*WorkProgramBriefCaveat           `json:"caveats"`
+	Badges               []*WorkActionBadge                  `json:"badges"`
+}
+
+type WorkProgramBriefCaveat struct {
+	Key               string               `json:"key"`
+	Severity          string               `json:"severity"`
+	Title             string               `json:"title"`
+	Detail            string               `json:"detail"`
+	RecommendedAction *string              `json:"recommendedAction,omitempty"`
+	EvidenceRef       *string              `json:"evidenceRef,omitempty"`
+	Evidence          *WorkEvidenceSummary `json:"evidence,omitempty"`
+}
+
+type WorkProgramBriefQualityGate struct {
+	Key               string  `json:"key"`
+	GateState         string  `json:"gateState"`
+	Blocking          bool    `json:"blocking"`
+	Detail            string  `json:"detail"`
+	RecommendedAction *string `json:"recommendedAction,omitempty"`
+}
+
+type WorkProgramBriefRiskDriver struct {
+	Key               string               `json:"key"`
+	DriverKind        string               `json:"driverKind"`
+	SubjectKind       *string              `json:"subjectKind,omitempty"`
+	SubjectObjectType *string              `json:"subjectObjectType,omitempty"`
+	SubjectKey        *string              `json:"subjectKey,omitempty"`
+	Title             string               `json:"title"`
+	Status            string               `json:"status"`
+	RecommendedAction *string              `json:"recommendedAction,omitempty"`
+	EvidenceRef       *string              `json:"evidenceRef,omitempty"`
+	Evidence          *WorkEvidenceSummary `json:"evidence,omitempty"`
+	RankScore         float64              `json:"rankScore"`
+	Badges            []*WorkActionBadge   `json:"badges"`
+}
+
+type WorkProgramBriefRiskDriverBucket struct {
+	DriverKind      string                        `json:"driverKind"`
+	Title           string                        `json:"title"`
+	RiskDriverCount int                           `json:"riskDriverCount"`
+	TopRiskDrivers  []*WorkProgramBriefRiskDriver `json:"topRiskDrivers"`
+}
+
+type WorkProgramExecutionPacket struct {
+	SourceInstance             *string                              `json:"sourceInstance,omitempty"`
+	GeneratedAt                *string                              `json:"generatedAt,omitempty"`
+	WorkstreamKey              string                               `json:"workstreamKey"`
+	ActionState                string                               `json:"actionState"`
+	ExecutionState             string                               `json:"executionState"`
+	AutonomousActionReady      bool                                 `json:"autonomousActionReady"`
+	HumanReviewRequired        bool                                 `json:"humanReviewRequired"`
+	SourceCoverageState        string                               `json:"sourceCoverageState"`
+	SourceCoverageLimitedCount int                                  `json:"sourceCoverageLimitedCount"`
+	SourceCoverageUnknownCount int                                  `json:"sourceCoverageUnknownCount"`
+	AbsenceClaimsAllowed       bool                                 `json:"absenceClaimsAllowed"`
+	ActionCount                int                                  `json:"actionCount"`
+	ProductActionCount         int                                  `json:"productActionCount"`
+	ValidationLeadCount        int                                  `json:"validationLeadCount"`
+	SourceRepairCount          int                                  `json:"sourceRepairCount"`
+	CloseoutReviewCount        int                                  `json:"closeoutReviewCount"`
+	ModelOrRuleQaCount         int                                  `json:"modelOrRuleQaCount"`
+	EvidenceNeedCount          int                                  `json:"evidenceNeedCount"`
+	AutomationSummary          string                               `json:"automationSummary"`
+	RecommendedFocus           *string                              `json:"recommendedFocus,omitempty"`
+	TpmReadiness               *WorkProgramTpmReadinessPacket       `json:"tpmReadiness"`
+	Actions                    []*WorkAction                        `json:"actions"`
+	EvidenceNeeds              []*WorkProgramAutomationEvidenceNeed `json:"evidenceNeeds"`
+}
+
+type WorkProgramForecastPacket struct {
+	SourceInstance                            *string                              `json:"sourceInstance,omitempty"`
+	GeneratedAt                               *string                              `json:"generatedAt,omitempty"`
+	WorkstreamKey                             string                               `json:"workstreamKey"`
+	ReadinessState                            string                               `json:"readinessState"`
+	EtaForecastReady                          bool                                 `json:"etaForecastReady"`
+	ForecastMethod                            *string                              `json:"forecastMethod,omitempty"`
+	HighRiskForecastCount                     int                                  `json:"highRiskForecastCount"`
+	EtaReadyForecastCount                     int                                  `json:"etaReadyForecastCount"`
+	DecisionTargetEvaluationState             string                               `json:"decisionTargetEvaluationState"`
+	DecisionTargetEvaluationCount             int                                  `json:"decisionTargetEvaluationCount"`
+	ProductReadyDecisionTargetEvaluationCount int                                  `json:"productReadyDecisionTargetEvaluationCount"`
+	EvidenceNeedCount                         int                                  `json:"evidenceNeedCount"`
+	HumanRequired                             bool                                 `json:"humanRequired"`
+	AutomationSummary                         string                               `json:"automationSummary"`
+	RecommendedFocus                          *string                              `json:"recommendedFocus,omitempty"`
+	Readiness                                 *WorkForecastReadiness               `json:"readiness"`
+	DecisionTargetReadiness                   *WorkDecisionTargetReadiness         `json:"decisionTargetReadiness"`
+	ForecastReliability                       []*WorkProgramForecastReliability    `json:"forecastReliability"`
+	Forecasts                                 []*WorkItemForecast                  `json:"forecasts"`
+	DecisionTargetEvaluations                 []*WorkDecisionTargetEvaluation      `json:"decisionTargetEvaluations"`
+	EvidenceNeeds                             []*WorkProgramAutomationEvidenceNeed `json:"evidenceNeeds"`
+}
+
+type WorkProgramForecastReliability struct {
+	ForecastProduct string `json:"forecastProduct"`
+	ReadinessState  string `json:"readinessState"`
+	ProductSafe     bool   `json:"productSafe"`
+	SafeUse         string `json:"safeUse"`
+	BestModel       string `json:"bestModel"`
+	PrimaryMetric   string `json:"primaryMetric"`
+	MetricValue     string `json:"metricValue"`
+	NextEvidence    string `json:"nextEvidence"`
+	Guardrail       string `json:"guardrail"`
+}
+
+type WorkProgramGraphBrief struct {
+	SourceInstance    *string              `json:"sourceInstance,omitempty"`
+	WorkstreamKey     string               `json:"workstreamKey"`
+	BriefMode         string               `json:"briefMode"`
+	GeneratedAt       *string              `json:"generatedAt,omitempty"`
+	ContextHash       string               `json:"contextHash"`
+	ModelName         *string              `json:"modelName,omitempty"`
+	ModelVersion      *string              `json:"modelVersion,omitempty"`
+	ModelMethod       *string              `json:"modelMethod,omitempty"`
+	EvaluationSummary *string              `json:"evaluationSummary,omitempty"`
+	BriefMarkdown     string               `json:"briefMarkdown"`
+	SnapshotKey       *string              `json:"snapshotKey,omitempty"`
+	RunKey            *string              `json:"runKey,omitempty"`
+	Insight           *WorkInsightSummary  `json:"insight"`
+	Evidence          *WorkEvidenceSummary `json:"evidence,omitempty"`
+	Badges            []*WorkActionBadge   `json:"badges"`
+}
+
+// Graph context is the prompt/building-block DTO for AI summaries.
+// The server decides which rows are evidence, guardrails, or non-claimable diagnostics.
+type WorkProgramGraphContext struct {
+	SourceInstance       *string                              `json:"sourceInstance,omitempty"`
+	GeneratedAt          *string                              `json:"generatedAt,omitempty"`
+	ScopeMode            string                               `json:"scopeMode"`
+	RunKey               *string                              `json:"runKey,omitempty"`
+	WorkstreamKey        string                               `json:"workstreamKey"`
+	ContextHash          string                               `json:"contextHash"`
+	TraversalDepth       int                                  `json:"traversalDepth"`
+	ItemCount            int                                  `json:"itemCount"`
+	ActionCount          int                                  `json:"actionCount"`
+	DependencyEdgeCount  int                                  `json:"dependencyEdgeCount"`
+	InsightCount         int                                  `json:"insightCount"`
+	ForecastCount        int                                  `json:"forecastCount"`
+	GraphSummary         string                               `json:"graphSummary"`
+	LlmTask              string                               `json:"llmTask"`
+	ReachedSubjectKeys   []string                             `json:"reachedSubjectKeys"`
+	AllowedCitations     []string                             `json:"allowedCitations"`
+	Citations            []*WorkGraphCitation                 `json:"citations"`
+	Items                []*WorkProgramItem                   `json:"items"`
+	Actions              []*WorkAction                        `json:"actions"`
+	DependencyEdges      []*WorkDependencyEdge                `json:"dependencyEdges"`
+	Insights             []*WorkInsightSummary                `json:"insights"`
+	Forecasts            []*WorkItemForecast                  `json:"forecasts"`
+	QualityGates         []*WorkProgramBriefQualityGate       `json:"qualityGates"`
+	EvidenceNeeds        []*WorkProgramAutomationEvidenceNeed `json:"evidenceNeeds"`
+	ForecastPacket       *WorkProgramForecastPacket           `json:"forecastPacket"`
+	GuardrailPacket      *WorkProgramGuardrailPacket          `json:"guardrailPacket"`
+	SourceCoveragePacket *WorkProgramSourceCoveragePacket     `json:"sourceCoveragePacket"`
+	Badges               []*WorkActionBadge                   `json:"badges"`
+}
+
+type WorkProgramGuardrailPacket struct {
+	SourceInstance                *string                              `json:"sourceInstance,omitempty"`
+	GeneratedAt                   *string                              `json:"generatedAt,omitempty"`
+	WorkstreamKey                 string                               `json:"workstreamKey"`
+	GuardrailState                string                               `json:"guardrailState"`
+	ReadinessState                string                               `json:"readinessState"`
+	AutonomousActionReady         bool                                 `json:"autonomousActionReady"`
+	HumanReviewRequired           bool                                 `json:"humanReviewRequired"`
+	BlockingGateCount             int                                  `json:"blockingGateCount"`
+	FailedCheckCount              int                                  `json:"failedCheckCount"`
+	FailedAdversarialCheckCount   int                                  `json:"failedAdversarialCheckCount"`
+	WarningCheckCount             int                                  `json:"warningCheckCount"`
+	WarningAdversarialCheckCount  int                                  `json:"warningAdversarialCheckCount"`
+	CaveatCount                   int                                  `json:"caveatCount"`
+	EvidenceNeedCount             int                                  `json:"evidenceNeedCount"`
+	ResponsibilityValidationCount int                                  `json:"responsibilityValidationCount"`
+	AutomationSummary             string                               `json:"automationSummary"`
+	RecommendedFocus              *string                              `json:"recommendedFocus,omitempty"`
+	AutomationReadiness           *WorkProgramAutomationReadiness      `json:"automationReadiness,omitempty"`
+	QualityGates                  []*WorkProgramBriefQualityGate       `json:"qualityGates"`
+	AdversarialChecks             []*WorkProgramAdversarialCheck       `json:"adversarialChecks"`
+	Caveats                       []*WorkProgramBriefCaveat            `json:"caveats"`
+	EvidenceNeeds                 []*WorkProgramAutomationEvidenceNeed `json:"evidenceNeeds"`
+	Responsibilities              []*WorkResponsibility                `json:"responsibilities"`
+}
+
+// WorkProgramItem is the workstream register row that TPM views page over.
+// It references product work while keeping generated status and claim gates separate.
+type WorkProgramItem struct {
+	Key                   string                 `json:"key"`
+	SourceInstance        *string                `json:"sourceInstance,omitempty"`
+	WorkstreamKey         string                 `json:"workstreamKey"`
+	SubjectKind           string                 `json:"subjectKind"`
+	SubjectObjectType     *string                `json:"subjectObjectType,omitempty"`
+	SubjectKey            string                 `json:"subjectKey"`
+	LinkedTicketKeys      []string               `json:"linkedTicketKeys"`
+	LinkedPullRequestKeys []string               `json:"linkedPullRequestKeys"`
+	Title                 string                 `json:"title"`
+	ProgramStatus         string                 `json:"programStatus"`
+	TpmBucket             string                 `json:"tpmBucket"`
+	OwnerKey              *string                `json:"ownerKey,omitempty"`
+	OwnerSource           *string                `json:"ownerSource,omitempty"`
+	AuthorDri             *string                `json:"authorDri,omitempty"`
+	RequestedReviewerKeys []string               `json:"requestedReviewerKeys"`
+	ReviewerOrApprover    *string                `json:"reviewerOrApprover,omitempty"`
+	NextAction            *string                `json:"nextAction,omitempty"`
+	DecisionNeeded        *string                `json:"decisionNeeded,omitempty"`
+	DecisionState         string                 `json:"decisionState"`
+	DecisionGateReason    *string                `json:"decisionGateReason,omitempty"`
+	ClaimUse              string                 `json:"claimUse"`
+	ClaimGateReason       string                 `json:"claimGateReason"`
+	ProductActionAllowed  bool                   `json:"productActionAllowed"`
+	AbsenceClaimAllowed   bool                   `json:"absenceClaimAllowed"`
+	EtaClaimAllowed       bool                   `json:"etaClaimAllowed"`
+	DueBucket             string                 `json:"dueBucket"`
+	LastSourceUpdateAt    *string                `json:"lastSourceUpdateAt,omitempty"`
+	AgeDays               *float64               `json:"ageDays,omitempty"`
+	StaleDays             *float64               `json:"staleDays,omitempty"`
+	RiskScore             float64                `json:"riskScore"`
+	BlockerLabelState     *string                `json:"blockerLabelState,omitempty"`
+	CiSignal              *string                `json:"ciSignal,omitempty"`
+	TransitionState       *string                `json:"transitionState,omitempty"`
+	DependencySummary     *string                `json:"dependencySummary,omitempty"`
+	SourceCoverageState   *string                `json:"sourceCoverageState,omitempty"`
+	LabelQuality          *string                `json:"labelQuality,omitempty"`
+	EvidenceRef           *string                `json:"evidenceRef,omitempty"`
+	Evidence              *WorkEvidenceSummary   `json:"evidence,omitempty"`
+	Badges                []*WorkActionBadge     `json:"badges"`
+	Action                *WorkAction            `json:"action,omitempty"`
+	Links                 []*WorkProgramItemLink `json:"links"`
+}
+
+// Structured adjacency for a WorkProgramItem.
+// Display key lists remain UI hints; these rows are the traversable relationships.
+type WorkProgramItemLink struct {
+	Key                   string               `json:"key"`
+	SourceInstance        *string              `json:"sourceInstance,omitempty"`
+	LinkKind              string               `json:"linkKind"`
+	TargetObjectType      string               `json:"targetObjectType"`
+	TargetKey             string               `json:"targetKey"`
+	TargetResolutionState string               `json:"targetResolutionState"`
+	LinkSummary           *string              `json:"linkSummary,omitempty"`
+	LinkSource            *string              `json:"linkSource,omitempty"`
+	EvidenceRef           *string              `json:"evidenceRef,omitempty"`
+	Evidence              *WorkEvidenceSummary `json:"evidence,omitempty"`
+	FreshnessState        string               `json:"freshnessState"`
+	Visibility            string               `json:"visibility"`
+	Confidence            float64              `json:"confidence"`
+	RankScore             float64              `json:"rankScore"`
+}
+
+type WorkProgramMilestone struct {
+	Key                       string               `json:"key"`
+	SourceInstance            *string              `json:"sourceInstance,omitempty"`
+	WorkstreamKey             string               `json:"workstreamKey"`
+	SubjectKind               string               `json:"subjectKind"`
+	SubjectObjectType         *string              `json:"subjectObjectType,omitempty"`
+	SubjectKey                string               `json:"subjectKey"`
+	SubjectTitle              *string              `json:"subjectTitle,omitempty"`
+	SubjectURL                *string              `json:"subjectUrl,omitempty"`
+	MilestoneKind             string               `json:"milestoneKind"`
+	MilestoneName             string               `json:"milestoneName"`
+	TargetDate                *string              `json:"targetDate,omitempty"`
+	OutcomeDate               *string              `json:"outcomeDate,omitempty"`
+	MilestoneState            string               `json:"milestoneState"`
+	CommitmentStrength        string               `json:"commitmentStrength"`
+	DateClaimAllowed          bool                 `json:"dateClaimAllowed"`
+	DeliveryCommitmentAllowed bool                 `json:"deliveryCommitmentAllowed"`
+	ClaimGateReason           string               `json:"claimGateReason"`
+	SourceField               string               `json:"sourceField"`
+	SourcePayloadKey          *string              `json:"sourcePayloadKey,omitempty"`
+	SourceURL                 *string              `json:"sourceUrl,omitempty"`
+	CapturedAt                *string              `json:"capturedAt,omitempty"`
+	GeneratedAt               *string              `json:"generatedAt,omitempty"`
+	EvidenceRef               *string              `json:"evidenceRef,omitempty"`
+	Evidence                  *WorkEvidenceSummary `json:"evidence,omitempty"`
+	Badges                    []*WorkActionBadge   `json:"badges"`
+}
+
+type WorkProgramMilestonePacket struct {
+	SourceInstance                 *string                 `json:"sourceInstance,omitempty"`
+	WorkstreamKey                  string                  `json:"workstreamKey"`
+	GeneratedAt                    *string                 `json:"generatedAt,omitempty"`
+	TotalCount                     int                     `json:"totalCount"`
+	ReleaseTargetCount             int                     `json:"releaseTargetCount"`
+	DatedReleaseTargetCount        int                     `json:"datedReleaseTargetCount"`
+	ExplicitDueDateCount           int                     `json:"explicitDueDateCount"`
+	DeliveryCommitmentCount        int                     `json:"deliveryCommitmentCount"`
+	OutcomeFactCount               int                     `json:"outcomeFactCount"`
+	DateClaimAllowedCount          int                     `json:"dateClaimAllowedCount"`
+	DeliveryCommitmentAllowedCount int                     `json:"deliveryCommitmentAllowedCount"`
+	Milestones                     []*WorkProgramMilestone `json:"milestones"`
+	Badges                         []*WorkActionBadge      `json:"badges"`
+}
+
+type WorkProgramOwnerPacket struct {
+	SourceInstance                *string                              `json:"sourceInstance,omitempty"`
+	GeneratedAt                   *string                              `json:"generatedAt,omitempty"`
+	WorkstreamKey                 string                               `json:"workstreamKey"`
+	OwnerKey                      string                               `json:"ownerKey"`
+	LoadStatus                    string                               `json:"loadStatus"`
+	RecommendedFocus              *string                              `json:"recommendedFocus,omitempty"`
+	ActionCount                   int                                  `json:"actionCount"`
+	EvidenceNeedCount             int                                  `json:"evidenceNeedCount"`
+	ResponsibilityCount           int                                  `json:"responsibilityCount"`
+	ActiveResponsibilityCount     int                                  `json:"activeResponsibilityCount"`
+	CandidateResponsibilityCount  int                                  `json:"candidateResponsibilityCount"`
+	UnassignedResponsibilityCount int                                  `json:"unassignedResponsibilityCount"`
+	HumanRequired                 bool                                 `json:"humanRequired"`
+	AutomationSummary             string                               `json:"automationSummary"`
+	OwnerLoad                     *WorkOwnerLoadSnapshot               `json:"ownerLoad,omitempty"`
+	Actions                       []*WorkAction                        `json:"actions"`
+	EvidenceNeeds                 []*WorkProgramAutomationEvidenceNeed `json:"evidenceNeeds"`
+	Responsibilities              []*WorkResponsibility                `json:"responsibilities"`
+}
+
+type WorkProgramOwnerRollup struct {
+	OwnerKey              string             `json:"ownerKey"`
+	OwnerSource           *string            `json:"ownerSource,omitempty"`
+	ItemCount             int                `json:"itemCount"`
+	NeedsDecisionCount    int                `json:"needsDecisionCount"`
+	ValidateSignalCount   int                `json:"validateSignalCount"`
+	CiFailingCount        int                `json:"ciFailingCount"`
+	WaitingReviewCount    int                `json:"waitingReviewCount"`
+	SourceRepairCount     int                `json:"sourceRepairCount"`
+	ClosureCandidateCount int                `json:"closureCandidateCount"`
+	NowCount              int                `json:"nowCount"`
+	HighRiskCount         int                `json:"highRiskCount"`
+	MaxRiskScore          float64            `json:"maxRiskScore"`
+	Badges                []*WorkActionBadge `json:"badges"`
+	TopItems              []*WorkProgramItem `json:"topItems"`
+}
+
+type WorkProgramSourceCoveragePacket struct {
+	SourceInstance            *string                              `json:"sourceInstance,omitempty"`
+	GeneratedAt               *string                              `json:"generatedAt,omitempty"`
+	WorkstreamKey             string                               `json:"workstreamKey"`
+	CoverageState             string                               `json:"coverageState"`
+	CompleteItemCount         int                                  `json:"completeItemCount"`
+	LimitedItemCount          int                                  `json:"limitedItemCount"`
+	UnknownItemCount          int                                  `json:"unknownItemCount"`
+	SourceSyncIssueCount      int                                  `json:"sourceSyncIssueCount"`
+	AuthOrRateLimitIssueCount int                                  `json:"authOrRateLimitIssueCount"`
+	EvidenceNeedCount         int                                  `json:"evidenceNeedCount"`
+	AbsenceClaimsAllowed      bool                                 `json:"absenceClaimsAllowed"`
+	AbsenceClaimGateReason    string                               `json:"absenceClaimGateReason"`
+	HumanReviewRequired       bool                                 `json:"humanReviewRequired"`
+	AutomationSummary         string                               `json:"automationSummary"`
+	RecommendedFocus          *string                              `json:"recommendedFocus,omitempty"`
+	AffectedItems             []*WorkProgramItem                   `json:"affectedItems"`
+	SourceSyncIssues          []*SourceSyncIssue                   `json:"sourceSyncIssues"`
+	EvidenceNeeds             []*WorkProgramAutomationEvidenceNeed `json:"evidenceNeeds"`
+}
+
+type WorkProgramSummary struct {
+	SourceInstance             *string                   `json:"sourceInstance,omitempty"`
+	WorkstreamKey              *string                   `json:"workstreamKey,omitempty"`
+	TotalCount                 int                       `json:"totalCount"`
+	NeedsDecisionCount         int                       `json:"needsDecisionCount"`
+	ValidateSignalCount        int                       `json:"validateSignalCount"`
+	CiFailingCount             int                       `json:"ciFailingCount"`
+	WaitingReviewCount         int                       `json:"waitingReviewCount"`
+	SourceRepairCount          int                       `json:"sourceRepairCount"`
+	ClosedPendingReviewCount   int                       `json:"closedPendingReviewCount"`
+	ModelQualityCount          int                       `json:"modelQualityCount"`
+	ClosureCandidateCount      int                       `json:"closureCandidateCount"`
+	DismissedCount             int                       `json:"dismissedCount"`
+	NowCount                   int                       `json:"nowCount"`
+	HighRiskCount              int                       `json:"highRiskCount"`
+	UnassignedCount            int                       `json:"unassignedCount"`
+	ProductActionCount         int                       `json:"productActionCount"`
+	ValidationLeadCount        int                       `json:"validationLeadCount"`
+	SourceCoverageLimitedCount int                       `json:"sourceCoverageLimitedCount"`
+	OwnerLoadStatus            string                    `json:"ownerLoadStatus"`
+	OwnerLoadActionCount       int                       `json:"ownerLoadActionCount"`
+	OverloadedOwnerCount       int                       `json:"overloadedOwnerCount"`
+	AttentionOwnerCount        int                       `json:"attentionOwnerCount"`
+	UnassignedActionCount      int                       `json:"unassignedActionCount"`
+	BlockerCount               int                       `json:"blockerCount"`
+	ActiveBlockerCount         int                       `json:"activeBlockerCount"`
+	ValidatingBlockerCount     int                       `json:"validatingBlockerCount"`
+	BlockerImpactCount         int                       `json:"blockerImpactCount"`
+	ActiveBlockerImpactCount   int                       `json:"activeBlockerImpactCount"`
+	DependencyEdgeCount        int                       `json:"dependencyEdgeCount"`
+	BlockingDependencyCount    int                       `json:"blockingDependencyCount"`
+	NeedsActionDependencyCount int                       `json:"needsActionDependencyCount"`
+	OperatingStatus            string                    `json:"operatingStatus"`
+	DecisionPressure           string                    `json:"decisionPressure"`
+	ForecastState              string                    `json:"forecastState"`
+	PrimaryRisk                *string                   `json:"primaryRisk,omitempty"`
+	RecommendedFocus           string                    `json:"recommendedFocus"`
+	CapabilityGaps             []string                  `json:"capabilityGaps"`
+	ForecastReadiness          *WorkForecastReadiness    `json:"forecastReadiness"`
+	Badges                     []*WorkActionBadge        `json:"badges"`
+	Breakdowns                 []*WorkActionBreakdown    `json:"breakdowns"`
+	OwnerRollups               []*WorkProgramOwnerRollup `json:"ownerRollups"`
+	TopOwnerLoads              []*WorkOwnerLoadSnapshot  `json:"topOwnerLoads"`
+	TopItems                   []*WorkProgramItem        `json:"topItems"`
+	TopBlockers                []*WorkBlocker            `json:"topBlockers"`
+	TopBlockerImpacts          []*WorkBlockerImpact      `json:"topBlockerImpacts"`
+	TopDependencies            []*WorkDependencyEdge     `json:"topDependencies"`
+	TopForecasts               []*WorkItemForecast       `json:"topForecasts"`
+}
+
+type WorkProgramTpmFunctionReadiness struct {
+	FunctionKey           string                         `json:"functionKey"`
+	FunctionName          string                         `json:"functionName"`
+	ReadinessState        string                         `json:"readinessState"`
+	AutomationState       string                         `json:"automationState"`
+	HumanRequired         bool                           `json:"humanRequired"`
+	SupportingSignalCount int                            `json:"supportingSignalCount"`
+	BlockingGateKeys      []string                       `json:"blockingGateKeys"`
+	BlockingGates         []*WorkProgramBriefQualityGate `json:"blockingGates"`
+	Detail                string                         `json:"detail"`
+	RecommendedAction     string                         `json:"recommendedAction"`
+}
+
+// Readiness packets expose whether each TPM function is measured, gated, or only a lead.
+// The packet is intentionally separate from source truth rows.
+type WorkProgramTpmReadinessPacket struct {
+	SourceInstance                            *string                              `json:"sourceInstance,omitempty"`
+	WorkstreamKey                             string                               `json:"workstreamKey"`
+	GeneratedAt                               *string                              `json:"generatedAt,omitempty"`
+	ReplacementState                          string                               `json:"replacementState"`
+	AutonomousActionReady                     bool                                 `json:"autonomousActionReady"`
+	HumanReviewRequired                       bool                                 `json:"humanReviewRequired"`
+	TotalFunctionCount                        int                                  `json:"totalFunctionCount"`
+	ReadyFunctionCount                        int                                  `json:"readyFunctionCount"`
+	SupervisedFunctionCount                   int                                  `json:"supervisedFunctionCount"`
+	BlockedFunctionCount                      int                                  `json:"blockedFunctionCount"`
+	HumanRequiredFunctionCount                int                                  `json:"humanRequiredFunctionCount"`
+	BlockingGateCount                         int                                  `json:"blockingGateCount"`
+	FailedCheckCount                          int                                  `json:"failedCheckCount"`
+	FailedAdversarialCheckCount               int                                  `json:"failedAdversarialCheckCount"`
+	FailingCheckPullRequestCount              int                                  `json:"failingCheckPullRequestCount"`
+	OpenFailingCheckPullRequestCount          int                                  `json:"openFailingCheckPullRequestCount"`
+	EvidenceNeedCount                         int                                  `json:"evidenceNeedCount"`
+	MeasurementState                          string                               `json:"measurementState"`
+	MeasurementProductActionReady             bool                                 `json:"measurementProductActionReady"`
+	MeasurementGapCount                       int                                  `json:"measurementGapCount"`
+	MeasurementMissingLabelCount              int                                  `json:"measurementMissingLabelCount"`
+	ForecastReadinessState                    string                               `json:"forecastReadinessState"`
+	ForecastEtaReady                          bool                                 `json:"forecastEtaReady"`
+	DecisionTargetEvaluationState             string                               `json:"decisionTargetEvaluationState"`
+	DecisionTargetEvaluationCount             int                                  `json:"decisionTargetEvaluationCount"`
+	ProductReadyDecisionTargetEvaluationCount int                                  `json:"productReadyDecisionTargetEvaluationCount"`
+	SourceCoverageState                       string                               `json:"sourceCoverageState"`
+	SourceCoverageLimitedCount                int                                  `json:"sourceCoverageLimitedCount"`
+	SourceCoverageUnknownCount                int                                  `json:"sourceCoverageUnknownCount"`
+	AbsenceClaimsAllowed                      bool                                 `json:"absenceClaimsAllowed"`
+	ResponsibilityValidationCount             int                                  `json:"responsibilityValidationCount"`
+	AutomationSummary                         string                               `json:"automationSummary"`
+	RecommendedFocus                          *string                              `json:"recommendedFocus,omitempty"`
+	GuardrailPacket                           *WorkProgramGuardrailPacket          `json:"guardrailPacket"`
+	SourceCoveragePacket                      *WorkProgramSourceCoveragePacket     `json:"sourceCoveragePacket"`
+	MeasurementPacket                         *WorkInsightMeasurementPacket        `json:"measurementPacket"`
+	AutomationReadiness                       *WorkProgramAutomationReadiness      `json:"automationReadiness,omitempty"`
+	TpmFunctionReadiness                      []*WorkProgramTpmFunctionReadiness   `json:"tpmFunctionReadiness"`
+	DecisionTargetReadiness                   *WorkDecisionTargetReadiness         `json:"decisionTargetReadiness"`
+	DecisionTargetEvaluations                 []*WorkDecisionTargetEvaluation      `json:"decisionTargetEvaluations"`
+	QualityGates                              []*WorkProgramBriefQualityGate       `json:"qualityGates"`
+	EvidenceNeeds                             []*WorkProgramAutomationEvidenceNeed `json:"evidenceNeeds"`
+	Responsibilities                          []*WorkResponsibility                `json:"responsibilities"`
+}
+
+// Responsibility rows model accountable parties with evidence and basis.
+// They avoid hiding ownership inside free-form owner_key text.
+type WorkResponsibility struct {
+	Key                       string                             `json:"key"`
+	SourceInstance            *string                            `json:"sourceInstance,omitempty"`
+	WorkstreamKey             *string                            `json:"workstreamKey,omitempty"`
+	SubjectKind               string                             `json:"subjectKind"`
+	SubjectKey                string                             `json:"subjectKey"`
+	SubjectTitle              *string                            `json:"subjectTitle,omitempty"`
+	SubjectURL                *string                            `json:"subjectUrl,omitempty"`
+	PartyKind                 string                             `json:"partyKind"`
+	PartyKey                  string                             `json:"partyKey"`
+	PartySource               *string                            `json:"partySource,omitempty"`
+	PersonKey                 *string                            `json:"personKey,omitempty"`
+	PersonDisplayName         *string                            `json:"personDisplayName,omitempty"`
+	ResponsibilityKind        string                             `json:"responsibilityKind"`
+	BasisKind                 string                             `json:"basisKind"`
+	BasisDetail               *string                            `json:"basisDetail,omitempty"`
+	ResponsibilityState       string                             `json:"responsibilityState"`
+	ResponsibilityStateReason *string                            `json:"responsibilityStateReason,omitempty"`
+	SourceURL                 *string                            `json:"sourceUrl,omitempty"`
+	EvidenceRef               *string                            `json:"evidenceRef,omitempty"`
+	Evidence                  *WorkEvidenceSummary               `json:"evidence,omitempty"`
+	FreshnessState            string                             `json:"freshnessState"`
+	Visibility                string                             `json:"visibility"`
+	Confidence                float64                            `json:"confidence"`
+	RankScore                 float64                            `json:"rankScore"`
+	Badges                    []*WorkActionBadge                 `json:"badges"`
+	Action                    *WorkAction                        `json:"action,omitempty"`
+	Blocker                   *WorkBlocker                       `json:"blocker,omitempty"`
+	ProgramItem               *WorkProgramItem                   `json:"programItem,omitempty"`
+	EvidenceNeed              *WorkProgramAutomationEvidenceNeed `json:"evidenceNeed,omitempty"`
+}
+
+type WorkstreamHealthSnapshot struct {
+	Key                               string               `json:"key"`
+	SourceInstance                    *string              `json:"sourceInstance,omitempty"`
+	WorkstreamKey                     string               `json:"workstreamKey"`
+	WorkstreamTitle                   *string              `json:"workstreamTitle,omitempty"`
+	GeneratedAt                       *string              `json:"generatedAt,omitempty"`
+	OperatingStatus                   string               `json:"operatingStatus"`
+	ActionItemCount                   int                  `json:"actionItemCount"`
+	ProductActionCount                int                  `json:"productActionCount"`
+	ValidationLeadCount               int                  `json:"validationLeadCount"`
+	CriticalOrHighValidationLeadCount int                  `json:"criticalOrHighValidationLeadCount"`
+	ModelOrRuleQaCount                int                  `json:"modelOrRuleQaCount"`
+	CloseoutReviewCount               int                  `json:"closeoutReviewCount"`
+	OwnerCount                        int                  `json:"ownerCount"`
+	TopOwnerActionCount               int                  `json:"topOwnerActionCount"`
+	FailingCheckPullRequestCount      int                  `json:"failingCheckPullRequestCount"`
+	OpenFailingCheckPullRequestCount  int                  `json:"openFailingCheckPullRequestCount"`
+	SourceRepairCount                 int                  `json:"sourceRepairCount"`
+	CoverageLimitedCount              int                  `json:"coverageLimitedCount"`
+	AnonymousObservationCount         int                  `json:"anonymousObservationCount"`
+	TerminalTransitionCount           int                  `json:"terminalTransitionCount"`
+	TerminalTransitionSubjects        *string              `json:"terminalTransitionSubjects,omitempty"`
+	EtaForecastReady                  bool                 `json:"etaForecastReady"`
+	TruthLabelCoverage                *string              `json:"truthLabelCoverage,omitempty"`
+	ActionabilityLabelCoverage        *string              `json:"actionabilityLabelCoverage,omitempty"`
+	RecommendedCadenceFocus           *string              `json:"recommendedCadenceFocus,omitempty"`
+	EvidenceRef                       *string              `json:"evidenceRef,omitempty"`
+	Evidence                          *WorkEvidenceSummary `json:"evidence,omitempty"`
+	Badges                            []*WorkActionBadge   `json:"badges"`
+}
+
+type WorkstreamRegister struct {
+	Key                 string                 `json:"key"`
+	SourceInstance      *string                `json:"sourceInstance,omitempty"`
+	Title               string                 `json:"title"`
+	Status              string                 `json:"status"`
+	Summary             *string                `json:"summary,omitempty"`
+	SourceURL           *string                `json:"sourceUrl,omitempty"`
+	TicketCount         int                    `json:"ticketCount"`
+	ActionItemCount     int                    `json:"actionItemCount"`
+	ProductActionCount  int                    `json:"productActionCount"`
+	ValidationLeadCount int                    `json:"validationLeadCount"`
+	CloseoutReviewCount int                    `json:"closeoutReviewCount"`
+	ModelOrRuleQaCount  int                    `json:"modelOrRuleQaCount"`
+	NowCount            int                    `json:"nowCount"`
+	TopRiskScore        float64                `json:"topRiskScore"`
+	ForecastReadiness   *WorkForecastReadiness `json:"forecastReadiness"`
+	Badges              []*WorkActionBadge     `json:"badges"`
+	TopActions          []*WorkAction          `json:"topActions"`
+}
+
+type WorkstreamStandup struct {
+	SourceInstance                    *string                     `json:"sourceInstance,omitempty"`
+	ActionState                       string                      `json:"actionState"`
+	OperatingStatus                   string                      `json:"operatingStatus"`
+	ActionItemCount                   int                         `json:"actionItemCount"`
+	ProductActionCount                int                         `json:"productActionCount"`
+	ValidationLeadCount               int                         `json:"validationLeadCount"`
+	CriticalOrHighValidationLeadCount int                         `json:"criticalOrHighValidationLeadCount"`
+	ModelOrRuleQaCount                int                         `json:"modelOrRuleQaCount"`
+	CloseoutReviewCount               int                         `json:"closeoutReviewCount"`
+	OwnerCount                        int                         `json:"ownerCount"`
+	TopOwnerActionCount               int                         `json:"topOwnerActionCount"`
+	NowCount                          int                         `json:"nowCount"`
+	AnonymousObservationCount         int                         `json:"anonymousObservationCount"`
+	CoverageLimitedCount              int                         `json:"coverageLimitedCount"`
+	EtaForecastReady                  bool                        `json:"etaForecastReady"`
+	RecommendedCadenceFocus           string                      `json:"recommendedCadenceFocus"`
+	ForecastReadiness                 *WorkForecastReadiness      `json:"forecastReadiness"`
+	Sections                          []*WorkstreamStandupSection `json:"sections"`
+}
+
+type WorkstreamStandupSection struct {
+	SourceInstance    *string              `json:"sourceInstance,omitempty"`
+	GeneratedAt       *string              `json:"generatedAt,omitempty"`
+	SectionRank       int                  `json:"sectionRank"`
+	SectionKind       string               `json:"sectionKind"`
+	Urgency           string               `json:"urgency"`
+	FreshnessState    string               `json:"freshnessState"`
+	Confidence        float64              `json:"confidence"`
+	OwnerKey          *string              `json:"ownerKey,omitempty"`
+	SubjectKind       string               `json:"subjectKind"`
+	SubjectObjectType *string              `json:"subjectObjectType,omitempty"`
+	SubjectKey        *string              `json:"subjectKey,omitempty"`
+	ActionType        *string              `json:"actionType,omitempty"`
+	StatusSignal      *string              `json:"statusSignal,omitempty"`
+	Summary           string               `json:"summary"`
+	RecommendedAction string               `json:"recommendedAction"`
+	EvidenceRef       *string              `json:"evidenceRef,omitempty"`
+	Evidence          *WorkEvidenceSummary `json:"evidence,omitempty"`
+	Action            *WorkAction          `json:"action,omitempty"`
 }
