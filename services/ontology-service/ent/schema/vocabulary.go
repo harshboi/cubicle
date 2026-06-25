@@ -2,6 +2,9 @@ package schema
 
 import "cubicle/services/ontology-service/internal/ontology"
 
+// Ent enum values are the persistence contract. Some values mirror
+// internal/ontology aliases, but schema migrations and replay fixtures depend
+// on these strings remaining stable across serving-layer refactors.
 const (
 	freshnessFresh   = "fresh"   // freshnessFresh means Cubicle believes the fact is current for its source.
 	freshnessPartial = "partial" // freshnessPartial means at least one source gap or incomplete crawl affects the fact.
@@ -437,6 +440,17 @@ const (
 )
 
 const (
+	workProgramItemLinkRelated         = "related"          // workProgramItemLinkRelated means the target is relevant context for the register item.
+	workProgramItemLinkImplements      = "implements"       // workProgramItemLinkImplements means a PR or change implements the register item's subject.
+	workProgramItemLinkBlocks          = "blocks"           // workProgramItemLinkBlocks means the target blocks or constrains the register item.
+	workProgramItemLinkDependsOn       = "depends_on"       // workProgramItemLinkDependsOn means the register item depends on the target.
+	workProgramItemLinkEvidence        = "evidence"         // workProgramItemLinkEvidence means the target is supporting evidence.
+	workProgramItemLinkDiscussion      = "discussion"       // workProgramItemLinkDiscussion means the target is a discussion or decision thread.
+	workProgramItemLinkDocumentation   = "documentation"    // workProgramItemLinkDocumentation means the target is explanatory documentation.
+	workProgramItemLinkSourceReference = "source_reference" // workProgramItemLinkSourceReference means the target is a source-native reference preserved for replay.
+)
+
+const (
 	workProgramMilestoneReleaseTarget     = "release_target"     // workProgramMilestoneReleaseTarget records a source release or fix-version target signal.
 	workProgramMilestoneExplicitDueDate   = "explicit_due_date"  // workProgramMilestoneExplicitDueDate records a source-native due date.
 	workProgramMilestoneResolutionOutcome = "resolution_outcome" // workProgramMilestoneResolutionOutcome records a resolved or closed source outcome date.
@@ -817,6 +831,19 @@ func workProgramBucketValues() []string {
 		workProgramBucketModelQuality,
 		workProgramBucketSourceRepair,
 		workProgramBucketReview,
+	}
+}
+
+func workProgramItemLinkKindValues() []string {
+	return []string{
+		workProgramItemLinkRelated,
+		workProgramItemLinkImplements,
+		workProgramItemLinkBlocks,
+		workProgramItemLinkDependsOn,
+		workProgramItemLinkEvidence,
+		workProgramItemLinkDiscussion,
+		workProgramItemLinkDocumentation,
+		workProgramItemLinkSourceReference,
 	}
 }
 
