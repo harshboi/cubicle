@@ -74,6 +74,21 @@ func (Ticket) Edges() []ent.Edge {
 			Unique().
 			Field("latest_evidence_id").
 			Comment("Most recent evidence supporting this ticket state."),
+		edge.From("insights", WorkInsight.Type).
+			Ref("ticket").
+			Comment("Generated TPM/product insights about this ticket."),
+		edge.From("actions", WorkAction.Type).
+			Ref("ticket").
+			Comment("Gated TPM actions about this ticket."),
+		edge.From("state_snapshots", WorkItemStateSnapshot.Type).
+			Ref("ticket").
+			Comment("Observed state snapshots for this ticket."),
+		edge.From("state_transitions", WorkItemStateTransition.Type).
+			Ref("ticket").
+			Comment("Observed state transitions for this ticket."),
+		edge.From("milestones", WorkProgramMilestone.Type).
+			Ref("ticket").
+			Comment("Source-backed milestone and date signals for this ticket."),
 	}
 }
 
