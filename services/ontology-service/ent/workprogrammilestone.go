@@ -33,6 +33,8 @@ type WorkProgramMilestone struct {
 	WorkstreamKey string `json:"workstream_key,omitempty"`
 	// Typed product kind this milestone is about.
 	SubjectKind workprogrammilestone.SubjectKind `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Stable product key this milestone is about.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Kind of source milestone/date signal.
@@ -169,7 +171,7 @@ func (*WorkProgramMilestone) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case workprogrammilestone.FieldID, workprogrammilestone.FieldWorkstreamID, workprogrammilestone.FieldPullRequestID, workprogrammilestone.FieldTicketID, workprogrammilestone.FieldLatestEvidenceID, workprogrammilestone.FieldEvidenceCount, workprogrammilestone.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workprogrammilestone.FieldKey, workprogrammilestone.FieldWorkstreamKey, workprogrammilestone.FieldSubjectKind, workprogrammilestone.FieldSubjectKey, workprogrammilestone.FieldMilestoneKind, workprogrammilestone.FieldMilestoneName, workprogrammilestone.FieldMilestoneState, workprogrammilestone.FieldCommitmentStrength, workprogrammilestone.FieldClaimGateReason, workprogrammilestone.FieldSourceField, workprogrammilestone.FieldSourcePayloadKey, workprogrammilestone.FieldSourceSystem, workprogrammilestone.FieldSourceInstance, workprogrammilestone.FieldExternalKind, workprogrammilestone.FieldExternalID, workprogrammilestone.FieldSourceURL, workprogrammilestone.FieldFreshnessState, workprogrammilestone.FieldVisibility:
+		case workprogrammilestone.FieldKey, workprogrammilestone.FieldWorkstreamKey, workprogrammilestone.FieldSubjectKind, workprogrammilestone.FieldSubjectObjectType, workprogrammilestone.FieldSubjectKey, workprogrammilestone.FieldMilestoneKind, workprogrammilestone.FieldMilestoneName, workprogrammilestone.FieldMilestoneState, workprogrammilestone.FieldCommitmentStrength, workprogrammilestone.FieldClaimGateReason, workprogrammilestone.FieldSourceField, workprogrammilestone.FieldSourcePayloadKey, workprogrammilestone.FieldSourceSystem, workprogrammilestone.FieldSourceInstance, workprogrammilestone.FieldExternalKind, workprogrammilestone.FieldExternalID, workprogrammilestone.FieldSourceURL, workprogrammilestone.FieldFreshnessState, workprogrammilestone.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workprogrammilestone.FieldTargetDate, workprogrammilestone.FieldOutcomeDate, workprogrammilestone.FieldCapturedAt, workprogrammilestone.FieldGeneratedAt, workprogrammilestone.FieldFirstSeenAt, workprogrammilestone.FieldLastActivityAt, workprogrammilestone.FieldCreatedAt, workprogrammilestone.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -229,6 +231,12 @@ func (_m *WorkProgramMilestone) assignValues(columns []string, values []any) err
 				return fmt.Errorf("unexpected type %T for field subject_kind", values[i])
 			} else if value.Valid {
 				_m.SubjectKind = workprogrammilestone.SubjectKind(value.String)
+			}
+		case workprogrammilestone.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
 			}
 		case workprogrammilestone.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -483,6 +491,9 @@ func (_m *WorkProgramMilestone) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("subject_kind=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SubjectKind))
+	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
 	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)

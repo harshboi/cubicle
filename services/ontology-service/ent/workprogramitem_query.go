@@ -10,7 +10,9 @@ import (
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workaction"
 	"cubicle/services/ontology-service/ent/workprogramitem"
+	"cubicle/services/ontology-service/ent/workprogramitemlink"
 	"cubicle/services/ontology-service/ent/workstream"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -32,6 +34,7 @@ type WorkProgramItemQuery struct {
 	withPullRequest    *PullRequestQuery
 	withTicket         *TicketQuery
 	withLatestEvidence *EvidenceQuery
+	withLinks          *WorkProgramItemLinkQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -171,6 +174,28 @@ func (_q *WorkProgramItemQuery) QueryLatestEvidence() *EvidenceQuery {
 			sqlgraph.From(workprogramitem.Table, workprogramitem.FieldID, selector),
 			sqlgraph.To(evidence.Table, evidence.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitem.LatestEvidenceTable, workprogramitem.LatestEvidenceColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryLinks chains the current query on the "links" edge.
+func (_q *WorkProgramItemQuery) QueryLinks() *WorkProgramItemLinkQuery {
+	query := (&WorkProgramItemLinkClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitem.Table, workprogramitem.FieldID, selector),
+			sqlgraph.To(workprogramitemlink.Table, workprogramitemlink.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, workprogramitem.LinksTable, workprogramitem.LinksColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -375,6 +400,7 @@ func (_q *WorkProgramItemQuery) Clone() *WorkProgramItemQuery {
 		withPullRequest:    _q.withPullRequest.Clone(),
 		withTicket:         _q.withTicket.Clone(),
 		withLatestEvidence: _q.withLatestEvidence.Clone(),
+		withLinks:          _q.withLinks.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -433,6 +459,17 @@ func (_q *WorkProgramItemQuery) WithLatestEvidence(opts ...func(*EvidenceQuery))
 		opt(query)
 	}
 	_q.withLatestEvidence = query
+	return _q
+}
+
+// WithLinks tells the query-builder to eager-load the nodes that are connected to
+// the "links" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkProgramItemQuery) WithLinks(opts ...func(*WorkProgramItemLinkQuery)) *WorkProgramItemQuery {
+	query := (&WorkProgramItemLinkClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withLinks = query
 	return _q
 }
 
@@ -514,12 +551,13 @@ func (_q *WorkProgramItemQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	var (
 		nodes       = []*WorkProgramItem{}
 		_spec       = _q.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [6]bool{
 			_q.withWorkstream != nil,
 			_q.withWorkAction != nil,
 			_q.withPullRequest != nil,
 			_q.withTicket != nil,
 			_q.withLatestEvidence != nil,
+			_q.withLinks != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -567,6 +605,13 @@ func (_q *WorkProgramItemQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	if query := _q.withLatestEvidence; query != nil {
 		if err := _q.loadLatestEvidence(ctx, query, nodes, nil,
 			func(n *WorkProgramItem, e *Evidence) { n.Edges.LatestEvidence = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withLinks; query != nil {
+		if err := _q.loadLinks(ctx, query, nodes,
+			func(n *WorkProgramItem) { n.Edges.Links = []*WorkProgramItemLink{} },
+			func(n *WorkProgramItem, e *WorkProgramItemLink) { n.Edges.Links = append(n.Edges.Links, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -715,6 +760,36 @@ func (_q *WorkProgramItemQuery) loadLatestEvidence(ctx context.Context, query *E
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (_q *WorkProgramItemQuery) loadLinks(ctx context.Context, query *WorkProgramItemLinkQuery, nodes []*WorkProgramItem, init func(*WorkProgramItem), assign func(*WorkProgramItem, *WorkProgramItemLink)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*WorkProgramItem)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workprogramitemlink.FieldWorkProgramItemID)
+	}
+	query.Where(predicate.WorkProgramItemLink(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(workprogramitem.LinksColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.WorkProgramItemID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "work_program_item_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

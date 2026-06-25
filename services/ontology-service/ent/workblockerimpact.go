@@ -51,6 +51,8 @@ type WorkBlockerImpact struct {
 	AffectedKey string `json:"affected_key,omitempty"`
 	// Original typed product subject kind on the blocker.
 	SubjectKind workblockerimpact.SubjectKind `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Original typed product subject key on the blocker.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Number of derived topology hops between the blocker and affected node.
@@ -197,7 +199,7 @@ func (*WorkBlockerImpact) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case workblockerimpact.FieldID, workblockerimpact.FieldWorkBlockerID, workblockerimpact.FieldWorkActionID, workblockerimpact.FieldWorkstreamID, workblockerimpact.FieldPullRequestID, workblockerimpact.FieldTicketID, workblockerimpact.FieldPathLength, workblockerimpact.FieldLatestEvidenceID, workblockerimpact.FieldEvidenceCount, workblockerimpact.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workblockerimpact.FieldKey, workblockerimpact.FieldImpactKind, workblockerimpact.FieldImpactState, workblockerimpact.FieldSeverity, workblockerimpact.FieldBlockerKind, workblockerimpact.FieldAffectedKind, workblockerimpact.FieldAffectedKey, workblockerimpact.FieldSubjectKind, workblockerimpact.FieldSubjectKey, workblockerimpact.FieldSourceCoverageState, workblockerimpact.FieldTitle, workblockerimpact.FieldRecommendedAction, workblockerimpact.FieldSummary, workblockerimpact.FieldSearchText, workblockerimpact.FieldSourceSystem, workblockerimpact.FieldSourceInstance, workblockerimpact.FieldExternalKind, workblockerimpact.FieldExternalID, workblockerimpact.FieldSourceURL, workblockerimpact.FieldFreshnessState, workblockerimpact.FieldVisibility:
+		case workblockerimpact.FieldKey, workblockerimpact.FieldImpactKind, workblockerimpact.FieldImpactState, workblockerimpact.FieldSeverity, workblockerimpact.FieldBlockerKind, workblockerimpact.FieldAffectedKind, workblockerimpact.FieldAffectedKey, workblockerimpact.FieldSubjectKind, workblockerimpact.FieldSubjectObjectType, workblockerimpact.FieldSubjectKey, workblockerimpact.FieldSourceCoverageState, workblockerimpact.FieldTitle, workblockerimpact.FieldRecommendedAction, workblockerimpact.FieldSummary, workblockerimpact.FieldSearchText, workblockerimpact.FieldSourceSystem, workblockerimpact.FieldSourceInstance, workblockerimpact.FieldExternalKind, workblockerimpact.FieldExternalID, workblockerimpact.FieldSourceURL, workblockerimpact.FieldFreshnessState, workblockerimpact.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workblockerimpact.FieldFirstSeenAt, workblockerimpact.FieldLastActivityAt, workblockerimpact.FieldCreatedAt, workblockerimpact.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -305,6 +307,12 @@ func (_m *WorkBlockerImpact) assignValues(columns []string, values []any) error 
 				return fmt.Errorf("unexpected type %T for field subject_kind", values[i])
 			} else if value.Valid {
 				_m.SubjectKind = workblockerimpact.SubjectKind(value.String)
+			}
+		case workblockerimpact.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
 			}
 		case workblockerimpact.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -551,6 +559,9 @@ func (_m *WorkBlockerImpact) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("subject_kind=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SubjectKind))
+	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
 	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)

@@ -80,6 +80,11 @@ func WorkstreamKey(v string) predicate.WorkProgramMilestone {
 	return predicate.WorkProgramMilestone(sql.FieldEQ(FieldWorkstreamKey, v))
 }
 
+// SubjectObjectType applies equality check predicate on the "subject_object_type" field. It's identical to SubjectObjectTypeEQ.
+func SubjectObjectType(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
 // SubjectKey applies equality check predicate on the "subject_key" field. It's identical to SubjectKeyEQ.
 func SubjectKey(v string) predicate.WorkProgramMilestone {
 	return predicate.WorkProgramMilestone(sql.FieldEQ(FieldSubjectKey, v))
@@ -443,6 +448,81 @@ func SubjectKindIn(vs ...SubjectKind) predicate.WorkProgramMilestone {
 // SubjectKindNotIn applies the NotIn predicate on the "subject_kind" field.
 func SubjectKindNotIn(vs ...SubjectKind) predicate.WorkProgramMilestone {
 	return predicate.WorkProgramMilestone(sql.FieldNotIn(FieldSubjectKind, vs...))
+}
+
+// SubjectObjectTypeEQ applies the EQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeEQ(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeNEQ applies the NEQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeNEQ(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldNEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIn applies the In predicate on the "subject_object_type" field.
+func SubjectObjectTypeIn(vs ...string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeNotIn applies the NotIn predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotIn(vs ...string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldNotIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeGT applies the GT predicate on the "subject_object_type" field.
+func SubjectObjectTypeGT(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldGT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeGTE applies the GTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeGTE(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldGTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLT applies the LT predicate on the "subject_object_type" field.
+func SubjectObjectTypeLT(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldLT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLTE applies the LTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeLTE(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldLTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContains applies the Contains predicate on the "subject_object_type" field.
+func SubjectObjectTypeContains(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldContains(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasPrefix applies the HasPrefix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasPrefix(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldHasPrefix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasSuffix applies the HasSuffix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasSuffix(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldHasSuffix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIsNil applies the IsNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeIsNil() predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldIsNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeNotNil applies the NotNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotNil() predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldNotNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeEqualFold applies the EqualFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeEqualFold(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldEqualFold(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContainsFold applies the ContainsFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeContainsFold(v string) predicate.WorkProgramMilestone {
+	return predicate.WorkProgramMilestone(sql.FieldContainsFold(FieldSubjectObjectType, v))
 }
 
 // SubjectKeyEQ applies the EQ predicate on the "subject_key" field.

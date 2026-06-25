@@ -60,6 +60,26 @@ func (_u *WorkItemStateTransitionUpdate) SetNillableSubjectKind(v *workitemstate
 	return _u
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkItemStateTransitionUpdate) SetSubjectObjectType(v string) *WorkItemStateTransitionUpdate {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkItemStateTransitionUpdate) SetNillableSubjectObjectType(v *string) *WorkItemStateTransitionUpdate {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkItemStateTransitionUpdate) ClearSubjectObjectType() *WorkItemStateTransitionUpdate {
+	_u.mutation.ClearSubjectObjectType()
+	return _u
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_u *WorkItemStateTransitionUpdate) SetSubjectKey(v string) *WorkItemStateTransitionUpdate {
 	_u.mutation.SetSubjectKey(v)
@@ -782,6 +802,12 @@ func (_u *WorkItemStateTransitionUpdate) sqlSave(ctx context.Context) (_node int
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workitemstatetransition.FieldSubjectKind, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workitemstatetransition.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workitemstatetransition.FieldSubjectObjectType, field.TypeString)
+	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workitemstatetransition.FieldSubjectKey, field.TypeString, value)
 	}
@@ -1101,6 +1127,26 @@ func (_u *WorkItemStateTransitionUpdateOne) SetNillableSubjectKind(v *workitemst
 	if v != nil {
 		_u.SetSubjectKind(*v)
 	}
+	return _u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkItemStateTransitionUpdateOne) SetSubjectObjectType(v string) *WorkItemStateTransitionUpdateOne {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkItemStateTransitionUpdateOne) SetNillableSubjectObjectType(v *string) *WorkItemStateTransitionUpdateOne {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkItemStateTransitionUpdateOne) ClearSubjectObjectType() *WorkItemStateTransitionUpdateOne {
+	_u.mutation.ClearSubjectObjectType()
 	return _u
 }
 
@@ -1855,6 +1901,12 @@ func (_u *WorkItemStateTransitionUpdateOne) sqlSave(ctx context.Context) (_node 
 	}
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workitemstatetransition.FieldSubjectKind, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workitemstatetransition.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workitemstatetransition.FieldSubjectObjectType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workitemstatetransition.FieldSubjectKey, field.TypeString, value)

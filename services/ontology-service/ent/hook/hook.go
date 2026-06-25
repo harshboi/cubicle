@@ -68,6 +68,18 @@ func (f EvidenceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EvidenceMutation", m)
 }
 
+// The EvidenceAttachmentFunc type is an adapter to allow the use of ordinary
+// function as EvidenceAttachment mutator.
+type EvidenceAttachmentFunc func(context.Context, *ent.EvidenceAttachmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EvidenceAttachmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EvidenceAttachmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EvidenceAttachmentMutation", m)
+}
+
 // The MessageFunc type is an adapter to allow the use of ordinary
 // function as Message mutator.
 type MessageFunc func(context.Context, *ent.MessageMutation) (ent.Value, error)
@@ -678,6 +690,18 @@ func (f WorkProgramItemFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramItemMutation", m)
+}
+
+// The WorkProgramItemLinkFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramItemLink mutator.
+type WorkProgramItemLinkFunc func(context.Context, *ent.WorkProgramItemLinkMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramItemLinkFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramItemLinkMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramItemLinkMutation", m)
 }
 
 // The WorkProgramMilestoneFunc type is an adapter to allow the use of ordinary

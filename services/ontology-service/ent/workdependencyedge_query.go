@@ -6,6 +6,7 @@ import (
 	"context"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/predicate"
+	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workaction"
 	"cubicle/services/ontology-service/ent/workblocker"
 	"cubicle/services/ontology-service/ent/workdependencyedge"
@@ -23,14 +24,15 @@ import (
 // WorkDependencyEdgeQuery is the builder for querying WorkDependencyEdge entities.
 type WorkDependencyEdgeQuery struct {
 	config
-	ctx                *QueryContext
-	order              []workdependencyedge.OrderOption
-	inters             []Interceptor
-	predicates         []predicate.WorkDependencyEdge
-	withWorkBlocker    *WorkBlockerQuery
-	withWorkAction     *WorkActionQuery
-	withLatestEvidence *EvidenceQuery
-	withEndpoints      *WorkDependencyEndpointQuery
+	ctx                   *QueryContext
+	order                 []workdependencyedge.OrderOption
+	inters                []Interceptor
+	predicates            []predicate.WorkDependencyEdge
+	withWorkBlocker       *WorkBlockerQuery
+	withWorkAction        *WorkActionQuery
+	withTicketPullRequest *TicketPullRequestQuery
+	withLatestEvidence    *EvidenceQuery
+	withEndpoints         *WorkDependencyEndpointQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -104,6 +106,28 @@ func (_q *WorkDependencyEdgeQuery) QueryWorkAction() *WorkActionQuery {
 			sqlgraph.From(workdependencyedge.Table, workdependencyedge.FieldID, selector),
 			sqlgraph.To(workaction.Table, workaction.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyedge.WorkActionTable, workdependencyedge.WorkActionColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTicketPullRequest chains the current query on the "ticket_pull_request" edge.
+func (_q *WorkDependencyEdgeQuery) QueryTicketPullRequest() *TicketPullRequestQuery {
+	query := (&TicketPullRequestClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyedge.Table, workdependencyedge.FieldID, selector),
+			sqlgraph.To(ticketpullrequest.Table, ticketpullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyedge.TicketPullRequestTable, workdependencyedge.TicketPullRequestColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -342,15 +366,16 @@ func (_q *WorkDependencyEdgeQuery) Clone() *WorkDependencyEdgeQuery {
 		return nil
 	}
 	return &WorkDependencyEdgeQuery{
-		config:             _q.config,
-		ctx:                _q.ctx.Clone(),
-		order:              append([]workdependencyedge.OrderOption{}, _q.order...),
-		inters:             append([]Interceptor{}, _q.inters...),
-		predicates:         append([]predicate.WorkDependencyEdge{}, _q.predicates...),
-		withWorkBlocker:    _q.withWorkBlocker.Clone(),
-		withWorkAction:     _q.withWorkAction.Clone(),
-		withLatestEvidence: _q.withLatestEvidence.Clone(),
-		withEndpoints:      _q.withEndpoints.Clone(),
+		config:                _q.config,
+		ctx:                   _q.ctx.Clone(),
+		order:                 append([]workdependencyedge.OrderOption{}, _q.order...),
+		inters:                append([]Interceptor{}, _q.inters...),
+		predicates:            append([]predicate.WorkDependencyEdge{}, _q.predicates...),
+		withWorkBlocker:       _q.withWorkBlocker.Clone(),
+		withWorkAction:        _q.withWorkAction.Clone(),
+		withTicketPullRequest: _q.withTicketPullRequest.Clone(),
+		withLatestEvidence:    _q.withLatestEvidence.Clone(),
+		withEndpoints:         _q.withEndpoints.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -376,6 +401,17 @@ func (_q *WorkDependencyEdgeQuery) WithWorkAction(opts ...func(*WorkActionQuery)
 		opt(query)
 	}
 	_q.withWorkAction = query
+	return _q
+}
+
+// WithTicketPullRequest tells the query-builder to eager-load the nodes that are connected to
+// the "ticket_pull_request" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkDependencyEdgeQuery) WithTicketPullRequest(opts ...func(*TicketPullRequestQuery)) *WorkDependencyEdgeQuery {
+	query := (&TicketPullRequestClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTicketPullRequest = query
 	return _q
 }
 
@@ -479,9 +515,10 @@ func (_q *WorkDependencyEdgeQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	var (
 		nodes       = []*WorkDependencyEdge{}
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			_q.withWorkBlocker != nil,
 			_q.withWorkAction != nil,
+			_q.withTicketPullRequest != nil,
 			_q.withLatestEvidence != nil,
 			_q.withEndpoints != nil,
 		}
@@ -513,6 +550,12 @@ func (_q *WorkDependencyEdgeQuery) sqlAll(ctx context.Context, hooks ...queryHoo
 	if query := _q.withWorkAction; query != nil {
 		if err := _q.loadWorkAction(ctx, query, nodes, nil,
 			func(n *WorkDependencyEdge, e *WorkAction) { n.Edges.WorkAction = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTicketPullRequest; query != nil {
+		if err := _q.loadTicketPullRequest(ctx, query, nodes, nil,
+			func(n *WorkDependencyEdge, e *TicketPullRequest) { n.Edges.TicketPullRequest = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -585,6 +628,35 @@ func (_q *WorkDependencyEdgeQuery) loadWorkAction(ctx context.Context, query *Wo
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "work_action_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *WorkDependencyEdgeQuery) loadTicketPullRequest(ctx context.Context, query *TicketPullRequestQuery, nodes []*WorkDependencyEdge, init func(*WorkDependencyEdge), assign func(*WorkDependencyEdge, *TicketPullRequest)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*WorkDependencyEdge)
+	for i := range nodes {
+		fk := nodes[i].TicketPullRequestID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(ticketpullrequest.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "ticket_pull_request_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -682,6 +754,9 @@ func (_q *WorkDependencyEdgeQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if _q.withWorkAction != nil {
 			_spec.Node.AddColumnOnce(workdependencyedge.FieldWorkActionID)
+		}
+		if _q.withTicketPullRequest != nil {
+			_spec.Node.AddColumnOnce(workdependencyedge.FieldTicketPullRequestID)
 		}
 		if _q.withLatestEvidence != nil {
 			_spec.Node.AddColumnOnce(workdependencyedge.FieldLatestEvidenceID)

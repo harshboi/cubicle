@@ -48,6 +48,8 @@ type WorkResponsibility struct {
 	WorkstreamKey string `json:"workstream_key,omitempty"`
 	// Typed work subject this responsibility points at.
 	SubjectKind workresponsibility.SubjectKind `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Stable key of the subject work object.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Type of accountable party represented by party_key.
@@ -243,7 +245,7 @@ func (*WorkResponsibility) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case workresponsibility.FieldID, workresponsibility.FieldPersonID, workresponsibility.FieldWorkstreamID, workresponsibility.FieldPullRequestID, workresponsibility.FieldTicketID, workresponsibility.FieldWorkActionID, workresponsibility.FieldWorkBlockerID, workresponsibility.FieldWorkProgramEvidenceNeedID, workresponsibility.FieldWorkProgramItemID, workresponsibility.FieldLatestEvidenceID, workresponsibility.FieldEvidenceCount, workresponsibility.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workresponsibility.FieldKey, workresponsibility.FieldWorkstreamKey, workresponsibility.FieldSubjectKind, workresponsibility.FieldSubjectKey, workresponsibility.FieldPartyKind, workresponsibility.FieldPartyKey, workresponsibility.FieldPartySource, workresponsibility.FieldResponsibilityKind, workresponsibility.FieldBasisKind, workresponsibility.FieldBasisDetail, workresponsibility.FieldResponsibilityState, workresponsibility.FieldResponsibilityStateReason, workresponsibility.FieldSourceSystem, workresponsibility.FieldSourceInstance, workresponsibility.FieldExternalKind, workresponsibility.FieldExternalID, workresponsibility.FieldSourceURL, workresponsibility.FieldFreshnessState, workresponsibility.FieldVisibility:
+		case workresponsibility.FieldKey, workresponsibility.FieldWorkstreamKey, workresponsibility.FieldSubjectKind, workresponsibility.FieldSubjectObjectType, workresponsibility.FieldSubjectKey, workresponsibility.FieldPartyKind, workresponsibility.FieldPartyKey, workresponsibility.FieldPartySource, workresponsibility.FieldResponsibilityKind, workresponsibility.FieldBasisKind, workresponsibility.FieldBasisDetail, workresponsibility.FieldResponsibilityState, workresponsibility.FieldResponsibilityStateReason, workresponsibility.FieldSourceSystem, workresponsibility.FieldSourceInstance, workresponsibility.FieldExternalKind, workresponsibility.FieldExternalID, workresponsibility.FieldSourceURL, workresponsibility.FieldFreshnessState, workresponsibility.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workresponsibility.FieldGeneratedAt, workresponsibility.FieldValidFrom, workresponsibility.FieldValidUntil, workresponsibility.FieldFirstSeenAt, workresponsibility.FieldLastActivityAt, workresponsibility.FieldCreatedAt, workresponsibility.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -333,6 +335,12 @@ func (_m *WorkResponsibility) assignValues(columns []string, values []any) error
 				return fmt.Errorf("unexpected type %T for field subject_kind", values[i])
 			} else if value.Valid {
 				_m.SubjectKind = workresponsibility.SubjectKind(value.String)
+			}
+		case workresponsibility.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
 			}
 		case workresponsibility.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -615,6 +623,9 @@ func (_m *WorkResponsibility) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("subject_kind=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SubjectKind))
+	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
 	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)

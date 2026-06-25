@@ -21,6 +21,9 @@ type DocumentLink func(*sql.Selector)
 // Evidence is the predicate function for evidence builders.
 type Evidence func(*sql.Selector)
 
+// EvidenceAttachment is the predicate function for evidenceattachment builders.
+type EvidenceAttachment func(*sql.Selector)
+
 // Message is the predicate function for message builders.
 type Message func(*sql.Selector)
 
@@ -173,6 +176,9 @@ type WorkProgramEvidenceNeed func(*sql.Selector)
 
 // WorkProgramItem is the predicate function for workprogramitem builders.
 type WorkProgramItem func(*sql.Selector)
+
+// WorkProgramItemLink is the predicate function for workprogramitemlink builders.
+type WorkProgramItemLink func(*sql.Selector)
 
 // WorkProgramMilestone is the predicate function for workprogrammilestone builders.
 type WorkProgramMilestone func(*sql.Selector)

@@ -9,6 +9,7 @@ import (
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workforecastevaluation"
 	"cubicle/services/ontology-service/ent/workitemforecast"
 	"errors"
 	"fmt"
@@ -71,6 +72,26 @@ func (_u *WorkItemForecastUpdate) SetNillableSubjectKind(v *workitemforecast.Sub
 	if v != nil {
 		_u.SetSubjectKind(*v)
 	}
+	return _u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkItemForecastUpdate) SetSubjectObjectType(v string) *WorkItemForecastUpdate {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkItemForecastUpdate) SetNillableSubjectObjectType(v *string) *WorkItemForecastUpdate {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkItemForecastUpdate) ClearSubjectObjectType() *WorkItemForecastUpdate {
+	_u.mutation.ClearSubjectObjectType()
 	return _u
 }
 
@@ -145,6 +166,26 @@ func (_u *WorkItemForecastUpdate) SetNillableWorkActionID(v *int) *WorkItemForec
 // ClearWorkActionID clears the value of the "work_action_id" field.
 func (_u *WorkItemForecastUpdate) ClearWorkActionID() *WorkItemForecastUpdate {
 	_u.mutation.ClearWorkActionID()
+	return _u
+}
+
+// SetForecastEvaluationID sets the "forecast_evaluation_id" field.
+func (_u *WorkItemForecastUpdate) SetForecastEvaluationID(v int) *WorkItemForecastUpdate {
+	_u.mutation.SetForecastEvaluationID(v)
+	return _u
+}
+
+// SetNillableForecastEvaluationID sets the "forecast_evaluation_id" field if the given value is not nil.
+func (_u *WorkItemForecastUpdate) SetNillableForecastEvaluationID(v *int) *WorkItemForecastUpdate {
+	if v != nil {
+		_u.SetForecastEvaluationID(*v)
+	}
+	return _u
+}
+
+// ClearForecastEvaluationID clears the value of the "forecast_evaluation_id" field.
+func (_u *WorkItemForecastUpdate) ClearForecastEvaluationID() *WorkItemForecastUpdate {
+	_u.mutation.ClearForecastEvaluationID()
 	return _u
 }
 
@@ -712,6 +753,11 @@ func (_u *WorkItemForecastUpdate) SetWorkAction(v *WorkAction) *WorkItemForecast
 	return _u.SetWorkActionID(v.ID)
 }
 
+// SetForecastEvaluation sets the "forecast_evaluation" edge to the WorkForecastEvaluation entity.
+func (_u *WorkItemForecastUpdate) SetForecastEvaluation(v *WorkForecastEvaluation) *WorkItemForecastUpdate {
+	return _u.SetForecastEvaluationID(v.ID)
+}
+
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *WorkItemForecastUpdate) SetLatestEvidence(v *Evidence) *WorkItemForecastUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -737,6 +783,12 @@ func (_u *WorkItemForecastUpdate) ClearTicket() *WorkItemForecastUpdate {
 // ClearWorkAction clears the "work_action" edge to the WorkAction entity.
 func (_u *WorkItemForecastUpdate) ClearWorkAction() *WorkItemForecastUpdate {
 	_u.mutation.ClearWorkAction()
+	return _u
+}
+
+// ClearForecastEvaluation clears the "forecast_evaluation" edge to the WorkForecastEvaluation entity.
+func (_u *WorkItemForecastUpdate) ClearForecastEvaluation() *WorkItemForecastUpdate {
+	_u.mutation.ClearForecastEvaluation()
 	return _u
 }
 
@@ -847,6 +899,12 @@ func (_u *WorkItemForecastUpdate) sqlSave(ctx context.Context) (_node int, err e
 	}
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workitemforecast.FieldSubjectKind, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workitemforecast.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workitemforecast.FieldSubjectObjectType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workitemforecast.FieldSubjectKey, field.TypeString, value)
@@ -1094,6 +1152,35 @@ func (_u *WorkItemForecastUpdate) sqlSave(ctx context.Context) (_node int, err e
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.ForecastEvaluationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workitemforecast.ForecastEvaluationTable,
+			Columns: []string{workitemforecast.ForecastEvaluationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workforecastevaluation.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ForecastEvaluationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workitemforecast.ForecastEvaluationTable,
+			Columns: []string{workitemforecast.ForecastEvaluationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workforecastevaluation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1185,6 +1272,26 @@ func (_u *WorkItemForecastUpdateOne) SetNillableSubjectKind(v *workitemforecast.
 	return _u
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkItemForecastUpdateOne) SetSubjectObjectType(v string) *WorkItemForecastUpdateOne {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkItemForecastUpdateOne) SetNillableSubjectObjectType(v *string) *WorkItemForecastUpdateOne {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkItemForecastUpdateOne) ClearSubjectObjectType() *WorkItemForecastUpdateOne {
+	_u.mutation.ClearSubjectObjectType()
+	return _u
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_u *WorkItemForecastUpdateOne) SetSubjectKey(v string) *WorkItemForecastUpdateOne {
 	_u.mutation.SetSubjectKey(v)
@@ -1256,6 +1363,26 @@ func (_u *WorkItemForecastUpdateOne) SetNillableWorkActionID(v *int) *WorkItemFo
 // ClearWorkActionID clears the value of the "work_action_id" field.
 func (_u *WorkItemForecastUpdateOne) ClearWorkActionID() *WorkItemForecastUpdateOne {
 	_u.mutation.ClearWorkActionID()
+	return _u
+}
+
+// SetForecastEvaluationID sets the "forecast_evaluation_id" field.
+func (_u *WorkItemForecastUpdateOne) SetForecastEvaluationID(v int) *WorkItemForecastUpdateOne {
+	_u.mutation.SetForecastEvaluationID(v)
+	return _u
+}
+
+// SetNillableForecastEvaluationID sets the "forecast_evaluation_id" field if the given value is not nil.
+func (_u *WorkItemForecastUpdateOne) SetNillableForecastEvaluationID(v *int) *WorkItemForecastUpdateOne {
+	if v != nil {
+		_u.SetForecastEvaluationID(*v)
+	}
+	return _u
+}
+
+// ClearForecastEvaluationID clears the value of the "forecast_evaluation_id" field.
+func (_u *WorkItemForecastUpdateOne) ClearForecastEvaluationID() *WorkItemForecastUpdateOne {
+	_u.mutation.ClearForecastEvaluationID()
 	return _u
 }
 
@@ -1823,6 +1950,11 @@ func (_u *WorkItemForecastUpdateOne) SetWorkAction(v *WorkAction) *WorkItemForec
 	return _u.SetWorkActionID(v.ID)
 }
 
+// SetForecastEvaluation sets the "forecast_evaluation" edge to the WorkForecastEvaluation entity.
+func (_u *WorkItemForecastUpdateOne) SetForecastEvaluation(v *WorkForecastEvaluation) *WorkItemForecastUpdateOne {
+	return _u.SetForecastEvaluationID(v.ID)
+}
+
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *WorkItemForecastUpdateOne) SetLatestEvidence(v *Evidence) *WorkItemForecastUpdateOne {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -1848,6 +1980,12 @@ func (_u *WorkItemForecastUpdateOne) ClearTicket() *WorkItemForecastUpdateOne {
 // ClearWorkAction clears the "work_action" edge to the WorkAction entity.
 func (_u *WorkItemForecastUpdateOne) ClearWorkAction() *WorkItemForecastUpdateOne {
 	_u.mutation.ClearWorkAction()
+	return _u
+}
+
+// ClearForecastEvaluation clears the "forecast_evaluation" edge to the WorkForecastEvaluation entity.
+func (_u *WorkItemForecastUpdateOne) ClearForecastEvaluation() *WorkItemForecastUpdateOne {
+	_u.mutation.ClearForecastEvaluation()
 	return _u
 }
 
@@ -1988,6 +2126,12 @@ func (_u *WorkItemForecastUpdateOne) sqlSave(ctx context.Context) (_node *WorkIt
 	}
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workitemforecast.FieldSubjectKind, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workitemforecast.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workitemforecast.FieldSubjectObjectType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workitemforecast.FieldSubjectKey, field.TypeString, value)
@@ -2228,6 +2372,35 @@ func (_u *WorkItemForecastUpdateOne) sqlSave(ctx context.Context) (_node *WorkIt
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ForecastEvaluationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workitemforecast.ForecastEvaluationTable,
+			Columns: []string{workitemforecast.ForecastEvaluationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workforecastevaluation.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ForecastEvaluationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workitemforecast.ForecastEvaluationTable,
+			Columns: []string{workitemforecast.ForecastEvaluationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workforecastevaluation.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

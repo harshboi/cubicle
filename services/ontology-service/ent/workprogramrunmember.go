@@ -18,7 +18,7 @@ type WorkProgramRunMember struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// Optional Ent run row this membership belongs to.
+	// Ent run row this membership belongs to.
 	WorkProgramRunID int `json:"work_program_run_id,omitempty"`
 	// Stable run key, retained for replay compatibility.
 	RunKey string `json:"run_key,omitempty"`

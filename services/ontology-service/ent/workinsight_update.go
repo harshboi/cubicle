@@ -103,6 +103,26 @@ func (_u *WorkInsightUpdate) SetNillableSubjectKind(v *workinsight.SubjectKind) 
 	return _u
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkInsightUpdate) SetSubjectObjectType(v string) *WorkInsightUpdate {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkInsightUpdate) SetNillableSubjectObjectType(v *string) *WorkInsightUpdate {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkInsightUpdate) ClearSubjectObjectType() *WorkInsightUpdate {
+	_u.mutation.ClearSubjectObjectType()
+	return _u
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_u *WorkInsightUpdate) SetSubjectKey(v string) *WorkInsightUpdate {
 	_u.mutation.SetSubjectKey(v)
@@ -1078,6 +1098,12 @@ func (_u *WorkInsightUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workinsight.FieldSubjectKind, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workinsight.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workinsight.FieldSubjectObjectType, field.TypeString)
+	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workinsight.FieldSubjectKey, field.TypeString, value)
 	}
@@ -1540,6 +1566,26 @@ func (_u *WorkInsightUpdateOne) SetNillableSubjectKind(v *workinsight.SubjectKin
 	if v != nil {
 		_u.SetSubjectKind(*v)
 	}
+	return _u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkInsightUpdateOne) SetSubjectObjectType(v string) *WorkInsightUpdateOne {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkInsightUpdateOne) SetNillableSubjectObjectType(v *string) *WorkInsightUpdateOne {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkInsightUpdateOne) ClearSubjectObjectType() *WorkInsightUpdateOne {
+	_u.mutation.ClearSubjectObjectType()
 	return _u
 }
 
@@ -2547,6 +2593,12 @@ func (_u *WorkInsightUpdateOne) sqlSave(ctx context.Context) (_node *WorkInsight
 	}
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workinsight.FieldSubjectKind, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workinsight.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workinsight.FieldSubjectObjectType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workinsight.FieldSubjectKey, field.TypeString, value)

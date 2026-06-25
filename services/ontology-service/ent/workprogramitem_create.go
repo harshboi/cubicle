@@ -9,6 +9,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workaction"
 	"cubicle/services/ontology-service/ent/workprogramitem"
+	"cubicle/services/ontology-service/ent/workprogramitemlink"
 	"cubicle/services/ontology-service/ent/workstream"
 	"errors"
 	"fmt"
@@ -105,6 +106,20 @@ func (_c *WorkProgramItemCreate) SetSubjectKind(v workprogramitem.SubjectKind) *
 func (_c *WorkProgramItemCreate) SetNillableSubjectKind(v *workprogramitem.SubjectKind) *WorkProgramItemCreate {
 	if v != nil {
 		_c.SetSubjectKind(*v)
+	}
+	return _c
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkProgramItemCreate) SetSubjectObjectType(v string) *WorkProgramItemCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkProgramItemCreate) SetNillableSubjectObjectType(v *string) *WorkProgramItemCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
 	}
 	return _c
 }
@@ -720,6 +735,21 @@ func (_c *WorkProgramItemCreate) SetLatestEvidence(v *Evidence) *WorkProgramItem
 	return _c.SetLatestEvidenceID(v.ID)
 }
 
+// AddLinkIDs adds the "links" edge to the WorkProgramItemLink entity by IDs.
+func (_c *WorkProgramItemCreate) AddLinkIDs(ids ...int) *WorkProgramItemCreate {
+	_c.mutation.AddLinkIDs(ids...)
+	return _c
+}
+
+// AddLinks adds the "links" edges to the WorkProgramItemLink entity.
+func (_c *WorkProgramItemCreate) AddLinks(v ...*WorkProgramItemLink) *WorkProgramItemCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddLinkIDs(ids...)
+}
+
 // Mutation returns the WorkProgramItemMutation object of the builder.
 func (_c *WorkProgramItemCreate) Mutation() *WorkProgramItemMutation {
 	return _c.mutation
@@ -962,6 +992,10 @@ func (_c *WorkProgramItemCreate) createSpec() (*WorkProgramItem, *sqlgraph.Creat
 	if value, ok := _c.mutation.SubjectKind(); ok {
 		_spec.SetField(workprogramitem.FieldSubjectKind, field.TypeEnum, value)
 		_node.SubjectKind = value
+	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workprogramitem.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
 	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workprogramitem.FieldSubjectKey, field.TypeString, value)
@@ -1216,6 +1250,22 @@ func (_c *WorkProgramItemCreate) createSpec() (*WorkProgramItem, *sqlgraph.Creat
 		_node.LatestEvidenceID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := _c.mutation.LinksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   workprogramitem.LinksTable,
+			Columns: []string{workprogramitem.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogramitemlink.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -1373,6 +1423,24 @@ func (u *WorkProgramItemUpsert) SetSubjectKind(v workprogramitem.SubjectKind) *W
 // UpdateSubjectKind sets the "subject_kind" field to the value that was provided on create.
 func (u *WorkProgramItemUpsert) UpdateSubjectKind() *WorkProgramItemUpsert {
 	u.SetExcluded(workprogramitem.FieldSubjectKind)
+	return u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkProgramItemUpsert) SetSubjectObjectType(v string) *WorkProgramItemUpsert {
+	u.Set(workprogramitem.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkProgramItemUpsert) UpdateSubjectObjectType() *WorkProgramItemUpsert {
+	u.SetExcluded(workprogramitem.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkProgramItemUpsert) ClearSubjectObjectType() *WorkProgramItemUpsert {
+	u.SetNull(workprogramitem.FieldSubjectObjectType)
 	return u
 }
 
@@ -2258,6 +2326,27 @@ func (u *WorkProgramItemUpsertOne) SetSubjectKind(v workprogramitem.SubjectKind)
 func (u *WorkProgramItemUpsertOne) UpdateSubjectKind() *WorkProgramItemUpsertOne {
 	return u.Update(func(s *WorkProgramItemUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkProgramItemUpsertOne) SetSubjectObjectType(v string) *WorkProgramItemUpsertOne {
+	return u.Update(func(s *WorkProgramItemUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkProgramItemUpsertOne) UpdateSubjectObjectType() *WorkProgramItemUpsertOne {
+	return u.Update(func(s *WorkProgramItemUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkProgramItemUpsertOne) ClearSubjectObjectType() *WorkProgramItemUpsertOne {
+	return u.Update(func(s *WorkProgramItemUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
@@ -3428,6 +3517,27 @@ func (u *WorkProgramItemUpsertBulk) SetSubjectKind(v workprogramitem.SubjectKind
 func (u *WorkProgramItemUpsertBulk) UpdateSubjectKind() *WorkProgramItemUpsertBulk {
 	return u.Update(func(s *WorkProgramItemUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkProgramItemUpsertBulk) SetSubjectObjectType(v string) *WorkProgramItemUpsertBulk {
+	return u.Update(func(s *WorkProgramItemUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkProgramItemUpsertBulk) UpdateSubjectObjectType() *WorkProgramItemUpsertBulk {
+	return u.Update(func(s *WorkProgramItemUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkProgramItemUpsertBulk) ClearSubjectObjectType() *WorkProgramItemUpsertBulk {
+	return u.Update(func(s *WorkProgramItemUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 

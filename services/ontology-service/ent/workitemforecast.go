@@ -7,6 +7,7 @@ import (
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workforecastevaluation"
 	"cubicle/services/ontology-service/ent/workitemforecast"
 	"fmt"
 	"strings"
@@ -27,6 +28,8 @@ type WorkItemForecast struct {
 	ForecastKind workitemforecast.ForecastKind `json:"forecast_kind,omitempty"`
 	// Resolved typed product kind this forecast is about.
 	SubjectKind workitemforecast.SubjectKind `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Stable product key this forecast is about.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Optional PullRequest subject when the forecast targets a PR.
@@ -35,6 +38,8 @@ type WorkItemForecast struct {
 	TicketID int `json:"ticket_id,omitempty"`
 	// Optional TPM action that should execute or validate this forecast risk.
 	WorkActionID int `json:"work_action_id,omitempty"`
+	// Optional WorkForecastEvaluation row authorizing this forecast's readiness state.
+	ForecastEvaluationID int `json:"forecast_evaluation_id,omitempty"`
 	// Source lifecycle state of the subject when this forecast was generated.
 	SubjectState string `json:"subject_state,omitempty"`
 	// Forecast method selected for this subject.
@@ -107,11 +112,13 @@ type WorkItemForecastEdges struct {
 	Ticket *Ticket `json:"ticket,omitempty"`
 	// Executable TPM action for this forecast risk, when materialized.
 	WorkAction *WorkAction `json:"work_action,omitempty"`
+	// Forecast evaluation row that authorizes ETA readiness for this forecast.
+	ForecastEvaluation *WorkForecastEvaluation `json:"forecast_evaluation,omitempty"`
 	// Most recent evidence supporting this forecast row.
 	LatestEvidence *Evidence `json:"latest_evidence,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // PullRequestOrErr returns the PullRequest value or an error if the edge
@@ -147,12 +154,23 @@ func (e WorkItemForecastEdges) WorkActionOrErr() (*WorkAction, error) {
 	return nil, &NotLoadedError{edge: "work_action"}
 }
 
+// ForecastEvaluationOrErr returns the ForecastEvaluation value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e WorkItemForecastEdges) ForecastEvaluationOrErr() (*WorkForecastEvaluation, error) {
+	if e.ForecastEvaluation != nil {
+		return e.ForecastEvaluation, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: workforecastevaluation.Label}
+	}
+	return nil, &NotLoadedError{edge: "forecast_evaluation"}
+}
+
 // LatestEvidenceOrErr returns the LatestEvidence value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e WorkItemForecastEdges) LatestEvidenceOrErr() (*Evidence, error) {
 	if e.LatestEvidence != nil {
 		return e.LatestEvidence, nil
-	} else if e.loadedTypes[3] {
+	} else if e.loadedTypes[4] {
 		return nil, &NotFoundError{label: evidence.Label}
 	}
 	return nil, &NotLoadedError{edge: "latest_evidence"}
@@ -167,9 +185,9 @@ func (*WorkItemForecast) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case workitemforecast.FieldAgeDays, workitemforecast.FieldPredictedTotalCycleDays, workitemforecast.FieldPredictedRemainingDays, workitemforecast.FieldOverdueDays, workitemforecast.FieldRiskScore, workitemforecast.FieldConfidence, workitemforecast.FieldRankScore:
 			values[i] = new(sql.NullFloat64)
-		case workitemforecast.FieldID, workitemforecast.FieldPullRequestID, workitemforecast.FieldTicketID, workitemforecast.FieldWorkActionID, workitemforecast.FieldLatestEvidenceID, workitemforecast.FieldEvidenceCount, workitemforecast.FieldEventCount:
+		case workitemforecast.FieldID, workitemforecast.FieldPullRequestID, workitemforecast.FieldTicketID, workitemforecast.FieldWorkActionID, workitemforecast.FieldForecastEvaluationID, workitemforecast.FieldLatestEvidenceID, workitemforecast.FieldEvidenceCount, workitemforecast.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workitemforecast.FieldKey, workitemforecast.FieldForecastKind, workitemforecast.FieldSubjectKind, workitemforecast.FieldSubjectKey, workitemforecast.FieldSubjectState, workitemforecast.FieldForecastMethod, workitemforecast.FieldModelName, workitemforecast.FieldRiskBand, workitemforecast.FieldReadinessState, workitemforecast.FieldReadinessReason, workitemforecast.FieldSourceSystem, workitemforecast.FieldSourceInstance, workitemforecast.FieldExternalKind, workitemforecast.FieldExternalID, workitemforecast.FieldSourceURL, workitemforecast.FieldFreshnessState, workitemforecast.FieldVisibility:
+		case workitemforecast.FieldKey, workitemforecast.FieldForecastKind, workitemforecast.FieldSubjectKind, workitemforecast.FieldSubjectObjectType, workitemforecast.FieldSubjectKey, workitemforecast.FieldSubjectState, workitemforecast.FieldForecastMethod, workitemforecast.FieldModelName, workitemforecast.FieldRiskBand, workitemforecast.FieldReadinessState, workitemforecast.FieldReadinessReason, workitemforecast.FieldSourceSystem, workitemforecast.FieldSourceInstance, workitemforecast.FieldExternalKind, workitemforecast.FieldExternalID, workitemforecast.FieldSourceURL, workitemforecast.FieldFreshnessState, workitemforecast.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workitemforecast.FieldForecastedAt, workitemforecast.FieldFirstSeenAt, workitemforecast.FieldLastActivityAt, workitemforecast.FieldCreatedAt, workitemforecast.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -212,6 +230,12 @@ func (_m *WorkItemForecast) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.SubjectKind = workitemforecast.SubjectKind(value.String)
 			}
+		case workitemforecast.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
+			}
 		case workitemforecast.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field subject_key", values[i])
@@ -235,6 +259,12 @@ func (_m *WorkItemForecast) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field work_action_id", values[i])
 			} else if value.Valid {
 				_m.WorkActionID = int(value.Int64)
+			}
+		case workitemforecast.FieldForecastEvaluationID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field forecast_evaluation_id", values[i])
+			} else if value.Valid {
+				_m.ForecastEvaluationID = int(value.Int64)
 			}
 		case workitemforecast.FieldSubjectState:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -442,6 +472,11 @@ func (_m *WorkItemForecast) QueryWorkAction() *WorkActionQuery {
 	return NewWorkItemForecastClient(_m.config).QueryWorkAction(_m)
 }
 
+// QueryForecastEvaluation queries the "forecast_evaluation" edge of the WorkItemForecast entity.
+func (_m *WorkItemForecast) QueryForecastEvaluation() *WorkForecastEvaluationQuery {
+	return NewWorkItemForecastClient(_m.config).QueryForecastEvaluation(_m)
+}
+
 // QueryLatestEvidence queries the "latest_evidence" edge of the WorkItemForecast entity.
 func (_m *WorkItemForecast) QueryLatestEvidence() *EvidenceQuery {
 	return NewWorkItemForecastClient(_m.config).QueryLatestEvidence(_m)
@@ -479,6 +514,9 @@ func (_m *WorkItemForecast) String() string {
 	builder.WriteString("subject_kind=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SubjectKind))
 	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
+	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)
 	builder.WriteString(", ")
@@ -490,6 +528,9 @@ func (_m *WorkItemForecast) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("work_action_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.WorkActionID))
+	builder.WriteString(", ")
+	builder.WriteString("forecast_evaluation_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ForecastEvaluationID))
 	builder.WriteString(", ")
 	builder.WriteString("subject_state=")
 	builder.WriteString(_m.SubjectState)

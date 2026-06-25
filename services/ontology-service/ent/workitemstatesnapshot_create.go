@@ -46,6 +46,20 @@ func (_c *WorkItemStateSnapshotCreate) SetNillableSubjectKind(v *workitemstatesn
 	return _c
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkItemStateSnapshotCreate) SetSubjectObjectType(v string) *WorkItemStateSnapshotCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkItemStateSnapshotCreate) SetNillableSubjectObjectType(v *string) *WorkItemStateSnapshotCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
+	}
+	return _c
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_c *WorkItemStateSnapshotCreate) SetSubjectKey(v string) *WorkItemStateSnapshotCreate {
 	_c.mutation.SetSubjectKey(v)
@@ -928,6 +942,10 @@ func (_c *WorkItemStateSnapshotCreate) createSpec() (*WorkItemStateSnapshot, *sq
 		_spec.SetField(workitemstatesnapshot.FieldSubjectKind, field.TypeEnum, value)
 		_node.SubjectKind = value
 	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workitemstatesnapshot.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
+	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workitemstatesnapshot.FieldSubjectKey, field.TypeString, value)
 		_node.SubjectKey = value
@@ -1260,6 +1278,24 @@ func (u *WorkItemStateSnapshotUpsert) SetSubjectKind(v workitemstatesnapshot.Sub
 // UpdateSubjectKind sets the "subject_kind" field to the value that was provided on create.
 func (u *WorkItemStateSnapshotUpsert) UpdateSubjectKind() *WorkItemStateSnapshotUpsert {
 	u.SetExcluded(workitemstatesnapshot.FieldSubjectKind)
+	return u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkItemStateSnapshotUpsert) SetSubjectObjectType(v string) *WorkItemStateSnapshotUpsert {
+	u.Set(workitemstatesnapshot.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkItemStateSnapshotUpsert) UpdateSubjectObjectType() *WorkItemStateSnapshotUpsert {
+	u.SetExcluded(workitemstatesnapshot.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkItemStateSnapshotUpsert) ClearSubjectObjectType() *WorkItemStateSnapshotUpsert {
+	u.SetNull(workitemstatesnapshot.FieldSubjectObjectType)
 	return u
 }
 
@@ -2185,6 +2221,27 @@ func (u *WorkItemStateSnapshotUpsertOne) SetSubjectKind(v workitemstatesnapshot.
 func (u *WorkItemStateSnapshotUpsertOne) UpdateSubjectKind() *WorkItemStateSnapshotUpsertOne {
 	return u.Update(func(s *WorkItemStateSnapshotUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkItemStateSnapshotUpsertOne) SetSubjectObjectType(v string) *WorkItemStateSnapshotUpsertOne {
+	return u.Update(func(s *WorkItemStateSnapshotUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkItemStateSnapshotUpsertOne) UpdateSubjectObjectType() *WorkItemStateSnapshotUpsertOne {
+	return u.Update(func(s *WorkItemStateSnapshotUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkItemStateSnapshotUpsertOne) ClearSubjectObjectType() *WorkItemStateSnapshotUpsertOne {
+	return u.Update(func(s *WorkItemStateSnapshotUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
@@ -3418,6 +3475,27 @@ func (u *WorkItemStateSnapshotUpsertBulk) SetSubjectKind(v workitemstatesnapshot
 func (u *WorkItemStateSnapshotUpsertBulk) UpdateSubjectKind() *WorkItemStateSnapshotUpsertBulk {
 	return u.Update(func(s *WorkItemStateSnapshotUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkItemStateSnapshotUpsertBulk) SetSubjectObjectType(v string) *WorkItemStateSnapshotUpsertBulk {
+	return u.Update(func(s *WorkItemStateSnapshotUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkItemStateSnapshotUpsertBulk) UpdateSubjectObjectType() *WorkItemStateSnapshotUpsertBulk {
+	return u.Update(func(s *WorkItemStateSnapshotUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkItemStateSnapshotUpsertBulk) ClearSubjectObjectType() *WorkItemStateSnapshotUpsertBulk {
+	return u.Update(func(s *WorkItemStateSnapshotUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 

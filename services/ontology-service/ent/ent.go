@@ -9,6 +9,7 @@ import (
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/documentlink"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/evidenceattachment"
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/messageauthorship"
 	"cubicle/services/ontology-service/ent/messagelensresult"
@@ -60,6 +61,7 @@ import (
 	"cubicle/services/ontology-service/ent/workprogrambriefsnapshot"
 	"cubicle/services/ontology-service/ent/workprogramevidenceneed"
 	"cubicle/services/ontology-service/ent/workprogramitem"
+	"cubicle/services/ontology-service/ent/workprogramitemlink"
 	"cubicle/services/ontology-service/ent/workprogrammilestone"
 	"cubicle/services/ontology-service/ent/workprogramownerrollupsnapshot"
 	"cubicle/services/ontology-service/ent/workprogramqualitygate"
@@ -146,6 +148,7 @@ func checkColumn(t, c string) error {
 			documentlensresult.Table:                documentlensresult.ValidColumn,
 			documentlink.Table:                      documentlink.ValidColumn,
 			evidence.Table:                          evidence.ValidColumn,
+			evidenceattachment.Table:                evidenceattachment.ValidColumn,
 			message.Table:                           message.ValidColumn,
 			messageauthorship.Table:                 messageauthorship.ValidColumn,
 			messagelensresult.Table:                 messagelensresult.ValidColumn,
@@ -197,6 +200,7 @@ func checkColumn(t, c string) error {
 			workprogrambriefsnapshot.Table:          workprogrambriefsnapshot.ValidColumn,
 			workprogramevidenceneed.Table:           workprogramevidenceneed.ValidColumn,
 			workprogramitem.Table:                   workprogramitem.ValidColumn,
+			workprogramitemlink.Table:               workprogramitemlink.ValidColumn,
 			workprogrammilestone.Table:              workprogrammilestone.ValidColumn,
 			workprogramownerrollupsnapshot.Table:    workprogramownerrollupsnapshot.ValidColumn,
 			workprogramqualitygate.Table:            workprogramqualitygate.ValidColumn,

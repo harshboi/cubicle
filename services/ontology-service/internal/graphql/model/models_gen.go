@@ -985,6 +985,8 @@ type WorkProgramBriefQualityGate struct {
 type WorkProgramBriefRiskDriver struct {
 	Key               string               `json:"key"`
 	DriverKind        string               `json:"driverKind"`
+	SubjectKind       *string              `json:"subjectKind,omitempty"`
+	SubjectObjectType *string              `json:"subjectObjectType,omitempty"`
 	SubjectKey        *string              `json:"subjectKey,omitempty"`
 	Title             string               `json:"title"`
 	Status            string               `json:"status"`
@@ -1144,45 +1146,66 @@ type WorkProgramGuardrailPacket struct {
 // WorkProgramItem is the workstream register row that TPM views page over.
 // It references product work while keeping generated status and claim gates separate.
 type WorkProgramItem struct {
+	Key                   string                 `json:"key"`
+	SourceInstance        *string                `json:"sourceInstance,omitempty"`
+	WorkstreamKey         string                 `json:"workstreamKey"`
+	SubjectKind           string                 `json:"subjectKind"`
+	SubjectObjectType     *string                `json:"subjectObjectType,omitempty"`
+	SubjectKey            string                 `json:"subjectKey"`
+	LinkedTicketKeys      []string               `json:"linkedTicketKeys"`
+	LinkedPullRequestKeys []string               `json:"linkedPullRequestKeys"`
+	Title                 string                 `json:"title"`
+	ProgramStatus         string                 `json:"programStatus"`
+	TpmBucket             string                 `json:"tpmBucket"`
+	OwnerKey              *string                `json:"ownerKey,omitempty"`
+	OwnerSource           *string                `json:"ownerSource,omitempty"`
+	AuthorDri             *string                `json:"authorDri,omitempty"`
+	RequestedReviewerKeys []string               `json:"requestedReviewerKeys"`
+	ReviewerOrApprover    *string                `json:"reviewerOrApprover,omitempty"`
+	NextAction            *string                `json:"nextAction,omitempty"`
+	DecisionNeeded        *string                `json:"decisionNeeded,omitempty"`
+	DecisionState         string                 `json:"decisionState"`
+	DecisionGateReason    *string                `json:"decisionGateReason,omitempty"`
+	ClaimUse              string                 `json:"claimUse"`
+	ClaimGateReason       string                 `json:"claimGateReason"`
+	ProductActionAllowed  bool                   `json:"productActionAllowed"`
+	AbsenceClaimAllowed   bool                   `json:"absenceClaimAllowed"`
+	EtaClaimAllowed       bool                   `json:"etaClaimAllowed"`
+	DueBucket             string                 `json:"dueBucket"`
+	LastSourceUpdateAt    *string                `json:"lastSourceUpdateAt,omitempty"`
+	AgeDays               *float64               `json:"ageDays,omitempty"`
+	StaleDays             *float64               `json:"staleDays,omitempty"`
+	RiskScore             float64                `json:"riskScore"`
+	BlockerLabelState     *string                `json:"blockerLabelState,omitempty"`
+	CiSignal              *string                `json:"ciSignal,omitempty"`
+	TransitionState       *string                `json:"transitionState,omitempty"`
+	DependencySummary     *string                `json:"dependencySummary,omitempty"`
+	SourceCoverageState   *string                `json:"sourceCoverageState,omitempty"`
+	LabelQuality          *string                `json:"labelQuality,omitempty"`
+	EvidenceRef           *string                `json:"evidenceRef,omitempty"`
+	Evidence              *WorkEvidenceSummary   `json:"evidence,omitempty"`
+	Badges                []*WorkActionBadge     `json:"badges"`
+	Action                *WorkAction            `json:"action,omitempty"`
+	Links                 []*WorkProgramItemLink `json:"links"`
+}
+
+// Structured adjacency for a WorkProgramItem.
+// Display key lists remain UI hints; these rows are the traversable relationships.
+type WorkProgramItemLink struct {
 	Key                   string               `json:"key"`
 	SourceInstance        *string              `json:"sourceInstance,omitempty"`
-	WorkstreamKey         string               `json:"workstreamKey"`
-	SubjectKind           string               `json:"subjectKind"`
-	SubjectKey            string               `json:"subjectKey"`
-	LinkedTicketKeys      []string             `json:"linkedTicketKeys"`
-	LinkedPullRequestKeys []string             `json:"linkedPullRequestKeys"`
-	Title                 string               `json:"title"`
-	ProgramStatus         string               `json:"programStatus"`
-	TpmBucket             string               `json:"tpmBucket"`
-	OwnerKey              *string              `json:"ownerKey,omitempty"`
-	OwnerSource           *string              `json:"ownerSource,omitempty"`
-	AuthorDri             *string              `json:"authorDri,omitempty"`
-	RequestedReviewerKeys []string             `json:"requestedReviewerKeys"`
-	ReviewerOrApprover    *string              `json:"reviewerOrApprover,omitempty"`
-	NextAction            *string              `json:"nextAction,omitempty"`
-	DecisionNeeded        *string              `json:"decisionNeeded,omitempty"`
-	DecisionState         string               `json:"decisionState"`
-	DecisionGateReason    *string              `json:"decisionGateReason,omitempty"`
-	ClaimUse              string               `json:"claimUse"`
-	ClaimGateReason       string               `json:"claimGateReason"`
-	ProductActionAllowed  bool                 `json:"productActionAllowed"`
-	AbsenceClaimAllowed   bool                 `json:"absenceClaimAllowed"`
-	EtaClaimAllowed       bool                 `json:"etaClaimAllowed"`
-	DueBucket             string               `json:"dueBucket"`
-	LastSourceUpdateAt    *string              `json:"lastSourceUpdateAt,omitempty"`
-	AgeDays               *float64             `json:"ageDays,omitempty"`
-	StaleDays             *float64             `json:"staleDays,omitempty"`
-	RiskScore             float64              `json:"riskScore"`
-	BlockerLabelState     *string              `json:"blockerLabelState,omitempty"`
-	CiSignal              *string              `json:"ciSignal,omitempty"`
-	TransitionState       *string              `json:"transitionState,omitempty"`
-	DependencySummary     *string              `json:"dependencySummary,omitempty"`
-	SourceCoverageState   *string              `json:"sourceCoverageState,omitempty"`
-	LabelQuality          *string              `json:"labelQuality,omitempty"`
+	LinkKind              string               `json:"linkKind"`
+	TargetObjectType      string               `json:"targetObjectType"`
+	TargetKey             string               `json:"targetKey"`
+	TargetResolutionState string               `json:"targetResolutionState"`
+	LinkSummary           *string              `json:"linkSummary,omitempty"`
+	LinkSource            *string              `json:"linkSource,omitempty"`
 	EvidenceRef           *string              `json:"evidenceRef,omitempty"`
 	Evidence              *WorkEvidenceSummary `json:"evidence,omitempty"`
-	Badges                []*WorkActionBadge   `json:"badges"`
-	Action                *WorkAction          `json:"action,omitempty"`
+	FreshnessState        string               `json:"freshnessState"`
+	Visibility            string               `json:"visibility"`
+	Confidence            float64              `json:"confidence"`
+	RankScore             float64              `json:"rankScore"`
 }
 
 type WorkProgramMilestone struct {
@@ -1190,6 +1213,7 @@ type WorkProgramMilestone struct {
 	SourceInstance            *string              `json:"sourceInstance,omitempty"`
 	WorkstreamKey             string               `json:"workstreamKey"`
 	SubjectKind               string               `json:"subjectKind"`
+	SubjectObjectType         *string              `json:"subjectObjectType,omitempty"`
 	SubjectKey                string               `json:"subjectKey"`
 	SubjectTitle              *string              `json:"subjectTitle,omitempty"`
 	SubjectURL                *string              `json:"subjectUrl,omitempty"`
@@ -1513,6 +1537,8 @@ type WorkstreamStandupSection struct {
 	FreshnessState    string               `json:"freshnessState"`
 	Confidence        float64              `json:"confidence"`
 	OwnerKey          *string              `json:"ownerKey,omitempty"`
+	SubjectKind       string               `json:"subjectKind"`
+	SubjectObjectType *string              `json:"subjectObjectType,omitempty"`
 	SubjectKey        *string              `json:"subjectKey,omitempty"`
 	ActionType        *string              `json:"actionType,omitempty"`
 	StatusSignal      *string              `json:"statusSignal,omitempty"`

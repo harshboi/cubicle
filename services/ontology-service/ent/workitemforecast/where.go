@@ -60,6 +60,11 @@ func Key(v string) predicate.WorkItemForecast {
 	return predicate.WorkItemForecast(sql.FieldEQ(FieldKey, v))
 }
 
+// SubjectObjectType applies equality check predicate on the "subject_object_type" field. It's identical to SubjectObjectTypeEQ.
+func SubjectObjectType(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
 // SubjectKey applies equality check predicate on the "subject_key" field. It's identical to SubjectKeyEQ.
 func SubjectKey(v string) predicate.WorkItemForecast {
 	return predicate.WorkItemForecast(sql.FieldEQ(FieldSubjectKey, v))
@@ -78,6 +83,11 @@ func TicketID(v int) predicate.WorkItemForecast {
 // WorkActionID applies equality check predicate on the "work_action_id" field. It's identical to WorkActionIDEQ.
 func WorkActionID(v int) predicate.WorkItemForecast {
 	return predicate.WorkItemForecast(sql.FieldEQ(FieldWorkActionID, v))
+}
+
+// ForecastEvaluationID applies equality check predicate on the "forecast_evaluation_id" field. It's identical to ForecastEvaluationIDEQ.
+func ForecastEvaluationID(v int) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldEQ(FieldForecastEvaluationID, v))
 }
 
 // SubjectState applies equality check predicate on the "subject_state" field. It's identical to SubjectStateEQ.
@@ -310,6 +320,81 @@ func SubjectKindNotIn(vs ...SubjectKind) predicate.WorkItemForecast {
 	return predicate.WorkItemForecast(sql.FieldNotIn(FieldSubjectKind, vs...))
 }
 
+// SubjectObjectTypeEQ applies the EQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeEQ(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeNEQ applies the NEQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeNEQ(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldNEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIn applies the In predicate on the "subject_object_type" field.
+func SubjectObjectTypeIn(vs ...string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeNotIn applies the NotIn predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotIn(vs ...string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldNotIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeGT applies the GT predicate on the "subject_object_type" field.
+func SubjectObjectTypeGT(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldGT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeGTE applies the GTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeGTE(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldGTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLT applies the LT predicate on the "subject_object_type" field.
+func SubjectObjectTypeLT(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldLT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLTE applies the LTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeLTE(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldLTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContains applies the Contains predicate on the "subject_object_type" field.
+func SubjectObjectTypeContains(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldContains(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasPrefix applies the HasPrefix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasPrefix(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldHasPrefix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasSuffix applies the HasSuffix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasSuffix(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldHasSuffix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIsNil applies the IsNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeIsNil() predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldIsNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeNotNil applies the NotNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotNil() predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldNotNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeEqualFold applies the EqualFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeEqualFold(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldEqualFold(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContainsFold applies the ContainsFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeContainsFold(v string) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldContainsFold(FieldSubjectObjectType, v))
+}
+
 // SubjectKeyEQ applies the EQ predicate on the "subject_key" field.
 func SubjectKeyEQ(v string) predicate.WorkItemForecast {
 	return predicate.WorkItemForecast(sql.FieldEQ(FieldSubjectKey, v))
@@ -463,6 +548,36 @@ func WorkActionIDIsNil() predicate.WorkItemForecast {
 // WorkActionIDNotNil applies the NotNil predicate on the "work_action_id" field.
 func WorkActionIDNotNil() predicate.WorkItemForecast {
 	return predicate.WorkItemForecast(sql.FieldNotNull(FieldWorkActionID))
+}
+
+// ForecastEvaluationIDEQ applies the EQ predicate on the "forecast_evaluation_id" field.
+func ForecastEvaluationIDEQ(v int) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldEQ(FieldForecastEvaluationID, v))
+}
+
+// ForecastEvaluationIDNEQ applies the NEQ predicate on the "forecast_evaluation_id" field.
+func ForecastEvaluationIDNEQ(v int) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldNEQ(FieldForecastEvaluationID, v))
+}
+
+// ForecastEvaluationIDIn applies the In predicate on the "forecast_evaluation_id" field.
+func ForecastEvaluationIDIn(vs ...int) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldIn(FieldForecastEvaluationID, vs...))
+}
+
+// ForecastEvaluationIDNotIn applies the NotIn predicate on the "forecast_evaluation_id" field.
+func ForecastEvaluationIDNotIn(vs ...int) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldNotIn(FieldForecastEvaluationID, vs...))
+}
+
+// ForecastEvaluationIDIsNil applies the IsNil predicate on the "forecast_evaluation_id" field.
+func ForecastEvaluationIDIsNil() predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldIsNull(FieldForecastEvaluationID))
+}
+
+// ForecastEvaluationIDNotNil applies the NotNil predicate on the "forecast_evaluation_id" field.
+func ForecastEvaluationIDNotNil() predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(sql.FieldNotNull(FieldForecastEvaluationID))
 }
 
 // SubjectStateEQ applies the EQ predicate on the "subject_state" field.
@@ -1951,6 +2066,29 @@ func HasWorkAction() predicate.WorkItemForecast {
 func HasWorkActionWith(preds ...predicate.WorkAction) predicate.WorkItemForecast {
 	return predicate.WorkItemForecast(func(s *sql.Selector) {
 		step := newWorkActionStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasForecastEvaluation applies the HasEdge predicate on the "forecast_evaluation" edge.
+func HasForecastEvaluation() predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ForecastEvaluationTable, ForecastEvaluationColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasForecastEvaluationWith applies the HasEdge predicate on the "forecast_evaluation" edge with a given conditions (other predicates).
+func HasForecastEvaluationWith(preds ...predicate.WorkForecastEvaluation) predicate.WorkItemForecast {
+	return predicate.WorkItemForecast(func(s *sql.Selector) {
+		step := newForecastEvaluationStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

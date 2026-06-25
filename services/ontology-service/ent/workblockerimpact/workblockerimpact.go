@@ -43,6 +43,8 @@ const (
 	FieldAffectedKey = "affected_key"
 	// FieldSubjectKind holds the string denoting the subject_kind field in the database.
 	FieldSubjectKind = "subject_kind"
+	// FieldSubjectObjectType holds the string denoting the subject_object_type field in the database.
+	FieldSubjectObjectType = "subject_object_type"
 	// FieldSubjectKey holds the string denoting the subject_key field in the database.
 	FieldSubjectKey = "subject_key"
 	// FieldPathLength holds the string denoting the path_length field in the database.
@@ -164,6 +166,7 @@ var Columns = []string{
 	FieldAffectedKind,
 	FieldAffectedKey,
 	FieldSubjectKind,
+	FieldSubjectObjectType,
 	FieldSubjectKey,
 	FieldPathLength,
 	FieldSourceCoverageState,
@@ -526,6 +529,11 @@ func ByAffectedKey(opts ...sql.OrderTermOption) OrderOption {
 // BySubjectKind orders the results by the subject_kind field.
 func BySubjectKind(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSubjectKind, opts...).ToFunc()
+}
+
+// BySubjectObjectType orders the results by the subject_object_type field.
+func BySubjectObjectType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSubjectObjectType, opts...).ToFunc()
 }
 
 // BySubjectKey orders the results by the subject_key field.

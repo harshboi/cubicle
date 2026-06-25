@@ -156,6 +156,20 @@ func (_c *WorkstreamStandupSectionCreate) SetNillableSubjectKind(v *workstreamst
 	return _c
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkstreamStandupSectionCreate) SetSubjectObjectType(v string) *WorkstreamStandupSectionCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkstreamStandupSectionCreate) SetNillableSubjectObjectType(v *string) *WorkstreamStandupSectionCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
+	}
+	return _c
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_c *WorkstreamStandupSectionCreate) SetSubjectKey(v string) *WorkstreamStandupSectionCreate {
 	_c.mutation.SetSubjectKey(v)
@@ -703,6 +717,10 @@ func (_c *WorkstreamStandupSectionCreate) createSpec() (*WorkstreamStandupSectio
 		_spec.SetField(workstreamstandupsection.FieldSubjectKind, field.TypeEnum, value)
 		_node.SubjectKind = value
 	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workstreamstandupsection.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
+	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workstreamstandupsection.FieldSubjectKey, field.TypeString, value)
 		_node.SubjectKey = value
@@ -1072,6 +1090,24 @@ func (u *WorkstreamStandupSectionUpsert) SetSubjectKind(v workstreamstandupsecti
 // UpdateSubjectKind sets the "subject_kind" field to the value that was provided on create.
 func (u *WorkstreamStandupSectionUpsert) UpdateSubjectKind() *WorkstreamStandupSectionUpsert {
 	u.SetExcluded(workstreamstandupsection.FieldSubjectKind)
+	return u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkstreamStandupSectionUpsert) SetSubjectObjectType(v string) *WorkstreamStandupSectionUpsert {
+	u.Set(workstreamstandupsection.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkstreamStandupSectionUpsert) UpdateSubjectObjectType() *WorkstreamStandupSectionUpsert {
+	u.SetExcluded(workstreamstandupsection.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkstreamStandupSectionUpsert) ClearSubjectObjectType() *WorkstreamStandupSectionUpsert {
+	u.SetNull(workstreamstandupsection.FieldSubjectObjectType)
 	return u
 }
 
@@ -1667,6 +1703,27 @@ func (u *WorkstreamStandupSectionUpsertOne) SetSubjectKind(v workstreamstandupse
 func (u *WorkstreamStandupSectionUpsertOne) UpdateSubjectKind() *WorkstreamStandupSectionUpsertOne {
 	return u.Update(func(s *WorkstreamStandupSectionUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkstreamStandupSectionUpsertOne) SetSubjectObjectType(v string) *WorkstreamStandupSectionUpsertOne {
+	return u.Update(func(s *WorkstreamStandupSectionUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkstreamStandupSectionUpsertOne) UpdateSubjectObjectType() *WorkstreamStandupSectionUpsertOne {
+	return u.Update(func(s *WorkstreamStandupSectionUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkstreamStandupSectionUpsertOne) ClearSubjectObjectType() *WorkstreamStandupSectionUpsertOne {
+	return u.Update(func(s *WorkstreamStandupSectionUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
@@ -2487,6 +2544,27 @@ func (u *WorkstreamStandupSectionUpsertBulk) SetSubjectKind(v workstreamstandups
 func (u *WorkstreamStandupSectionUpsertBulk) UpdateSubjectKind() *WorkstreamStandupSectionUpsertBulk {
 	return u.Update(func(s *WorkstreamStandupSectionUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkstreamStandupSectionUpsertBulk) SetSubjectObjectType(v string) *WorkstreamStandupSectionUpsertBulk {
+	return u.Update(func(s *WorkstreamStandupSectionUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkstreamStandupSectionUpsertBulk) UpdateSubjectObjectType() *WorkstreamStandupSectionUpsertBulk {
+	return u.Update(func(s *WorkstreamStandupSectionUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkstreamStandupSectionUpsertBulk) ClearSubjectObjectType() *WorkstreamStandupSectionUpsertBulk {
+	return u.Update(func(s *WorkstreamStandupSectionUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 

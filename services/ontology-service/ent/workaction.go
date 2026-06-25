@@ -34,6 +34,8 @@ type WorkAction struct {
 	DecisionReason string `json:"decision_reason,omitempty"`
 	// Resolved typed product kind this action is about.
 	SubjectKind workaction.SubjectKind `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Stable product key or source-neutral subject key this action is about.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Optional PullRequest subject when the action has a typed PR target.
@@ -169,7 +171,7 @@ func (*WorkAction) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case workaction.FieldID, workaction.FieldPullRequestID, workaction.FieldTicketID, workaction.FieldLatestEvidenceID, workaction.FieldEvidenceCount, workaction.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workaction.FieldKey, workaction.FieldActionType, workaction.FieldActionState, workaction.FieldDecisionState, workaction.FieldDecision, workaction.FieldDecisionReason, workaction.FieldSubjectKind, workaction.FieldSubjectKey, workaction.FieldOwnerKey, workaction.FieldOwnerSource, workaction.FieldDueBucket, workaction.FieldCreatedFromRunKey, workaction.FieldSourceSystem, workaction.FieldSourceInstance, workaction.FieldExternalKind, workaction.FieldExternalID, workaction.FieldSourceURL, workaction.FieldFreshnessState, workaction.FieldVisibility:
+		case workaction.FieldKey, workaction.FieldActionType, workaction.FieldActionState, workaction.FieldDecisionState, workaction.FieldDecision, workaction.FieldDecisionReason, workaction.FieldSubjectKind, workaction.FieldSubjectObjectType, workaction.FieldSubjectKey, workaction.FieldOwnerKey, workaction.FieldOwnerSource, workaction.FieldDueBucket, workaction.FieldCreatedFromRunKey, workaction.FieldSourceSystem, workaction.FieldSourceInstance, workaction.FieldExternalKind, workaction.FieldExternalID, workaction.FieldSourceURL, workaction.FieldFreshnessState, workaction.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workaction.FieldOpenedAt, workaction.FieldDecidedAt, workaction.FieldClosedAt, workaction.FieldFirstSeenAt, workaction.FieldLastActivityAt, workaction.FieldCreatedAt, workaction.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -235,6 +237,12 @@ func (_m *WorkAction) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field subject_kind", values[i])
 			} else if value.Valid {
 				_m.SubjectKind = workaction.SubjectKind(value.String)
+			}
+		case workaction.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
 			}
 		case workaction.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -473,6 +481,9 @@ func (_m *WorkAction) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("subject_kind=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SubjectKind))
+	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
 	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)

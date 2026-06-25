@@ -30,6 +30,8 @@ type WorkInsight struct {
 	ProducerState workinsight.ProducerState `json:"producer_state,omitempty"`
 	// Resolved typed product kind this insight is about; unsupported subjects stay unknown until modeled.
 	SubjectKind workinsight.SubjectKind `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Stable product key or source-neutral subject key this insight is about.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Optional PullRequest subject when the insight has a typed PR target.
@@ -193,7 +195,7 @@ func (*WorkInsight) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case workinsight.FieldID, workinsight.FieldPullRequestID, workinsight.FieldTicketID, workinsight.FieldLatestEvidenceID, workinsight.FieldEvidenceCount, workinsight.FieldSourceScopeStateID, workinsight.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workinsight.FieldKey, workinsight.FieldInsightKind, workinsight.FieldSeverity, workinsight.FieldProducerState, workinsight.FieldSubjectKind, workinsight.FieldSubjectKey, workinsight.FieldTitle, workinsight.FieldDetails, workinsight.FieldRecommendedAction, workinsight.FieldModelName, workinsight.FieldModelVersion, workinsight.FieldModelMethod, workinsight.FieldScoreExplanation, workinsight.FieldSourceSystem, workinsight.FieldSourceInstance, workinsight.FieldExternalKind, workinsight.FieldExternalID, workinsight.FieldSourceURL, workinsight.FieldSourceVersion, workinsight.FieldContentHash, workinsight.FieldDeletionState, workinsight.FieldACLPolicyKey, workinsight.FieldVisibilityHash, workinsight.FieldACLState, workinsight.FieldFreshnessState, workinsight.FieldVisibility:
+		case workinsight.FieldKey, workinsight.FieldInsightKind, workinsight.FieldSeverity, workinsight.FieldProducerState, workinsight.FieldSubjectKind, workinsight.FieldSubjectObjectType, workinsight.FieldSubjectKey, workinsight.FieldTitle, workinsight.FieldDetails, workinsight.FieldRecommendedAction, workinsight.FieldModelName, workinsight.FieldModelVersion, workinsight.FieldModelMethod, workinsight.FieldScoreExplanation, workinsight.FieldSourceSystem, workinsight.FieldSourceInstance, workinsight.FieldExternalKind, workinsight.FieldExternalID, workinsight.FieldSourceURL, workinsight.FieldSourceVersion, workinsight.FieldContentHash, workinsight.FieldDeletionState, workinsight.FieldACLPolicyKey, workinsight.FieldVisibilityHash, workinsight.FieldACLState, workinsight.FieldFreshnessState, workinsight.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workinsight.FieldSourceUpdatedAt, workinsight.FieldDeletedAt, workinsight.FieldACLCheckedAt, workinsight.FieldFreshnessCheckedAt, workinsight.FieldLastConfirmedAt, workinsight.FieldLastChangedAt, workinsight.FieldFirstSeenAt, workinsight.FieldLastActivityAt, workinsight.FieldCreatedAt, workinsight.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -247,6 +249,12 @@ func (_m *WorkInsight) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field subject_kind", values[i])
 			} else if value.Valid {
 				_m.SubjectKind = workinsight.SubjectKind(value.String)
+			}
+		case workinsight.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
 			}
 		case workinsight.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -563,6 +571,9 @@ func (_m *WorkInsight) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("subject_kind=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SubjectKind))
+	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
 	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)

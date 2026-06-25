@@ -22,6 +22,8 @@ type Tx struct {
 	DocumentLink *DocumentLinkClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
+	// EvidenceAttachment is the client for interacting with the EvidenceAttachment builders.
+	EvidenceAttachment *EvidenceAttachmentClient
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
 	// MessageAuthorship is the client for interacting with the MessageAuthorship builders.
@@ -124,6 +126,8 @@ type Tx struct {
 	WorkProgramEvidenceNeed *WorkProgramEvidenceNeedClient
 	// WorkProgramItem is the client for interacting with the WorkProgramItem builders.
 	WorkProgramItem *WorkProgramItemClient
+	// WorkProgramItemLink is the client for interacting with the WorkProgramItemLink builders.
+	WorkProgramItemLink *WorkProgramItemLinkClient
 	// WorkProgramMilestone is the client for interacting with the WorkProgramMilestone builders.
 	WorkProgramMilestone *WorkProgramMilestoneClient
 	// WorkProgramOwnerRollupSnapshot is the client for interacting with the WorkProgramOwnerRollupSnapshot builders.
@@ -286,6 +290,7 @@ func (tx *Tx) init() {
 	tx.DocumentLensResult = NewDocumentLensResultClient(tx.config)
 	tx.DocumentLink = NewDocumentLinkClient(tx.config)
 	tx.Evidence = NewEvidenceClient(tx.config)
+	tx.EvidenceAttachment = NewEvidenceAttachmentClient(tx.config)
 	tx.Message = NewMessageClient(tx.config)
 	tx.MessageAuthorship = NewMessageAuthorshipClient(tx.config)
 	tx.MessageLensResult = NewMessageLensResultClient(tx.config)
@@ -337,6 +342,7 @@ func (tx *Tx) init() {
 	tx.WorkProgramBriefSnapshot = NewWorkProgramBriefSnapshotClient(tx.config)
 	tx.WorkProgramEvidenceNeed = NewWorkProgramEvidenceNeedClient(tx.config)
 	tx.WorkProgramItem = NewWorkProgramItemClient(tx.config)
+	tx.WorkProgramItemLink = NewWorkProgramItemLinkClient(tx.config)
 	tx.WorkProgramMilestone = NewWorkProgramMilestoneClient(tx.config)
 	tx.WorkProgramOwnerRollupSnapshot = NewWorkProgramOwnerRollupSnapshotClient(tx.config)
 	tx.WorkProgramQualityGate = NewWorkProgramQualityGateClient(tx.config)

@@ -169,6 +169,20 @@ func (_c *WorkResponsibilityCreate) SetSubjectKind(v workresponsibility.SubjectK
 	return _c
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkResponsibilityCreate) SetSubjectObjectType(v string) *WorkResponsibilityCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkResponsibilityCreate) SetNillableSubjectObjectType(v *string) *WorkResponsibilityCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
+	}
+	return _c
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_c *WorkResponsibilityCreate) SetSubjectKey(v string) *WorkResponsibilityCreate {
 	_c.mutation.SetSubjectKey(v)
@@ -790,6 +804,10 @@ func (_c *WorkResponsibilityCreate) createSpec() (*WorkResponsibility, *sqlgraph
 		_spec.SetField(workresponsibility.FieldSubjectKind, field.TypeEnum, value)
 		_node.SubjectKind = value
 	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workresponsibility.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
+	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workresponsibility.FieldSubjectKey, field.TypeString, value)
 		_node.SubjectKey = value
@@ -1286,6 +1304,24 @@ func (u *WorkResponsibilityUpsert) SetSubjectKind(v workresponsibility.SubjectKi
 // UpdateSubjectKind sets the "subject_kind" field to the value that was provided on create.
 func (u *WorkResponsibilityUpsert) UpdateSubjectKind() *WorkResponsibilityUpsert {
 	u.SetExcluded(workresponsibility.FieldSubjectKind)
+	return u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkResponsibilityUpsert) SetSubjectObjectType(v string) *WorkResponsibilityUpsert {
+	u.Set(workresponsibility.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkResponsibilityUpsert) UpdateSubjectObjectType() *WorkResponsibilityUpsert {
+	u.SetExcluded(workresponsibility.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkResponsibilityUpsert) ClearSubjectObjectType() *WorkResponsibilityUpsert {
+	u.SetNull(workresponsibility.FieldSubjectObjectType)
 	return u
 }
 
@@ -1980,6 +2016,27 @@ func (u *WorkResponsibilityUpsertOne) SetSubjectKind(v workresponsibility.Subjec
 func (u *WorkResponsibilityUpsertOne) UpdateSubjectKind() *WorkResponsibilityUpsertOne {
 	return u.Update(func(s *WorkResponsibilityUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkResponsibilityUpsertOne) SetSubjectObjectType(v string) *WorkResponsibilityUpsertOne {
+	return u.Update(func(s *WorkResponsibilityUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkResponsibilityUpsertOne) UpdateSubjectObjectType() *WorkResponsibilityUpsertOne {
+	return u.Update(func(s *WorkResponsibilityUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkResponsibilityUpsertOne) ClearSubjectObjectType() *WorkResponsibilityUpsertOne {
+	return u.Update(func(s *WorkResponsibilityUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
@@ -2912,6 +2969,27 @@ func (u *WorkResponsibilityUpsertBulk) SetSubjectKind(v workresponsibility.Subje
 func (u *WorkResponsibilityUpsertBulk) UpdateSubjectKind() *WorkResponsibilityUpsertBulk {
 	return u.Update(func(s *WorkResponsibilityUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkResponsibilityUpsertBulk) SetSubjectObjectType(v string) *WorkResponsibilityUpsertBulk {
+	return u.Update(func(s *WorkResponsibilityUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkResponsibilityUpsertBulk) UpdateSubjectObjectType() *WorkResponsibilityUpsertBulk {
+	return u.Update(func(s *WorkResponsibilityUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkResponsibilityUpsertBulk) ClearSubjectObjectType() *WorkResponsibilityUpsertBulk {
+	return u.Update(func(s *WorkResponsibilityUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 

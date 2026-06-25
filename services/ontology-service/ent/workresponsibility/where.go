@@ -105,6 +105,11 @@ func WorkstreamKey(v string) predicate.WorkResponsibility {
 	return predicate.WorkResponsibility(sql.FieldEQ(FieldWorkstreamKey, v))
 }
 
+// SubjectObjectType applies equality check predicate on the "subject_object_type" field. It's identical to SubjectObjectTypeEQ.
+func SubjectObjectType(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
 // SubjectKey applies equality check predicate on the "subject_key" field. It's identical to SubjectKeyEQ.
 func SubjectKey(v string) predicate.WorkResponsibility {
 	return predicate.WorkResponsibility(sql.FieldEQ(FieldSubjectKey, v))
@@ -613,6 +618,81 @@ func SubjectKindIn(vs ...SubjectKind) predicate.WorkResponsibility {
 // SubjectKindNotIn applies the NotIn predicate on the "subject_kind" field.
 func SubjectKindNotIn(vs ...SubjectKind) predicate.WorkResponsibility {
 	return predicate.WorkResponsibility(sql.FieldNotIn(FieldSubjectKind, vs...))
+}
+
+// SubjectObjectTypeEQ applies the EQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeEQ(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeNEQ applies the NEQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeNEQ(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldNEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIn applies the In predicate on the "subject_object_type" field.
+func SubjectObjectTypeIn(vs ...string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeNotIn applies the NotIn predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotIn(vs ...string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldNotIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeGT applies the GT predicate on the "subject_object_type" field.
+func SubjectObjectTypeGT(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldGT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeGTE applies the GTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeGTE(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldGTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLT applies the LT predicate on the "subject_object_type" field.
+func SubjectObjectTypeLT(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldLT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLTE applies the LTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeLTE(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldLTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContains applies the Contains predicate on the "subject_object_type" field.
+func SubjectObjectTypeContains(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldContains(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasPrefix applies the HasPrefix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasPrefix(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldHasPrefix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasSuffix applies the HasSuffix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasSuffix(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldHasSuffix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIsNil applies the IsNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeIsNil() predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldIsNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeNotNil applies the NotNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotNil() predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldNotNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeEqualFold applies the EqualFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeEqualFold(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldEqualFold(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContainsFold applies the ContainsFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeContainsFold(v string) predicate.WorkResponsibility {
+	return predicate.WorkResponsibility(sql.FieldContainsFold(FieldSubjectObjectType, v))
 }
 
 // SubjectKeyEQ applies the EQ predicate on the "subject_key" field.

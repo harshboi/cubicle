@@ -94,6 +94,20 @@ func (_c *WorkProgramMilestoneCreate) SetNillableSubjectKind(v *workprogrammiles
 	return _c
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkProgramMilestoneCreate) SetSubjectObjectType(v string) *WorkProgramMilestoneCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkProgramMilestoneCreate) SetNillableSubjectObjectType(v *string) *WorkProgramMilestoneCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
+	}
+	return _c
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_c *WorkProgramMilestoneCreate) SetSubjectKey(v string) *WorkProgramMilestoneCreate {
 	_c.mutation.SetSubjectKey(v)
@@ -756,6 +770,10 @@ func (_c *WorkProgramMilestoneCreate) createSpec() (*WorkProgramMilestone, *sqlg
 		_spec.SetField(workprogrammilestone.FieldSubjectKind, field.TypeEnum, value)
 		_node.SubjectKind = value
 	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workprogrammilestone.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
+	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workprogrammilestone.FieldSubjectKey, field.TypeString, value)
 		_node.SubjectKey = value
@@ -1079,6 +1097,24 @@ func (u *WorkProgramMilestoneUpsert) SetSubjectKind(v workprogrammilestone.Subje
 // UpdateSubjectKind sets the "subject_kind" field to the value that was provided on create.
 func (u *WorkProgramMilestoneUpsert) UpdateSubjectKind() *WorkProgramMilestoneUpsert {
 	u.SetExcluded(workprogrammilestone.FieldSubjectKind)
+	return u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkProgramMilestoneUpsert) SetSubjectObjectType(v string) *WorkProgramMilestoneUpsert {
+	u.Set(workprogrammilestone.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkProgramMilestoneUpsert) UpdateSubjectObjectType() *WorkProgramMilestoneUpsert {
+	u.SetExcluded(workprogrammilestone.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkProgramMilestoneUpsert) ClearSubjectObjectType() *WorkProgramMilestoneUpsert {
+	u.SetNull(workprogrammilestone.FieldSubjectObjectType)
 	return u
 }
 
@@ -1679,6 +1715,27 @@ func (u *WorkProgramMilestoneUpsertOne) SetSubjectKind(v workprogrammilestone.Su
 func (u *WorkProgramMilestoneUpsertOne) UpdateSubjectKind() *WorkProgramMilestoneUpsertOne {
 	return u.Update(func(s *WorkProgramMilestoneUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkProgramMilestoneUpsertOne) SetSubjectObjectType(v string) *WorkProgramMilestoneUpsertOne {
+	return u.Update(func(s *WorkProgramMilestoneUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkProgramMilestoneUpsertOne) UpdateSubjectObjectType() *WorkProgramMilestoneUpsertOne {
+	return u.Update(func(s *WorkProgramMilestoneUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkProgramMilestoneUpsertOne) ClearSubjectObjectType() *WorkProgramMilestoneUpsertOne {
+	return u.Update(func(s *WorkProgramMilestoneUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
@@ -2520,6 +2577,27 @@ func (u *WorkProgramMilestoneUpsertBulk) SetSubjectKind(v workprogrammilestone.S
 func (u *WorkProgramMilestoneUpsertBulk) UpdateSubjectKind() *WorkProgramMilestoneUpsertBulk {
 	return u.Update(func(s *WorkProgramMilestoneUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkProgramMilestoneUpsertBulk) SetSubjectObjectType(v string) *WorkProgramMilestoneUpsertBulk {
+	return u.Update(func(s *WorkProgramMilestoneUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkProgramMilestoneUpsertBulk) UpdateSubjectObjectType() *WorkProgramMilestoneUpsertBulk {
+	return u.Update(func(s *WorkProgramMilestoneUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkProgramMilestoneUpsertBulk) ClearSubjectObjectType() *WorkProgramMilestoneUpsertBulk {
+	return u.Update(func(s *WorkProgramMilestoneUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 

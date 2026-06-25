@@ -81,6 +81,20 @@ func (_c *WorkInsightCreate) SetNillableSubjectKind(v *workinsight.SubjectKind) 
 	return _c
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkInsightCreate) SetSubjectObjectType(v string) *WorkInsightCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkInsightCreate) SetNillableSubjectObjectType(v *string) *WorkInsightCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
+	}
+	return _c
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_c *WorkInsightCreate) SetSubjectKey(v string) *WorkInsightCreate {
 	_c.mutation.SetSubjectKey(v)
@@ -921,6 +935,10 @@ func (_c *WorkInsightCreate) createSpec() (*WorkInsight, *sqlgraph.CreateSpec) {
 		_spec.SetField(workinsight.FieldSubjectKind, field.TypeEnum, value)
 		_node.SubjectKind = value
 	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workinsight.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
+	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workinsight.FieldSubjectKey, field.TypeString, value)
 		_node.SubjectKey = value
@@ -1261,6 +1279,24 @@ func (u *WorkInsightUpsert) SetSubjectKind(v workinsight.SubjectKind) *WorkInsig
 // UpdateSubjectKind sets the "subject_kind" field to the value that was provided on create.
 func (u *WorkInsightUpsert) UpdateSubjectKind() *WorkInsightUpsert {
 	u.SetExcluded(workinsight.FieldSubjectKind)
+	return u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkInsightUpsert) SetSubjectObjectType(v string) *WorkInsightUpsert {
+	u.Set(workinsight.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkInsightUpsert) UpdateSubjectObjectType() *WorkInsightUpsert {
+	u.SetExcluded(workinsight.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkInsightUpsert) ClearSubjectObjectType() *WorkInsightUpsert {
+	u.SetNull(workinsight.FieldSubjectObjectType)
 	return u
 }
 
@@ -2042,6 +2078,27 @@ func (u *WorkInsightUpsertOne) SetSubjectKind(v workinsight.SubjectKind) *WorkIn
 func (u *WorkInsightUpsertOne) UpdateSubjectKind() *WorkInsightUpsertOne {
 	return u.Update(func(s *WorkInsightUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkInsightUpsertOne) SetSubjectObjectType(v string) *WorkInsightUpsertOne {
+	return u.Update(func(s *WorkInsightUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkInsightUpsertOne) UpdateSubjectObjectType() *WorkInsightUpsertOne {
+	return u.Update(func(s *WorkInsightUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkInsightUpsertOne) ClearSubjectObjectType() *WorkInsightUpsertOne {
+	return u.Update(func(s *WorkInsightUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
@@ -3100,6 +3157,27 @@ func (u *WorkInsightUpsertBulk) SetSubjectKind(v workinsight.SubjectKind) *WorkI
 func (u *WorkInsightUpsertBulk) UpdateSubjectKind() *WorkInsightUpsertBulk {
 	return u.Update(func(s *WorkInsightUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkInsightUpsertBulk) SetSubjectObjectType(v string) *WorkInsightUpsertBulk {
+	return u.Update(func(s *WorkInsightUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkInsightUpsertBulk) UpdateSubjectObjectType() *WorkInsightUpsertBulk {
+	return u.Update(func(s *WorkInsightUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkInsightUpsertBulk) ClearSubjectObjectType() *WorkInsightUpsertBulk {
+	return u.Update(func(s *WorkInsightUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 

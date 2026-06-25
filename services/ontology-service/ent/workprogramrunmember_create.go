@@ -29,14 +29,6 @@ func (_c *WorkProgramRunMemberCreate) SetWorkProgramRunID(v int) *WorkProgramRun
 	return _c
 }
 
-// SetNillableWorkProgramRunID sets the "work_program_run_id" field if the given value is not nil.
-func (_c *WorkProgramRunMemberCreate) SetNillableWorkProgramRunID(v *int) *WorkProgramRunMemberCreate {
-	if v != nil {
-		_c.SetWorkProgramRunID(*v)
-	}
-	return _c
-}
-
 // SetRunKey sets the "run_key" field.
 func (_c *WorkProgramRunMemberCreate) SetRunKey(v string) *WorkProgramRunMemberCreate {
 	_c.mutation.SetRunKey(v)
@@ -156,6 +148,9 @@ func (_c *WorkProgramRunMemberCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *WorkProgramRunMemberCreate) check() error {
+	if _, ok := _c.mutation.WorkProgramRunID(); !ok {
+		return &ValidationError{Name: "work_program_run_id", err: errors.New(`ent: missing required field "WorkProgramRunMember.work_program_run_id"`)}
+	}
 	if _, ok := _c.mutation.RunKey(); !ok {
 		return &ValidationError{Name: "run_key", err: errors.New(`ent: missing required field "WorkProgramRunMember.run_key"`)}
 	}
@@ -177,6 +172,9 @@ func (_c *WorkProgramRunMemberCreate) check() error {
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "WorkProgramRunMember.created_at"`)}
+	}
+	if len(_c.mutation.WorkProgramRunIDs()) == 0 {
+		return &ValidationError{Name: "work_program_run", err: errors.New(`ent: missing required edge "WorkProgramRunMember.work_program_run"`)}
 	}
 	return nil
 }
@@ -315,12 +313,6 @@ func (u *WorkProgramRunMemberUpsert) SetWorkProgramRunID(v int) *WorkProgramRunM
 // UpdateWorkProgramRunID sets the "work_program_run_id" field to the value that was provided on create.
 func (u *WorkProgramRunMemberUpsert) UpdateWorkProgramRunID() *WorkProgramRunMemberUpsert {
 	u.SetExcluded(workprogramrunmember.FieldWorkProgramRunID)
-	return u
-}
-
-// ClearWorkProgramRunID clears the value of the "work_program_run_id" field.
-func (u *WorkProgramRunMemberUpsert) ClearWorkProgramRunID() *WorkProgramRunMemberUpsert {
-	u.SetNull(workprogramrunmember.FieldWorkProgramRunID)
 	return u
 }
 
@@ -507,13 +499,6 @@ func (u *WorkProgramRunMemberUpsertOne) SetWorkProgramRunID(v int) *WorkProgramR
 func (u *WorkProgramRunMemberUpsertOne) UpdateWorkProgramRunID() *WorkProgramRunMemberUpsertOne {
 	return u.Update(func(s *WorkProgramRunMemberUpsert) {
 		s.UpdateWorkProgramRunID()
-	})
-}
-
-// ClearWorkProgramRunID clears the value of the "work_program_run_id" field.
-func (u *WorkProgramRunMemberUpsertOne) ClearWorkProgramRunID() *WorkProgramRunMemberUpsertOne {
-	return u.Update(func(s *WorkProgramRunMemberUpsert) {
-		s.ClearWorkProgramRunID()
 	})
 }
 
@@ -885,13 +870,6 @@ func (u *WorkProgramRunMemberUpsertBulk) SetWorkProgramRunID(v int) *WorkProgram
 func (u *WorkProgramRunMemberUpsertBulk) UpdateWorkProgramRunID() *WorkProgramRunMemberUpsertBulk {
 	return u.Update(func(s *WorkProgramRunMemberUpsert) {
 		s.UpdateWorkProgramRunID()
-	})
-}
-
-// ClearWorkProgramRunID clears the value of the "work_program_run_id" field.
-func (u *WorkProgramRunMemberUpsertBulk) ClearWorkProgramRunID() *WorkProgramRunMemberUpsertBulk {
-	return u.Update(func(s *WorkProgramRunMemberUpsert) {
-		s.ClearWorkProgramRunID()
 	})
 }
 

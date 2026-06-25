@@ -1050,6 +1050,8 @@ type ComplexityRoot struct {
 		RecommendedAction func(childComplexity int) int
 		Status            func(childComplexity int) int
 		SubjectKey        func(childComplexity int) int
+		SubjectKind       func(childComplexity int) int
+		SubjectObjectType func(childComplexity int) int
 		Title             func(childComplexity int) int
 	}
 
@@ -1220,6 +1222,7 @@ type ComplexityRoot struct {
 		LastSourceUpdateAt    func(childComplexity int) int
 		LinkedPullRequestKeys func(childComplexity int) int
 		LinkedTicketKeys      func(childComplexity int) int
+		Links                 func(childComplexity int) int
 		NextAction            func(childComplexity int) int
 		OwnerKey              func(childComplexity int) int
 		OwnerSource           func(childComplexity int) int
@@ -1233,10 +1236,28 @@ type ComplexityRoot struct {
 		StaleDays             func(childComplexity int) int
 		SubjectKey            func(childComplexity int) int
 		SubjectKind           func(childComplexity int) int
+		SubjectObjectType     func(childComplexity int) int
 		Title                 func(childComplexity int) int
 		TpmBucket             func(childComplexity int) int
 		TransitionState       func(childComplexity int) int
 		WorkstreamKey         func(childComplexity int) int
+	}
+
+	WorkProgramItemLink struct {
+		Confidence            func(childComplexity int) int
+		Evidence              func(childComplexity int) int
+		EvidenceRef           func(childComplexity int) int
+		FreshnessState        func(childComplexity int) int
+		Key                   func(childComplexity int) int
+		LinkKind              func(childComplexity int) int
+		LinkSource            func(childComplexity int) int
+		LinkSummary           func(childComplexity int) int
+		RankScore             func(childComplexity int) int
+		SourceInstance        func(childComplexity int) int
+		TargetKey             func(childComplexity int) int
+		TargetObjectType      func(childComplexity int) int
+		TargetResolutionState func(childComplexity int) int
+		Visibility            func(childComplexity int) int
 	}
 
 	WorkProgramMilestone struct {
@@ -1260,6 +1281,7 @@ type ComplexityRoot struct {
 		SourceURL                 func(childComplexity int) int
 		SubjectKey                func(childComplexity int) int
 		SubjectKind               func(childComplexity int) int
+		SubjectObjectType         func(childComplexity int) int
 		SubjectTitle              func(childComplexity int) int
 		SubjectURL                func(childComplexity int) int
 		TargetDate                func(childComplexity int) int
@@ -1569,6 +1591,8 @@ type ComplexityRoot struct {
 		SourceInstance    func(childComplexity int) int
 		StatusSignal      func(childComplexity int) int
 		SubjectKey        func(childComplexity int) int
+		SubjectKind       func(childComplexity int) int
+		SubjectObjectType func(childComplexity int) int
 		Summary           func(childComplexity int) int
 		Urgency           func(childComplexity int) int
 	}
@@ -7106,6 +7130,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.WorkProgramBriefRiskDriver.SubjectKey(childComplexity), true
+	case "WorkProgramBriefRiskDriver.subjectKind":
+		if e.ComplexityRoot.WorkProgramBriefRiskDriver.SubjectKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramBriefRiskDriver.SubjectKind(childComplexity), true
+	case "WorkProgramBriefRiskDriver.subjectObjectType":
+		if e.ComplexityRoot.WorkProgramBriefRiskDriver.SubjectObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramBriefRiskDriver.SubjectObjectType(childComplexity), true
 	case "WorkProgramBriefRiskDriver.title":
 		if e.ComplexityRoot.WorkProgramBriefRiskDriver.Title == nil {
 			break
@@ -7990,6 +8026,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.WorkProgramItem.LinkedTicketKeys(childComplexity), true
+	case "WorkProgramItem.links":
+		if e.ComplexityRoot.WorkProgramItem.Links == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItem.Links(childComplexity), true
 	case "WorkProgramItem.nextAction":
 		if e.ComplexityRoot.WorkProgramItem.NextAction == nil {
 			break
@@ -8068,6 +8110,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.WorkProgramItem.SubjectKind(childComplexity), true
+	case "WorkProgramItem.subjectObjectType":
+		if e.ComplexityRoot.WorkProgramItem.SubjectObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItem.SubjectObjectType(childComplexity), true
 	case "WorkProgramItem.title":
 		if e.ComplexityRoot.WorkProgramItem.Title == nil {
 			break
@@ -8092,6 +8140,91 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.WorkProgramItem.WorkstreamKey(childComplexity), true
+
+	case "WorkProgramItemLink.confidence":
+		if e.ComplexityRoot.WorkProgramItemLink.Confidence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.Confidence(childComplexity), true
+	case "WorkProgramItemLink.evidence":
+		if e.ComplexityRoot.WorkProgramItemLink.Evidence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.Evidence(childComplexity), true
+	case "WorkProgramItemLink.evidenceRef":
+		if e.ComplexityRoot.WorkProgramItemLink.EvidenceRef == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.EvidenceRef(childComplexity), true
+	case "WorkProgramItemLink.freshnessState":
+		if e.ComplexityRoot.WorkProgramItemLink.FreshnessState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.FreshnessState(childComplexity), true
+	case "WorkProgramItemLink.key":
+		if e.ComplexityRoot.WorkProgramItemLink.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.Key(childComplexity), true
+	case "WorkProgramItemLink.linkKind":
+		if e.ComplexityRoot.WorkProgramItemLink.LinkKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.LinkKind(childComplexity), true
+	case "WorkProgramItemLink.linkSource":
+		if e.ComplexityRoot.WorkProgramItemLink.LinkSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.LinkSource(childComplexity), true
+	case "WorkProgramItemLink.linkSummary":
+		if e.ComplexityRoot.WorkProgramItemLink.LinkSummary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.LinkSummary(childComplexity), true
+	case "WorkProgramItemLink.rankScore":
+		if e.ComplexityRoot.WorkProgramItemLink.RankScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.RankScore(childComplexity), true
+	case "WorkProgramItemLink.sourceInstance":
+		if e.ComplexityRoot.WorkProgramItemLink.SourceInstance == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.SourceInstance(childComplexity), true
+	case "WorkProgramItemLink.targetKey":
+		if e.ComplexityRoot.WorkProgramItemLink.TargetKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.TargetKey(childComplexity), true
+	case "WorkProgramItemLink.targetObjectType":
+		if e.ComplexityRoot.WorkProgramItemLink.TargetObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.TargetObjectType(childComplexity), true
+	case "WorkProgramItemLink.targetResolutionState":
+		if e.ComplexityRoot.WorkProgramItemLink.TargetResolutionState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.TargetResolutionState(childComplexity), true
+	case "WorkProgramItemLink.visibility":
+		if e.ComplexityRoot.WorkProgramItemLink.Visibility == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramItemLink.Visibility(childComplexity), true
 
 	case "WorkProgramMilestone.badges":
 		if e.ComplexityRoot.WorkProgramMilestone.Badges == nil {
@@ -8213,6 +8346,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.WorkProgramMilestone.SubjectKind(childComplexity), true
+	case "WorkProgramMilestone.subjectObjectType":
+		if e.ComplexityRoot.WorkProgramMilestone.SubjectObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkProgramMilestone.SubjectObjectType(childComplexity), true
 	case "WorkProgramMilestone.subjectTitle":
 		if e.ComplexityRoot.WorkProgramMilestone.SubjectTitle == nil {
 			break
@@ -9863,6 +10002,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.WorkstreamStandupSection.SubjectKey(childComplexity), true
+	case "WorkstreamStandupSection.subjectKind":
+		if e.ComplexityRoot.WorkstreamStandupSection.SubjectKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkstreamStandupSection.SubjectKind(childComplexity), true
+	case "WorkstreamStandupSection.subjectObjectType":
+		if e.ComplexityRoot.WorkstreamStandupSection.SubjectObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WorkstreamStandupSection.SubjectObjectType(childComplexity), true
 	case "WorkstreamStandupSection.summary":
 		if e.ComplexityRoot.WorkstreamStandupSection.Summary == nil {
 			break
@@ -10075,6 +10226,7 @@ type WorkProgramItem {
   sourceInstance: String
   workstreamKey: String!
   subjectKind: String!
+  subjectObjectType: String
   subjectKey: String!
   linkedTicketKeys: [String!]!
   linkedPullRequestKeys: [String!]!
@@ -10110,6 +10262,28 @@ type WorkProgramItem {
   evidence: WorkEvidenceSummary
   badges: [WorkActionBadge!]!
   action: WorkAction
+  links: [WorkProgramItemLink!]!
+}
+
+"""
+Structured adjacency for a WorkProgramItem.
+Display key lists remain UI hints; these rows are the traversable relationships.
+"""
+type WorkProgramItemLink {
+  key: ID!
+  sourceInstance: String
+  linkKind: String!
+  targetObjectType: String!
+  targetKey: String!
+  targetResolutionState: String!
+  linkSummary: String
+  linkSource: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+  rankScore: Float!
 }
 
 """
@@ -10169,6 +10343,7 @@ type WorkProgramMilestone {
   sourceInstance: String
   workstreamKey: String!
   subjectKind: String!
+  subjectObjectType: String
   subjectKey: String!
   subjectTitle: String
   subjectUrl: String
@@ -10739,6 +10914,8 @@ type WorkGraphCitation {
 type WorkProgramBriefRiskDriver {
   key: ID!
   driverKind: String!
+  subjectKind: String
+  subjectObjectType: String
   subjectKey: String
   title: String!
   status: String!
@@ -11129,6 +11306,8 @@ type WorkstreamStandupSection {
   freshnessState: String!
   confidence: Float!
   ownerKey: String
+  subjectKind: String!
+  subjectObjectType: String
   subjectKey: String
   actionType: String
   statusSignal: String
@@ -13476,6 +13655,10 @@ func (ec *executionContext) childFields_WorkProgramBriefRiskDriver(ctx context.C
 		return ec.fieldContext_WorkProgramBriefRiskDriver_key(ctx, field)
 	case "driverKind":
 		return ec.fieldContext_WorkProgramBriefRiskDriver_driverKind(ctx, field)
+	case "subjectKind":
+		return ec.fieldContext_WorkProgramBriefRiskDriver_subjectKind(ctx, field)
+	case "subjectObjectType":
+		return ec.fieldContext_WorkProgramBriefRiskDriver_subjectObjectType(ctx, field)
 	case "subjectKey":
 		return ec.fieldContext_WorkProgramBriefRiskDriver_subjectKey(ctx, field)
 	case "title":
@@ -13794,6 +13977,8 @@ func (ec *executionContext) childFields_WorkProgramItem(ctx context.Context, fie
 		return ec.fieldContext_WorkProgramItem_workstreamKey(ctx, field)
 	case "subjectKind":
 		return ec.fieldContext_WorkProgramItem_subjectKind(ctx, field)
+	case "subjectObjectType":
+		return ec.fieldContext_WorkProgramItem_subjectObjectType(ctx, field)
 	case "subjectKey":
 		return ec.fieldContext_WorkProgramItem_subjectKey(ctx, field)
 	case "linkedTicketKeys":
@@ -13864,8 +14049,44 @@ func (ec *executionContext) childFields_WorkProgramItem(ctx context.Context, fie
 		return ec.fieldContext_WorkProgramItem_badges(ctx, field)
 	case "action":
 		return ec.fieldContext_WorkProgramItem_action(ctx, field)
+	case "links":
+		return ec.fieldContext_WorkProgramItem_links(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type WorkProgramItem", field.Name)
+}
+
+func (ec *executionContext) childFields_WorkProgramItemLink(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_WorkProgramItemLink_key(ctx, field)
+	case "sourceInstance":
+		return ec.fieldContext_WorkProgramItemLink_sourceInstance(ctx, field)
+	case "linkKind":
+		return ec.fieldContext_WorkProgramItemLink_linkKind(ctx, field)
+	case "targetObjectType":
+		return ec.fieldContext_WorkProgramItemLink_targetObjectType(ctx, field)
+	case "targetKey":
+		return ec.fieldContext_WorkProgramItemLink_targetKey(ctx, field)
+	case "targetResolutionState":
+		return ec.fieldContext_WorkProgramItemLink_targetResolutionState(ctx, field)
+	case "linkSummary":
+		return ec.fieldContext_WorkProgramItemLink_linkSummary(ctx, field)
+	case "linkSource":
+		return ec.fieldContext_WorkProgramItemLink_linkSource(ctx, field)
+	case "evidenceRef":
+		return ec.fieldContext_WorkProgramItemLink_evidenceRef(ctx, field)
+	case "evidence":
+		return ec.fieldContext_WorkProgramItemLink_evidence(ctx, field)
+	case "freshnessState":
+		return ec.fieldContext_WorkProgramItemLink_freshnessState(ctx, field)
+	case "visibility":
+		return ec.fieldContext_WorkProgramItemLink_visibility(ctx, field)
+	case "confidence":
+		return ec.fieldContext_WorkProgramItemLink_confidence(ctx, field)
+	case "rankScore":
+		return ec.fieldContext_WorkProgramItemLink_rankScore(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type WorkProgramItemLink", field.Name)
 }
 
 func (ec *executionContext) childFields_WorkProgramMilestone(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -13878,6 +14099,8 @@ func (ec *executionContext) childFields_WorkProgramMilestone(ctx context.Context
 		return ec.fieldContext_WorkProgramMilestone_workstreamKey(ctx, field)
 	case "subjectKind":
 		return ec.fieldContext_WorkProgramMilestone_subjectKind(ctx, field)
+	case "subjectObjectType":
+		return ec.fieldContext_WorkProgramMilestone_subjectObjectType(ctx, field)
 	case "subjectKey":
 		return ec.fieldContext_WorkProgramMilestone_subjectKey(ctx, field)
 	case "subjectTitle":
@@ -14516,6 +14739,10 @@ func (ec *executionContext) childFields_WorkstreamStandupSection(ctx context.Con
 		return ec.fieldContext_WorkstreamStandupSection_confidence(ctx, field)
 	case "ownerKey":
 		return ec.fieldContext_WorkstreamStandupSection_ownerKey(ctx, field)
+	case "subjectKind":
+		return ec.fieldContext_WorkstreamStandupSection_subjectKind(ctx, field)
+	case "subjectObjectType":
+		return ec.fieldContext_WorkstreamStandupSection_subjectObjectType(ctx, field)
 	case "subjectKey":
 		return ec.fieldContext_WorkstreamStandupSection_subjectKey(ctx, field)
 	case "actionType":
@@ -38100,6 +38327,52 @@ func (ec *executionContext) fieldContext_WorkProgramBriefRiskDriver_driverKind(_
 	return graphql.NewScalarFieldContext("WorkProgramBriefRiskDriver", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _WorkProgramBriefRiskDriver_subjectKind(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramBriefRiskDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramBriefRiskDriver_subjectKind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubjectKind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramBriefRiskDriver_subjectKind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramBriefRiskDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramBriefRiskDriver_subjectObjectType(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramBriefRiskDriver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramBriefRiskDriver_subjectObjectType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubjectObjectType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramBriefRiskDriver_subjectObjectType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramBriefRiskDriver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _WorkProgramBriefRiskDriver_subjectKey(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramBriefRiskDriver) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -41502,6 +41775,29 @@ func (ec *executionContext) fieldContext_WorkProgramItem_subjectKind(_ context.C
 	return graphql.NewScalarFieldContext("WorkProgramItem", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _WorkProgramItem_subjectObjectType(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItem_subjectObjectType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubjectObjectType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItem_subjectObjectType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _WorkProgramItem_subjectKey(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItem) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -42334,6 +42630,369 @@ func (ec *executionContext) fieldContext_WorkProgramItem_action(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _WorkProgramItem_links(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItem_links(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Links, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.WorkProgramItemLink) graphql.Marshaler {
+			return ec.marshalNWorkProgramItemLink2ᚕᚖcubicleᚋservicesᚋontologyᚑserviceᚋinternalᚋgraphqlᚋmodelᚐWorkProgramItemLinkᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItem_links(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WorkProgramItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_WorkProgramItemLink(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WorkProgramItemLink_key(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_sourceInstance(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_sourceInstance(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceInstance, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_sourceInstance(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_linkKind(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_linkKind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LinkKind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_linkKind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_targetObjectType(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_targetObjectType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetObjectType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_targetObjectType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_targetKey(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_targetKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_targetKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_targetResolutionState(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_targetResolutionState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetResolutionState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_targetResolutionState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_linkSummary(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_linkSummary(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LinkSummary, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_linkSummary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_linkSource(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_linkSource(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LinkSource, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_linkSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_evidenceRef(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_evidenceRef(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EvidenceRef, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_evidenceRef(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_evidence(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_evidence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Evidence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.WorkEvidenceSummary) graphql.Marshaler {
+			return ec.marshalOWorkEvidenceSummary2ᚖcubicleᚋservicesᚋontologyᚑserviceᚋinternalᚋgraphqlᚋmodelᚐWorkEvidenceSummary(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_evidence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WorkProgramItemLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_WorkEvidenceSummary(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WorkProgramItemLink_freshnessState(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_freshnessState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FreshnessState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_freshnessState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_visibility(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_visibility(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Visibility, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_visibility(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_confidence(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_confidence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Confidence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_confidence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramItemLink_rankScore(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramItemLink) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramItemLink_rankScore(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RankScore, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramItemLink_rankScore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramItemLink", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
 func (ec *executionContext) _WorkProgramMilestone_key(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramMilestone) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -42423,6 +43082,29 @@ func (ec *executionContext) _WorkProgramMilestone_subjectKind(ctx context.Contex
 	)
 }
 func (ec *executionContext) fieldContext_WorkProgramMilestone_subjectKind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkProgramMilestone", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkProgramMilestone_subjectObjectType(ctx context.Context, field graphql.CollectedField, obj *model.WorkProgramMilestone) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkProgramMilestone_subjectObjectType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubjectObjectType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_WorkProgramMilestone_subjectObjectType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("WorkProgramMilestone", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
@@ -49355,6 +50037,52 @@ func (ec *executionContext) _WorkstreamStandupSection_ownerKey(ctx context.Conte
 	)
 }
 func (ec *executionContext) fieldContext_WorkstreamStandupSection_ownerKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkstreamStandupSection", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkstreamStandupSection_subjectKind(ctx context.Context, field graphql.CollectedField, obj *model.WorkstreamStandupSection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkstreamStandupSection_subjectKind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubjectKind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_WorkstreamStandupSection_subjectKind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("WorkstreamStandupSection", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _WorkstreamStandupSection_subjectObjectType(ctx context.Context, field graphql.CollectedField, obj *model.WorkstreamStandupSection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_WorkstreamStandupSection_subjectObjectType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubjectObjectType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_WorkstreamStandupSection_subjectObjectType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("WorkstreamStandupSection", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
@@ -56408,6 +57136,10 @@ func (ec *executionContext) _WorkProgramBriefRiskDriver(ctx context.Context, sel
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "subjectKind":
+			out.Values[i] = ec._WorkProgramBriefRiskDriver_subjectKind(ctx, field, obj)
+		case "subjectObjectType":
+			out.Values[i] = ec._WorkProgramBriefRiskDriver_subjectObjectType(ctx, field, obj)
 		case "subjectKey":
 			out.Values[i] = ec._WorkProgramBriefRiskDriver_subjectKey(ctx, field, obj)
 		case "title":
@@ -57271,6 +58003,8 @@ func (ec *executionContext) _WorkProgramItem(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "subjectObjectType":
+			out.Values[i] = ec._WorkProgramItem_subjectObjectType(ctx, field, obj)
 		case "subjectKey":
 			out.Values[i] = ec._WorkProgramItem_subjectKey(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -57389,6 +58123,100 @@ func (ec *executionContext) _WorkProgramItem(ctx context.Context, sel ast.Select
 			}
 		case "action":
 			out.Values[i] = ec._WorkProgramItem_action(ctx, field, obj)
+		case "links":
+			out.Values[i] = ec._WorkProgramItem_links(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var workProgramItemLinkImplementors = []string{"WorkProgramItemLink"}
+
+func (ec *executionContext) _WorkProgramItemLink(ctx context.Context, sel ast.SelectionSet, obj *model.WorkProgramItemLink) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, workProgramItemLinkImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("WorkProgramItemLink")
+		case "key":
+			out.Values[i] = ec._WorkProgramItemLink_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sourceInstance":
+			out.Values[i] = ec._WorkProgramItemLink_sourceInstance(ctx, field, obj)
+		case "linkKind":
+			out.Values[i] = ec._WorkProgramItemLink_linkKind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "targetObjectType":
+			out.Values[i] = ec._WorkProgramItemLink_targetObjectType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "targetKey":
+			out.Values[i] = ec._WorkProgramItemLink_targetKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "targetResolutionState":
+			out.Values[i] = ec._WorkProgramItemLink_targetResolutionState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "linkSummary":
+			out.Values[i] = ec._WorkProgramItemLink_linkSummary(ctx, field, obj)
+		case "linkSource":
+			out.Values[i] = ec._WorkProgramItemLink_linkSource(ctx, field, obj)
+		case "evidenceRef":
+			out.Values[i] = ec._WorkProgramItemLink_evidenceRef(ctx, field, obj)
+		case "evidence":
+			out.Values[i] = ec._WorkProgramItemLink_evidence(ctx, field, obj)
+		case "freshnessState":
+			out.Values[i] = ec._WorkProgramItemLink_freshnessState(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "visibility":
+			out.Values[i] = ec._WorkProgramItemLink_visibility(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "confidence":
+			out.Values[i] = ec._WorkProgramItemLink_confidence(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "rankScore":
+			out.Values[i] = ec._WorkProgramItemLink_rankScore(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -57440,6 +58268,8 @@ func (ec *executionContext) _WorkProgramMilestone(ctx context.Context, sel ast.S
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "subjectObjectType":
+			out.Values[i] = ec._WorkProgramMilestone_subjectObjectType(ctx, field, obj)
 		case "subjectKey":
 			out.Values[i] = ec._WorkProgramMilestone_subjectKey(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -59086,6 +59916,13 @@ func (ec *executionContext) _WorkstreamStandupSection(ctx context.Context, sel a
 			}
 		case "ownerKey":
 			out.Values[i] = ec._WorkstreamStandupSection_ownerKey(ctx, field, obj)
+		case "subjectKind":
+			out.Values[i] = ec._WorkstreamStandupSection_subjectKind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "subjectObjectType":
+			out.Values[i] = ec._WorkstreamStandupSection_subjectObjectType(ctx, field, obj)
 		case "subjectKey":
 			out.Values[i] = ec._WorkstreamStandupSection_subjectKey(ctx, field, obj)
 		case "actionType":
@@ -60724,6 +61561,32 @@ func (ec *executionContext) marshalNWorkProgramItem2ᚖcubicleᚋservicesᚋonto
 		return graphql.Null
 	}
 	return ec._WorkProgramItem(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNWorkProgramItemLink2ᚕᚖcubicleᚋservicesᚋontologyᚑserviceᚋinternalᚋgraphqlᚋmodelᚐWorkProgramItemLinkᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.WorkProgramItemLink) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNWorkProgramItemLink2ᚖcubicleᚋservicesᚋontologyᚑserviceᚋinternalᚋgraphqlᚋmodelᚐWorkProgramItemLink(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNWorkProgramItemLink2ᚖcubicleᚋservicesᚋontologyᚑserviceᚋinternalᚋgraphqlᚋmodelᚐWorkProgramItemLink(ctx context.Context, sel ast.SelectionSet, v *model.WorkProgramItemLink) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._WorkProgramItemLink(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNWorkProgramMilestone2ᚕᚖcubicleᚋservicesᚋontologyᚑserviceᚋinternalᚋgraphqlᚋmodelᚐWorkProgramMilestoneᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.WorkProgramMilestone) graphql.Marshaler {

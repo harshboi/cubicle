@@ -25,6 +25,8 @@ type WorkItemStateTransition struct {
 	Key string `json:"key,omitempty"`
 	// Resolved typed product kind this transition is about.
 	SubjectKind workitemstatetransition.SubjectKind `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Stable product key this transition is about.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Optional PullRequest subject when the transition targets a PR.
@@ -178,7 +180,7 @@ func (*WorkItemStateTransition) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case workitemstatetransition.FieldID, workitemstatetransition.FieldPullRequestID, workitemstatetransition.FieldTicketID, workitemstatetransition.FieldFromSnapshotID, workitemstatetransition.FieldToSnapshotID, workitemstatetransition.FieldLatestEvidenceID, workitemstatetransition.FieldEvidenceCount, workitemstatetransition.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workitemstatetransition.FieldKey, workitemstatetransition.FieldSubjectKind, workitemstatetransition.FieldSubjectKey, workitemstatetransition.FieldFromState, workitemstatetransition.FieldToState, workitemstatetransition.FieldTransitionKind, workitemstatetransition.FieldConfidenceBasis, workitemstatetransition.FieldVerificationState, workitemstatetransition.FieldNote, workitemstatetransition.FieldSourceSystem, workitemstatetransition.FieldSourceInstance, workitemstatetransition.FieldExternalKind, workitemstatetransition.FieldExternalID, workitemstatetransition.FieldSourceURL, workitemstatetransition.FieldFreshnessState, workitemstatetransition.FieldVisibility:
+		case workitemstatetransition.FieldKey, workitemstatetransition.FieldSubjectKind, workitemstatetransition.FieldSubjectObjectType, workitemstatetransition.FieldSubjectKey, workitemstatetransition.FieldFromState, workitemstatetransition.FieldToState, workitemstatetransition.FieldTransitionKind, workitemstatetransition.FieldConfidenceBasis, workitemstatetransition.FieldVerificationState, workitemstatetransition.FieldNote, workitemstatetransition.FieldSourceSystem, workitemstatetransition.FieldSourceInstance, workitemstatetransition.FieldExternalKind, workitemstatetransition.FieldExternalID, workitemstatetransition.FieldSourceURL, workitemstatetransition.FieldFreshnessState, workitemstatetransition.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workitemstatetransition.FieldFromObservedAt, workitemstatetransition.FieldToObservedAt, workitemstatetransition.FieldFirstSeenAt, workitemstatetransition.FieldLastActivityAt, workitemstatetransition.FieldCreatedAt, workitemstatetransition.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -214,6 +216,12 @@ func (_m *WorkItemStateTransition) assignValues(columns []string, values []any) 
 				return fmt.Errorf("unexpected type %T for field subject_kind", values[i])
 			} else if value.Valid {
 				_m.SubjectKind = workitemstatetransition.SubjectKind(value.String)
+			}
+		case workitemstatetransition.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
 			}
 		case workitemstatetransition.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -473,6 +481,9 @@ func (_m *WorkItemStateTransition) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("subject_kind=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SubjectKind))
+	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
 	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)

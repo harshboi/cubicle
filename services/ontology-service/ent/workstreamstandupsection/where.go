@@ -95,6 +95,11 @@ func OwnerKey(v string) predicate.WorkstreamStandupSection {
 	return predicate.WorkstreamStandupSection(sql.FieldEQ(FieldOwnerKey, v))
 }
 
+// SubjectObjectType applies equality check predicate on the "subject_object_type" field. It's identical to SubjectObjectTypeEQ.
+func SubjectObjectType(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
 // SubjectKey applies equality check predicate on the "subject_key" field. It's identical to SubjectKeyEQ.
 func SubjectKey(v string) predicate.WorkstreamStandupSection {
 	return predicate.WorkstreamStandupSection(sql.FieldEQ(FieldSubjectKey, v))
@@ -638,6 +643,81 @@ func SubjectKindIn(vs ...SubjectKind) predicate.WorkstreamStandupSection {
 // SubjectKindNotIn applies the NotIn predicate on the "subject_kind" field.
 func SubjectKindNotIn(vs ...SubjectKind) predicate.WorkstreamStandupSection {
 	return predicate.WorkstreamStandupSection(sql.FieldNotIn(FieldSubjectKind, vs...))
+}
+
+// SubjectObjectTypeEQ applies the EQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeEQ(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeNEQ applies the NEQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeNEQ(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldNEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIn applies the In predicate on the "subject_object_type" field.
+func SubjectObjectTypeIn(vs ...string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeNotIn applies the NotIn predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotIn(vs ...string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldNotIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeGT applies the GT predicate on the "subject_object_type" field.
+func SubjectObjectTypeGT(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldGT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeGTE applies the GTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeGTE(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldGTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLT applies the LT predicate on the "subject_object_type" field.
+func SubjectObjectTypeLT(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldLT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLTE applies the LTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeLTE(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldLTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContains applies the Contains predicate on the "subject_object_type" field.
+func SubjectObjectTypeContains(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldContains(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasPrefix applies the HasPrefix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasPrefix(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldHasPrefix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasSuffix applies the HasSuffix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasSuffix(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldHasSuffix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIsNil applies the IsNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeIsNil() predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldIsNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeNotNil applies the NotNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotNil() predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldNotNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeEqualFold applies the EqualFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeEqualFold(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldEqualFold(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContainsFold applies the ContainsFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeContainsFold(v string) predicate.WorkstreamStandupSection {
+	return predicate.WorkstreamStandupSection(sql.FieldContainsFold(FieldSubjectObjectType, v))
 }
 
 // SubjectKeyEQ applies the EQ predicate on the "subject_key" field.

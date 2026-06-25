@@ -60,6 +60,11 @@ func Key(v string) predicate.WorkInsight {
 	return predicate.WorkInsight(sql.FieldEQ(FieldKey, v))
 }
 
+// SubjectObjectType applies equality check predicate on the "subject_object_type" field. It's identical to SubjectObjectTypeEQ.
+func SubjectObjectType(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
 // SubjectKey applies equality check predicate on the "subject_key" field. It's identical to SubjectKeyEQ.
 func SubjectKey(v string) predicate.WorkInsight {
 	return predicate.WorkInsight(sql.FieldEQ(FieldSubjectKey, v))
@@ -383,6 +388,81 @@ func SubjectKindIn(vs ...SubjectKind) predicate.WorkInsight {
 // SubjectKindNotIn applies the NotIn predicate on the "subject_kind" field.
 func SubjectKindNotIn(vs ...SubjectKind) predicate.WorkInsight {
 	return predicate.WorkInsight(sql.FieldNotIn(FieldSubjectKind, vs...))
+}
+
+// SubjectObjectTypeEQ applies the EQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeEQ(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeNEQ applies the NEQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeNEQ(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldNEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIn applies the In predicate on the "subject_object_type" field.
+func SubjectObjectTypeIn(vs ...string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeNotIn applies the NotIn predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotIn(vs ...string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldNotIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeGT applies the GT predicate on the "subject_object_type" field.
+func SubjectObjectTypeGT(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldGT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeGTE applies the GTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeGTE(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldGTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLT applies the LT predicate on the "subject_object_type" field.
+func SubjectObjectTypeLT(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldLT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLTE applies the LTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeLTE(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldLTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContains applies the Contains predicate on the "subject_object_type" field.
+func SubjectObjectTypeContains(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldContains(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasPrefix applies the HasPrefix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasPrefix(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldHasPrefix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasSuffix applies the HasSuffix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasSuffix(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldHasSuffix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIsNil applies the IsNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeIsNil() predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldIsNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeNotNil applies the NotNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotNil() predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldNotNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeEqualFold applies the EqualFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeEqualFold(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldEqualFold(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContainsFold applies the ContainsFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeContainsFold(v string) predicate.WorkInsight {
+	return predicate.WorkInsight(sql.FieldContainsFold(FieldSubjectObjectType, v))
 }
 
 // SubjectKeyEQ applies the EQ predicate on the "subject_key" field.

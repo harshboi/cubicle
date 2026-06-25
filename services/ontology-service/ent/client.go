@@ -16,6 +16,7 @@ import (
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/documentlink"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/evidenceattachment"
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/messageauthorship"
 	"cubicle/services/ontology-service/ent/messagelensresult"
@@ -67,6 +68,7 @@ import (
 	"cubicle/services/ontology-service/ent/workprogrambriefsnapshot"
 	"cubicle/services/ontology-service/ent/workprogramevidenceneed"
 	"cubicle/services/ontology-service/ent/workprogramitem"
+	"cubicle/services/ontology-service/ent/workprogramitemlink"
 	"cubicle/services/ontology-service/ent/workprogrammilestone"
 	"cubicle/services/ontology-service/ent/workprogramownerrollupsnapshot"
 	"cubicle/services/ontology-service/ent/workprogramqualitygate"
@@ -102,6 +104,8 @@ type Client struct {
 	DocumentLink *DocumentLinkClient
 	// Evidence is the client for interacting with the Evidence builders.
 	Evidence *EvidenceClient
+	// EvidenceAttachment is the client for interacting with the EvidenceAttachment builders.
+	EvidenceAttachment *EvidenceAttachmentClient
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
 	// MessageAuthorship is the client for interacting with the MessageAuthorship builders.
@@ -204,6 +208,8 @@ type Client struct {
 	WorkProgramEvidenceNeed *WorkProgramEvidenceNeedClient
 	// WorkProgramItem is the client for interacting with the WorkProgramItem builders.
 	WorkProgramItem *WorkProgramItemClient
+	// WorkProgramItemLink is the client for interacting with the WorkProgramItemLink builders.
+	WorkProgramItemLink *WorkProgramItemLinkClient
 	// WorkProgramMilestone is the client for interacting with the WorkProgramMilestone builders.
 	WorkProgramMilestone *WorkProgramMilestoneClient
 	// WorkProgramOwnerRollupSnapshot is the client for interacting with the WorkProgramOwnerRollupSnapshot builders.
@@ -246,6 +252,7 @@ func (c *Client) init() {
 	c.DocumentLensResult = NewDocumentLensResultClient(c.config)
 	c.DocumentLink = NewDocumentLinkClient(c.config)
 	c.Evidence = NewEvidenceClient(c.config)
+	c.EvidenceAttachment = NewEvidenceAttachmentClient(c.config)
 	c.Message = NewMessageClient(c.config)
 	c.MessageAuthorship = NewMessageAuthorshipClient(c.config)
 	c.MessageLensResult = NewMessageLensResultClient(c.config)
@@ -297,6 +304,7 @@ func (c *Client) init() {
 	c.WorkProgramBriefSnapshot = NewWorkProgramBriefSnapshotClient(c.config)
 	c.WorkProgramEvidenceNeed = NewWorkProgramEvidenceNeedClient(c.config)
 	c.WorkProgramItem = NewWorkProgramItemClient(c.config)
+	c.WorkProgramItemLink = NewWorkProgramItemLinkClient(c.config)
 	c.WorkProgramMilestone = NewWorkProgramMilestoneClient(c.config)
 	c.WorkProgramOwnerRollupSnapshot = NewWorkProgramOwnerRollupSnapshotClient(c.config)
 	c.WorkProgramQualityGate = NewWorkProgramQualityGateClient(c.config)
@@ -407,6 +415,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		DocumentLensResult:                NewDocumentLensResultClient(cfg),
 		DocumentLink:                      NewDocumentLinkClient(cfg),
 		Evidence:                          NewEvidenceClient(cfg),
+		EvidenceAttachment:                NewEvidenceAttachmentClient(cfg),
 		Message:                           NewMessageClient(cfg),
 		MessageAuthorship:                 NewMessageAuthorshipClient(cfg),
 		MessageLensResult:                 NewMessageLensResultClient(cfg),
@@ -458,6 +467,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		WorkProgramBriefSnapshot:          NewWorkProgramBriefSnapshotClient(cfg),
 		WorkProgramEvidenceNeed:           NewWorkProgramEvidenceNeedClient(cfg),
 		WorkProgramItem:                   NewWorkProgramItemClient(cfg),
+		WorkProgramItemLink:               NewWorkProgramItemLinkClient(cfg),
 		WorkProgramMilestone:              NewWorkProgramMilestoneClient(cfg),
 		WorkProgramOwnerRollupSnapshot:    NewWorkProgramOwnerRollupSnapshotClient(cfg),
 		WorkProgramQualityGate:            NewWorkProgramQualityGateClient(cfg),
@@ -495,6 +505,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		DocumentLensResult:                NewDocumentLensResultClient(cfg),
 		DocumentLink:                      NewDocumentLinkClient(cfg),
 		Evidence:                          NewEvidenceClient(cfg),
+		EvidenceAttachment:                NewEvidenceAttachmentClient(cfg),
 		Message:                           NewMessageClient(cfg),
 		MessageAuthorship:                 NewMessageAuthorshipClient(cfg),
 		MessageLensResult:                 NewMessageLensResultClient(cfg),
@@ -546,6 +557,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		WorkProgramBriefSnapshot:          NewWorkProgramBriefSnapshotClient(cfg),
 		WorkProgramEvidenceNeed:           NewWorkProgramEvidenceNeedClient(cfg),
 		WorkProgramItem:                   NewWorkProgramItemClient(cfg),
+		WorkProgramItemLink:               NewWorkProgramItemLinkClient(cfg),
 		WorkProgramMilestone:              NewWorkProgramMilestoneClient(cfg),
 		WorkProgramOwnerRollupSnapshot:    NewWorkProgramOwnerRollupSnapshotClient(cfg),
 		WorkProgramQualityGate:            NewWorkProgramQualityGateClient(cfg),
@@ -589,27 +601,28 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Document, c.DocumentAuthorship, c.DocumentLensResult, c.DocumentLink,
-		c.Evidence, c.Message, c.MessageAuthorship, c.MessageLensResult,
-		c.MessageMention, c.OpenGraphAssociation, c.OpenGraphObject, c.Person,
-		c.PersonIdentity, c.PullRequest, c.PullRequestAuthorship,
-		c.PullRequestLensResult, c.PullRequestReview, c.SourceAlias,
-		c.SourceConnection, c.SourceScope, c.SourceScopeState, c.SourceSyncIssue,
-		c.SourceSyncRun, c.Ticket, c.TicketAssignment, c.TicketDocument,
-		c.TicketLensResult, c.TicketMention, c.TicketMessage, c.TicketPullRequest,
-		c.UnresolvedReference, c.WorkAction, c.WorkActionObservation, c.WorkArea,
-		c.WorkBlocker, c.WorkBlockerImpact, c.WorkDecisionTargetEvaluation,
-		c.WorkDependencyEdge, c.WorkDependencyEndpoint, c.WorkForecastEvaluation,
-		c.WorkInsight, c.WorkInsightEvaluationSnapshot,
+		c.Evidence, c.EvidenceAttachment, c.Message, c.MessageAuthorship,
+		c.MessageLensResult, c.MessageMention, c.OpenGraphAssociation,
+		c.OpenGraphObject, c.Person, c.PersonIdentity, c.PullRequest,
+		c.PullRequestAuthorship, c.PullRequestLensResult, c.PullRequestReview,
+		c.SourceAlias, c.SourceConnection, c.SourceScope, c.SourceScopeState,
+		c.SourceSyncIssue, c.SourceSyncRun, c.Ticket, c.TicketAssignment,
+		c.TicketDocument, c.TicketLensResult, c.TicketMention, c.TicketMessage,
+		c.TicketPullRequest, c.UnresolvedReference, c.WorkAction,
+		c.WorkActionObservation, c.WorkArea, c.WorkBlocker, c.WorkBlockerImpact,
+		c.WorkDecisionTargetEvaluation, c.WorkDependencyEdge, c.WorkDependencyEndpoint,
+		c.WorkForecastEvaluation, c.WorkInsight, c.WorkInsightEvaluationSnapshot,
 		c.WorkInsightKindEvaluationSnapshot, c.WorkInsightReview, c.WorkItemForecast,
 		c.WorkItemStateSnapshot, c.WorkItemStateTransition, c.WorkLens,
 		c.WorkLensWindow, c.WorkOwnerLoadSnapshot, c.WorkProgramAdversarialCheck,
 		c.WorkProgramAutomationReadiness, c.WorkProgramBriefCaveat,
 		c.WorkProgramBriefSnapshot, c.WorkProgramEvidenceNeed, c.WorkProgramItem,
-		c.WorkProgramMilestone, c.WorkProgramOwnerRollupSnapshot,
-		c.WorkProgramQualityGate, c.WorkProgramRiskDriver, c.WorkProgramRun,
-		c.WorkProgramRunMember, c.WorkProgramSummarySnapshot,
-		c.WorkProgramTPMFunctionReadiness, c.WorkResponsibility, c.Workstream,
-		c.WorkstreamHealthSnapshot, c.WorkstreamStandupSection, c.WorkstreamTicket,
+		c.WorkProgramItemLink, c.WorkProgramMilestone,
+		c.WorkProgramOwnerRollupSnapshot, c.WorkProgramQualityGate,
+		c.WorkProgramRiskDriver, c.WorkProgramRun, c.WorkProgramRunMember,
+		c.WorkProgramSummarySnapshot, c.WorkProgramTPMFunctionReadiness,
+		c.WorkResponsibility, c.Workstream, c.WorkstreamHealthSnapshot,
+		c.WorkstreamStandupSection, c.WorkstreamTicket,
 	} {
 		n.Use(hooks...)
 	}
@@ -620,27 +633,28 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Document, c.DocumentAuthorship, c.DocumentLensResult, c.DocumentLink,
-		c.Evidence, c.Message, c.MessageAuthorship, c.MessageLensResult,
-		c.MessageMention, c.OpenGraphAssociation, c.OpenGraphObject, c.Person,
-		c.PersonIdentity, c.PullRequest, c.PullRequestAuthorship,
-		c.PullRequestLensResult, c.PullRequestReview, c.SourceAlias,
-		c.SourceConnection, c.SourceScope, c.SourceScopeState, c.SourceSyncIssue,
-		c.SourceSyncRun, c.Ticket, c.TicketAssignment, c.TicketDocument,
-		c.TicketLensResult, c.TicketMention, c.TicketMessage, c.TicketPullRequest,
-		c.UnresolvedReference, c.WorkAction, c.WorkActionObservation, c.WorkArea,
-		c.WorkBlocker, c.WorkBlockerImpact, c.WorkDecisionTargetEvaluation,
-		c.WorkDependencyEdge, c.WorkDependencyEndpoint, c.WorkForecastEvaluation,
-		c.WorkInsight, c.WorkInsightEvaluationSnapshot,
+		c.Evidence, c.EvidenceAttachment, c.Message, c.MessageAuthorship,
+		c.MessageLensResult, c.MessageMention, c.OpenGraphAssociation,
+		c.OpenGraphObject, c.Person, c.PersonIdentity, c.PullRequest,
+		c.PullRequestAuthorship, c.PullRequestLensResult, c.PullRequestReview,
+		c.SourceAlias, c.SourceConnection, c.SourceScope, c.SourceScopeState,
+		c.SourceSyncIssue, c.SourceSyncRun, c.Ticket, c.TicketAssignment,
+		c.TicketDocument, c.TicketLensResult, c.TicketMention, c.TicketMessage,
+		c.TicketPullRequest, c.UnresolvedReference, c.WorkAction,
+		c.WorkActionObservation, c.WorkArea, c.WorkBlocker, c.WorkBlockerImpact,
+		c.WorkDecisionTargetEvaluation, c.WorkDependencyEdge, c.WorkDependencyEndpoint,
+		c.WorkForecastEvaluation, c.WorkInsight, c.WorkInsightEvaluationSnapshot,
 		c.WorkInsightKindEvaluationSnapshot, c.WorkInsightReview, c.WorkItemForecast,
 		c.WorkItemStateSnapshot, c.WorkItemStateTransition, c.WorkLens,
 		c.WorkLensWindow, c.WorkOwnerLoadSnapshot, c.WorkProgramAdversarialCheck,
 		c.WorkProgramAutomationReadiness, c.WorkProgramBriefCaveat,
 		c.WorkProgramBriefSnapshot, c.WorkProgramEvidenceNeed, c.WorkProgramItem,
-		c.WorkProgramMilestone, c.WorkProgramOwnerRollupSnapshot,
-		c.WorkProgramQualityGate, c.WorkProgramRiskDriver, c.WorkProgramRun,
-		c.WorkProgramRunMember, c.WorkProgramSummarySnapshot,
-		c.WorkProgramTPMFunctionReadiness, c.WorkResponsibility, c.Workstream,
-		c.WorkstreamHealthSnapshot, c.WorkstreamStandupSection, c.WorkstreamTicket,
+		c.WorkProgramItemLink, c.WorkProgramMilestone,
+		c.WorkProgramOwnerRollupSnapshot, c.WorkProgramQualityGate,
+		c.WorkProgramRiskDriver, c.WorkProgramRun, c.WorkProgramRunMember,
+		c.WorkProgramSummarySnapshot, c.WorkProgramTPMFunctionReadiness,
+		c.WorkResponsibility, c.Workstream, c.WorkstreamHealthSnapshot,
+		c.WorkstreamStandupSection, c.WorkstreamTicket,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -659,6 +673,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.DocumentLink.mutate(ctx, m)
 	case *EvidenceMutation:
 		return c.Evidence.mutate(ctx, m)
+	case *EvidenceAttachmentMutation:
+		return c.EvidenceAttachment.mutate(ctx, m)
 	case *MessageMutation:
 		return c.Message.mutate(ctx, m)
 	case *MessageAuthorshipMutation:
@@ -761,6 +777,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.WorkProgramEvidenceNeed.mutate(ctx, m)
 	case *WorkProgramItemMutation:
 		return c.WorkProgramItem.mutate(ctx, m)
+	case *WorkProgramItemLinkMutation:
+		return c.WorkProgramItemLink.mutate(ctx, m)
 	case *WorkProgramMilestoneMutation:
 		return c.WorkProgramMilestone.mutate(ctx, m)
 	case *WorkProgramOwnerRollupSnapshotMutation:
@@ -1710,6 +1728,331 @@ func (c *EvidenceClient) mutate(ctx context.Context, m *EvidenceMutation) (Value
 		return (&EvidenceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Evidence mutation op: %q", m.Op())
+	}
+}
+
+// EvidenceAttachmentClient is a client for the EvidenceAttachment schema.
+type EvidenceAttachmentClient struct {
+	config
+}
+
+// NewEvidenceAttachmentClient returns a client for the EvidenceAttachment from the given config.
+func NewEvidenceAttachmentClient(c config) *EvidenceAttachmentClient {
+	return &EvidenceAttachmentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `evidenceattachment.Hooks(f(g(h())))`.
+func (c *EvidenceAttachmentClient) Use(hooks ...Hook) {
+	c.hooks.EvidenceAttachment = append(c.hooks.EvidenceAttachment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `evidenceattachment.Intercept(f(g(h())))`.
+func (c *EvidenceAttachmentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EvidenceAttachment = append(c.inters.EvidenceAttachment, interceptors...)
+}
+
+// Create returns a builder for creating a EvidenceAttachment entity.
+func (c *EvidenceAttachmentClient) Create() *EvidenceAttachmentCreate {
+	mutation := newEvidenceAttachmentMutation(c.config, OpCreate)
+	return &EvidenceAttachmentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EvidenceAttachment entities.
+func (c *EvidenceAttachmentClient) CreateBulk(builders ...*EvidenceAttachmentCreate) *EvidenceAttachmentCreateBulk {
+	return &EvidenceAttachmentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EvidenceAttachmentClient) MapCreateBulk(slice any, setFunc func(*EvidenceAttachmentCreate, int)) *EvidenceAttachmentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EvidenceAttachmentCreateBulk{err: fmt.Errorf("calling to EvidenceAttachmentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EvidenceAttachmentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EvidenceAttachmentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EvidenceAttachment.
+func (c *EvidenceAttachmentClient) Update() *EvidenceAttachmentUpdate {
+	mutation := newEvidenceAttachmentMutation(c.config, OpUpdate)
+	return &EvidenceAttachmentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EvidenceAttachmentClient) UpdateOne(_m *EvidenceAttachment) *EvidenceAttachmentUpdateOne {
+	mutation := newEvidenceAttachmentMutation(c.config, OpUpdateOne, withEvidenceAttachment(_m))
+	return &EvidenceAttachmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EvidenceAttachmentClient) UpdateOneID(id int) *EvidenceAttachmentUpdateOne {
+	mutation := newEvidenceAttachmentMutation(c.config, OpUpdateOne, withEvidenceAttachmentID(id))
+	return &EvidenceAttachmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EvidenceAttachment.
+func (c *EvidenceAttachmentClient) Delete() *EvidenceAttachmentDelete {
+	mutation := newEvidenceAttachmentMutation(c.config, OpDelete)
+	return &EvidenceAttachmentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EvidenceAttachmentClient) DeleteOne(_m *EvidenceAttachment) *EvidenceAttachmentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EvidenceAttachmentClient) DeleteOneID(id int) *EvidenceAttachmentDeleteOne {
+	builder := c.Delete().Where(evidenceattachment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EvidenceAttachmentDeleteOne{builder}
+}
+
+// Query returns a query builder for EvidenceAttachment.
+func (c *EvidenceAttachmentClient) Query() *EvidenceAttachmentQuery {
+	return &EvidenceAttachmentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEvidenceAttachment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EvidenceAttachment entity by its id.
+func (c *EvidenceAttachmentClient) Get(ctx context.Context, id int) (*EvidenceAttachment, error) {
+	return c.Query().Where(evidenceattachment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EvidenceAttachmentClient) GetX(ctx context.Context, id int) *EvidenceAttachment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEvidence queries the evidence edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryEvidence(_m *EvidenceAttachment) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.EvidenceTable, evidenceattachment.EvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryTicket(_m *EvidenceAttachment) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.TicketTable, evidenceattachment.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPullRequest queries the pull_request edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryPullRequest(_m *EvidenceAttachment) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.PullRequestTable, evidenceattachment.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicketPullRequest queries the ticket_pull_request edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryTicketPullRequest(_m *EvidenceAttachment) *TicketPullRequestQuery {
+	query := (&TicketPullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(ticketpullrequest.Table, ticketpullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.TicketPullRequestTable, evidenceattachment.TicketPullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOpenGraphObject queries the open_graph_object edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryOpenGraphObject(_m *EvidenceAttachment) *OpenGraphObjectQuery {
+	query := (&OpenGraphObjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(opengraphobject.Table, opengraphobject.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.OpenGraphObjectTable, evidenceattachment.OpenGraphObjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOpenGraphAssociation queries the open_graph_association edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryOpenGraphAssociation(_m *EvidenceAttachment) *OpenGraphAssociationQuery {
+	query := (&OpenGraphAssociationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(opengraphassociation.Table, opengraphassociation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.OpenGraphAssociationTable, evidenceattachment.OpenGraphAssociationColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkAction queries the work_action edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkAction(_m *EvidenceAttachment) *WorkActionQuery {
+	query := (&WorkActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkActionTable, evidenceattachment.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkInsight queries the work_insight edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkInsight(_m *EvidenceAttachment) *WorkInsightQuery {
+	query := (&WorkInsightClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workinsight.Table, workinsight.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkInsightTable, evidenceattachment.WorkInsightColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkBlocker queries the work_blocker edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkBlocker(_m *EvidenceAttachment) *WorkBlockerQuery {
+	query := (&WorkBlockerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workblocker.Table, workblocker.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkBlockerTable, evidenceattachment.WorkBlockerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkDependencyEdge queries the work_dependency_edge edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkDependencyEdge(_m *EvidenceAttachment) *WorkDependencyEdgeQuery {
+	query := (&WorkDependencyEdgeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workdependencyedge.Table, workdependencyedge.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkDependencyEdgeTable, evidenceattachment.WorkDependencyEdgeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkItemForecast queries the work_item_forecast edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkItemForecast(_m *EvidenceAttachment) *WorkItemForecastQuery {
+	query := (&WorkItemForecastClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workitemforecast.Table, workitemforecast.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkItemForecastTable, evidenceattachment.WorkItemForecastColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryWorkResponsibility queries the work_responsibility edge of a EvidenceAttachment.
+func (c *EvidenceAttachmentClient) QueryWorkResponsibility(_m *EvidenceAttachment) *WorkResponsibilityQuery {
+	query := (&WorkResponsibilityClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(evidenceattachment.Table, evidenceattachment.FieldID, id),
+			sqlgraph.To(workresponsibility.Table, workresponsibility.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, evidenceattachment.WorkResponsibilityTable, evidenceattachment.WorkResponsibilityColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EvidenceAttachmentClient) Hooks() []Hook {
+	return c.hooks.EvidenceAttachment
+}
+
+// Interceptors returns the client interceptors.
+func (c *EvidenceAttachmentClient) Interceptors() []Interceptor {
+	return c.inters.EvidenceAttachment
+}
+
+func (c *EvidenceAttachmentClient) mutate(ctx context.Context, m *EvidenceAttachmentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EvidenceAttachmentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EvidenceAttachmentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EvidenceAttachmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EvidenceAttachmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EvidenceAttachment mutation op: %q", m.Op())
 	}
 }
 
@@ -7837,6 +8180,22 @@ func (c *WorkDependencyEdgeClient) QueryWorkAction(_m *WorkDependencyEdge) *Work
 	return query
 }
 
+// QueryTicketPullRequest queries the ticket_pull_request edge of a WorkDependencyEdge.
+func (c *WorkDependencyEdgeClient) QueryTicketPullRequest(_m *WorkDependencyEdge) *TicketPullRequestQuery {
+	query := (&TicketPullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workdependencyedge.Table, workdependencyedge.FieldID, id),
+			sqlgraph.To(ticketpullrequest.Table, ticketpullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workdependencyedge.TicketPullRequestTable, workdependencyedge.TicketPullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryLatestEvidence queries the latest_evidence edge of a WorkDependencyEdge.
 func (c *WorkDependencyEdgeClient) QueryLatestEvidence(_m *WorkDependencyEdge) *EvidenceQuery {
 	query := (&EvidenceClient{config: c.config}).Query()
@@ -9129,6 +9488,22 @@ func (c *WorkItemForecastClient) QueryWorkAction(_m *WorkItemForecast) *WorkActi
 			sqlgraph.From(workitemforecast.Table, workitemforecast.FieldID, id),
 			sqlgraph.To(workaction.Table, workaction.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, workitemforecast.WorkActionTable, workitemforecast.WorkActionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryForecastEvaluation queries the forecast_evaluation edge of a WorkItemForecast.
+func (c *WorkItemForecastClient) QueryForecastEvaluation(_m *WorkItemForecast) *WorkForecastEvaluationQuery {
+	query := (&WorkForecastEvaluationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemforecast.Table, workitemforecast.FieldID, id),
+			sqlgraph.To(workforecastevaluation.Table, workforecastevaluation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemforecast.ForecastEvaluationTable, workitemforecast.ForecastEvaluationColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -11208,6 +11583,22 @@ func (c *WorkProgramItemClient) QueryLatestEvidence(_m *WorkProgramItem) *Eviden
 	return query
 }
 
+// QueryLinks queries the links edge of a WorkProgramItem.
+func (c *WorkProgramItemClient) QueryLinks(_m *WorkProgramItem) *WorkProgramItemLinkQuery {
+	query := (&WorkProgramItemLinkClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitem.Table, workprogramitem.FieldID, id),
+			sqlgraph.To(workprogramitemlink.Table, workprogramitemlink.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, workprogramitem.LinksTable, workprogramitem.LinksColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *WorkProgramItemClient) Hooks() []Hook {
 	return c.hooks.WorkProgramItem
@@ -11230,6 +11621,235 @@ func (c *WorkProgramItemClient) mutate(ctx context.Context, m *WorkProgramItemMu
 		return (&WorkProgramItemDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown WorkProgramItem mutation op: %q", m.Op())
+	}
+}
+
+// WorkProgramItemLinkClient is a client for the WorkProgramItemLink schema.
+type WorkProgramItemLinkClient struct {
+	config
+}
+
+// NewWorkProgramItemLinkClient returns a client for the WorkProgramItemLink from the given config.
+func NewWorkProgramItemLinkClient(c config) *WorkProgramItemLinkClient {
+	return &WorkProgramItemLinkClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `workprogramitemlink.Hooks(f(g(h())))`.
+func (c *WorkProgramItemLinkClient) Use(hooks ...Hook) {
+	c.hooks.WorkProgramItemLink = append(c.hooks.WorkProgramItemLink, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `workprogramitemlink.Intercept(f(g(h())))`.
+func (c *WorkProgramItemLinkClient) Intercept(interceptors ...Interceptor) {
+	c.inters.WorkProgramItemLink = append(c.inters.WorkProgramItemLink, interceptors...)
+}
+
+// Create returns a builder for creating a WorkProgramItemLink entity.
+func (c *WorkProgramItemLinkClient) Create() *WorkProgramItemLinkCreate {
+	mutation := newWorkProgramItemLinkMutation(c.config, OpCreate)
+	return &WorkProgramItemLinkCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of WorkProgramItemLink entities.
+func (c *WorkProgramItemLinkClient) CreateBulk(builders ...*WorkProgramItemLinkCreate) *WorkProgramItemLinkCreateBulk {
+	return &WorkProgramItemLinkCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *WorkProgramItemLinkClient) MapCreateBulk(slice any, setFunc func(*WorkProgramItemLinkCreate, int)) *WorkProgramItemLinkCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &WorkProgramItemLinkCreateBulk{err: fmt.Errorf("calling to WorkProgramItemLinkClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*WorkProgramItemLinkCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &WorkProgramItemLinkCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) Update() *WorkProgramItemLinkUpdate {
+	mutation := newWorkProgramItemLinkMutation(c.config, OpUpdate)
+	return &WorkProgramItemLinkUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *WorkProgramItemLinkClient) UpdateOne(_m *WorkProgramItemLink) *WorkProgramItemLinkUpdateOne {
+	mutation := newWorkProgramItemLinkMutation(c.config, OpUpdateOne, withWorkProgramItemLink(_m))
+	return &WorkProgramItemLinkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *WorkProgramItemLinkClient) UpdateOneID(id int) *WorkProgramItemLinkUpdateOne {
+	mutation := newWorkProgramItemLinkMutation(c.config, OpUpdateOne, withWorkProgramItemLinkID(id))
+	return &WorkProgramItemLinkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) Delete() *WorkProgramItemLinkDelete {
+	mutation := newWorkProgramItemLinkMutation(c.config, OpDelete)
+	return &WorkProgramItemLinkDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *WorkProgramItemLinkClient) DeleteOne(_m *WorkProgramItemLink) *WorkProgramItemLinkDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *WorkProgramItemLinkClient) DeleteOneID(id int) *WorkProgramItemLinkDeleteOne {
+	builder := c.Delete().Where(workprogramitemlink.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &WorkProgramItemLinkDeleteOne{builder}
+}
+
+// Query returns a query builder for WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) Query() *WorkProgramItemLinkQuery {
+	return &WorkProgramItemLinkQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeWorkProgramItemLink},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a WorkProgramItemLink entity by its id.
+func (c *WorkProgramItemLinkClient) Get(ctx context.Context, id int) (*WorkProgramItemLink, error) {
+	return c.Query().Where(workprogramitemlink.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *WorkProgramItemLinkClient) GetX(ctx context.Context, id int) *WorkProgramItemLink {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryWorkProgramItem queries the work_program_item edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryWorkProgramItem(_m *WorkProgramItemLink) *WorkProgramItemQuery {
+	query := (&WorkProgramItemClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(workprogramitem.Table, workprogramitem.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.WorkProgramItemTable, workprogramitemlink.WorkProgramItemColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPullRequest queries the pull_request edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryPullRequest(_m *WorkProgramItemLink) *PullRequestQuery {
+	query := (&PullRequestClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.PullRequestTable, workprogramitemlink.PullRequestColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTicket queries the ticket edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryTicket(_m *WorkProgramItemLink) *TicketQuery {
+	query := (&TicketClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(ticket.Table, ticket.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.TicketTable, workprogramitemlink.TicketColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryOpenGraphObject queries the open_graph_object edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryOpenGraphObject(_m *WorkProgramItemLink) *OpenGraphObjectQuery {
+	query := (&OpenGraphObjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(opengraphobject.Table, opengraphobject.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.OpenGraphObjectTable, workprogramitemlink.OpenGraphObjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEvidenceAttachment queries the evidence_attachment edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryEvidenceAttachment(_m *WorkProgramItemLink) *EvidenceAttachmentQuery {
+	query := (&EvidenceAttachmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(evidenceattachment.Table, evidenceattachment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.EvidenceAttachmentTable, workprogramitemlink.EvidenceAttachmentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLatestEvidence queries the latest_evidence edge of a WorkProgramItemLink.
+func (c *WorkProgramItemLinkClient) QueryLatestEvidence(_m *WorkProgramItemLink) *EvidenceQuery {
+	query := (&EvidenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workprogramitemlink.Table, workprogramitemlink.FieldID, id),
+			sqlgraph.To(evidence.Table, evidence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workprogramitemlink.LatestEvidenceTable, workprogramitemlink.LatestEvidenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *WorkProgramItemLinkClient) Hooks() []Hook {
+	return c.hooks.WorkProgramItemLink
+}
+
+// Interceptors returns the client interceptors.
+func (c *WorkProgramItemLinkClient) Interceptors() []Interceptor {
+	return c.inters.WorkProgramItemLink
+}
+
+func (c *WorkProgramItemLinkClient) mutate(ctx context.Context, m *WorkProgramItemLinkMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&WorkProgramItemLinkCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&WorkProgramItemLinkUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&WorkProgramItemLinkUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&WorkProgramItemLinkDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown WorkProgramItemLink mutation op: %q", m.Op())
 	}
 }
 
@@ -13622,10 +14242,10 @@ func (c *WorkstreamTicketClient) mutate(ctx context.Context, m *WorkstreamTicket
 type (
 	hooks struct {
 		Document, DocumentAuthorship, DocumentLensResult, DocumentLink, Evidence,
-		Message, MessageAuthorship, MessageLensResult, MessageMention,
-		OpenGraphAssociation, OpenGraphObject, Person, PersonIdentity, PullRequest,
-		PullRequestAuthorship, PullRequestLensResult, PullRequestReview, SourceAlias,
-		SourceConnection, SourceScope, SourceScopeState, SourceSyncIssue,
+		EvidenceAttachment, Message, MessageAuthorship, MessageLensResult,
+		MessageMention, OpenGraphAssociation, OpenGraphObject, Person, PersonIdentity,
+		PullRequest, PullRequestAuthorship, PullRequestLensResult, PullRequestReview,
+		SourceAlias, SourceConnection, SourceScope, SourceScopeState, SourceSyncIssue,
 		SourceSyncRun, Ticket, TicketAssignment, TicketDocument, TicketLensResult,
 		TicketMention, TicketMessage, TicketPullRequest, UnresolvedReference,
 		WorkAction, WorkActionObservation, WorkArea, WorkBlocker, WorkBlockerImpact,
@@ -13636,18 +14256,18 @@ type (
 		WorkOwnerLoadSnapshot, WorkProgramAdversarialCheck,
 		WorkProgramAutomationReadiness, WorkProgramBriefCaveat,
 		WorkProgramBriefSnapshot, WorkProgramEvidenceNeed, WorkProgramItem,
-		WorkProgramMilestone, WorkProgramOwnerRollupSnapshot, WorkProgramQualityGate,
-		WorkProgramRiskDriver, WorkProgramRun, WorkProgramRunMember,
-		WorkProgramSummarySnapshot, WorkProgramTPMFunctionReadiness,
-		WorkResponsibility, Workstream, WorkstreamHealthSnapshot,
-		WorkstreamStandupSection, WorkstreamTicket []ent.Hook
+		WorkProgramItemLink, WorkProgramMilestone, WorkProgramOwnerRollupSnapshot,
+		WorkProgramQualityGate, WorkProgramRiskDriver, WorkProgramRun,
+		WorkProgramRunMember, WorkProgramSummarySnapshot,
+		WorkProgramTPMFunctionReadiness, WorkResponsibility, Workstream,
+		WorkstreamHealthSnapshot, WorkstreamStandupSection, WorkstreamTicket []ent.Hook
 	}
 	inters struct {
 		Document, DocumentAuthorship, DocumentLensResult, DocumentLink, Evidence,
-		Message, MessageAuthorship, MessageLensResult, MessageMention,
-		OpenGraphAssociation, OpenGraphObject, Person, PersonIdentity, PullRequest,
-		PullRequestAuthorship, PullRequestLensResult, PullRequestReview, SourceAlias,
-		SourceConnection, SourceScope, SourceScopeState, SourceSyncIssue,
+		EvidenceAttachment, Message, MessageAuthorship, MessageLensResult,
+		MessageMention, OpenGraphAssociation, OpenGraphObject, Person, PersonIdentity,
+		PullRequest, PullRequestAuthorship, PullRequestLensResult, PullRequestReview,
+		SourceAlias, SourceConnection, SourceScope, SourceScopeState, SourceSyncIssue,
 		SourceSyncRun, Ticket, TicketAssignment, TicketDocument, TicketLensResult,
 		TicketMention, TicketMessage, TicketPullRequest, UnresolvedReference,
 		WorkAction, WorkActionObservation, WorkArea, WorkBlocker, WorkBlockerImpact,
@@ -13658,10 +14278,11 @@ type (
 		WorkOwnerLoadSnapshot, WorkProgramAdversarialCheck,
 		WorkProgramAutomationReadiness, WorkProgramBriefCaveat,
 		WorkProgramBriefSnapshot, WorkProgramEvidenceNeed, WorkProgramItem,
-		WorkProgramMilestone, WorkProgramOwnerRollupSnapshot, WorkProgramQualityGate,
-		WorkProgramRiskDriver, WorkProgramRun, WorkProgramRunMember,
-		WorkProgramSummarySnapshot, WorkProgramTPMFunctionReadiness,
-		WorkResponsibility, Workstream, WorkstreamHealthSnapshot,
-		WorkstreamStandupSection, WorkstreamTicket []ent.Interceptor
+		WorkProgramItemLink, WorkProgramMilestone, WorkProgramOwnerRollupSnapshot,
+		WorkProgramQualityGate, WorkProgramRiskDriver, WorkProgramRun,
+		WorkProgramRunMember, WorkProgramSummarySnapshot,
+		WorkProgramTPMFunctionReadiness, WorkResponsibility, Workstream,
+		WorkstreamHealthSnapshot, WorkstreamStandupSection,
+		WorkstreamTicket []ent.Interceptor
 	}
 )

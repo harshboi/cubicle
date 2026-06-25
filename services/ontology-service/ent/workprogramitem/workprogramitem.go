@@ -29,6 +29,8 @@ const (
 	FieldWorkstreamKey = "workstream_key"
 	// FieldSubjectKind holds the string denoting the subject_kind field in the database.
 	FieldSubjectKind = "subject_kind"
+	// FieldSubjectObjectType holds the string denoting the subject_object_type field in the database.
+	FieldSubjectObjectType = "subject_object_type"
 	// FieldSubjectKey holds the string denoting the subject_key field in the database.
 	FieldSubjectKey = "subject_key"
 	// FieldLinkedTicketKeys holds the string denoting the linked_ticket_keys field in the database.
@@ -125,6 +127,8 @@ const (
 	EdgeTicket = "ticket"
 	// EdgeLatestEvidence holds the string denoting the latest_evidence edge name in mutations.
 	EdgeLatestEvidence = "latest_evidence"
+	// EdgeLinks holds the string denoting the links edge name in mutations.
+	EdgeLinks = "links"
 	// Table holds the table name of the workprogramitem in the database.
 	Table = "work_program_items"
 	// WorkstreamTable is the table that holds the workstream relation/edge.
@@ -162,6 +166,13 @@ const (
 	LatestEvidenceInverseTable = "evidences"
 	// LatestEvidenceColumn is the table column denoting the latest_evidence relation/edge.
 	LatestEvidenceColumn = "latest_evidence_id"
+	// LinksTable is the table that holds the links relation/edge.
+	LinksTable = "work_program_item_links"
+	// LinksInverseTable is the table name for the WorkProgramItemLink entity.
+	// It exists in this package in order to avoid circular dependency with the "workprogramitemlink" package.
+	LinksInverseTable = "work_program_item_links"
+	// LinksColumn is the table column denoting the links relation/edge.
+	LinksColumn = "work_program_item_id"
 )
 
 // Columns holds all SQL columns for workprogramitem fields.
@@ -174,6 +185,7 @@ var Columns = []string{
 	FieldTicketID,
 	FieldWorkstreamKey,
 	FieldSubjectKind,
+	FieldSubjectObjectType,
 	FieldSubjectKey,
 	FieldLinkedTicketKeys,
 	FieldLinkedPullRequestKeys,
@@ -514,6 +526,11 @@ func BySubjectKind(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSubjectKind, opts...).ToFunc()
 }
 
+// BySubjectObjectType orders the results by the subject_object_type field.
+func BySubjectObjectType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSubjectObjectType, opts...).ToFunc()
+}
+
 // BySubjectKey orders the results by the subject_key field.
 func BySubjectKey(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSubjectKey, opts...).ToFunc()
@@ -763,6 +780,20 @@ func ByLatestEvidenceField(field string, opts ...sql.OrderTermOption) OrderOptio
 		sqlgraph.OrderByNeighborTerms(s, newLatestEvidenceStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByLinksCount orders the results by links count.
+func ByLinksCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newLinksStep(), opts...)
+	}
+}
+
+// ByLinks orders the results by links terms.
+func ByLinks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newLinksStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newWorkstreamStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -796,5 +827,12 @@ func newLatestEvidenceStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(LatestEvidenceInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, LatestEvidenceTable, LatestEvidenceColumn),
+	)
+}
+func newLinksStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(LinksInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, LinksTable, LinksColumn),
 	)
 }

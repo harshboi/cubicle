@@ -433,6 +433,204 @@ var (
 			},
 		},
 	}
+	// EvidenceAttachmentsColumns holds the columns for the "evidence_attachments" table.
+	EvidenceAttachmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "claim_kind", Type: field.TypeEnum, Enums: []string{"object_state", "relationship", "identity", "candidate", "generated_summary"}, Default: "object_state"},
+		{Name: "target_kind", Type: field.TypeString},
+		{Name: "target_key", Type: field.TypeString},
+		{Name: "target_table", Type: field.TypeString, Nullable: true},
+		{Name: "target_id", Type: field.TypeInt, Nullable: true},
+		{Name: "claim_field", Type: field.TypeString, Nullable: true},
+		{Name: "relationship_kind", Type: field.TypeString, Nullable: true},
+		{Name: "relationship_id", Type: field.TypeInt, Nullable: true},
+		{Name: "attachment_state", Type: field.TypeEnum, Enums: []string{"current", "candidate", "superseded", "rejected"}, Default: "current"},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "evidence_id", Type: field.TypeInt},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "open_graph_object_id", Type: field.TypeInt, Nullable: true},
+		{Name: "open_graph_association_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_insight_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_blocker_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_dependency_edge_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_item_forecast_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_responsibility_id", Type: field.TypeInt, Nullable: true},
+	}
+	// EvidenceAttachmentsTable holds the schema information for the "evidence_attachments" table.
+	EvidenceAttachmentsTable = &schema.Table{
+		Name:       "evidence_attachments",
+		Columns:    EvidenceAttachmentsColumns,
+		PrimaryKey: []*schema.Column{EvidenceAttachmentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "evidence_attachments_evidences_evidence",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[21]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "evidence_attachments_tickets_ticket",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[22]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_pull_requests_pull_request",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[23]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_ticket_pull_requests_ticket_pull_request",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[24]},
+				RefColumns: []*schema.Column{TicketPullRequestsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_open_graph_objects_open_graph_object",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[25]},
+				RefColumns: []*schema.Column{OpenGraphObjectsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_open_graph_associations_open_graph_association",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[26]},
+				RefColumns: []*schema.Column{OpenGraphAssociationsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_actions_work_action",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[27]},
+				RefColumns: []*schema.Column{WorkActionsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_insights_work_insight",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[28]},
+				RefColumns: []*schema.Column{WorkInsightsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_blockers_work_blocker",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[29]},
+				RefColumns: []*schema.Column{WorkBlockersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_dependency_edges_work_dependency_edge",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[30]},
+				RefColumns: []*schema.Column{WorkDependencyEdgesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_item_forecasts_work_item_forecast",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[31]},
+				RefColumns: []*schema.Column{WorkItemForecastsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "evidence_attachments_work_responsibilities_work_responsibility",
+				Columns:    []*schema.Column{EvidenceAttachmentsColumns[32]},
+				RefColumns: []*schema.Column{WorkResponsibilitiesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "evidenceattachment_target_kind_target_key_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[3], EvidenceAttachmentsColumns[4], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_target_kind_target_key_claim_field_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[3], EvidenceAttachmentsColumns[4], EvidenceAttachmentsColumns[7], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_relationship_kind_relationship_id_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[8], EvidenceAttachmentsColumns[9], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_evidence_id_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[21], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_ticket_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[22], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_pull_request_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[23], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_ticket_pull_request_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[24], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_open_graph_object_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[25], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_open_graph_association_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[26], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_action_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[27], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_insight_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[28], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_blocker_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[29], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_dependency_edge_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[30], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_item_forecast_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[31], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_work_responsibility_id_claim_kind_attachment_state",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[32], EvidenceAttachmentsColumns[2], EvidenceAttachmentsColumns[10]},
+			},
+			{
+				Name:    "evidenceattachment_source_system_source_instance_external_kind_external_id",
+				Unique:  false,
+				Columns: []*schema.Column{EvidenceAttachmentsColumns[11], EvidenceAttachmentsColumns[12], EvidenceAttachmentsColumns[13], EvidenceAttachmentsColumns[14]},
+			},
+		},
+	}
 	// MessagesColumns holds the columns for the "messages" table.
 	MessagesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -2328,6 +2526,7 @@ var (
 		{Name: "decision", Type: field.TypeString, Nullable: true},
 		{Name: "decision_reason", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString},
 		{Name: "owner_key", Type: field.TypeString, Nullable: true},
 		{Name: "owner_source", Type: field.TypeString, Nullable: true},
@@ -2363,19 +2562,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "work_actions_pull_requests_pull_request",
-				Columns:    []*schema.Column{WorkActionsColumns[31]},
+				Columns:    []*schema.Column{WorkActionsColumns[32]},
 				RefColumns: []*schema.Column{PullRequestsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_actions_tickets_ticket",
-				Columns:    []*schema.Column{WorkActionsColumns[32]},
+				Columns:    []*schema.Column{WorkActionsColumns[33]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_actions_evidences_latest_evidence",
-				Columns:    []*schema.Column{WorkActionsColumns[33]},
+				Columns:    []*schema.Column{WorkActionsColumns[34]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -2384,32 +2583,32 @@ var (
 			{
 				Name:    "workaction_decision_state_action_state_due_bucket_rank_score_last_activity_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkActionsColumns[4], WorkActionsColumns[3], WorkActionsColumns[11], WorkActionsColumns[28], WorkActionsColumns[27]},
+				Columns: []*schema.Column{WorkActionsColumns[4], WorkActionsColumns[3], WorkActionsColumns[12], WorkActionsColumns[29], WorkActionsColumns[28]},
 			},
 			{
 				Name:    "workaction_subject_kind_subject_key_decision_state_action_state",
 				Unique:  false,
-				Columns: []*schema.Column{WorkActionsColumns[7], WorkActionsColumns[8], WorkActionsColumns[4], WorkActionsColumns[3]},
+				Columns: []*schema.Column{WorkActionsColumns[7], WorkActionsColumns[9], WorkActionsColumns[4], WorkActionsColumns[3]},
 			},
 			{
 				Name:    "workaction_owner_key_action_state_due_bucket_rank_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkActionsColumns[9], WorkActionsColumns[3], WorkActionsColumns[11], WorkActionsColumns[28]},
+				Columns: []*schema.Column{WorkActionsColumns[10], WorkActionsColumns[3], WorkActionsColumns[12], WorkActionsColumns[29]},
 			},
 			{
 				Name:    "workaction_pull_request_id_decision_state_action_state_rank_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkActionsColumns[31], WorkActionsColumns[4], WorkActionsColumns[3], WorkActionsColumns[28]},
+				Columns: []*schema.Column{WorkActionsColumns[32], WorkActionsColumns[4], WorkActionsColumns[3], WorkActionsColumns[29]},
 			},
 			{
 				Name:    "workaction_ticket_id_decision_state_action_state_rank_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkActionsColumns[32], WorkActionsColumns[4], WorkActionsColumns[3], WorkActionsColumns[28]},
+				Columns: []*schema.Column{WorkActionsColumns[33], WorkActionsColumns[4], WorkActionsColumns[3], WorkActionsColumns[29]},
 			},
 			{
 				Name:    "workaction_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkActionsColumns[16], WorkActionsColumns[17], WorkActionsColumns[18], WorkActionsColumns[19]},
+				Columns: []*schema.Column{WorkActionsColumns[17], WorkActionsColumns[18], WorkActionsColumns[19], WorkActionsColumns[20]},
 			},
 		},
 	}
@@ -2552,6 +2751,7 @@ var (
 		{Name: "blocker_state", Type: field.TypeEnum, Enums: []string{"unknown", "active", "validating", "resolved", "dismissed"}, Default: "unknown"},
 		{Name: "severity", Type: field.TypeEnum, Enums: []string{"info", "low", "medium", "high", "critical"}, Default: "info"},
 		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString},
 		{Name: "owner_key", Type: field.TypeString, Nullable: true},
 		{Name: "owner_source", Type: field.TypeString, Nullable: true},
@@ -2611,31 +2811,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "work_blockers_pull_requests_pull_request",
-				Columns:    []*schema.Column{WorkBlockersColumns[51]},
+				Columns:    []*schema.Column{WorkBlockersColumns[52]},
 				RefColumns: []*schema.Column{PullRequestsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_blockers_tickets_ticket",
-				Columns:    []*schema.Column{WorkBlockersColumns[52]},
+				Columns:    []*schema.Column{WorkBlockersColumns[53]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_blockers_work_actions_work_action",
-				Columns:    []*schema.Column{WorkBlockersColumns[53]},
+				Columns:    []*schema.Column{WorkBlockersColumns[54]},
 				RefColumns: []*schema.Column{WorkActionsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "work_blockers_work_insights_work_insight",
-				Columns:    []*schema.Column{WorkBlockersColumns[54]},
+				Columns:    []*schema.Column{WorkBlockersColumns[55]},
 				RefColumns: []*schema.Column{WorkInsightsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "work_blockers_evidences_latest_evidence",
-				Columns:    []*schema.Column{WorkBlockersColumns[55]},
+				Columns:    []*schema.Column{WorkBlockersColumns[56]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -2644,37 +2844,37 @@ var (
 			{
 				Name:    "workblocker_blocker_state_decision_state_severity_rank_score_last_activity_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkBlockersColumns[3], WorkBlockersColumns[9], WorkBlockersColumns[4], WorkBlockersColumns[48], WorkBlockersColumns[47]},
+				Columns: []*schema.Column{WorkBlockersColumns[3], WorkBlockersColumns[10], WorkBlockersColumns[4], WorkBlockersColumns[49], WorkBlockersColumns[48]},
 			},
 			{
 				Name:    "workblocker_subject_kind_subject_key_blocker_state_decision_state",
 				Unique:  false,
-				Columns: []*schema.Column{WorkBlockersColumns[5], WorkBlockersColumns[6], WorkBlockersColumns[3], WorkBlockersColumns[9]},
+				Columns: []*schema.Column{WorkBlockersColumns[5], WorkBlockersColumns[7], WorkBlockersColumns[3], WorkBlockersColumns[10]},
 			},
 			{
 				Name:    "workblocker_owner_key_blocker_state_severity_rank_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkBlockersColumns[7], WorkBlockersColumns[3], WorkBlockersColumns[4], WorkBlockersColumns[48]},
+				Columns: []*schema.Column{WorkBlockersColumns[8], WorkBlockersColumns[3], WorkBlockersColumns[4], WorkBlockersColumns[49]},
 			},
 			{
 				Name:    "workblocker_pull_request_id_blocker_state_severity_rank_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkBlockersColumns[51], WorkBlockersColumns[3], WorkBlockersColumns[4], WorkBlockersColumns[48]},
+				Columns: []*schema.Column{WorkBlockersColumns[52], WorkBlockersColumns[3], WorkBlockersColumns[4], WorkBlockersColumns[49]},
 			},
 			{
 				Name:    "workblocker_ticket_id_blocker_state_severity_rank_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkBlockersColumns[52], WorkBlockersColumns[3], WorkBlockersColumns[4], WorkBlockersColumns[48]},
+				Columns: []*schema.Column{WorkBlockersColumns[53], WorkBlockersColumns[3], WorkBlockersColumns[4], WorkBlockersColumns[49]},
 			},
 			{
 				Name:    "workblocker_work_action_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkBlockersColumns[53]},
+				Columns: []*schema.Column{WorkBlockersColumns[54]},
 			},
 			{
 				Name:    "workblocker_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkBlockersColumns[23], WorkBlockersColumns[24], WorkBlockersColumns[25], WorkBlockersColumns[26]},
+				Columns: []*schema.Column{WorkBlockersColumns[24], WorkBlockersColumns[25], WorkBlockersColumns[26], WorkBlockersColumns[27]},
 			},
 		},
 	}
@@ -2690,6 +2890,7 @@ var (
 		{Name: "affected_kind", Type: field.TypeEnum, Enums: []string{"workstream", "ticket", "pull_request", "blocker", "action", "component"}},
 		{Name: "affected_key", Type: field.TypeString},
 		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString},
 		{Name: "path_length", Type: field.TypeInt, Default: 0},
 		{Name: "source_coverage_state", Type: field.TypeString, Nullable: true},
@@ -2727,37 +2928,37 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "work_blocker_impacts_work_blockers_work_blocker",
-				Columns:    []*schema.Column{WorkBlockerImpactsColumns[32]},
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[33]},
 				RefColumns: []*schema.Column{WorkBlockersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "work_blocker_impacts_work_actions_work_action",
-				Columns:    []*schema.Column{WorkBlockerImpactsColumns[33]},
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[34]},
 				RefColumns: []*schema.Column{WorkActionsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "work_blocker_impacts_workstreams_workstream",
-				Columns:    []*schema.Column{WorkBlockerImpactsColumns[34]},
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[35]},
 				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "work_blocker_impacts_pull_requests_pull_request",
-				Columns:    []*schema.Column{WorkBlockerImpactsColumns[35]},
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[36]},
 				RefColumns: []*schema.Column{PullRequestsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "work_blocker_impacts_tickets_ticket",
-				Columns:    []*schema.Column{WorkBlockerImpactsColumns[36]},
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[37]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "work_blocker_impacts_evidences_latest_evidence",
-				Columns:    []*schema.Column{WorkBlockerImpactsColumns[37]},
+				Columns:    []*schema.Column{WorkBlockerImpactsColumns[38]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -2766,7 +2967,7 @@ var (
 			{
 				Name:    "workblockerimpact_impact_state_impact_score_rank_score_last_activity_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4], WorkBlockerImpactsColumns[29], WorkBlockerImpactsColumns[28]},
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4], WorkBlockerImpactsColumns[30], WorkBlockerImpactsColumns[29]},
 			},
 			{
 				Name:    "workblockerimpact_affected_kind_affected_key_impact_state_impact_score",
@@ -2776,32 +2977,32 @@ var (
 			{
 				Name:    "workblockerimpact_subject_kind_subject_key_impact_state_impact_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkBlockerImpactsColumns[9], WorkBlockerImpactsColumns[10], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[9], WorkBlockerImpactsColumns[11], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
 			},
 			{
 				Name:    "workblockerimpact_work_blocker_id_impact_kind_affected_kind_affected_key",
 				Unique:  true,
-				Columns: []*schema.Column{WorkBlockerImpactsColumns[32], WorkBlockerImpactsColumns[2], WorkBlockerImpactsColumns[7], WorkBlockerImpactsColumns[8]},
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[33], WorkBlockerImpactsColumns[2], WorkBlockerImpactsColumns[7], WorkBlockerImpactsColumns[8]},
 			},
 			{
 				Name:    "workblockerimpact_workstream_id_impact_state_impact_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkBlockerImpactsColumns[34], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[35], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
 			},
 			{
 				Name:    "workblockerimpact_pull_request_id_impact_state_impact_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkBlockerImpactsColumns[35], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[36], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
 			},
 			{
 				Name:    "workblockerimpact_ticket_id_impact_state_impact_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkBlockerImpactsColumns[36], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[37], WorkBlockerImpactsColumns[3], WorkBlockerImpactsColumns[4]},
 			},
 			{
 				Name:    "workblockerimpact_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkBlockerImpactsColumns[17], WorkBlockerImpactsColumns[18], WorkBlockerImpactsColumns[19], WorkBlockerImpactsColumns[20]},
+				Columns: []*schema.Column{WorkBlockerImpactsColumns[18], WorkBlockerImpactsColumns[19], WorkBlockerImpactsColumns[20], WorkBlockerImpactsColumns[21]},
 			},
 		},
 	}
@@ -2921,6 +3122,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "work_blocker_id", Type: field.TypeInt, Nullable: true},
 		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_pull_request_id", Type: field.TypeInt, Nullable: true},
 		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
 	}
 	// WorkDependencyEdgesTable holds the schema information for the "work_dependency_edges" table.
@@ -2942,8 +3144,14 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "work_dependency_edges_evidences_latest_evidence",
+				Symbol:     "work_dependency_edges_ticket_pull_requests_ticket_pull_request",
 				Columns:    []*schema.Column{WorkDependencyEdgesColumns[44]},
+				RefColumns: []*schema.Column{TicketPullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_dependency_edges_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkDependencyEdgesColumns[45]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -2988,6 +3196,11 @@ var (
 				Name:    "workdependencyedge_pull_request_id_edge_kind_rank_score_last_activity_at",
 				Unique:  false,
 				Columns: []*schema.Column{WorkDependencyEdgesColumns[13], WorkDependencyEdgesColumns[2], WorkDependencyEdgesColumns[39], WorkDependencyEdgesColumns[38]},
+			},
+			{
+				Name:    "workdependencyedge_ticket_pull_request_id_relationship_authority_edge_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkDependencyEdgesColumns[44], WorkDependencyEdgesColumns[3], WorkDependencyEdgesColumns[2]},
 			},
 			{
 				Name:    "workdependencyedge_from_kind_from_key_edge_kind_rank_score",
@@ -3235,6 +3448,7 @@ var (
 		{Name: "severity", Type: field.TypeEnum, Enums: []string{"info", "low", "medium", "high", "critical"}, Default: "info"},
 		{Name: "producer_state", Type: field.TypeEnum, Enums: []string{"current", "stale", "superseded"}, Default: "current"},
 		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString},
 		{Name: "title", Type: field.TypeString},
 		{Name: "details", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -3284,19 +3498,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "work_insights_pull_requests_pull_request",
-				Columns:    []*schema.Column{WorkInsightsColumns[43]},
+				Columns:    []*schema.Column{WorkInsightsColumns[44]},
 				RefColumns: []*schema.Column{PullRequestsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_insights_tickets_ticket",
-				Columns:    []*schema.Column{WorkInsightsColumns[44]},
+				Columns:    []*schema.Column{WorkInsightsColumns[45]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_insights_evidences_latest_evidence",
-				Columns:    []*schema.Column{WorkInsightsColumns[45]},
+				Columns:    []*schema.Column{WorkInsightsColumns[46]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -3305,32 +3519,32 @@ var (
 			{
 				Name:    "workinsight_insight_kind_severity_rank_score_last_activity_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkInsightsColumns[2], WorkInsightsColumns[3], WorkInsightsColumns[40], WorkInsightsColumns[39]},
+				Columns: []*schema.Column{WorkInsightsColumns[2], WorkInsightsColumns[3], WorkInsightsColumns[41], WorkInsightsColumns[40]},
 			},
 			{
 				Name:    "workinsight_subject_kind_subject_key_producer_state",
 				Unique:  false,
-				Columns: []*schema.Column{WorkInsightsColumns[5], WorkInsightsColumns[6], WorkInsightsColumns[4]},
+				Columns: []*schema.Column{WorkInsightsColumns[5], WorkInsightsColumns[7], WorkInsightsColumns[4]},
 			},
 			{
 				Name:    "workinsight_producer_state_severity_rank_score_last_activity_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkInsightsColumns[4], WorkInsightsColumns[3], WorkInsightsColumns[40], WorkInsightsColumns[39]},
+				Columns: []*schema.Column{WorkInsightsColumns[4], WorkInsightsColumns[3], WorkInsightsColumns[41], WorkInsightsColumns[40]},
 			},
 			{
 				Name:    "workinsight_pull_request_id_producer_state_severity_rank_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkInsightsColumns[43], WorkInsightsColumns[4], WorkInsightsColumns[3], WorkInsightsColumns[40]},
+				Columns: []*schema.Column{WorkInsightsColumns[44], WorkInsightsColumns[4], WorkInsightsColumns[3], WorkInsightsColumns[41]},
 			},
 			{
 				Name:    "workinsight_ticket_id_producer_state_severity_rank_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkInsightsColumns[44], WorkInsightsColumns[4], WorkInsightsColumns[3], WorkInsightsColumns[40]},
+				Columns: []*schema.Column{WorkInsightsColumns[45], WorkInsightsColumns[4], WorkInsightsColumns[3], WorkInsightsColumns[41]},
 			},
 			{
 				Name:    "workinsight_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkInsightsColumns[16], WorkInsightsColumns[17], WorkInsightsColumns[18], WorkInsightsColumns[19]},
+				Columns: []*schema.Column{WorkInsightsColumns[17], WorkInsightsColumns[18], WorkInsightsColumns[19], WorkInsightsColumns[20]},
 			},
 		},
 	}
@@ -3575,6 +3789,7 @@ var (
 		{Name: "key", Type: field.TypeString, Unique: true},
 		{Name: "forecast_kind", Type: field.TypeEnum, Enums: []string{"cycle_time"}, Default: "cycle_time"},
 		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString},
 		{Name: "subject_state", Type: field.TypeString, Nullable: true},
 		{Name: "forecast_method", Type: field.TypeString, Nullable: true},
@@ -3607,6 +3822,7 @@ var (
 		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
 		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
 		{Name: "work_action_id", Type: field.TypeInt, Nullable: true},
+		{Name: "forecast_evaluation_id", Type: field.TypeInt, Nullable: true},
 		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
 	}
 	// WorkItemForecastsTable holds the schema information for the "work_item_forecasts" table.
@@ -3617,25 +3833,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "work_item_forecasts_pull_requests_pull_request",
-				Columns:    []*schema.Column{WorkItemForecastsColumns[33]},
+				Columns:    []*schema.Column{WorkItemForecastsColumns[34]},
 				RefColumns: []*schema.Column{PullRequestsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_item_forecasts_tickets_ticket",
-				Columns:    []*schema.Column{WorkItemForecastsColumns[34]},
+				Columns:    []*schema.Column{WorkItemForecastsColumns[35]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_item_forecasts_work_actions_work_action",
-				Columns:    []*schema.Column{WorkItemForecastsColumns[35]},
+				Columns:    []*schema.Column{WorkItemForecastsColumns[36]},
 				RefColumns: []*schema.Column{WorkActionsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
+				Symbol:     "work_item_forecasts_work_forecast_evaluations_forecast_evaluation",
+				Columns:    []*schema.Column{WorkItemForecastsColumns[37]},
+				RefColumns: []*schema.Column{WorkForecastEvaluationsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
 				Symbol:     "work_item_forecasts_evidences_latest_evidence",
-				Columns:    []*schema.Column{WorkItemForecastsColumns[36]},
+				Columns:    []*schema.Column{WorkItemForecastsColumns[38]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -3644,37 +3866,42 @@ var (
 			{
 				Name:    "workitemforecast_forecast_kind_subject_kind_subject_key",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemForecastsColumns[2], WorkItemForecastsColumns[3], WorkItemForecastsColumns[4]},
+				Columns: []*schema.Column{WorkItemForecastsColumns[2], WorkItemForecastsColumns[3], WorkItemForecastsColumns[5]},
 			},
 			{
 				Name:    "workitemforecast_risk_band_risk_score_overdue_days",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemForecastsColumns[13], WorkItemForecastsColumns[12], WorkItemForecastsColumns[11]},
+				Columns: []*schema.Column{WorkItemForecastsColumns[14], WorkItemForecastsColumns[13], WorkItemForecastsColumns[12]},
 			},
 			{
 				Name:    "workitemforecast_subject_state_risk_band_risk_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemForecastsColumns[5], WorkItemForecastsColumns[13], WorkItemForecastsColumns[12]},
+				Columns: []*schema.Column{WorkItemForecastsColumns[6], WorkItemForecastsColumns[14], WorkItemForecastsColumns[13]},
 			},
 			{
 				Name:    "workitemforecast_pull_request_id_forecast_kind",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemForecastsColumns[33], WorkItemForecastsColumns[2]},
+				Columns: []*schema.Column{WorkItemForecastsColumns[34], WorkItemForecastsColumns[2]},
 			},
 			{
 				Name:    "workitemforecast_ticket_id_forecast_kind",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemForecastsColumns[34], WorkItemForecastsColumns[2]},
+				Columns: []*schema.Column{WorkItemForecastsColumns[35], WorkItemForecastsColumns[2]},
 			},
 			{
 				Name:    "workitemforecast_work_action_id",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemForecastsColumns[35]},
+				Columns: []*schema.Column{WorkItemForecastsColumns[36]},
+			},
+			{
+				Name:    "workitemforecast_forecast_evaluation_id_readiness_state_ready_for_eta",
+				Unique:  false,
+				Columns: []*schema.Column{WorkItemForecastsColumns[37], WorkItemForecastsColumns[15], WorkItemForecastsColumns[16]},
 			},
 			{
 				Name:    "workitemforecast_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkItemForecastsColumns[18], WorkItemForecastsColumns[19], WorkItemForecastsColumns[20], WorkItemForecastsColumns[21]},
+				Columns: []*schema.Column{WorkItemForecastsColumns[19], WorkItemForecastsColumns[20], WorkItemForecastsColumns[21], WorkItemForecastsColumns[22]},
 			},
 		},
 	}
@@ -3683,6 +3910,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "key", Type: field.TypeString, Unique: true},
 		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString},
 		{Name: "state", Type: field.TypeString, Nullable: true},
 		{Name: "title", Type: field.TypeString, Nullable: true},
@@ -3739,19 +3967,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "work_item_state_snapshots_pull_requests_pull_request",
-				Columns:    []*schema.Column{WorkItemStateSnapshotsColumns[47]},
+				Columns:    []*schema.Column{WorkItemStateSnapshotsColumns[48]},
 				RefColumns: []*schema.Column{PullRequestsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_item_state_snapshots_tickets_ticket",
-				Columns:    []*schema.Column{WorkItemStateSnapshotsColumns[48]},
+				Columns:    []*schema.Column{WorkItemStateSnapshotsColumns[49]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_item_state_snapshots_evidences_latest_evidence",
-				Columns:    []*schema.Column{WorkItemStateSnapshotsColumns[49]},
+				Columns:    []*schema.Column{WorkItemStateSnapshotsColumns[50]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -3760,37 +3988,37 @@ var (
 			{
 				Name:    "workitemstatesnapshot_subject_kind_subject_key_observed_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[2], WorkItemStateSnapshotsColumns[3], WorkItemStateSnapshotsColumns[6]},
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[2], WorkItemStateSnapshotsColumns[4], WorkItemStateSnapshotsColumns[7]},
 			},
 			{
 				Name:    "workitemstatesnapshot_pull_request_id_observed_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[47], WorkItemStateSnapshotsColumns[6]},
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[48], WorkItemStateSnapshotsColumns[7]},
 			},
 			{
 				Name:    "workitemstatesnapshot_ticket_id_observed_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[48], WorkItemStateSnapshotsColumns[6]},
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[49], WorkItemStateSnapshotsColumns[7]},
 			},
 			{
 				Name:    "workitemstatesnapshot_state_observed_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[4], WorkItemStateSnapshotsColumns[6]},
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[5], WorkItemStateSnapshotsColumns[7]},
 			},
 			{
 				Name:    "workitemstatesnapshot_risk_band_risk_score_observed_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[16], WorkItemStateSnapshotsColumns[15], WorkItemStateSnapshotsColumns[6]},
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[17], WorkItemStateSnapshotsColumns[16], WorkItemStateSnapshotsColumns[7]},
 			},
 			{
 				Name:    "workitemstatesnapshot_source_current_coverage_state_source_current_detail_state",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[18], WorkItemStateSnapshotsColumns[19]},
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[19], WorkItemStateSnapshotsColumns[20]},
 			},
 			{
 				Name:    "workitemstatesnapshot_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[32], WorkItemStateSnapshotsColumns[33], WorkItemStateSnapshotsColumns[34], WorkItemStateSnapshotsColumns[35]},
+				Columns: []*schema.Column{WorkItemStateSnapshotsColumns[33], WorkItemStateSnapshotsColumns[34], WorkItemStateSnapshotsColumns[35], WorkItemStateSnapshotsColumns[36]},
 			},
 		},
 	}
@@ -3799,6 +4027,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "key", Type: field.TypeString, Unique: true},
 		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString},
 		{Name: "from_observed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "to_observed_at", Type: field.TypeTime, Nullable: true},
@@ -3840,31 +4069,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "work_item_state_transitions_pull_requests_pull_request",
-				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[30]},
+				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[31]},
 				RefColumns: []*schema.Column{PullRequestsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_item_state_transitions_tickets_ticket",
-				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[31]},
+				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[32]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_item_state_transitions_work_item_state_snapshots_from_snapshot",
-				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[32]},
-				RefColumns: []*schema.Column{WorkItemStateSnapshotsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
-				Symbol:     "work_item_state_transitions_work_item_state_snapshots_to_snapshot",
 				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[33]},
 				RefColumns: []*schema.Column{WorkItemStateSnapshotsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "work_item_state_transitions_evidences_latest_evidence",
+				Symbol:     "work_item_state_transitions_work_item_state_snapshots_to_snapshot",
 				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[34]},
+				RefColumns: []*schema.Column{WorkItemStateSnapshotsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_item_state_transitions_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkItemStateTransitionsColumns[35]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -3873,32 +4102,32 @@ var (
 			{
 				Name:    "workitemstatetransition_subject_kind_subject_key_to_observed_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemStateTransitionsColumns[2], WorkItemStateTransitionsColumns[3], WorkItemStateTransitionsColumns[5]},
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[2], WorkItemStateTransitionsColumns[4], WorkItemStateTransitionsColumns[6]},
 			},
 			{
 				Name:    "workitemstatetransition_transition_kind_terminal_requires_closeout_to_observed_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemStateTransitionsColumns[8], WorkItemStateTransitionsColumns[12], WorkItemStateTransitionsColumns[13], WorkItemStateTransitionsColumns[5]},
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[9], WorkItemStateTransitionsColumns[13], WorkItemStateTransitionsColumns[14], WorkItemStateTransitionsColumns[6]},
 			},
 			{
 				Name:    "workitemstatetransition_verification_state_requires_closeout_to_observed_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemStateTransitionsColumns[11], WorkItemStateTransitionsColumns[13], WorkItemStateTransitionsColumns[5]},
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[12], WorkItemStateTransitionsColumns[14], WorkItemStateTransitionsColumns[6]},
 			},
 			{
 				Name:    "workitemstatetransition_pull_request_id_to_observed_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemStateTransitionsColumns[30], WorkItemStateTransitionsColumns[5]},
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[31], WorkItemStateTransitionsColumns[6]},
 			},
 			{
 				Name:    "workitemstatetransition_ticket_id_to_observed_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkItemStateTransitionsColumns[31], WorkItemStateTransitionsColumns[5]},
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[32], WorkItemStateTransitionsColumns[6]},
 			},
 			{
 				Name:    "workitemstatetransition_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkItemStateTransitionsColumns[15], WorkItemStateTransitionsColumns[16], WorkItemStateTransitionsColumns[17], WorkItemStateTransitionsColumns[18]},
+				Columns: []*schema.Column{WorkItemStateTransitionsColumns[16], WorkItemStateTransitionsColumns[17], WorkItemStateTransitionsColumns[18], WorkItemStateTransitionsColumns[19]},
 			},
 		},
 	}
@@ -4555,6 +4784,7 @@ var (
 		{Name: "key", Type: field.TypeString, Unique: true},
 		{Name: "workstream_key", Type: field.TypeString},
 		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString},
 		{Name: "linked_ticket_keys", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "linked_pull_request_keys", Type: field.TypeString, Nullable: true, Size: 2147483647},
@@ -4611,31 +4841,31 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "work_program_items_workstreams_workstream",
-				Columns:    []*schema.Column{WorkProgramItemsColumns[46]},
+				Columns:    []*schema.Column{WorkProgramItemsColumns[47]},
 				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "work_program_items_work_actions_work_action",
-				Columns:    []*schema.Column{WorkProgramItemsColumns[47]},
+				Columns:    []*schema.Column{WorkProgramItemsColumns[48]},
 				RefColumns: []*schema.Column{WorkActionsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "work_program_items_pull_requests_pull_request",
-				Columns:    []*schema.Column{WorkProgramItemsColumns[48]},
+				Columns:    []*schema.Column{WorkProgramItemsColumns[49]},
 				RefColumns: []*schema.Column{PullRequestsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_program_items_tickets_ticket",
-				Columns:    []*schema.Column{WorkProgramItemsColumns[49]},
+				Columns:    []*schema.Column{WorkProgramItemsColumns[50]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_program_items_evidences_latest_evidence",
-				Columns:    []*schema.Column{WorkProgramItemsColumns[50]},
+				Columns:    []*schema.Column{WorkProgramItemsColumns[51]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -4644,42 +4874,160 @@ var (
 			{
 				Name:    "workprogramitem_workstream_key_program_status_due_bucket_risk_score_last_activity_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramItemsColumns[2], WorkProgramItemsColumns[8], WorkProgramItemsColumns[19], WorkProgramItemsColumns[23], WorkProgramItemsColumns[42]},
+				Columns: []*schema.Column{WorkProgramItemsColumns[2], WorkProgramItemsColumns[9], WorkProgramItemsColumns[20], WorkProgramItemsColumns[24], WorkProgramItemsColumns[43]},
 			},
 			{
 				Name:    "workprogramitem_workstream_id_program_status_due_bucket_risk_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramItemsColumns[46], WorkProgramItemsColumns[8], WorkProgramItemsColumns[19], WorkProgramItemsColumns[23]},
+				Columns: []*schema.Column{WorkProgramItemsColumns[47], WorkProgramItemsColumns[9], WorkProgramItemsColumns[20], WorkProgramItemsColumns[24]},
 			},
 			{
 				Name:    "workprogramitem_subject_kind_subject_key_program_status",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramItemsColumns[3], WorkProgramItemsColumns[4], WorkProgramItemsColumns[8]},
+				Columns: []*schema.Column{WorkProgramItemsColumns[3], WorkProgramItemsColumns[5], WorkProgramItemsColumns[9]},
+			},
+			{
+				Name:    "workprogramitem_subject_object_type_subject_key_program_status",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemsColumns[4], WorkProgramItemsColumns[5], WorkProgramItemsColumns[9]},
 			},
 			{
 				Name:    "workprogramitem_owner_key_program_status_due_bucket_risk_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramItemsColumns[10], WorkProgramItemsColumns[8], WorkProgramItemsColumns[19], WorkProgramItemsColumns[23]},
+				Columns: []*schema.Column{WorkProgramItemsColumns[11], WorkProgramItemsColumns[9], WorkProgramItemsColumns[20], WorkProgramItemsColumns[24]},
 			},
 			{
 				Name:    "workprogramitem_work_action_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkProgramItemsColumns[47]},
+				Columns: []*schema.Column{WorkProgramItemsColumns[48]},
 			},
 			{
 				Name:    "workprogramitem_pull_request_id_program_status_risk_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramItemsColumns[48], WorkProgramItemsColumns[8], WorkProgramItemsColumns[23]},
+				Columns: []*schema.Column{WorkProgramItemsColumns[49], WorkProgramItemsColumns[9], WorkProgramItemsColumns[24]},
 			},
 			{
 				Name:    "workprogramitem_ticket_id_program_status_risk_score",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramItemsColumns[49], WorkProgramItemsColumns[8], WorkProgramItemsColumns[23]},
+				Columns: []*schema.Column{WorkProgramItemsColumns[50], WorkProgramItemsColumns[9], WorkProgramItemsColumns[24]},
 			},
 			{
 				Name:    "workprogramitem_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkProgramItemsColumns[31], WorkProgramItemsColumns[32], WorkProgramItemsColumns[33], WorkProgramItemsColumns[34]},
+				Columns: []*schema.Column{WorkProgramItemsColumns[32], WorkProgramItemsColumns[33], WorkProgramItemsColumns[34], WorkProgramItemsColumns[35]},
+			},
+		},
+	}
+	// WorkProgramItemLinksColumns holds the columns for the "work_program_item_links" table.
+	WorkProgramItemLinksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "key", Type: field.TypeString, Unique: true},
+		{Name: "link_kind", Type: field.TypeEnum, Enums: []string{"related", "implements", "blocks", "depends_on", "evidence", "discussion", "documentation", "source_reference"}, Default: "related"},
+		{Name: "target_object_type", Type: field.TypeString},
+		{Name: "target_key", Type: field.TypeString},
+		{Name: "target_resolution_state", Type: field.TypeEnum, Enums: []string{"resolved", "key_only", "missing"}, Default: "key_only"},
+		{Name: "link_summary", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "link_source", Type: field.TypeString, Nullable: true},
+		{Name: "source_system", Type: field.TypeString, Nullable: true},
+		{Name: "source_instance", Type: field.TypeString, Nullable: true},
+		{Name: "external_kind", Type: field.TypeString, Nullable: true},
+		{Name: "external_id", Type: field.TypeString, Nullable: true},
+		{Name: "source_url", Type: field.TypeString, Nullable: true},
+		{Name: "evidence_count", Type: field.TypeInt, Default: 0},
+		{Name: "freshness_state", Type: field.TypeEnum, Enums: []string{"fresh", "partial", "stale", "unknown"}, Default: "unknown"},
+		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"unknown", "public", "private", "team", "restricted"}, Default: "unknown"},
+		{Name: "confidence", Type: field.TypeFloat64, Default: 1},
+		{Name: "event_count", Type: field.TypeInt, Default: 0},
+		{Name: "first_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_activity_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rank_score", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "work_program_item_id", Type: field.TypeInt},
+		{Name: "pull_request_id", Type: field.TypeInt, Nullable: true},
+		{Name: "ticket_id", Type: field.TypeInt, Nullable: true},
+		{Name: "open_graph_object_id", Type: field.TypeInt, Nullable: true},
+		{Name: "evidence_attachment_id", Type: field.TypeInt, Nullable: true},
+		{Name: "latest_evidence_id", Type: field.TypeInt, Nullable: true},
+	}
+	// WorkProgramItemLinksTable holds the schema information for the "work_program_item_links" table.
+	WorkProgramItemLinksTable = &schema.Table{
+		Name:       "work_program_item_links",
+		Columns:    WorkProgramItemLinksColumns,
+		PrimaryKey: []*schema.Column{WorkProgramItemLinksColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "work_program_item_links_work_program_items_work_program_item",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[23]},
+				RefColumns: []*schema.Column{WorkProgramItemsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "work_program_item_links_pull_requests_pull_request",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[24]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_program_item_links_tickets_ticket",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[25]},
+				RefColumns: []*schema.Column{TicketsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_program_item_links_open_graph_objects_open_graph_object",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[26]},
+				RefColumns: []*schema.Column{OpenGraphObjectsColumns[0]},
+				OnDelete:   schema.Restrict,
+			},
+			{
+				Symbol:     "work_program_item_links_evidence_attachments_evidence_attachment",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[27]},
+				RefColumns: []*schema.Column{EvidenceAttachmentsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "work_program_item_links_evidences_latest_evidence",
+				Columns:    []*schema.Column{WorkProgramItemLinksColumns[28]},
+				RefColumns: []*schema.Column{EvidencesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "workprogramitemlink_work_program_item_id_link_kind_rank_score_last_activity_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[23], WorkProgramItemLinksColumns[2], WorkProgramItemLinksColumns[20], WorkProgramItemLinksColumns[19]},
+			},
+			{
+				Name:    "workprogramitemlink_target_object_type_target_key_link_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[3], WorkProgramItemLinksColumns[4], WorkProgramItemLinksColumns[2]},
+			},
+			{
+				Name:    "workprogramitemlink_pull_request_id_link_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[24], WorkProgramItemLinksColumns[2]},
+			},
+			{
+				Name:    "workprogramitemlink_ticket_id_link_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[25], WorkProgramItemLinksColumns[2]},
+			},
+			{
+				Name:    "workprogramitemlink_open_graph_object_id_link_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[26], WorkProgramItemLinksColumns[2]},
+			},
+			{
+				Name:    "workprogramitemlink_evidence_attachment_id",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[27]},
+			},
+			{
+				Name:    "workprogramitemlink_source_system_source_instance_external_kind_external_id",
+				Unique:  true,
+				Columns: []*schema.Column{WorkProgramItemLinksColumns[8], WorkProgramItemLinksColumns[9], WorkProgramItemLinksColumns[10], WorkProgramItemLinksColumns[11]},
 			},
 		},
 	}
@@ -4689,6 +5037,7 @@ var (
 		{Name: "key", Type: field.TypeString, Unique: true},
 		{Name: "workstream_key", Type: field.TypeString},
 		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString},
 		{Name: "milestone_kind", Type: field.TypeEnum, Enums: []string{"release_target", "explicit_due_date", "resolution_outcome"}, Default: "release_target"},
 		{Name: "milestone_name", Type: field.TypeString, Size: 2147483647},
@@ -4731,25 +5080,25 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "work_program_milestones_workstreams_workstream",
-				Columns:    []*schema.Column{WorkProgramMilestonesColumns[33]},
+				Columns:    []*schema.Column{WorkProgramMilestonesColumns[34]},
 				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "work_program_milestones_pull_requests_pull_request",
-				Columns:    []*schema.Column{WorkProgramMilestonesColumns[34]},
+				Columns:    []*schema.Column{WorkProgramMilestonesColumns[35]},
 				RefColumns: []*schema.Column{PullRequestsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_program_milestones_tickets_ticket",
-				Columns:    []*schema.Column{WorkProgramMilestonesColumns[35]},
+				Columns:    []*schema.Column{WorkProgramMilestonesColumns[36]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_program_milestones_evidences_latest_evidence",
-				Columns:    []*schema.Column{WorkProgramMilestonesColumns[36]},
+				Columns:    []*schema.Column{WorkProgramMilestonesColumns[37]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -4758,32 +5107,37 @@ var (
 			{
 				Name:    "workprogrammilestone_workstream_key_generated_at_milestone_kind_target_date",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramMilestonesColumns[2], WorkProgramMilestonesColumns[17], WorkProgramMilestonesColumns[5], WorkProgramMilestonesColumns[7]},
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[2], WorkProgramMilestonesColumns[18], WorkProgramMilestonesColumns[6], WorkProgramMilestonesColumns[8]},
 			},
 			{
 				Name:    "workprogrammilestone_subject_kind_subject_key_milestone_kind",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramMilestonesColumns[3], WorkProgramMilestonesColumns[4], WorkProgramMilestonesColumns[5]},
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[3], WorkProgramMilestonesColumns[5], WorkProgramMilestonesColumns[6]},
+			},
+			{
+				Name:    "workprogrammilestone_subject_object_type_subject_key_milestone_kind",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[4], WorkProgramMilestonesColumns[5], WorkProgramMilestonesColumns[6]},
 			},
 			{
 				Name:    "workprogrammilestone_commitment_strength_date_claim_allowed_target_date",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramMilestonesColumns[10], WorkProgramMilestonesColumns[11], WorkProgramMilestonesColumns[7]},
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[11], WorkProgramMilestonesColumns[12], WorkProgramMilestonesColumns[8]},
 			},
 			{
 				Name:    "workprogrammilestone_ticket_id_milestone_kind_target_date",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramMilestonesColumns[35], WorkProgramMilestonesColumns[5], WorkProgramMilestonesColumns[7]},
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[36], WorkProgramMilestonesColumns[6], WorkProgramMilestonesColumns[8]},
 			},
 			{
 				Name:    "workprogrammilestone_pull_request_id_milestone_kind_target_date",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramMilestonesColumns[34], WorkProgramMilestonesColumns[5], WorkProgramMilestonesColumns[7]},
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[35], WorkProgramMilestonesColumns[6], WorkProgramMilestonesColumns[8]},
 			},
 			{
 				Name:    "workprogrammilestone_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkProgramMilestonesColumns[18], WorkProgramMilestonesColumns[19], WorkProgramMilestonesColumns[20], WorkProgramMilestonesColumns[21]},
+				Columns: []*schema.Column{WorkProgramMilestonesColumns[19], WorkProgramMilestonesColumns[20], WorkProgramMilestonesColumns[21], WorkProgramMilestonesColumns[22]},
 			},
 		},
 	}
@@ -4946,6 +5300,7 @@ var (
 		{Name: "driver_key", Type: field.TypeString},
 		{Name: "driver_kind", Type: field.TypeString},
 		{Name: "subject_kind", Type: field.TypeString, Nullable: true},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString, Nullable: true},
 		{Name: "title", Type: field.TypeString, Size: 2147483647},
 		{Name: "status", Type: field.TypeString},
@@ -4981,13 +5336,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "work_program_risk_drivers_workstreams_workstream",
-				Columns:    []*schema.Column{WorkProgramRiskDriversColumns[31]},
+				Columns:    []*schema.Column{WorkProgramRiskDriversColumns[32]},
 				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "work_program_risk_drivers_evidences_latest_evidence",
-				Columns:    []*schema.Column{WorkProgramRiskDriversColumns[32]},
+				Columns:    []*schema.Column{WorkProgramRiskDriversColumns[33]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -5001,17 +5356,22 @@ var (
 			{
 				Name:    "workprogramriskdriver_driver_kind_rank_score_generated_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramRiskDriversColumns[5], WorkProgramRiskDriversColumns[28], WorkProgramRiskDriversColumns[3]},
+				Columns: []*schema.Column{WorkProgramRiskDriversColumns[5], WorkProgramRiskDriversColumns[29], WorkProgramRiskDriversColumns[3]},
 			},
 			{
 				Name:    "workprogramriskdriver_workstream_id_generated_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkProgramRiskDriversColumns[31], WorkProgramRiskDriversColumns[3]},
+				Columns: []*schema.Column{WorkProgramRiskDriversColumns[32], WorkProgramRiskDriversColumns[3]},
+			},
+			{
+				Name:    "workprogramriskdriver_subject_object_type_subject_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkProgramRiskDriversColumns[7], WorkProgramRiskDriversColumns[8], WorkProgramRiskDriversColumns[3]},
 			},
 			{
 				Name:    "workprogramriskdriver_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkProgramRiskDriversColumns[16], WorkProgramRiskDriversColumns[17], WorkProgramRiskDriversColumns[18], WorkProgramRiskDriversColumns[19]},
+				Columns: []*schema.Column{WorkProgramRiskDriversColumns[17], WorkProgramRiskDriversColumns[18], WorkProgramRiskDriversColumns[19], WorkProgramRiskDriversColumns[20]},
 			},
 		},
 	}
@@ -5111,7 +5471,7 @@ var (
 		{Name: "member_rank_score", Type: field.TypeFloat64, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "work_program_run_members", Type: field.TypeInt, Nullable: true},
-		{Name: "work_program_run_id", Type: field.TypeInt, Nullable: true},
+		{Name: "work_program_run_id", Type: field.TypeInt},
 	}
 	// WorkProgramRunMembersTable holds the schema information for the "work_program_run_members" table.
 	WorkProgramRunMembersTable = &schema.Table{
@@ -5340,6 +5700,7 @@ var (
 		{Name: "key", Type: field.TypeString, Unique: true},
 		{Name: "workstream_key", Type: field.TypeString, Nullable: true},
 		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"pull_request", "ticket", "workstream", "work_action", "work_blocker", "work_program_evidence_need"}},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString},
 		{Name: "party_kind", Type: field.TypeEnum, Enums: []string{"person", "team", "unresolved", "unassigned"}},
 		{Name: "party_key", Type: field.TypeString},
@@ -5385,55 +5746,55 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "work_responsibilities_persons_person",
-				Columns:    []*schema.Column{WorkResponsibilitiesColumns[31]},
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[32]},
 				RefColumns: []*schema.Column{PersonsColumns[0]},
 				OnDelete:   schema.Restrict,
 			},
 			{
 				Symbol:     "work_responsibilities_workstreams_workstream",
-				Columns:    []*schema.Column{WorkResponsibilitiesColumns[32]},
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[33]},
 				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "work_responsibilities_pull_requests_pull_request",
-				Columns:    []*schema.Column{WorkResponsibilitiesColumns[33]},
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[34]},
 				RefColumns: []*schema.Column{PullRequestsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "work_responsibilities_tickets_ticket",
-				Columns:    []*schema.Column{WorkResponsibilitiesColumns[34]},
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[35]},
 				RefColumns: []*schema.Column{TicketsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "work_responsibilities_work_actions_work_action",
-				Columns:    []*schema.Column{WorkResponsibilitiesColumns[35]},
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[36]},
 				RefColumns: []*schema.Column{WorkActionsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "work_responsibilities_work_blockers_work_blocker",
-				Columns:    []*schema.Column{WorkResponsibilitiesColumns[36]},
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[37]},
 				RefColumns: []*schema.Column{WorkBlockersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "work_responsibilities_work_program_items_work_program_item",
-				Columns:    []*schema.Column{WorkResponsibilitiesColumns[37]},
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[38]},
 				RefColumns: []*schema.Column{WorkProgramItemsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "work_responsibilities_work_program_evidence_needs_work_program_evidence_need",
-				Columns:    []*schema.Column{WorkResponsibilitiesColumns[38]},
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[39]},
 				RefColumns: []*schema.Column{WorkProgramEvidenceNeedsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
 				Symbol:     "work_responsibilities_evidences_latest_evidence",
-				Columns:    []*schema.Column{WorkResponsibilitiesColumns[39]},
+				Columns:    []*schema.Column{WorkResponsibilitiesColumns[40]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -5442,67 +5803,67 @@ var (
 			{
 				Name:    "workresponsibility_party_key_responsibility_kind_responsibility_state_rank_score_last_activity_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[6], WorkResponsibilitiesColumns[8], WorkResponsibilitiesColumns[11], WorkResponsibilitiesColumns[28], WorkResponsibilitiesColumns[27]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[7], WorkResponsibilitiesColumns[9], WorkResponsibilitiesColumns[12], WorkResponsibilitiesColumns[29], WorkResponsibilitiesColumns[28]},
 			},
 			{
 				Name:    "workresponsibility_person_id_responsibility_kind_responsibility_state_rank_score_last_activity_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[31], WorkResponsibilitiesColumns[8], WorkResponsibilitiesColumns[11], WorkResponsibilitiesColumns[28], WorkResponsibilitiesColumns[27]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[32], WorkResponsibilitiesColumns[9], WorkResponsibilitiesColumns[12], WorkResponsibilitiesColumns[29], WorkResponsibilitiesColumns[28]},
 			},
 			{
 				Name:    "workresponsibility_party_kind_party_key",
 				Unique:  false,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[5], WorkResponsibilitiesColumns[6]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[6], WorkResponsibilitiesColumns[7]},
 			},
 			{
 				Name:    "workresponsibility_subject_kind_subject_key_party_key_responsibility_kind_basis_kind",
 				Unique:  true,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[3], WorkResponsibilitiesColumns[4], WorkResponsibilitiesColumns[6], WorkResponsibilitiesColumns[8], WorkResponsibilitiesColumns[9]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[3], WorkResponsibilitiesColumns[5], WorkResponsibilitiesColumns[7], WorkResponsibilitiesColumns[9], WorkResponsibilitiesColumns[10]},
 			},
 			{
 				Name:    "workresponsibility_workstream_key_responsibility_kind_responsibility_state_rank_score_last_activity_at",
 				Unique:  false,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[2], WorkResponsibilitiesColumns[8], WorkResponsibilitiesColumns[11], WorkResponsibilitiesColumns[28], WorkResponsibilitiesColumns[27]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[2], WorkResponsibilitiesColumns[9], WorkResponsibilitiesColumns[12], WorkResponsibilitiesColumns[29], WorkResponsibilitiesColumns[28]},
 			},
 			{
 				Name:    "workresponsibility_workstream_id_responsibility_kind",
 				Unique:  false,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[32], WorkResponsibilitiesColumns[8]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[33], WorkResponsibilitiesColumns[9]},
 			},
 			{
 				Name:    "workresponsibility_pull_request_id_responsibility_kind",
 				Unique:  false,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[33], WorkResponsibilitiesColumns[8]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[34], WorkResponsibilitiesColumns[9]},
 			},
 			{
 				Name:    "workresponsibility_ticket_id_responsibility_kind",
 				Unique:  false,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[34], WorkResponsibilitiesColumns[8]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[35], WorkResponsibilitiesColumns[9]},
 			},
 			{
 				Name:    "workresponsibility_work_action_id_responsibility_kind",
 				Unique:  false,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[35], WorkResponsibilitiesColumns[8]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[36], WorkResponsibilitiesColumns[9]},
 			},
 			{
 				Name:    "workresponsibility_work_blocker_id_responsibility_kind",
 				Unique:  false,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[36], WorkResponsibilitiesColumns[8]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[37], WorkResponsibilitiesColumns[9]},
 			},
 			{
 				Name:    "workresponsibility_work_program_item_id_responsibility_kind",
 				Unique:  false,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[37], WorkResponsibilitiesColumns[8]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[38], WorkResponsibilitiesColumns[9]},
 			},
 			{
 				Name:    "workresponsibility_work_program_evidence_need_id_responsibility_kind",
 				Unique:  false,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[38], WorkResponsibilitiesColumns[8]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[39], WorkResponsibilitiesColumns[9]},
 			},
 			{
 				Name:    "workresponsibility_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkResponsibilitiesColumns[16], WorkResponsibilitiesColumns[17], WorkResponsibilitiesColumns[18], WorkResponsibilitiesColumns[19]},
+				Columns: []*schema.Column{WorkResponsibilitiesColumns[17], WorkResponsibilitiesColumns[18], WorkResponsibilitiesColumns[19], WorkResponsibilitiesColumns[20]},
 			},
 		},
 	}
@@ -5667,6 +6028,7 @@ var (
 		{Name: "urgency", Type: field.TypeEnum, Enums: []string{"unknown", "critical", "high", "medium", "low"}, Default: "unknown"},
 		{Name: "owner_key", Type: field.TypeString, Nullable: true},
 		{Name: "subject_kind", Type: field.TypeEnum, Enums: []string{"unknown", "pull_request", "ticket"}, Default: "unknown"},
+		{Name: "subject_object_type", Type: field.TypeString, Nullable: true},
 		{Name: "subject_key", Type: field.TypeString, Nullable: true},
 		{Name: "action_type", Type: field.TypeString, Nullable: true},
 		{Name: "status_signal", Type: field.TypeString, Nullable: true},
@@ -5701,25 +6063,25 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "workstream_standup_sections_workstream_health_snapshots_workstream_health_snapshot",
-				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[30]},
+				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[31]},
 				RefColumns: []*schema.Column{WorkstreamHealthSnapshotsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "workstream_standup_sections_workstreams_workstream",
-				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[31]},
+				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[32]},
 				RefColumns: []*schema.Column{WorkstreamsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "workstream_standup_sections_work_actions_work_action",
-				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[32]},
+				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[33]},
 				RefColumns: []*schema.Column{WorkActionsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "workstream_standup_sections_evidences_latest_evidence",
-				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[33]},
+				Columns:    []*schema.Column{WorkstreamStandupSectionsColumns[34]},
 				RefColumns: []*schema.Column{EvidencesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -5733,12 +6095,12 @@ var (
 			{
 				Name:    "workstreamstandupsection_workstream_health_snapshot_id_section_rank",
 				Unique:  false,
-				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[30], WorkstreamStandupSectionsColumns[4]},
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[31], WorkstreamStandupSectionsColumns[4]},
 			},
 			{
 				Name:    "workstreamstandupsection_workstream_id_generated_at_section_rank",
 				Unique:  false,
-				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[31], WorkstreamStandupSectionsColumns[3], WorkstreamStandupSectionsColumns[4]},
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[32], WorkstreamStandupSectionsColumns[3], WorkstreamStandupSectionsColumns[4]},
 			},
 			{
 				Name:    "workstreamstandupsection_section_kind_urgency_generated_at",
@@ -5748,12 +6110,17 @@ var (
 			{
 				Name:    "workstreamstandupsection_work_action_id",
 				Unique:  false,
-				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[32]},
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[33]},
+			},
+			{
+				Name:    "workstreamstandupsection_subject_object_type_subject_key_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[9], WorkstreamStandupSectionsColumns[10], WorkstreamStandupSectionsColumns[3]},
 			},
 			{
 				Name:    "workstreamstandupsection_source_system_source_instance_external_kind_external_id",
 				Unique:  true,
-				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[15], WorkstreamStandupSectionsColumns[16], WorkstreamStandupSectionsColumns[17], WorkstreamStandupSectionsColumns[18]},
+				Columns: []*schema.Column{WorkstreamStandupSectionsColumns[16], WorkstreamStandupSectionsColumns[17], WorkstreamStandupSectionsColumns[18], WorkstreamStandupSectionsColumns[19]},
 			},
 		},
 	}
@@ -5898,6 +6265,7 @@ var (
 		DocumentLensResultsTable,
 		DocumentLinksTable,
 		EvidencesTable,
+		EvidenceAttachmentsTable,
 		MessagesTable,
 		MessageAuthorshipsTable,
 		MessageLensResultsTable,
@@ -5949,6 +6317,7 @@ var (
 		WorkProgramBriefSnapshotsTable,
 		WorkProgramEvidenceNeedsTable,
 		WorkProgramItemsTable,
+		WorkProgramItemLinksTable,
 		WorkProgramMilestonesTable,
 		WorkProgramOwnerRollupSnapshotsTable,
 		WorkProgramQualityGatesTable,
@@ -5980,6 +6349,22 @@ func init() {
 	DocumentLinksTable.ForeignKeys[1].RefTable = DocumentsTable
 	DocumentLinksTable.ForeignKeys[2].RefTable = EvidencesTable
 	EvidencesTable.ForeignKeys[0].RefTable = EvidencesTable
+	EvidenceAttachmentsTable.ForeignKeys[0].RefTable = EvidencesTable
+	EvidenceAttachmentsTable.ForeignKeys[1].RefTable = TicketsTable
+	EvidenceAttachmentsTable.ForeignKeys[2].RefTable = PullRequestsTable
+	EvidenceAttachmentsTable.ForeignKeys[3].RefTable = TicketPullRequestsTable
+	EvidenceAttachmentsTable.ForeignKeys[4].RefTable = OpenGraphObjectsTable
+	EvidenceAttachmentsTable.ForeignKeys[5].RefTable = OpenGraphAssociationsTable
+	EvidenceAttachmentsTable.ForeignKeys[6].RefTable = WorkActionsTable
+	EvidenceAttachmentsTable.ForeignKeys[7].RefTable = WorkInsightsTable
+	EvidenceAttachmentsTable.ForeignKeys[8].RefTable = WorkBlockersTable
+	EvidenceAttachmentsTable.ForeignKeys[9].RefTable = WorkDependencyEdgesTable
+	EvidenceAttachmentsTable.ForeignKeys[10].RefTable = WorkItemForecastsTable
+	EvidenceAttachmentsTable.ForeignKeys[11].RefTable = WorkResponsibilitiesTable
+	EvidenceAttachmentsTable.Annotation = &entsql.Annotation{}
+	EvidenceAttachmentsTable.Annotation.Checks = map[string]string{
+		"evidence_attachments_relationship_claim_has_relationship": "claim_kind != 'relationship' OR relationship_kind IS NOT NULL OR relationship_id IS NOT NULL",
+	}
 	MessagesTable.ForeignKeys[0].RefTable = EvidencesTable
 	MessageAuthorshipsTable.ForeignKeys[0].RefTable = PersonsTable
 	MessageAuthorshipsTable.ForeignKeys[1].RefTable = MessagesTable
@@ -6070,13 +6455,14 @@ func init() {
 	WorkDecisionTargetEvaluationsTable.ForeignKeys[0].RefTable = EvidencesTable
 	WorkDependencyEdgesTable.ForeignKeys[0].RefTable = WorkBlockersTable
 	WorkDependencyEdgesTable.ForeignKeys[1].RefTable = WorkActionsTable
-	WorkDependencyEdgesTable.ForeignKeys[2].RefTable = EvidencesTable
+	WorkDependencyEdgesTable.ForeignKeys[2].RefTable = TicketPullRequestsTable
+	WorkDependencyEdgesTable.ForeignKeys[3].RefTable = EvidencesTable
 	WorkDependencyEdgesTable.Annotation = &entsql.Annotation{}
 	WorkDependencyEdgesTable.Annotation.Checks = map[string]string{
 		"work_dependency_edges_canonical_mirror_requires_typed_kind": "relationship_authority != 'canonical_mirror' OR canonical_relationship_kind IS NOT NULL",
 		"work_dependency_edges_no_self_edge":                         "from_kind != to_kind OR from_key != to_key",
 		"work_dependency_edges_projection_has_no_canonical_kind":     "relationship_authority = 'canonical_mirror' OR canonical_relationship_kind IS NULL",
-		"work_dependency_edges_ticket_pr_mirror_shape":               "relationship_authority != 'canonical_mirror' OR (edge_kind = 'ticket_pr' AND canonical_relationship_kind = 'ticket_pull_request' AND from_kind = 'ticket' AND to_kind = 'pull_request' AND ticket_id IS NOT NULL AND pull_request_id IS NOT NULL)",
+		"work_dependency_edges_ticket_pr_mirror_shape":               "relationship_authority != 'canonical_mirror' OR (edge_kind = 'ticket_pr' AND canonical_relationship_kind = 'ticket_pull_request' AND from_kind = 'ticket' AND to_kind = 'pull_request' AND ticket_id IS NOT NULL AND pull_request_id IS NOT NULL AND ticket_pull_request_id IS NOT NULL)",
 	}
 	WorkDependencyEndpointsTable.ForeignKeys[0].RefTable = WorkDependencyEdgesTable
 	WorkDependencyEndpointsTable.ForeignKeys[1].RefTable = WorkstreamsTable
@@ -6110,7 +6496,8 @@ func init() {
 	WorkItemForecastsTable.ForeignKeys[0].RefTable = PullRequestsTable
 	WorkItemForecastsTable.ForeignKeys[1].RefTable = TicketsTable
 	WorkItemForecastsTable.ForeignKeys[2].RefTable = WorkActionsTable
-	WorkItemForecastsTable.ForeignKeys[3].RefTable = EvidencesTable
+	WorkItemForecastsTable.ForeignKeys[3].RefTable = WorkForecastEvaluationsTable
+	WorkItemForecastsTable.ForeignKeys[4].RefTable = EvidencesTable
 	WorkItemForecastsTable.Annotation = &entsql.Annotation{}
 	WorkItemForecastsTable.Annotation.Checks = map[string]string{
 		"work_item_forecasts_subject_pointer_matches_kind": "((subject_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL) OR (subject_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL) OR (subject_kind = 'unknown' AND pull_request_id IS NULL AND ticket_id IS NULL))",
@@ -6162,6 +6549,16 @@ func init() {
 	WorkProgramItemsTable.Annotation = &entsql.Annotation{}
 	WorkProgramItemsTable.Annotation.Checks = map[string]string{
 		"work_program_items_subject_pointer_matches_kind": "((subject_kind = 'pull_request' AND pull_request_id IS NOT NULL AND ticket_id IS NULL) OR (subject_kind = 'ticket' AND ticket_id IS NOT NULL AND pull_request_id IS NULL) OR (subject_kind = 'unknown' AND pull_request_id IS NULL AND ticket_id IS NULL))",
+	}
+	WorkProgramItemLinksTable.ForeignKeys[0].RefTable = WorkProgramItemsTable
+	WorkProgramItemLinksTable.ForeignKeys[1].RefTable = PullRequestsTable
+	WorkProgramItemLinksTable.ForeignKeys[2].RefTable = TicketsTable
+	WorkProgramItemLinksTable.ForeignKeys[3].RefTable = OpenGraphObjectsTable
+	WorkProgramItemLinksTable.ForeignKeys[4].RefTable = EvidenceAttachmentsTable
+	WorkProgramItemLinksTable.ForeignKeys[5].RefTable = EvidencesTable
+	WorkProgramItemLinksTable.Annotation = &entsql.Annotation{}
+	WorkProgramItemLinksTable.Annotation.Checks = map[string]string{
+		"work_program_item_links_one_typed_target": "((pull_request_id IS NULL OR ticket_id IS NULL) AND (open_graph_object_id IS NULL OR (pull_request_id IS NULL AND ticket_id IS NULL)))",
 	}
 	WorkProgramMilestonesTable.ForeignKeys[0].RefTable = WorkstreamsTable
 	WorkProgramMilestonesTable.ForeignKeys[1].RefTable = PullRequestsTable

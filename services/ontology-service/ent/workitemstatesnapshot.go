@@ -24,6 +24,8 @@ type WorkItemStateSnapshot struct {
 	Key string `json:"key,omitempty"`
 	// Resolved typed product kind this snapshot is about.
 	SubjectKind workitemstatesnapshot.SubjectKind `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Stable product key this snapshot is about.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Optional PullRequest subject when the snapshot targets a PR.
@@ -201,7 +203,7 @@ func (*WorkItemStateSnapshot) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case workitemstatesnapshot.FieldID, workitemstatesnapshot.FieldPullRequestID, workitemstatesnapshot.FieldTicketID, workitemstatesnapshot.FieldLinkedPrCount, workitemstatesnapshot.FieldFreshPrLinkCount, workitemstatesnapshot.FieldPartialPrLinkCount, workitemstatesnapshot.FieldCommentCount, workitemstatesnapshot.FieldParticipantCount, workitemstatesnapshot.FieldBlockerKeywordCount, workitemstatesnapshot.FieldLatestEvidenceID, workitemstatesnapshot.FieldEvidenceCount, workitemstatesnapshot.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workitemstatesnapshot.FieldKey, workitemstatesnapshot.FieldSubjectKind, workitemstatesnapshot.FieldSubjectKey, workitemstatesnapshot.FieldState, workitemstatesnapshot.FieldTitle, workitemstatesnapshot.FieldRiskBand, workitemstatesnapshot.FieldForecastMethod, workitemstatesnapshot.FieldSourceCurrentCoverageState, workitemstatesnapshot.FieldSourceCurrentDetailState, workitemstatesnapshot.FieldSourceCurrentIssueCodes, workitemstatesnapshot.FieldSourceCurrentIssueKinds, workitemstatesnapshot.FieldLifecycleFieldsSource, workitemstatesnapshot.FieldChurnFieldsSource, workitemstatesnapshot.FieldMergeabilityFieldsSource, workitemstatesnapshot.FieldPriority, workitemstatesnapshot.FieldSourceSystem, workitemstatesnapshot.FieldSourceInstance, workitemstatesnapshot.FieldExternalKind, workitemstatesnapshot.FieldExternalID, workitemstatesnapshot.FieldSourceURL, workitemstatesnapshot.FieldFreshnessState, workitemstatesnapshot.FieldVisibility:
+		case workitemstatesnapshot.FieldKey, workitemstatesnapshot.FieldSubjectKind, workitemstatesnapshot.FieldSubjectObjectType, workitemstatesnapshot.FieldSubjectKey, workitemstatesnapshot.FieldState, workitemstatesnapshot.FieldTitle, workitemstatesnapshot.FieldRiskBand, workitemstatesnapshot.FieldForecastMethod, workitemstatesnapshot.FieldSourceCurrentCoverageState, workitemstatesnapshot.FieldSourceCurrentDetailState, workitemstatesnapshot.FieldSourceCurrentIssueCodes, workitemstatesnapshot.FieldSourceCurrentIssueKinds, workitemstatesnapshot.FieldLifecycleFieldsSource, workitemstatesnapshot.FieldChurnFieldsSource, workitemstatesnapshot.FieldMergeabilityFieldsSource, workitemstatesnapshot.FieldPriority, workitemstatesnapshot.FieldSourceSystem, workitemstatesnapshot.FieldSourceInstance, workitemstatesnapshot.FieldExternalKind, workitemstatesnapshot.FieldExternalID, workitemstatesnapshot.FieldSourceURL, workitemstatesnapshot.FieldFreshnessState, workitemstatesnapshot.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workitemstatesnapshot.FieldObservedAt, workitemstatesnapshot.FieldCapturedAt, workitemstatesnapshot.FieldSourceCreatedAt, workitemstatesnapshot.FieldSourceUpdatedAt, workitemstatesnapshot.FieldClosedAt, workitemstatesnapshot.FieldMergedAt, workitemstatesnapshot.FieldFirstSeenAt, workitemstatesnapshot.FieldLastActivityAt, workitemstatesnapshot.FieldCreatedAt, workitemstatesnapshot.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -237,6 +239,12 @@ func (_m *WorkItemStateSnapshot) assignValues(columns []string, values []any) er
 				return fmt.Errorf("unexpected type %T for field subject_kind", values[i])
 			} else if value.Valid {
 				_m.SubjectKind = workitemstatesnapshot.SubjectKind(value.String)
+			}
+		case workitemstatesnapshot.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
 			}
 		case workitemstatesnapshot.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -593,6 +601,9 @@ func (_m *WorkItemStateSnapshot) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("subject_kind=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SubjectKind))
+	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
 	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)

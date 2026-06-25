@@ -43,6 +43,8 @@ type WorkstreamStandupSection struct {
 	OwnerKey string `json:"owner_key,omitempty"`
 	// Typed product kind this agenda item is about, when known.
 	SubjectKind workstreamstandupsection.SubjectKind `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Stable product subject key this agenda item is about.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Action or generated agenda type, when this row has one.
@@ -161,7 +163,7 @@ func (*WorkstreamStandupSection) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case workstreamstandupsection.FieldID, workstreamstandupsection.FieldWorkstreamHealthSnapshotID, workstreamstandupsection.FieldWorkstreamID, workstreamstandupsection.FieldWorkActionID, workstreamstandupsection.FieldSectionRank, workstreamstandupsection.FieldLatestEvidenceID, workstreamstandupsection.FieldEvidenceCount, workstreamstandupsection.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workstreamstandupsection.FieldKey, workstreamstandupsection.FieldWorkstreamKey, workstreamstandupsection.FieldSectionKind, workstreamstandupsection.FieldUrgency, workstreamstandupsection.FieldOwnerKey, workstreamstandupsection.FieldSubjectKind, workstreamstandupsection.FieldSubjectKey, workstreamstandupsection.FieldActionType, workstreamstandupsection.FieldStatusSignal, workstreamstandupsection.FieldSummary, workstreamstandupsection.FieldRecommendedAction, workstreamstandupsection.FieldEvidenceRef, workstreamstandupsection.FieldSourceSystem, workstreamstandupsection.FieldSourceInstance, workstreamstandupsection.FieldExternalKind, workstreamstandupsection.FieldExternalID, workstreamstandupsection.FieldSourceURL, workstreamstandupsection.FieldFreshnessState, workstreamstandupsection.FieldVisibility:
+		case workstreamstandupsection.FieldKey, workstreamstandupsection.FieldWorkstreamKey, workstreamstandupsection.FieldSectionKind, workstreamstandupsection.FieldUrgency, workstreamstandupsection.FieldOwnerKey, workstreamstandupsection.FieldSubjectKind, workstreamstandupsection.FieldSubjectObjectType, workstreamstandupsection.FieldSubjectKey, workstreamstandupsection.FieldActionType, workstreamstandupsection.FieldStatusSignal, workstreamstandupsection.FieldSummary, workstreamstandupsection.FieldRecommendedAction, workstreamstandupsection.FieldEvidenceRef, workstreamstandupsection.FieldSourceSystem, workstreamstandupsection.FieldSourceInstance, workstreamstandupsection.FieldExternalKind, workstreamstandupsection.FieldExternalID, workstreamstandupsection.FieldSourceURL, workstreamstandupsection.FieldFreshnessState, workstreamstandupsection.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workstreamstandupsection.FieldGeneratedAt, workstreamstandupsection.FieldFirstSeenAt, workstreamstandupsection.FieldLastActivityAt, workstreamstandupsection.FieldCreatedAt, workstreamstandupsection.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -251,6 +253,12 @@ func (_m *WorkstreamStandupSection) assignValues(columns []string, values []any)
 				return fmt.Errorf("unexpected type %T for field subject_kind", values[i])
 			} else if value.Valid {
 				_m.SubjectKind = workstreamstandupsection.SubjectKind(value.String)
+			}
+		case workstreamstandupsection.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
 			}
 		case workstreamstandupsection.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -472,6 +480,9 @@ func (_m *WorkstreamStandupSection) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("subject_kind=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SubjectKind))
+	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
 	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)

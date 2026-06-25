@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workaction"
 	"cubicle/services/ontology-service/ent/workblocker"
 	"cubicle/services/ontology-service/ent/workdependencyedge"
@@ -184,6 +185,20 @@ func (_c *WorkDependencyEdgeCreate) SetPullRequestID(v int) *WorkDependencyEdgeC
 func (_c *WorkDependencyEdgeCreate) SetNillablePullRequestID(v *int) *WorkDependencyEdgeCreate {
 	if v != nil {
 		_c.SetPullRequestID(*v)
+	}
+	return _c
+}
+
+// SetTicketPullRequestID sets the "ticket_pull_request_id" field.
+func (_c *WorkDependencyEdgeCreate) SetTicketPullRequestID(v int) *WorkDependencyEdgeCreate {
+	_c.mutation.SetTicketPullRequestID(v)
+	return _c
+}
+
+// SetNillableTicketPullRequestID sets the "ticket_pull_request_id" field if the given value is not nil.
+func (_c *WorkDependencyEdgeCreate) SetNillableTicketPullRequestID(v *int) *WorkDependencyEdgeCreate {
+	if v != nil {
+		_c.SetTicketPullRequestID(*v)
 	}
 	return _c
 }
@@ -602,6 +617,11 @@ func (_c *WorkDependencyEdgeCreate) SetWorkBlocker(v *WorkBlocker) *WorkDependen
 // SetWorkAction sets the "work_action" edge to the WorkAction entity.
 func (_c *WorkDependencyEdgeCreate) SetWorkAction(v *WorkAction) *WorkDependencyEdgeCreate {
 	return _c.SetWorkActionID(v.ID)
+}
+
+// SetTicketPullRequest sets the "ticket_pull_request" edge to the TicketPullRequest entity.
+func (_c *WorkDependencyEdgeCreate) SetTicketPullRequest(v *TicketPullRequest) *WorkDependencyEdgeCreate {
+	return _c.SetTicketPullRequestID(v.ID)
 }
 
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
@@ -1043,6 +1063,23 @@ func (_c *WorkDependencyEdgeCreate) createSpec() (*WorkDependencyEdge, *sqlgraph
 		_node.WorkActionID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := _c.mutation.TicketPullRequestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workdependencyedge.TicketPullRequestTable,
+			Columns: []string{workdependencyedge.TicketPullRequestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticketpullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.TicketPullRequestID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := _c.mutation.LatestEvidenceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1371,6 +1408,24 @@ func (u *WorkDependencyEdgeUpsert) AddPullRequestID(v int) *WorkDependencyEdgeUp
 // ClearPullRequestID clears the value of the "pull_request_id" field.
 func (u *WorkDependencyEdgeUpsert) ClearPullRequestID() *WorkDependencyEdgeUpsert {
 	u.SetNull(workdependencyedge.FieldPullRequestID)
+	return u
+}
+
+// SetTicketPullRequestID sets the "ticket_pull_request_id" field.
+func (u *WorkDependencyEdgeUpsert) SetTicketPullRequestID(v int) *WorkDependencyEdgeUpsert {
+	u.Set(workdependencyedge.FieldTicketPullRequestID, v)
+	return u
+}
+
+// UpdateTicketPullRequestID sets the "ticket_pull_request_id" field to the value that was provided on create.
+func (u *WorkDependencyEdgeUpsert) UpdateTicketPullRequestID() *WorkDependencyEdgeUpsert {
+	u.SetExcluded(workdependencyedge.FieldTicketPullRequestID)
+	return u
+}
+
+// ClearTicketPullRequestID clears the value of the "ticket_pull_request_id" field.
+func (u *WorkDependencyEdgeUpsert) ClearTicketPullRequestID() *WorkDependencyEdgeUpsert {
+	u.SetNull(workdependencyedge.FieldTicketPullRequestID)
 	return u
 }
 
@@ -2183,6 +2238,27 @@ func (u *WorkDependencyEdgeUpsertOne) UpdatePullRequestID() *WorkDependencyEdgeU
 func (u *WorkDependencyEdgeUpsertOne) ClearPullRequestID() *WorkDependencyEdgeUpsertOne {
 	return u.Update(func(s *WorkDependencyEdgeUpsert) {
 		s.ClearPullRequestID()
+	})
+}
+
+// SetTicketPullRequestID sets the "ticket_pull_request_id" field.
+func (u *WorkDependencyEdgeUpsertOne) SetTicketPullRequestID(v int) *WorkDependencyEdgeUpsertOne {
+	return u.Update(func(s *WorkDependencyEdgeUpsert) {
+		s.SetTicketPullRequestID(v)
+	})
+}
+
+// UpdateTicketPullRequestID sets the "ticket_pull_request_id" field to the value that was provided on create.
+func (u *WorkDependencyEdgeUpsertOne) UpdateTicketPullRequestID() *WorkDependencyEdgeUpsertOne {
+	return u.Update(func(s *WorkDependencyEdgeUpsert) {
+		s.UpdateTicketPullRequestID()
+	})
+}
+
+// ClearTicketPullRequestID clears the value of the "ticket_pull_request_id" field.
+func (u *WorkDependencyEdgeUpsertOne) ClearTicketPullRequestID() *WorkDependencyEdgeUpsertOne {
+	return u.Update(func(s *WorkDependencyEdgeUpsert) {
+		s.ClearTicketPullRequestID()
 	})
 }
 
@@ -3241,6 +3317,27 @@ func (u *WorkDependencyEdgeUpsertBulk) UpdatePullRequestID() *WorkDependencyEdge
 func (u *WorkDependencyEdgeUpsertBulk) ClearPullRequestID() *WorkDependencyEdgeUpsertBulk {
 	return u.Update(func(s *WorkDependencyEdgeUpsert) {
 		s.ClearPullRequestID()
+	})
+}
+
+// SetTicketPullRequestID sets the "ticket_pull_request_id" field.
+func (u *WorkDependencyEdgeUpsertBulk) SetTicketPullRequestID(v int) *WorkDependencyEdgeUpsertBulk {
+	return u.Update(func(s *WorkDependencyEdgeUpsert) {
+		s.SetTicketPullRequestID(v)
+	})
+}
+
+// UpdateTicketPullRequestID sets the "ticket_pull_request_id" field to the value that was provided on create.
+func (u *WorkDependencyEdgeUpsertBulk) UpdateTicketPullRequestID() *WorkDependencyEdgeUpsertBulk {
+	return u.Update(func(s *WorkDependencyEdgeUpsert) {
+		s.UpdateTicketPullRequestID()
+	})
+}
+
+// ClearTicketPullRequestID clears the value of the "ticket_pull_request_id" field.
+func (u *WorkDependencyEdgeUpsertBulk) ClearTicketPullRequestID() *WorkDependencyEdgeUpsertBulk {
+	return u.Update(func(s *WorkDependencyEdgeUpsert) {
+		s.ClearTicketPullRequestID()
 	})
 }
 

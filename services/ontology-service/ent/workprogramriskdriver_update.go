@@ -146,6 +146,26 @@ func (_u *WorkProgramRiskDriverUpdate) ClearSubjectKind() *WorkProgramRiskDriver
 	return _u
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkProgramRiskDriverUpdate) SetSubjectObjectType(v string) *WorkProgramRiskDriverUpdate {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkProgramRiskDriverUpdate) SetNillableSubjectObjectType(v *string) *WorkProgramRiskDriverUpdate {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkProgramRiskDriverUpdate) ClearSubjectObjectType() *WorkProgramRiskDriverUpdate {
+	_u.mutation.ClearSubjectObjectType()
+	return _u
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_u *WorkProgramRiskDriverUpdate) SetSubjectKey(v string) *WorkProgramRiskDriverUpdate {
 	_u.mutation.SetSubjectKey(v)
@@ -736,6 +756,12 @@ func (_u *WorkProgramRiskDriverUpdate) sqlSave(ctx context.Context) (_node int, 
 	if _u.mutation.SubjectKindCleared() {
 		_spec.ClearField(workprogramriskdriver.FieldSubjectKind, field.TypeString)
 	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workprogramriskdriver.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workprogramriskdriver.FieldSubjectObjectType, field.TypeString)
+	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workprogramriskdriver.FieldSubjectKey, field.TypeString, value)
 	}
@@ -1050,6 +1076,26 @@ func (_u *WorkProgramRiskDriverUpdateOne) SetNillableSubjectKind(v *string) *Wor
 // ClearSubjectKind clears the value of the "subject_kind" field.
 func (_u *WorkProgramRiskDriverUpdateOne) ClearSubjectKind() *WorkProgramRiskDriverUpdateOne {
 	_u.mutation.ClearSubjectKind()
+	return _u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkProgramRiskDriverUpdateOne) SetSubjectObjectType(v string) *WorkProgramRiskDriverUpdateOne {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkProgramRiskDriverUpdateOne) SetNillableSubjectObjectType(v *string) *WorkProgramRiskDriverUpdateOne {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkProgramRiskDriverUpdateOne) ClearSubjectObjectType() *WorkProgramRiskDriverUpdateOne {
+	_u.mutation.ClearSubjectObjectType()
 	return _u
 }
 
@@ -1672,6 +1718,12 @@ func (_u *WorkProgramRiskDriverUpdateOne) sqlSave(ctx context.Context) (_node *W
 	}
 	if _u.mutation.SubjectKindCleared() {
 		_spec.ClearField(workprogramriskdriver.FieldSubjectKind, field.TypeString)
+	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workprogramriskdriver.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workprogramriskdriver.FieldSubjectObjectType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workprogramriskdriver.FieldSubjectKey, field.TypeString, value)

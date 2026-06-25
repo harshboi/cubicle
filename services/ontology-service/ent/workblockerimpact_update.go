@@ -267,6 +267,26 @@ func (_u *WorkBlockerImpactUpdate) SetNillableSubjectKind(v *workblockerimpact.S
 	return _u
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkBlockerImpactUpdate) SetSubjectObjectType(v string) *WorkBlockerImpactUpdate {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkBlockerImpactUpdate) SetNillableSubjectObjectType(v *string) *WorkBlockerImpactUpdate {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkBlockerImpactUpdate) ClearSubjectObjectType() *WorkBlockerImpactUpdate {
+	_u.mutation.ClearSubjectObjectType()
+	return _u
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_u *WorkBlockerImpactUpdate) SetSubjectKey(v string) *WorkBlockerImpactUpdate {
 	_u.mutation.SetSubjectKey(v)
@@ -888,6 +908,12 @@ func (_u *WorkBlockerImpactUpdate) sqlSave(ctx context.Context) (_node int, err 
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workblockerimpact.FieldSubjectKind, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workblockerimpact.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workblockerimpact.FieldSubjectObjectType, field.TypeString)
+	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workblockerimpact.FieldSubjectKey, field.TypeString, value)
 	}
@@ -1423,6 +1449,26 @@ func (_u *WorkBlockerImpactUpdateOne) SetNillableSubjectKind(v *workblockerimpac
 	if v != nil {
 		_u.SetSubjectKind(*v)
 	}
+	return _u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkBlockerImpactUpdateOne) SetSubjectObjectType(v string) *WorkBlockerImpactUpdateOne {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkBlockerImpactUpdateOne) SetNillableSubjectObjectType(v *string) *WorkBlockerImpactUpdateOne {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkBlockerImpactUpdateOne) ClearSubjectObjectType() *WorkBlockerImpactUpdateOne {
+	_u.mutation.ClearSubjectObjectType()
 	return _u
 }
 
@@ -2076,6 +2122,12 @@ func (_u *WorkBlockerImpactUpdateOne) sqlSave(ctx context.Context) (_node *WorkB
 	}
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workblockerimpact.FieldSubjectKind, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workblockerimpact.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workblockerimpact.FieldSubjectObjectType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workblockerimpact.FieldSubjectKey, field.TypeString, value)

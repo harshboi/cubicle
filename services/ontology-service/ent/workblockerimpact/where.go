@@ -95,6 +95,11 @@ func AffectedKey(v string) predicate.WorkBlockerImpact {
 	return predicate.WorkBlockerImpact(sql.FieldEQ(FieldAffectedKey, v))
 }
 
+// SubjectObjectType applies equality check predicate on the "subject_object_type" field. It's identical to SubjectObjectTypeEQ.
+func SubjectObjectType(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
 // SubjectKey applies equality check predicate on the "subject_key" field. It's identical to SubjectKeyEQ.
 func SubjectKey(v string) predicate.WorkBlockerImpact {
 	return predicate.WorkBlockerImpact(sql.FieldEQ(FieldSubjectKey, v))
@@ -638,6 +643,81 @@ func SubjectKindIn(vs ...SubjectKind) predicate.WorkBlockerImpact {
 // SubjectKindNotIn applies the NotIn predicate on the "subject_kind" field.
 func SubjectKindNotIn(vs ...SubjectKind) predicate.WorkBlockerImpact {
 	return predicate.WorkBlockerImpact(sql.FieldNotIn(FieldSubjectKind, vs...))
+}
+
+// SubjectObjectTypeEQ applies the EQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeEQ(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeNEQ applies the NEQ predicate on the "subject_object_type" field.
+func SubjectObjectTypeNEQ(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldNEQ(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIn applies the In predicate on the "subject_object_type" field.
+func SubjectObjectTypeIn(vs ...string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeNotIn applies the NotIn predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotIn(vs ...string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldNotIn(FieldSubjectObjectType, vs...))
+}
+
+// SubjectObjectTypeGT applies the GT predicate on the "subject_object_type" field.
+func SubjectObjectTypeGT(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldGT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeGTE applies the GTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeGTE(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldGTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLT applies the LT predicate on the "subject_object_type" field.
+func SubjectObjectTypeLT(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldLT(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeLTE applies the LTE predicate on the "subject_object_type" field.
+func SubjectObjectTypeLTE(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldLTE(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContains applies the Contains predicate on the "subject_object_type" field.
+func SubjectObjectTypeContains(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldContains(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasPrefix applies the HasPrefix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasPrefix(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldHasPrefix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeHasSuffix applies the HasSuffix predicate on the "subject_object_type" field.
+func SubjectObjectTypeHasSuffix(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldHasSuffix(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeIsNil applies the IsNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeIsNil() predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldIsNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeNotNil applies the NotNil predicate on the "subject_object_type" field.
+func SubjectObjectTypeNotNil() predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldNotNull(FieldSubjectObjectType))
+}
+
+// SubjectObjectTypeEqualFold applies the EqualFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeEqualFold(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldEqualFold(FieldSubjectObjectType, v))
+}
+
+// SubjectObjectTypeContainsFold applies the ContainsFold predicate on the "subject_object_type" field.
+func SubjectObjectTypeContainsFold(v string) predicate.WorkBlockerImpact {
+	return predicate.WorkBlockerImpact(sql.FieldContainsFold(FieldSubjectObjectType, v))
 }
 
 // SubjectKeyEQ applies the EQ predicate on the "subject_key" field.

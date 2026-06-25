@@ -43,12 +43,6 @@ func (_u *WorkProgramRunMemberUpdate) SetNillableWorkProgramRunID(v *int) *WorkP
 	return _u
 }
 
-// ClearWorkProgramRunID clears the value of the "work_program_run_id" field.
-func (_u *WorkProgramRunMemberUpdate) ClearWorkProgramRunID() *WorkProgramRunMemberUpdate {
-	_u.mutation.ClearWorkProgramRunID()
-	return _u
-}
-
 // SetRunKey sets the "run_key" field.
 func (_u *WorkProgramRunMemberUpdate) SetRunKey(v string) *WorkProgramRunMemberUpdate {
 	_u.mutation.SetRunKey(v)
@@ -254,6 +248,9 @@ func (_u *WorkProgramRunMemberUpdate) check() error {
 			return &ValidationError{Name: "member_table", err: fmt.Errorf(`ent: validator failed for field "WorkProgramRunMember.member_table": %w`, err)}
 		}
 	}
+	if _u.mutation.WorkProgramRunCleared() && len(_u.mutation.WorkProgramRunIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "WorkProgramRunMember.work_program_run"`)
+	}
 	return nil
 }
 
@@ -371,12 +368,6 @@ func (_u *WorkProgramRunMemberUpdateOne) SetNillableWorkProgramRunID(v *int) *Wo
 	if v != nil {
 		_u.SetWorkProgramRunID(*v)
 	}
-	return _u
-}
-
-// ClearWorkProgramRunID clears the value of the "work_program_run_id" field.
-func (_u *WorkProgramRunMemberUpdateOne) ClearWorkProgramRunID() *WorkProgramRunMemberUpdateOne {
-	_u.mutation.ClearWorkProgramRunID()
 	return _u
 }
 
@@ -597,6 +588,9 @@ func (_u *WorkProgramRunMemberUpdateOne) check() error {
 		if err := workprogramrunmember.MemberTableValidator(v); err != nil {
 			return &ValidationError{Name: "member_table", err: fmt.Errorf(`ent: validator failed for field "WorkProgramRunMember.member_table": %w`, err)}
 		}
+	}
+	if _u.mutation.WorkProgramRunCleared() && len(_u.mutation.WorkProgramRunIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "WorkProgramRunMember.work_program_run"`)
 	}
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workforecastevaluation"
 	"cubicle/services/ontology-service/ent/workitemforecast"
 	"errors"
 	"fmt"
@@ -60,6 +61,20 @@ func (_c *WorkItemForecastCreate) SetNillableSubjectKind(v *workitemforecast.Sub
 	return _c
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkItemForecastCreate) SetSubjectObjectType(v string) *WorkItemForecastCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkItemForecastCreate) SetNillableSubjectObjectType(v *string) *WorkItemForecastCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
+	}
+	return _c
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_c *WorkItemForecastCreate) SetSubjectKey(v string) *WorkItemForecastCreate {
 	_c.mutation.SetSubjectKey(v)
@@ -104,6 +119,20 @@ func (_c *WorkItemForecastCreate) SetWorkActionID(v int) *WorkItemForecastCreate
 func (_c *WorkItemForecastCreate) SetNillableWorkActionID(v *int) *WorkItemForecastCreate {
 	if v != nil {
 		_c.SetWorkActionID(*v)
+	}
+	return _c
+}
+
+// SetForecastEvaluationID sets the "forecast_evaluation_id" field.
+func (_c *WorkItemForecastCreate) SetForecastEvaluationID(v int) *WorkItemForecastCreate {
+	_c.mutation.SetForecastEvaluationID(v)
+	return _c
+}
+
+// SetNillableForecastEvaluationID sets the "forecast_evaluation_id" field if the given value is not nil.
+func (_c *WorkItemForecastCreate) SetNillableForecastEvaluationID(v *int) *WorkItemForecastCreate {
+	if v != nil {
+		_c.SetForecastEvaluationID(*v)
 	}
 	return _c
 }
@@ -529,6 +558,11 @@ func (_c *WorkItemForecastCreate) SetWorkAction(v *WorkAction) *WorkItemForecast
 	return _c.SetWorkActionID(v.ID)
 }
 
+// SetForecastEvaluation sets the "forecast_evaluation" edge to the WorkForecastEvaluation entity.
+func (_c *WorkItemForecastCreate) SetForecastEvaluation(v *WorkForecastEvaluation) *WorkItemForecastCreate {
+	return _c.SetForecastEvaluationID(v.ID)
+}
+
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_c *WorkItemForecastCreate) SetLatestEvidence(v *Evidence) *WorkItemForecastCreate {
 	return _c.SetLatestEvidenceID(v.ID)
@@ -756,6 +790,10 @@ func (_c *WorkItemForecastCreate) createSpec() (*WorkItemForecast, *sqlgraph.Cre
 		_spec.SetField(workitemforecast.FieldSubjectKind, field.TypeEnum, value)
 		_node.SubjectKind = value
 	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workitemforecast.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
+	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workitemforecast.FieldSubjectKey, field.TypeString, value)
 		_node.SubjectKey = value
@@ -923,6 +961,23 @@ func (_c *WorkItemForecastCreate) createSpec() (*WorkItemForecast, *sqlgraph.Cre
 		_node.WorkActionID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := _c.mutation.ForecastEvaluationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workitemforecast.ForecastEvaluationTable,
+			Columns: []string{workitemforecast.ForecastEvaluationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workforecastevaluation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ForecastEvaluationID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := _c.mutation.LatestEvidenceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1028,6 +1083,24 @@ func (u *WorkItemForecastUpsert) UpdateSubjectKind() *WorkItemForecastUpsert {
 	return u
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkItemForecastUpsert) SetSubjectObjectType(v string) *WorkItemForecastUpsert {
+	u.Set(workitemforecast.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkItemForecastUpsert) UpdateSubjectObjectType() *WorkItemForecastUpsert {
+	u.SetExcluded(workitemforecast.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkItemForecastUpsert) ClearSubjectObjectType() *WorkItemForecastUpsert {
+	u.SetNull(workitemforecast.FieldSubjectObjectType)
+	return u
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (u *WorkItemForecastUpsert) SetSubjectKey(v string) *WorkItemForecastUpsert {
 	u.Set(workitemforecast.FieldSubjectKey, v)
@@ -1091,6 +1164,24 @@ func (u *WorkItemForecastUpsert) UpdateWorkActionID() *WorkItemForecastUpsert {
 // ClearWorkActionID clears the value of the "work_action_id" field.
 func (u *WorkItemForecastUpsert) ClearWorkActionID() *WorkItemForecastUpsert {
 	u.SetNull(workitemforecast.FieldWorkActionID)
+	return u
+}
+
+// SetForecastEvaluationID sets the "forecast_evaluation_id" field.
+func (u *WorkItemForecastUpsert) SetForecastEvaluationID(v int) *WorkItemForecastUpsert {
+	u.Set(workitemforecast.FieldForecastEvaluationID, v)
+	return u
+}
+
+// UpdateForecastEvaluationID sets the "forecast_evaluation_id" field to the value that was provided on create.
+func (u *WorkItemForecastUpsert) UpdateForecastEvaluationID() *WorkItemForecastUpsert {
+	u.SetExcluded(workitemforecast.FieldForecastEvaluationID)
+	return u
+}
+
+// ClearForecastEvaluationID clears the value of the "forecast_evaluation_id" field.
+func (u *WorkItemForecastUpsert) ClearForecastEvaluationID() *WorkItemForecastUpsert {
+	u.SetNull(workitemforecast.FieldForecastEvaluationID)
 	return u
 }
 
@@ -1673,6 +1764,27 @@ func (u *WorkItemForecastUpsertOne) UpdateSubjectKind() *WorkItemForecastUpsertO
 	})
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkItemForecastUpsertOne) SetSubjectObjectType(v string) *WorkItemForecastUpsertOne {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkItemForecastUpsertOne) UpdateSubjectObjectType() *WorkItemForecastUpsertOne {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkItemForecastUpsertOne) ClearSubjectObjectType() *WorkItemForecastUpsertOne {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.ClearSubjectObjectType()
+	})
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (u *WorkItemForecastUpsertOne) SetSubjectKey(v string) *WorkItemForecastUpsertOne {
 	return u.Update(func(s *WorkItemForecastUpsert) {
@@ -1747,6 +1859,27 @@ func (u *WorkItemForecastUpsertOne) UpdateWorkActionID() *WorkItemForecastUpsert
 func (u *WorkItemForecastUpsertOne) ClearWorkActionID() *WorkItemForecastUpsertOne {
 	return u.Update(func(s *WorkItemForecastUpsert) {
 		s.ClearWorkActionID()
+	})
+}
+
+// SetForecastEvaluationID sets the "forecast_evaluation_id" field.
+func (u *WorkItemForecastUpsertOne) SetForecastEvaluationID(v int) *WorkItemForecastUpsertOne {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.SetForecastEvaluationID(v)
+	})
+}
+
+// UpdateForecastEvaluationID sets the "forecast_evaluation_id" field to the value that was provided on create.
+func (u *WorkItemForecastUpsertOne) UpdateForecastEvaluationID() *WorkItemForecastUpsertOne {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.UpdateForecastEvaluationID()
+	})
+}
+
+// ClearForecastEvaluationID clears the value of the "forecast_evaluation_id" field.
+func (u *WorkItemForecastUpsertOne) ClearForecastEvaluationID() *WorkItemForecastUpsertOne {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.ClearForecastEvaluationID()
 	})
 }
 
@@ -2577,6 +2710,27 @@ func (u *WorkItemForecastUpsertBulk) UpdateSubjectKind() *WorkItemForecastUpsert
 	})
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkItemForecastUpsertBulk) SetSubjectObjectType(v string) *WorkItemForecastUpsertBulk {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkItemForecastUpsertBulk) UpdateSubjectObjectType() *WorkItemForecastUpsertBulk {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkItemForecastUpsertBulk) ClearSubjectObjectType() *WorkItemForecastUpsertBulk {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.ClearSubjectObjectType()
+	})
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (u *WorkItemForecastUpsertBulk) SetSubjectKey(v string) *WorkItemForecastUpsertBulk {
 	return u.Update(func(s *WorkItemForecastUpsert) {
@@ -2651,6 +2805,27 @@ func (u *WorkItemForecastUpsertBulk) UpdateWorkActionID() *WorkItemForecastUpser
 func (u *WorkItemForecastUpsertBulk) ClearWorkActionID() *WorkItemForecastUpsertBulk {
 	return u.Update(func(s *WorkItemForecastUpsert) {
 		s.ClearWorkActionID()
+	})
+}
+
+// SetForecastEvaluationID sets the "forecast_evaluation_id" field.
+func (u *WorkItemForecastUpsertBulk) SetForecastEvaluationID(v int) *WorkItemForecastUpsertBulk {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.SetForecastEvaluationID(v)
+	})
+}
+
+// UpdateForecastEvaluationID sets the "forecast_evaluation_id" field to the value that was provided on create.
+func (u *WorkItemForecastUpsertBulk) UpdateForecastEvaluationID() *WorkItemForecastUpsertBulk {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.UpdateForecastEvaluationID()
+	})
+}
+
+// ClearForecastEvaluationID clears the value of the "forecast_evaluation_id" field.
+func (u *WorkItemForecastUpsertBulk) ClearForecastEvaluationID() *WorkItemForecastUpsertBulk {
+	return u.Update(func(s *WorkItemForecastUpsert) {
+		s.ClearForecastEvaluationID()
 	})
 }
 

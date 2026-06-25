@@ -46,6 +46,20 @@ func (_c *WorkItemStateTransitionCreate) SetNillableSubjectKind(v *workitemstate
 	return _c
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkItemStateTransitionCreate) SetSubjectObjectType(v string) *WorkItemStateTransitionCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkItemStateTransitionCreate) SetNillableSubjectObjectType(v *string) *WorkItemStateTransitionCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
+	}
+	return _c
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_c *WorkItemStateTransitionCreate) SetSubjectKey(v string) *WorkItemStateTransitionCreate {
 	_c.mutation.SetSubjectKey(v)
@@ -736,6 +750,10 @@ func (_c *WorkItemStateTransitionCreate) createSpec() (*WorkItemStateTransition,
 		_spec.SetField(workitemstatetransition.FieldSubjectKind, field.TypeEnum, value)
 		_node.SubjectKind = value
 	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workitemstatetransition.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
+	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workitemstatetransition.FieldSubjectKey, field.TypeString, value)
 		_node.SubjectKey = value
@@ -1002,6 +1020,24 @@ func (u *WorkItemStateTransitionUpsert) SetSubjectKind(v workitemstatetransition
 // UpdateSubjectKind sets the "subject_kind" field to the value that was provided on create.
 func (u *WorkItemStateTransitionUpsert) UpdateSubjectKind() *WorkItemStateTransitionUpsert {
 	u.SetExcluded(workitemstatetransition.FieldSubjectKind)
+	return u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkItemStateTransitionUpsert) SetSubjectObjectType(v string) *WorkItemStateTransitionUpsert {
+	u.Set(workitemstatetransition.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkItemStateTransitionUpsert) UpdateSubjectObjectType() *WorkItemStateTransitionUpsert {
+	u.SetExcluded(workitemstatetransition.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkItemStateTransitionUpsert) ClearSubjectObjectType() *WorkItemStateTransitionUpsert {
+	u.SetNull(workitemstatetransition.FieldSubjectObjectType)
 	return u
 }
 
@@ -1579,6 +1615,27 @@ func (u *WorkItemStateTransitionUpsertOne) SetSubjectKind(v workitemstatetransit
 func (u *WorkItemStateTransitionUpsertOne) UpdateSubjectKind() *WorkItemStateTransitionUpsertOne {
 	return u.Update(func(s *WorkItemStateTransitionUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkItemStateTransitionUpsertOne) SetSubjectObjectType(v string) *WorkItemStateTransitionUpsertOne {
+	return u.Update(func(s *WorkItemStateTransitionUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkItemStateTransitionUpsertOne) UpdateSubjectObjectType() *WorkItemStateTransitionUpsertOne {
+	return u.Update(func(s *WorkItemStateTransitionUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkItemStateTransitionUpsertOne) ClearSubjectObjectType() *WorkItemStateTransitionUpsertOne {
+	return u.Update(func(s *WorkItemStateTransitionUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
@@ -2406,6 +2463,27 @@ func (u *WorkItemStateTransitionUpsertBulk) SetSubjectKind(v workitemstatetransi
 func (u *WorkItemStateTransitionUpsertBulk) UpdateSubjectKind() *WorkItemStateTransitionUpsertBulk {
 	return u.Update(func(s *WorkItemStateTransitionUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkItemStateTransitionUpsertBulk) SetSubjectObjectType(v string) *WorkItemStateTransitionUpsertBulk {
+	return u.Update(func(s *WorkItemStateTransitionUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkItemStateTransitionUpsertBulk) UpdateSubjectObjectType() *WorkItemStateTransitionUpsertBulk {
+	return u.Update(func(s *WorkItemStateTransitionUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkItemStateTransitionUpsertBulk) ClearSubjectObjectType() *WorkItemStateTransitionUpsertBulk {
+	return u.Update(func(s *WorkItemStateTransitionUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 

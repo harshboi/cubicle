@@ -4,6 +4,7 @@ package ent
 
 import (
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workaction"
 	"cubicle/services/ontology-service/ent/workblocker"
 	"cubicle/services/ontology-service/ent/workdependencyedge"
@@ -50,6 +51,8 @@ type WorkDependencyEdge struct {
 	TicketID int `json:"ticket_id,omitempty"`
 	// Optional PullRequest endpoint or context for this dependency edge.
 	PullRequestID int `json:"pull_request_id,omitempty"`
+	// Optional canonical TicketPullRequest row this edge mirrors.
+	TicketPullRequestID int `json:"ticket_pull_request_id,omitempty"`
 	// Source system that produced or most recently confirmed this row.
 	SourceSystem string `json:"source_system,omitempty"`
 	// Concrete source instance, such as a Jira tenant or GitHub repository.
@@ -120,13 +123,15 @@ type WorkDependencyEdgeEdges struct {
 	WorkBlocker *WorkBlocker `json:"work_blocker,omitempty"`
 	// Action ledger context for needs-action edges.
 	WorkAction *WorkAction `json:"work_action,omitempty"`
+	// Canonical TicketPullRequest row mirrored by this dependency edge.
+	TicketPullRequest *TicketPullRequest `json:"ticket_pull_request,omitempty"`
 	// Most recent evidence supporting this dependency edge.
 	LatestEvidence *Evidence `json:"latest_evidence,omitempty"`
 	// Explicit from/to endpoint rows for this dependency edge.
 	Endpoints []*WorkDependencyEndpoint `json:"endpoints,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // WorkBlockerOrErr returns the WorkBlocker value or an error if the edge
@@ -151,12 +156,23 @@ func (e WorkDependencyEdgeEdges) WorkActionOrErr() (*WorkAction, error) {
 	return nil, &NotLoadedError{edge: "work_action"}
 }
 
+// TicketPullRequestOrErr returns the TicketPullRequest value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e WorkDependencyEdgeEdges) TicketPullRequestOrErr() (*TicketPullRequest, error) {
+	if e.TicketPullRequest != nil {
+		return e.TicketPullRequest, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: ticketpullrequest.Label}
+	}
+	return nil, &NotLoadedError{edge: "ticket_pull_request"}
+}
+
 // LatestEvidenceOrErr returns the LatestEvidence value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e WorkDependencyEdgeEdges) LatestEvidenceOrErr() (*Evidence, error) {
 	if e.LatestEvidence != nil {
 		return e.LatestEvidence, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: evidence.Label}
 	}
 	return nil, &NotLoadedError{edge: "latest_evidence"}
@@ -165,7 +181,7 @@ func (e WorkDependencyEdgeEdges) LatestEvidenceOrErr() (*Evidence, error) {
 // EndpointsOrErr returns the Endpoints value or an error if the edge
 // was not loaded in eager-loading.
 func (e WorkDependencyEdgeEdges) EndpointsOrErr() ([]*WorkDependencyEndpoint, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.Endpoints, nil
 	}
 	return nil, &NotLoadedError{edge: "endpoints"}
@@ -178,7 +194,7 @@ func (*WorkDependencyEdge) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case workdependencyedge.FieldConfidence, workdependencyedge.FieldRankScore:
 			values[i] = new(sql.NullFloat64)
-		case workdependencyedge.FieldID, workdependencyedge.FieldWorkstreamID, workdependencyedge.FieldWorkBlockerID, workdependencyedge.FieldWorkActionID, workdependencyedge.FieldTicketID, workdependencyedge.FieldPullRequestID, workdependencyedge.FieldSourceScopeStateID, workdependencyedge.FieldLatestEvidenceID, workdependencyedge.FieldEvidenceCount, workdependencyedge.FieldEventCount:
+		case workdependencyedge.FieldID, workdependencyedge.FieldWorkstreamID, workdependencyedge.FieldWorkBlockerID, workdependencyedge.FieldWorkActionID, workdependencyedge.FieldTicketID, workdependencyedge.FieldPullRequestID, workdependencyedge.FieldTicketPullRequestID, workdependencyedge.FieldSourceScopeStateID, workdependencyedge.FieldLatestEvidenceID, workdependencyedge.FieldEvidenceCount, workdependencyedge.FieldEventCount:
 			values[i] = new(sql.NullInt64)
 		case workdependencyedge.FieldKey, workdependencyedge.FieldEdgeKind, workdependencyedge.FieldRelationshipAuthority, workdependencyedge.FieldCanonicalRelationshipKind, workdependencyedge.FieldFromKind, workdependencyedge.FieldFromKey, workdependencyedge.FieldToKind, workdependencyedge.FieldToKey, workdependencyedge.FieldRiskSignal, workdependencyedge.FieldSourceCoverageState, workdependencyedge.FieldSourceSystem, workdependencyedge.FieldSourceInstance, workdependencyedge.FieldExternalKind, workdependencyedge.FieldExternalID, workdependencyedge.FieldSourceURL, workdependencyedge.FieldSourceVersion, workdependencyedge.FieldContentHash, workdependencyedge.FieldDeletionState, workdependencyedge.FieldACLPolicyKey, workdependencyedge.FieldVisibilityHash, workdependencyedge.FieldACLState, workdependencyedge.FieldFreshnessState, workdependencyedge.FieldVisibility:
 			values[i] = new(sql.NullString)
@@ -294,6 +310,12 @@ func (_m *WorkDependencyEdge) assignValues(columns []string, values []any) error
 				return fmt.Errorf("unexpected type %T for field pull_request_id", values[i])
 			} else if value.Valid {
 				_m.PullRequestID = int(value.Int64)
+			}
+		case workdependencyedge.FieldTicketPullRequestID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field ticket_pull_request_id", values[i])
+			} else if value.Valid {
+				_m.TicketPullRequestID = int(value.Int64)
 			}
 		case workdependencyedge.FieldSourceSystem:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -492,6 +514,11 @@ func (_m *WorkDependencyEdge) QueryWorkAction() *WorkActionQuery {
 	return NewWorkDependencyEdgeClient(_m.config).QueryWorkAction(_m)
 }
 
+// QueryTicketPullRequest queries the "ticket_pull_request" edge of the WorkDependencyEdge entity.
+func (_m *WorkDependencyEdge) QueryTicketPullRequest() *TicketPullRequestQuery {
+	return NewWorkDependencyEdgeClient(_m.config).QueryTicketPullRequest(_m)
+}
+
 // QueryLatestEvidence queries the "latest_evidence" edge of the WorkDependencyEdge entity.
 func (_m *WorkDependencyEdge) QueryLatestEvidence() *EvidenceQuery {
 	return NewWorkDependencyEdgeClient(_m.config).QueryLatestEvidence(_m)
@@ -569,6 +596,9 @@ func (_m *WorkDependencyEdge) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("pull_request_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.PullRequestID))
+	builder.WriteString(", ")
+	builder.WriteString("ticket_pull_request_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.TicketPullRequestID))
 	builder.WriteString(", ")
 	builder.WriteString("source_system=")
 	builder.WriteString(_m.SourceSystem)

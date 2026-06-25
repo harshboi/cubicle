@@ -105,6 +105,11 @@ func PullRequestID(v int) predicate.WorkDependencyEdge {
 	return predicate.WorkDependencyEdge(sql.FieldEQ(FieldPullRequestID, v))
 }
 
+// TicketPullRequestID applies equality check predicate on the "ticket_pull_request_id" field. It's identical to TicketPullRequestIDEQ.
+func TicketPullRequestID(v int) predicate.WorkDependencyEdge {
+	return predicate.WorkDependencyEdge(sql.FieldEQ(FieldTicketPullRequestID, v))
+}
+
 // SourceSystem applies equality check predicate on the "source_system" field. It's identical to SourceSystemEQ.
 func SourceSystem(v string) predicate.WorkDependencyEdge {
 	return predicate.WorkDependencyEdge(sql.FieldEQ(FieldSourceSystem, v))
@@ -893,6 +898,36 @@ func PullRequestIDIsNil() predicate.WorkDependencyEdge {
 // PullRequestIDNotNil applies the NotNil predicate on the "pull_request_id" field.
 func PullRequestIDNotNil() predicate.WorkDependencyEdge {
 	return predicate.WorkDependencyEdge(sql.FieldNotNull(FieldPullRequestID))
+}
+
+// TicketPullRequestIDEQ applies the EQ predicate on the "ticket_pull_request_id" field.
+func TicketPullRequestIDEQ(v int) predicate.WorkDependencyEdge {
+	return predicate.WorkDependencyEdge(sql.FieldEQ(FieldTicketPullRequestID, v))
+}
+
+// TicketPullRequestIDNEQ applies the NEQ predicate on the "ticket_pull_request_id" field.
+func TicketPullRequestIDNEQ(v int) predicate.WorkDependencyEdge {
+	return predicate.WorkDependencyEdge(sql.FieldNEQ(FieldTicketPullRequestID, v))
+}
+
+// TicketPullRequestIDIn applies the In predicate on the "ticket_pull_request_id" field.
+func TicketPullRequestIDIn(vs ...int) predicate.WorkDependencyEdge {
+	return predicate.WorkDependencyEdge(sql.FieldIn(FieldTicketPullRequestID, vs...))
+}
+
+// TicketPullRequestIDNotIn applies the NotIn predicate on the "ticket_pull_request_id" field.
+func TicketPullRequestIDNotIn(vs ...int) predicate.WorkDependencyEdge {
+	return predicate.WorkDependencyEdge(sql.FieldNotIn(FieldTicketPullRequestID, vs...))
+}
+
+// TicketPullRequestIDIsNil applies the IsNil predicate on the "ticket_pull_request_id" field.
+func TicketPullRequestIDIsNil() predicate.WorkDependencyEdge {
+	return predicate.WorkDependencyEdge(sql.FieldIsNull(FieldTicketPullRequestID))
+}
+
+// TicketPullRequestIDNotNil applies the NotNil predicate on the "ticket_pull_request_id" field.
+func TicketPullRequestIDNotNil() predicate.WorkDependencyEdge {
+	return predicate.WorkDependencyEdge(sql.FieldNotNull(FieldTicketPullRequestID))
 }
 
 // SourceSystemEQ applies the EQ predicate on the "source_system" field.
@@ -2408,6 +2443,29 @@ func HasWorkAction() predicate.WorkDependencyEdge {
 func HasWorkActionWith(preds ...predicate.WorkAction) predicate.WorkDependencyEdge {
 	return predicate.WorkDependencyEdge(func(s *sql.Selector) {
 		step := newWorkActionStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTicketPullRequest applies the HasEdge predicate on the "ticket_pull_request" edge.
+func HasTicketPullRequest() predicate.WorkDependencyEdge {
+	return predicate.WorkDependencyEdge(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, TicketPullRequestTable, TicketPullRequestColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTicketPullRequestWith applies the HasEdge predicate on the "ticket_pull_request" edge with a given conditions (other predicates).
+func HasTicketPullRequestWith(preds ...predicate.TicketPullRequest) predicate.WorkDependencyEdge {
+	return predicate.WorkDependencyEdge(func(s *sql.Selector) {
+		step := newTicketPullRequestStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

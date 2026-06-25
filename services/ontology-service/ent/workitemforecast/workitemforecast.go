@@ -21,6 +21,8 @@ const (
 	FieldForecastKind = "forecast_kind"
 	// FieldSubjectKind holds the string denoting the subject_kind field in the database.
 	FieldSubjectKind = "subject_kind"
+	// FieldSubjectObjectType holds the string denoting the subject_object_type field in the database.
+	FieldSubjectObjectType = "subject_object_type"
 	// FieldSubjectKey holds the string denoting the subject_key field in the database.
 	FieldSubjectKey = "subject_key"
 	// FieldPullRequestID holds the string denoting the pull_request_id field in the database.
@@ -29,6 +31,8 @@ const (
 	FieldTicketID = "ticket_id"
 	// FieldWorkActionID holds the string denoting the work_action_id field in the database.
 	FieldWorkActionID = "work_action_id"
+	// FieldForecastEvaluationID holds the string denoting the forecast_evaluation_id field in the database.
+	FieldForecastEvaluationID = "forecast_evaluation_id"
 	// FieldSubjectState holds the string denoting the subject_state field in the database.
 	FieldSubjectState = "subject_state"
 	// FieldForecastMethod holds the string denoting the forecast_method field in the database.
@@ -93,6 +97,8 @@ const (
 	EdgeTicket = "ticket"
 	// EdgeWorkAction holds the string denoting the work_action edge name in mutations.
 	EdgeWorkAction = "work_action"
+	// EdgeForecastEvaluation holds the string denoting the forecast_evaluation edge name in mutations.
+	EdgeForecastEvaluation = "forecast_evaluation"
 	// EdgeLatestEvidence holds the string denoting the latest_evidence edge name in mutations.
 	EdgeLatestEvidence = "latest_evidence"
 	// Table holds the table name of the workitemforecast in the database.
@@ -118,6 +124,13 @@ const (
 	WorkActionInverseTable = "work_actions"
 	// WorkActionColumn is the table column denoting the work_action relation/edge.
 	WorkActionColumn = "work_action_id"
+	// ForecastEvaluationTable is the table that holds the forecast_evaluation relation/edge.
+	ForecastEvaluationTable = "work_item_forecasts"
+	// ForecastEvaluationInverseTable is the table name for the WorkForecastEvaluation entity.
+	// It exists in this package in order to avoid circular dependency with the "workforecastevaluation" package.
+	ForecastEvaluationInverseTable = "work_forecast_evaluations"
+	// ForecastEvaluationColumn is the table column denoting the forecast_evaluation relation/edge.
+	ForecastEvaluationColumn = "forecast_evaluation_id"
 	// LatestEvidenceTable is the table that holds the latest_evidence relation/edge.
 	LatestEvidenceTable = "work_item_forecasts"
 	// LatestEvidenceInverseTable is the table name for the Evidence entity.
@@ -133,10 +146,12 @@ var Columns = []string{
 	FieldKey,
 	FieldForecastKind,
 	FieldSubjectKind,
+	FieldSubjectObjectType,
 	FieldSubjectKey,
 	FieldPullRequestID,
 	FieldTicketID,
 	FieldWorkActionID,
+	FieldForecastEvaluationID,
 	FieldSubjectState,
 	FieldForecastMethod,
 	FieldModelName,
@@ -392,6 +407,11 @@ func BySubjectKind(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSubjectKind, opts...).ToFunc()
 }
 
+// BySubjectObjectType orders the results by the subject_object_type field.
+func BySubjectObjectType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSubjectObjectType, opts...).ToFunc()
+}
+
 // BySubjectKey orders the results by the subject_key field.
 func BySubjectKey(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSubjectKey, opts...).ToFunc()
@@ -410,6 +430,11 @@ func ByTicketID(opts ...sql.OrderTermOption) OrderOption {
 // ByWorkActionID orders the results by the work_action_id field.
 func ByWorkActionID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldWorkActionID, opts...).ToFunc()
+}
+
+// ByForecastEvaluationID orders the results by the forecast_evaluation_id field.
+func ByForecastEvaluationID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldForecastEvaluationID, opts...).ToFunc()
 }
 
 // BySubjectState orders the results by the subject_state field.
@@ -578,6 +603,13 @@ func ByWorkActionField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
+// ByForecastEvaluationField orders the results by forecast_evaluation field.
+func ByForecastEvaluationField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newForecastEvaluationStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByLatestEvidenceField orders the results by latest_evidence field.
 func ByLatestEvidenceField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -603,6 +635,13 @@ func newWorkActionStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(WorkActionInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, WorkActionTable, WorkActionColumn),
+	)
+}
+func newForecastEvaluationStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ForecastEvaluationInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, ForecastEvaluationTable, ForecastEvaluationColumn),
 	)
 }
 func newLatestEvidenceStep() *sqlgraph.Step {

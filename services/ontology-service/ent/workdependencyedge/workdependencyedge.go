@@ -45,6 +45,8 @@ const (
 	FieldTicketID = "ticket_id"
 	// FieldPullRequestID holds the string denoting the pull_request_id field in the database.
 	FieldPullRequestID = "pull_request_id"
+	// FieldTicketPullRequestID holds the string denoting the ticket_pull_request_id field in the database.
+	FieldTicketPullRequestID = "ticket_pull_request_id"
 	// FieldSourceSystem holds the string denoting the source_system field in the database.
 	FieldSourceSystem = "source_system"
 	// FieldSourceInstance holds the string denoting the source_instance field in the database.
@@ -107,6 +109,8 @@ const (
 	EdgeWorkBlocker = "work_blocker"
 	// EdgeWorkAction holds the string denoting the work_action edge name in mutations.
 	EdgeWorkAction = "work_action"
+	// EdgeTicketPullRequest holds the string denoting the ticket_pull_request edge name in mutations.
+	EdgeTicketPullRequest = "ticket_pull_request"
 	// EdgeLatestEvidence holds the string denoting the latest_evidence edge name in mutations.
 	EdgeLatestEvidence = "latest_evidence"
 	// EdgeEndpoints holds the string denoting the endpoints edge name in mutations.
@@ -127,6 +131,13 @@ const (
 	WorkActionInverseTable = "work_actions"
 	// WorkActionColumn is the table column denoting the work_action relation/edge.
 	WorkActionColumn = "work_action_id"
+	// TicketPullRequestTable is the table that holds the ticket_pull_request relation/edge.
+	TicketPullRequestTable = "work_dependency_edges"
+	// TicketPullRequestInverseTable is the table name for the TicketPullRequest entity.
+	// It exists in this package in order to avoid circular dependency with the "ticketpullrequest" package.
+	TicketPullRequestInverseTable = "ticket_pull_requests"
+	// TicketPullRequestColumn is the table column denoting the ticket_pull_request relation/edge.
+	TicketPullRequestColumn = "ticket_pull_request_id"
 	// LatestEvidenceTable is the table that holds the latest_evidence relation/edge.
 	LatestEvidenceTable = "work_dependency_edges"
 	// LatestEvidenceInverseTable is the table name for the Evidence entity.
@@ -161,6 +172,7 @@ var Columns = []string{
 	FieldWorkActionID,
 	FieldTicketID,
 	FieldPullRequestID,
+	FieldTicketPullRequestID,
 	FieldSourceSystem,
 	FieldSourceInstance,
 	FieldExternalKind,
@@ -550,6 +562,11 @@ func ByPullRequestID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPullRequestID, opts...).ToFunc()
 }
 
+// ByTicketPullRequestID orders the results by the ticket_pull_request_id field.
+func ByTicketPullRequestID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTicketPullRequestID, opts...).ToFunc()
+}
+
 // BySourceSystem orders the results by the source_system field.
 func BySourceSystem(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSourceSystem, opts...).ToFunc()
@@ -709,6 +726,13 @@ func ByWorkActionField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
+// ByTicketPullRequestField orders the results by ticket_pull_request field.
+func ByTicketPullRequestField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTicketPullRequestStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByLatestEvidenceField orders the results by latest_evidence field.
 func ByLatestEvidenceField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -741,6 +765,13 @@ func newWorkActionStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(WorkActionInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, WorkActionTable, WorkActionColumn),
+	)
+}
+func newTicketPullRequestStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TicketPullRequestInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, TicketPullRequestTable, TicketPullRequestColumn),
 	)
 }
 func newLatestEvidenceStep() *sqlgraph.Step {

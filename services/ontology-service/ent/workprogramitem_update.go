@@ -10,6 +10,7 @@ import (
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workaction"
 	"cubicle/services/ontology-service/ent/workprogramitem"
+	"cubicle/services/ontology-service/ent/workprogramitemlink"
 	"cubicle/services/ontology-service/ent/workstream"
 	"errors"
 	"fmt"
@@ -152,6 +153,26 @@ func (_u *WorkProgramItemUpdate) SetNillableSubjectKind(v *workprogramitem.Subje
 	if v != nil {
 		_u.SetSubjectKind(*v)
 	}
+	return _u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkProgramItemUpdate) SetSubjectObjectType(v string) *WorkProgramItemUpdate {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkProgramItemUpdate) SetNillableSubjectObjectType(v *string) *WorkProgramItemUpdate {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkProgramItemUpdate) ClearSubjectObjectType() *WorkProgramItemUpdate {
+	_u.mutation.ClearSubjectObjectType()
 	return _u
 }
 
@@ -977,6 +998,21 @@ func (_u *WorkProgramItemUpdate) SetLatestEvidence(v *Evidence) *WorkProgramItem
 	return _u.SetLatestEvidenceID(v.ID)
 }
 
+// AddLinkIDs adds the "links" edge to the WorkProgramItemLink entity by IDs.
+func (_u *WorkProgramItemUpdate) AddLinkIDs(ids ...int) *WorkProgramItemUpdate {
+	_u.mutation.AddLinkIDs(ids...)
+	return _u
+}
+
+// AddLinks adds the "links" edges to the WorkProgramItemLink entity.
+func (_u *WorkProgramItemUpdate) AddLinks(v ...*WorkProgramItemLink) *WorkProgramItemUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLinkIDs(ids...)
+}
+
 // Mutation returns the WorkProgramItemMutation object of the builder.
 func (_u *WorkProgramItemUpdate) Mutation() *WorkProgramItemMutation {
 	return _u.mutation
@@ -1010,6 +1046,27 @@ func (_u *WorkProgramItemUpdate) ClearTicket() *WorkProgramItemUpdate {
 func (_u *WorkProgramItemUpdate) ClearLatestEvidence() *WorkProgramItemUpdate {
 	_u.mutation.ClearLatestEvidence()
 	return _u
+}
+
+// ClearLinks clears all "links" edges to the WorkProgramItemLink entity.
+func (_u *WorkProgramItemUpdate) ClearLinks() *WorkProgramItemUpdate {
+	_u.mutation.ClearLinks()
+	return _u
+}
+
+// RemoveLinkIDs removes the "links" edge to WorkProgramItemLink entities by IDs.
+func (_u *WorkProgramItemUpdate) RemoveLinkIDs(ids ...int) *WorkProgramItemUpdate {
+	_u.mutation.RemoveLinkIDs(ids...)
+	return _u
+}
+
+// RemoveLinks removes "links" edges to WorkProgramItemLink entities.
+func (_u *WorkProgramItemUpdate) RemoveLinks(v ...*WorkProgramItemLink) *WorkProgramItemUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLinkIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1128,6 +1185,12 @@ func (_u *WorkProgramItemUpdate) sqlSave(ctx context.Context) (_node int, err er
 	}
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workprogramitem.FieldSubjectKind, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workprogramitem.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workprogramitem.FieldSubjectObjectType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workprogramitem.FieldSubjectKey, field.TypeString, value)
@@ -1499,6 +1562,51 @@ func (_u *WorkProgramItemUpdate) sqlSave(ctx context.Context) (_node int, err er
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.LinksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   workprogramitem.LinksTable,
+			Columns: []string{workprogramitem.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogramitemlink.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLinksIDs(); len(nodes) > 0 && !_u.mutation.LinksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   workprogramitem.LinksTable,
+			Columns: []string{workprogramitem.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogramitemlink.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LinksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   workprogramitem.LinksTable,
+			Columns: []string{workprogramitem.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogramitemlink.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{workprogramitem.Label}
@@ -1638,6 +1746,26 @@ func (_u *WorkProgramItemUpdateOne) SetNillableSubjectKind(v *workprogramitem.Su
 	if v != nil {
 		_u.SetSubjectKind(*v)
 	}
+	return _u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkProgramItemUpdateOne) SetSubjectObjectType(v string) *WorkProgramItemUpdateOne {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkProgramItemUpdateOne) SetNillableSubjectObjectType(v *string) *WorkProgramItemUpdateOne {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkProgramItemUpdateOne) ClearSubjectObjectType() *WorkProgramItemUpdateOne {
+	_u.mutation.ClearSubjectObjectType()
 	return _u
 }
 
@@ -2463,6 +2591,21 @@ func (_u *WorkProgramItemUpdateOne) SetLatestEvidence(v *Evidence) *WorkProgramI
 	return _u.SetLatestEvidenceID(v.ID)
 }
 
+// AddLinkIDs adds the "links" edge to the WorkProgramItemLink entity by IDs.
+func (_u *WorkProgramItemUpdateOne) AddLinkIDs(ids ...int) *WorkProgramItemUpdateOne {
+	_u.mutation.AddLinkIDs(ids...)
+	return _u
+}
+
+// AddLinks adds the "links" edges to the WorkProgramItemLink entity.
+func (_u *WorkProgramItemUpdateOne) AddLinks(v ...*WorkProgramItemLink) *WorkProgramItemUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLinkIDs(ids...)
+}
+
 // Mutation returns the WorkProgramItemMutation object of the builder.
 func (_u *WorkProgramItemUpdateOne) Mutation() *WorkProgramItemMutation {
 	return _u.mutation
@@ -2496,6 +2639,27 @@ func (_u *WorkProgramItemUpdateOne) ClearTicket() *WorkProgramItemUpdateOne {
 func (_u *WorkProgramItemUpdateOne) ClearLatestEvidence() *WorkProgramItemUpdateOne {
 	_u.mutation.ClearLatestEvidence()
 	return _u
+}
+
+// ClearLinks clears all "links" edges to the WorkProgramItemLink entity.
+func (_u *WorkProgramItemUpdateOne) ClearLinks() *WorkProgramItemUpdateOne {
+	_u.mutation.ClearLinks()
+	return _u
+}
+
+// RemoveLinkIDs removes the "links" edge to WorkProgramItemLink entities by IDs.
+func (_u *WorkProgramItemUpdateOne) RemoveLinkIDs(ids ...int) *WorkProgramItemUpdateOne {
+	_u.mutation.RemoveLinkIDs(ids...)
+	return _u
+}
+
+// RemoveLinks removes "links" edges to WorkProgramItemLink entities.
+func (_u *WorkProgramItemUpdateOne) RemoveLinks(v ...*WorkProgramItemLink) *WorkProgramItemUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLinkIDs(ids...)
 }
 
 // Where appends a list predicates to the WorkProgramItemUpdate builder.
@@ -2644,6 +2808,12 @@ func (_u *WorkProgramItemUpdateOne) sqlSave(ctx context.Context) (_node *WorkPro
 	}
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workprogramitem.FieldSubjectKind, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workprogramitem.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workprogramitem.FieldSubjectObjectType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workprogramitem.FieldSubjectKey, field.TypeString, value)
@@ -3008,6 +3178,51 @@ func (_u *WorkProgramItemUpdateOne) sqlSave(ctx context.Context) (_node *WorkPro
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(evidence.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.LinksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   workprogramitem.LinksTable,
+			Columns: []string{workprogramitem.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogramitemlink.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLinksIDs(); len(nodes) > 0 && !_u.mutation.LinksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   workprogramitem.LinksTable,
+			Columns: []string{workprogramitem.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogramitemlink.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LinksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   workprogramitem.LinksTable,
+			Columns: []string{workprogramitem.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogramitemlink.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

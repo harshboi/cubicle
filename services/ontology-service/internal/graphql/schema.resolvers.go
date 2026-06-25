@@ -9,6 +9,7 @@ import (
 	"context"
 	"cubicle/services/ontology-service/internal/graphql/generated"
 	"cubicle/services/ontology-service/internal/graphql/model"
+	"fmt"
 )
 
 // Health is the resolver for the health field.
@@ -17,6 +18,196 @@ func (r *queryResolver) Health(ctx context.Context) (*model.Health, error) {
 		Ok:      true,
 		Service: "ontology-service",
 	}, nil
+}
+
+// WorkActions is the resolver for the workActions field.
+func (r *queryResolver) WorkActions(ctx context.Context, limit *int, decisionState *string, actionState *string, ownerKey *string, sourceInstance *string) ([]*model.WorkAction, error) {
+	panic(fmt.Errorf("not implemented: WorkActions - workActions"))
+}
+
+// WorkProgramItems is the resolver for the workProgramItems field.
+func (r *queryResolver) WorkProgramItems(ctx context.Context, limit *int, workstreamKey *string, programStatus *string, tpmBucket *string, ownerKey *string, sourceInstance *string) ([]*model.WorkProgramItem, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramItems - workProgramItems"))
+}
+
+// WorkProgramMilestonePacket is the resolver for the workProgramMilestonePacket field.
+func (r *queryResolver) WorkProgramMilestonePacket(ctx context.Context, workstreamKey string, limit *int, sourceInstance *string) (*model.WorkProgramMilestonePacket, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramMilestonePacket - workProgramMilestonePacket"))
+}
+
+// WorkProgramSummary is the resolver for the workProgramSummary field.
+func (r *queryResolver) WorkProgramSummary(ctx context.Context, workstreamKey *string, sourceInstance *string) (*model.WorkProgramSummary, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramSummary - workProgramSummary"))
+}
+
+// WorkProgramBrief is the resolver for the workProgramBrief field.
+func (r *queryResolver) WorkProgramBrief(ctx context.Context, workstreamKey *string, sourceInstance *string) (*model.WorkProgramBrief, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramBrief - workProgramBrief"))
+}
+
+// WorkProgramGraphBrief is the resolver for the workProgramGraphBrief field.
+func (r *queryResolver) WorkProgramGraphBrief(ctx context.Context, workstreamKey string, sourceInstance *string, promptMode *string) (*model.WorkProgramGraphBrief, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramGraphBrief - workProgramGraphBrief"))
+}
+
+// WorkProgramGraphContext is the resolver for the workProgramGraphContext field.
+func (r *queryResolver) WorkProgramGraphContext(ctx context.Context, workstreamKey string, itemLimit *int, actionLimit *int, edgeLimit *int, insightLimit *int, forecastLimit *int, evidenceLimit *int, traversalDepth *int, runKey *string, generatedAt *string, sourceInstance *string) (*model.WorkProgramGraphContext, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramGraphContext - workProgramGraphContext"))
+}
+
+// BoundedGraphContext is the resolver for the boundedGraphContext field.
+func (r *queryResolver) BoundedGraphContext(ctx context.Context, startObjectType string, startKey string, associationTypes []string, depth *int, limitPerObject *int) (*model.BoundedGraphContext, error) {
+	panic(fmt.Errorf("not implemented: BoundedGraphContext - boundedGraphContext"))
+}
+
+// WorkProgramEvidenceNeeds is the resolver for the workProgramEvidenceNeeds field.
+func (r *queryResolver) WorkProgramEvidenceNeeds(ctx context.Context, limit *int, workstreamKey *string, gateKey *string, evidenceKind *string, executionState *string, ownerKey *string, actionKey *string, actionState *string, sourceInstance *string) ([]*model.WorkProgramAutomationEvidenceNeed, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramEvidenceNeeds - workProgramEvidenceNeeds"))
+}
+
+// WorkResponsibilities is the resolver for the workResponsibilities field.
+func (r *queryResolver) WorkResponsibilities(ctx context.Context, limit *int, subjectKind *string, subjectKey *string, partyKind *string, partyKey *string, responsibilityKind *string, responsibilityState *string, basisKind *string, sourceInstance *string) ([]*model.WorkResponsibility, error) {
+	panic(fmt.Errorf("not implemented: WorkResponsibilities - workResponsibilities"))
+}
+
+// WorkProgramAttentionPacket is the resolver for the workProgramAttentionPacket field.
+func (r *queryResolver) WorkProgramAttentionPacket(ctx context.Context, workstreamKey string, limit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramAttentionPacket, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramAttentionPacket - workProgramAttentionPacket"))
+}
+
+// WorkProgramAutomationPlanPacket is the resolver for the workProgramAutomationPlanPacket field.
+func (r *queryResolver) WorkProgramAutomationPlanPacket(ctx context.Context, workstreamKey string, actionState *string, actionLimit *int, evidenceLimit *int, reviewLimit *int, sourceInstance *string) (*model.WorkProgramAutomationPlanPacket, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramAutomationPlanPacket - workProgramAutomationPlanPacket"))
+}
+
+// WorkProgramExecutionPacket is the resolver for the workProgramExecutionPacket field.
+func (r *queryResolver) WorkProgramExecutionPacket(ctx context.Context, workstreamKey string, actionState *string, actionLimit *int, evidenceLimit *int, reviewLimit *int, sourceInstance *string) (*model.WorkProgramExecutionPacket, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramExecutionPacket - workProgramExecutionPacket"))
+}
+
+// WorkProgramOwnerPacket is the resolver for the workProgramOwnerPacket field.
+func (r *queryResolver) WorkProgramOwnerPacket(ctx context.Context, workstreamKey string, ownerKey string, actionState *string, actionLimit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramOwnerPacket, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramOwnerPacket - workProgramOwnerPacket"))
+}
+
+// WorkProgramBlockerPacket is the resolver for the workProgramBlockerPacket field.
+func (r *queryResolver) WorkProgramBlockerPacket(ctx context.Context, workstreamKey string, blockerState *string, limit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramBlockerPacket, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramBlockerPacket - workProgramBlockerPacket"))
+}
+
+// WorkProgramForecastPacket is the resolver for the workProgramForecastPacket field.
+func (r *queryResolver) WorkProgramForecastPacket(ctx context.Context, workstreamKey string, limit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramForecastPacket, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramForecastPacket - workProgramForecastPacket"))
+}
+
+// WorkProgramGuardrailPacket is the resolver for the workProgramGuardrailPacket field.
+func (r *queryResolver) WorkProgramGuardrailPacket(ctx context.Context, workstreamKey string, limit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramGuardrailPacket, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramGuardrailPacket - workProgramGuardrailPacket"))
+}
+
+// WorkProgramSourceCoveragePacket is the resolver for the workProgramSourceCoveragePacket field.
+func (r *queryResolver) WorkProgramSourceCoveragePacket(ctx context.Context, workstreamKey string, limit *int, evidenceLimit *int, sourceInstance *string) (*model.WorkProgramSourceCoveragePacket, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramSourceCoveragePacket - workProgramSourceCoveragePacket"))
+}
+
+// WorkProgramTpmReadinessPacket is the resolver for the workProgramTpmReadinessPacket field.
+func (r *queryResolver) WorkProgramTpmReadinessPacket(ctx context.Context, workstreamKey string, functionLimit *int, evidenceLimit *int, reviewLimit *int, sourceInstance *string) (*model.WorkProgramTpmReadinessPacket, error) {
+	panic(fmt.Errorf("not implemented: WorkProgramTpmReadinessPacket - workProgramTpmReadinessPacket"))
+}
+
+// WorkDecisionTargetEvaluations is the resolver for the workDecisionTargetEvaluations field.
+func (r *queryResolver) WorkDecisionTargetEvaluations(ctx context.Context, limit *int, targetKind *string, evaluationKind *string, productActionGateState *string, sourceInstance *string) ([]*model.WorkDecisionTargetEvaluation, error) {
+	panic(fmt.Errorf("not implemented: WorkDecisionTargetEvaluations - workDecisionTargetEvaluations"))
+}
+
+// WorkDecisionTargetReadiness is the resolver for the workDecisionTargetReadiness field.
+func (r *queryResolver) WorkDecisionTargetReadiness(ctx context.Context, limit *int, sourceInstance *string) (*model.WorkDecisionTargetReadiness, error) {
+	panic(fmt.Errorf("not implemented: WorkDecisionTargetReadiness - workDecisionTargetReadiness"))
+}
+
+// WorkItemForecasts is the resolver for the workItemForecasts field.
+func (r *queryResolver) WorkItemForecasts(ctx context.Context, limit *int, riskBand *string, subjectState *string, sourceInstance string) ([]*model.WorkItemForecast, error) {
+	panic(fmt.Errorf("not implemented: WorkItemForecasts - workItemForecasts"))
+}
+
+// ForecastReadiness is the resolver for the forecastReadiness field.
+func (r *queryResolver) ForecastReadiness(ctx context.Context, sourceInstance string, actionState *string) (*model.WorkForecastReadiness, error) {
+	panic(fmt.Errorf("not implemented: ForecastReadiness - forecastReadiness"))
+}
+
+// WorkItemStateSnapshots is the resolver for the workItemStateSnapshots field.
+func (r *queryResolver) WorkItemStateSnapshots(ctx context.Context, subjectKind string, subjectKey string, limit *int, sourceInstance *string) ([]*model.WorkItemStateSnapshot, error) {
+	panic(fmt.Errorf("not implemented: WorkItemStateSnapshots - workItemStateSnapshots"))
+}
+
+// WorkItemStateTransitions is the resolver for the workItemStateTransitions field.
+func (r *queryResolver) WorkItemStateTransitions(ctx context.Context, limit *int, subjectKind *string, subjectKey *string, transitionKind *string, requiresCloseout *bool, sourceInstance *string) ([]*model.WorkItemStateTransition, error) {
+	panic(fmt.Errorf("not implemented: WorkItemStateTransitions - workItemStateTransitions"))
+}
+
+// WorkActionSummary is the resolver for the workActionSummary field.
+func (r *queryResolver) WorkActionSummary(ctx context.Context, actionState *string, sourceInstance *string) (*model.WorkActionSummary, error) {
+	panic(fmt.Errorf("not implemented: WorkActionSummary - workActionSummary"))
+}
+
+// WorkInsightEvaluation is the resolver for the workInsightEvaluation field.
+func (r *queryResolver) WorkInsightEvaluation(ctx context.Context, sourceInstance *string) (*model.WorkInsightEvaluation, error) {
+	panic(fmt.Errorf("not implemented: WorkInsightEvaluation - workInsightEvaluation"))
+}
+
+// WorkInsightMeasurementPacket is the resolver for the workInsightMeasurementPacket field.
+func (r *queryResolver) WorkInsightMeasurementPacket(ctx context.Context, sourceInstance *string, reviewLimit *int, insightKind *string) (*model.WorkInsightMeasurementPacket, error) {
+	panic(fmt.Errorf("not implemented: WorkInsightMeasurementPacket - workInsightMeasurementPacket"))
+}
+
+// WorkInsightReviews is the resolver for the workInsightReviews field.
+func (r *queryResolver) WorkInsightReviews(ctx context.Context, limit *int, sourceInstance *string, reviewState *string, reviewKind *string, insightKind *string, measurementEligible *bool) ([]*model.WorkInsightReview, error) {
+	panic(fmt.Errorf("not implemented: WorkInsightReviews - workInsightReviews"))
+}
+
+// Workstreams is the resolver for the workstreams field.
+func (r *queryResolver) Workstreams(ctx context.Context, limit *int, actionState *string, sourceInstance *string) ([]*model.WorkstreamRegister, error) {
+	panic(fmt.Errorf("not implemented: Workstreams - workstreams"))
+}
+
+// OwnerLoadSnapshots is the resolver for the ownerLoadSnapshots field.
+func (r *queryResolver) OwnerLoadSnapshots(ctx context.Context, limit *int, workstreamKey string, ownerKey *string, sourceInstance *string) ([]*model.WorkOwnerLoadSnapshot, error) {
+	panic(fmt.Errorf("not implemented: OwnerLoadSnapshots - ownerLoadSnapshots"))
+}
+
+// WorkstreamStandup is the resolver for the workstreamStandup field.
+func (r *queryResolver) WorkstreamStandup(ctx context.Context, actionState *string, sourceInstance *string) (*model.WorkstreamStandup, error) {
+	panic(fmt.Errorf("not implemented: WorkstreamStandup - workstreamStandup"))
+}
+
+// WorkstreamStandupSections is the resolver for the workstreamStandupSections field.
+func (r *queryResolver) WorkstreamStandupSections(ctx context.Context, limit *int, workstreamKey *string, sectionKind *string, sourceInstance *string) ([]*model.WorkstreamStandupSection, error) {
+	panic(fmt.Errorf("not implemented: WorkstreamStandupSections - workstreamStandupSections"))
+}
+
+// WorkstreamHealthSnapshots is the resolver for the workstreamHealthSnapshots field.
+func (r *queryResolver) WorkstreamHealthSnapshots(ctx context.Context, limit *int, workstreamKey *string, sourceInstance *string) ([]*model.WorkstreamHealthSnapshot, error) {
+	panic(fmt.Errorf("not implemented: WorkstreamHealthSnapshots - workstreamHealthSnapshots"))
+}
+
+// WorkLensWindows is the resolver for the workLensWindows field.
+func (r *queryResolver) WorkLensWindows(ctx context.Context, limit *int, targetKind *string, lensKind *string, resultLimit *int) ([]*model.WorkLensWindow, error) {
+	panic(fmt.Errorf("not implemented: WorkLensWindows - workLensWindows"))
+}
+
+// WorkBlockers is the resolver for the workBlockers field.
+func (r *queryResolver) WorkBlockers(ctx context.Context, limit *int, blockerState *string, subjectKind *string, subjectKey *string, sourceInstance *string) ([]*model.WorkBlocker, error) {
+	panic(fmt.Errorf("not implemented: WorkBlockers - workBlockers"))
+}
+
+// WorkDependencyEdges is the resolver for the workDependencyEdges field.
+func (r *queryResolver) WorkDependencyEdges(ctx context.Context, limit *int, fromKind *string, fromKey *string, edgeKind *string, sourceInstance *string) ([]*model.WorkDependencyEdge, error) {
+	panic(fmt.Errorf("not implemented: WorkDependencyEdges - workDependencyEdges"))
+}
+
+// WorkBlockerImpacts is the resolver for the workBlockerImpacts field.
+func (r *queryResolver) WorkBlockerImpacts(ctx context.Context, limit *int, impactState *string, affectedKind *string, affectedKey *string, workstreamKey *string, sourceInstance *string) ([]*model.WorkBlockerImpact, error) {
+	panic(fmt.Errorf("not implemented: WorkBlockerImpacts - workBlockerImpacts"))
 }
 
 // Query returns generated.QueryResolver implementation.

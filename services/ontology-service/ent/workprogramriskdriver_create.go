@@ -90,6 +90,20 @@ func (_c *WorkProgramRiskDriverCreate) SetNillableSubjectKind(v *string) *WorkPr
 	return _c
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkProgramRiskDriverCreate) SetSubjectObjectType(v string) *WorkProgramRiskDriverCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkProgramRiskDriverCreate) SetNillableSubjectObjectType(v *string) *WorkProgramRiskDriverCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
+	}
+	return _c
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_c *WorkProgramRiskDriverCreate) SetSubjectKey(v string) *WorkProgramRiskDriverCreate {
 	_c.mutation.SetSubjectKey(v)
@@ -638,6 +652,10 @@ func (_c *WorkProgramRiskDriverCreate) createSpec() (*WorkProgramRiskDriver, *sq
 		_spec.SetField(workprogramriskdriver.FieldSubjectKind, field.TypeString, value)
 		_node.SubjectKind = value
 	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workprogramriskdriver.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
+	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workprogramriskdriver.FieldSubjectKey, field.TypeString, value)
 		_node.SubjectKey = value
@@ -919,6 +937,24 @@ func (u *WorkProgramRiskDriverUpsert) UpdateSubjectKind() *WorkProgramRiskDriver
 // ClearSubjectKind clears the value of the "subject_kind" field.
 func (u *WorkProgramRiskDriverUpsert) ClearSubjectKind() *WorkProgramRiskDriverUpsert {
 	u.SetNull(workprogramriskdriver.FieldSubjectKind)
+	return u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkProgramRiskDriverUpsert) SetSubjectObjectType(v string) *WorkProgramRiskDriverUpsert {
+	u.Set(workprogramriskdriver.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkProgramRiskDriverUpsert) UpdateSubjectObjectType() *WorkProgramRiskDriverUpsert {
+	u.SetExcluded(workprogramriskdriver.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkProgramRiskDriverUpsert) ClearSubjectObjectType() *WorkProgramRiskDriverUpsert {
+	u.SetNull(workprogramriskdriver.FieldSubjectObjectType)
 	return u
 }
 
@@ -1485,6 +1521,27 @@ func (u *WorkProgramRiskDriverUpsertOne) UpdateSubjectKind() *WorkProgramRiskDri
 func (u *WorkProgramRiskDriverUpsertOne) ClearSubjectKind() *WorkProgramRiskDriverUpsertOne {
 	return u.Update(func(s *WorkProgramRiskDriverUpsert) {
 		s.ClearSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkProgramRiskDriverUpsertOne) SetSubjectObjectType(v string) *WorkProgramRiskDriverUpsertOne {
+	return u.Update(func(s *WorkProgramRiskDriverUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkProgramRiskDriverUpsertOne) UpdateSubjectObjectType() *WorkProgramRiskDriverUpsertOne {
+	return u.Update(func(s *WorkProgramRiskDriverUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkProgramRiskDriverUpsertOne) ClearSubjectObjectType() *WorkProgramRiskDriverUpsertOne {
+	return u.Update(func(s *WorkProgramRiskDriverUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
@@ -2284,6 +2341,27 @@ func (u *WorkProgramRiskDriverUpsertBulk) UpdateSubjectKind() *WorkProgramRiskDr
 func (u *WorkProgramRiskDriverUpsertBulk) ClearSubjectKind() *WorkProgramRiskDriverUpsertBulk {
 	return u.Update(func(s *WorkProgramRiskDriverUpsert) {
 		s.ClearSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkProgramRiskDriverUpsertBulk) SetSubjectObjectType(v string) *WorkProgramRiskDriverUpsertBulk {
+	return u.Update(func(s *WorkProgramRiskDriverUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkProgramRiskDriverUpsertBulk) UpdateSubjectObjectType() *WorkProgramRiskDriverUpsertBulk {
+	return u.Update(func(s *WorkProgramRiskDriverUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkProgramRiskDriverUpsertBulk) ClearSubjectObjectType() *WorkProgramRiskDriverUpsertBulk {
+	return u.Update(func(s *WorkProgramRiskDriverUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 

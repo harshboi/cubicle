@@ -120,16 +120,6 @@ func WorkProgramRunIDNotIn(vs ...int) predicate.WorkProgramRunMember {
 	return predicate.WorkProgramRunMember(sql.FieldNotIn(FieldWorkProgramRunID, vs...))
 }
 
-// WorkProgramRunIDIsNil applies the IsNil predicate on the "work_program_run_id" field.
-func WorkProgramRunIDIsNil() predicate.WorkProgramRunMember {
-	return predicate.WorkProgramRunMember(sql.FieldIsNull(FieldWorkProgramRunID))
-}
-
-// WorkProgramRunIDNotNil applies the NotNil predicate on the "work_program_run_id" field.
-func WorkProgramRunIDNotNil() predicate.WorkProgramRunMember {
-	return predicate.WorkProgramRunMember(sql.FieldNotNull(FieldWorkProgramRunID))
-}
-
 // RunKeyEQ applies the EQ predicate on the "run_key" field.
 func RunKeyEQ(v string) predicate.WorkProgramRunMember {
 	return predicate.WorkProgramRunMember(sql.FieldEQ(FieldRunKey, v))

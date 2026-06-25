@@ -33,6 +33,8 @@ type WorkProgramRiskDriver struct {
 	DriverKind string `json:"driver_kind,omitempty"`
 	// Kind of subject this risk driver points at.
 	SubjectKind string `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Subject key this risk driver points at.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Human-readable risk title.
@@ -131,7 +133,7 @@ func (*WorkProgramRiskDriver) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case workprogramriskdriver.FieldID, workprogramriskdriver.FieldWorkstreamID, workprogramriskdriver.FieldLatestEvidenceID, workprogramriskdriver.FieldEvidenceCount, workprogramriskdriver.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workprogramriskdriver.FieldKey, workprogramriskdriver.FieldWorkstreamKey, workprogramriskdriver.FieldDriverKey, workprogramriskdriver.FieldDriverKind, workprogramriskdriver.FieldSubjectKind, workprogramriskdriver.FieldSubjectKey, workprogramriskdriver.FieldTitle, workprogramriskdriver.FieldStatus, workprogramriskdriver.FieldRecommendedAction, workprogramriskdriver.FieldEvidenceRef, workprogramriskdriver.FieldBadgeKeys, workprogramriskdriver.FieldBadgeLabels, workprogramriskdriver.FieldBadgeTones, workprogramriskdriver.FieldBadgeDetails, workprogramriskdriver.FieldSourceSystem, workprogramriskdriver.FieldSourceInstance, workprogramriskdriver.FieldExternalKind, workprogramriskdriver.FieldExternalID, workprogramriskdriver.FieldSourceURL, workprogramriskdriver.FieldFreshnessState, workprogramriskdriver.FieldVisibility:
+		case workprogramriskdriver.FieldKey, workprogramriskdriver.FieldWorkstreamKey, workprogramriskdriver.FieldDriverKey, workprogramriskdriver.FieldDriverKind, workprogramriskdriver.FieldSubjectKind, workprogramriskdriver.FieldSubjectObjectType, workprogramriskdriver.FieldSubjectKey, workprogramriskdriver.FieldTitle, workprogramriskdriver.FieldStatus, workprogramriskdriver.FieldRecommendedAction, workprogramriskdriver.FieldEvidenceRef, workprogramriskdriver.FieldBadgeKeys, workprogramriskdriver.FieldBadgeLabels, workprogramriskdriver.FieldBadgeTones, workprogramriskdriver.FieldBadgeDetails, workprogramriskdriver.FieldSourceSystem, workprogramriskdriver.FieldSourceInstance, workprogramriskdriver.FieldExternalKind, workprogramriskdriver.FieldExternalID, workprogramriskdriver.FieldSourceURL, workprogramriskdriver.FieldFreshnessState, workprogramriskdriver.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workprogramriskdriver.FieldGeneratedAt, workprogramriskdriver.FieldFirstSeenAt, workprogramriskdriver.FieldLastActivityAt, workprogramriskdriver.FieldCreatedAt, workprogramriskdriver.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -197,6 +199,12 @@ func (_m *WorkProgramRiskDriver) assignValues(columns []string, values []any) er
 				return fmt.Errorf("unexpected type %T for field subject_kind", values[i])
 			} else if value.Valid {
 				_m.SubjectKind = value.String
+			}
+		case workprogramriskdriver.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
 			}
 		case workprogramriskdriver.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -414,6 +422,9 @@ func (_m *WorkProgramRiskDriver) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("subject_kind=")
 	builder.WriteString(_m.SubjectKind)
+	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
 	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)

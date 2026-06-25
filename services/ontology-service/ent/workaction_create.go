@@ -109,6 +109,20 @@ func (_c *WorkActionCreate) SetNillableSubjectKind(v *workaction.SubjectKind) *W
 	return _c
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkActionCreate) SetSubjectObjectType(v string) *WorkActionCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkActionCreate) SetNillableSubjectObjectType(v *string) *WorkActionCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
+	}
+	return _c
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_c *WorkActionCreate) SetSubjectKey(v string) *WorkActionCreate {
 	_c.mutation.SetSubjectKey(v)
@@ -742,6 +756,10 @@ func (_c *WorkActionCreate) createSpec() (*WorkAction, *sqlgraph.CreateSpec) {
 		_spec.SetField(workaction.FieldSubjectKind, field.TypeEnum, value)
 		_node.SubjectKind = value
 	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workaction.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
+	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workaction.FieldSubjectKey, field.TypeString, value)
 		_node.SubjectKey = value
@@ -1062,6 +1080,24 @@ func (u *WorkActionUpsert) SetSubjectKind(v workaction.SubjectKind) *WorkActionU
 // UpdateSubjectKind sets the "subject_kind" field to the value that was provided on create.
 func (u *WorkActionUpsert) UpdateSubjectKind() *WorkActionUpsert {
 	u.SetExcluded(workaction.FieldSubjectKind)
+	return u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkActionUpsert) SetSubjectObjectType(v string) *WorkActionUpsert {
+	u.Set(workaction.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkActionUpsert) UpdateSubjectObjectType() *WorkActionUpsert {
+	u.SetExcluded(workaction.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkActionUpsert) ClearSubjectObjectType() *WorkActionUpsert {
+	u.SetNull(workaction.FieldSubjectObjectType)
 	return u
 }
 
@@ -1639,6 +1675,27 @@ func (u *WorkActionUpsertOne) SetSubjectKind(v workaction.SubjectKind) *WorkActi
 func (u *WorkActionUpsertOne) UpdateSubjectKind() *WorkActionUpsertOne {
 	return u.Update(func(s *WorkActionUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkActionUpsertOne) SetSubjectObjectType(v string) *WorkActionUpsertOne {
+	return u.Update(func(s *WorkActionUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkActionUpsertOne) UpdateSubjectObjectType() *WorkActionUpsertOne {
+	return u.Update(func(s *WorkActionUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkActionUpsertOne) ClearSubjectObjectType() *WorkActionUpsertOne {
+	return u.Update(func(s *WorkActionUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
@@ -2452,6 +2509,27 @@ func (u *WorkActionUpsertBulk) SetSubjectKind(v workaction.SubjectKind) *WorkAct
 func (u *WorkActionUpsertBulk) UpdateSubjectKind() *WorkActionUpsertBulk {
 	return u.Update(func(s *WorkActionUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkActionUpsertBulk) SetSubjectObjectType(v string) *WorkActionUpsertBulk {
+	return u.Update(func(s *WorkActionUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkActionUpsertBulk) UpdateSubjectObjectType() *WorkActionUpsertBulk {
+	return u.Update(func(s *WorkActionUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkActionUpsertBulk) ClearSubjectObjectType() *WorkActionUpsertBulk {
+	return u.Update(func(s *WorkActionUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 

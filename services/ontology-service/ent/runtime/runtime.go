@@ -8,6 +8,7 @@ import (
 	"cubicle/services/ontology-service/ent/documentlensresult"
 	"cubicle/services/ontology-service/ent/documentlink"
 	"cubicle/services/ontology-service/ent/evidence"
+	"cubicle/services/ontology-service/ent/evidenceattachment"
 	"cubicle/services/ontology-service/ent/message"
 	"cubicle/services/ontology-service/ent/messageauthorship"
 	"cubicle/services/ontology-service/ent/messagelensresult"
@@ -60,6 +61,7 @@ import (
 	"cubicle/services/ontology-service/ent/workprogrambriefsnapshot"
 	"cubicle/services/ontology-service/ent/workprogramevidenceneed"
 	"cubicle/services/ontology-service/ent/workprogramitem"
+	"cubicle/services/ontology-service/ent/workprogramitemlink"
 	"cubicle/services/ontology-service/ent/workprogrammilestone"
 	"cubicle/services/ontology-service/ent/workprogramownerrollupsnapshot"
 	"cubicle/services/ontology-service/ent/workprogramqualitygate"
@@ -224,6 +226,34 @@ func init() {
 	evidence.DefaultUpdatedAt = evidenceDescUpdatedAt.Default.(func() time.Time)
 	// evidence.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	evidence.UpdateDefaultUpdatedAt = evidenceDescUpdatedAt.UpdateDefault.(func() time.Time)
+	evidenceattachmentFields := schema.EvidenceAttachment{}.Fields()
+	_ = evidenceattachmentFields
+	// evidenceattachmentDescKey is the schema descriptor for key field.
+	evidenceattachmentDescKey := evidenceattachmentFields[0].Descriptor()
+	// evidenceattachment.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	evidenceattachment.KeyValidator = evidenceattachmentDescKey.Validators[0].(func(string) error)
+	// evidenceattachmentDescTargetKind is the schema descriptor for target_kind field.
+	evidenceattachmentDescTargetKind := evidenceattachmentFields[3].Descriptor()
+	// evidenceattachment.TargetKindValidator is a validator for the "target_kind" field. It is called by the builders before save.
+	evidenceattachment.TargetKindValidator = evidenceattachmentDescTargetKind.Validators[0].(func(string) error)
+	// evidenceattachmentDescTargetKey is the schema descriptor for target_key field.
+	evidenceattachmentDescTargetKey := evidenceattachmentFields[4].Descriptor()
+	// evidenceattachment.TargetKeyValidator is a validator for the "target_key" field. It is called by the builders before save.
+	evidenceattachment.TargetKeyValidator = evidenceattachmentDescTargetKey.Validators[0].(func(string) error)
+	// evidenceattachmentDescConfidence is the schema descriptor for confidence field.
+	evidenceattachmentDescConfidence := evidenceattachmentFields[29].Descriptor()
+	// evidenceattachment.DefaultConfidence holds the default value on creation for the confidence field.
+	evidenceattachment.DefaultConfidence = evidenceattachmentDescConfidence.Default.(float64)
+	// evidenceattachmentDescCreatedAt is the schema descriptor for created_at field.
+	evidenceattachmentDescCreatedAt := evidenceattachmentFields[30].Descriptor()
+	// evidenceattachment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	evidenceattachment.DefaultCreatedAt = evidenceattachmentDescCreatedAt.Default.(func() time.Time)
+	// evidenceattachmentDescUpdatedAt is the schema descriptor for updated_at field.
+	evidenceattachmentDescUpdatedAt := evidenceattachmentFields[31].Descriptor()
+	// evidenceattachment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	evidenceattachment.DefaultUpdatedAt = evidenceattachmentDescUpdatedAt.Default.(func() time.Time)
+	// evidenceattachment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	evidenceattachment.UpdateDefaultUpdatedAt = evidenceattachmentDescUpdatedAt.UpdateDefault.(func() time.Time)
 	messageFields := schema.Message{}.Fields()
 	_ = messageFields
 	// messageDescKey is the schema descriptor for key field.
@@ -959,31 +989,31 @@ func init() {
 	// workaction.KeyValidator is a validator for the "key" field. It is called by the builders before save.
 	workaction.KeyValidator = workactionDescKey.Validators[0].(func(string) error)
 	// workactionDescSubjectKey is the schema descriptor for subject_key field.
-	workactionDescSubjectKey := workactionFields[7].Descriptor()
+	workactionDescSubjectKey := workactionFields[8].Descriptor()
 	// workaction.SubjectKeyValidator is a validator for the "subject_key" field. It is called by the builders before save.
 	workaction.SubjectKeyValidator = workactionDescSubjectKey.Validators[0].(func(string) error)
 	// workactionDescEvidenceCount is the schema descriptor for evidence_count field.
-	workactionDescEvidenceCount := workactionFields[23].Descriptor()
+	workactionDescEvidenceCount := workactionFields[24].Descriptor()
 	// workaction.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workaction.DefaultEvidenceCount = workactionDescEvidenceCount.Default.(int)
 	// workactionDescConfidence is the schema descriptor for confidence field.
-	workactionDescConfidence := workactionFields[26].Descriptor()
+	workactionDescConfidence := workactionFields[27].Descriptor()
 	// workaction.DefaultConfidence holds the default value on creation for the confidence field.
 	workaction.DefaultConfidence = workactionDescConfidence.Default.(float64)
 	// workactionDescEventCount is the schema descriptor for event_count field.
-	workactionDescEventCount := workactionFields[27].Descriptor()
+	workactionDescEventCount := workactionFields[28].Descriptor()
 	// workaction.DefaultEventCount holds the default value on creation for the event_count field.
 	workaction.DefaultEventCount = workactionDescEventCount.Default.(int)
 	// workactionDescRankScore is the schema descriptor for rank_score field.
-	workactionDescRankScore := workactionFields[30].Descriptor()
+	workactionDescRankScore := workactionFields[31].Descriptor()
 	// workaction.DefaultRankScore holds the default value on creation for the rank_score field.
 	workaction.DefaultRankScore = workactionDescRankScore.Default.(float64)
 	// workactionDescCreatedAt is the schema descriptor for created_at field.
-	workactionDescCreatedAt := workactionFields[31].Descriptor()
+	workactionDescCreatedAt := workactionFields[32].Descriptor()
 	// workaction.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workaction.DefaultCreatedAt = workactionDescCreatedAt.Default.(func() time.Time)
 	// workactionDescUpdatedAt is the schema descriptor for updated_at field.
-	workactionDescUpdatedAt := workactionFields[32].Descriptor()
+	workactionDescUpdatedAt := workactionFields[33].Descriptor()
 	// workaction.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workaction.DefaultUpdatedAt = workactionDescUpdatedAt.Default.(func() time.Time)
 	// workaction.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -1087,39 +1117,39 @@ func init() {
 	// workblocker.KeyValidator is a validator for the "key" field. It is called by the builders before save.
 	workblocker.KeyValidator = workblockerDescKey.Validators[0].(func(string) error)
 	// workblockerDescSubjectKey is the schema descriptor for subject_key field.
-	workblockerDescSubjectKey := workblockerFields[5].Descriptor()
+	workblockerDescSubjectKey := workblockerFields[6].Descriptor()
 	// workblocker.SubjectKeyValidator is a validator for the "subject_key" field. It is called by the builders before save.
 	workblocker.SubjectKeyValidator = workblockerDescSubjectKey.Validators[0].(func(string) error)
 	// workblockerDescMeasurementEligible is the schema descriptor for measurement_eligible field.
-	workblockerDescMeasurementEligible := workblockerFields[18].Descriptor()
+	workblockerDescMeasurementEligible := workblockerFields[19].Descriptor()
 	// workblocker.DefaultMeasurementEligible holds the default value on creation for the measurement_eligible field.
 	workblocker.DefaultMeasurementEligible = workblockerDescMeasurementEligible.Default.(bool)
 	// workblockerDescTitle is the schema descriptor for title field.
-	workblockerDescTitle := workblockerFields[22].Descriptor()
+	workblockerDescTitle := workblockerFields[23].Descriptor()
 	// workblocker.TitleValidator is a validator for the "title" field. It is called by the builders before save.
 	workblocker.TitleValidator = workblockerDescTitle.Validators[0].(func(string) error)
 	// workblockerDescEvidenceCount is the schema descriptor for evidence_count field.
-	workblockerDescEvidenceCount := workblockerFields[45].Descriptor()
+	workblockerDescEvidenceCount := workblockerFields[46].Descriptor()
 	// workblocker.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workblocker.DefaultEvidenceCount = workblockerDescEvidenceCount.Default.(int)
 	// workblockerDescConfidence is the schema descriptor for confidence field.
-	workblockerDescConfidence := workblockerFields[48].Descriptor()
+	workblockerDescConfidence := workblockerFields[49].Descriptor()
 	// workblocker.DefaultConfidence holds the default value on creation for the confidence field.
 	workblocker.DefaultConfidence = workblockerDescConfidence.Default.(float64)
 	// workblockerDescEventCount is the schema descriptor for event_count field.
-	workblockerDescEventCount := workblockerFields[49].Descriptor()
+	workblockerDescEventCount := workblockerFields[50].Descriptor()
 	// workblocker.DefaultEventCount holds the default value on creation for the event_count field.
 	workblocker.DefaultEventCount = workblockerDescEventCount.Default.(int)
 	// workblockerDescRankScore is the schema descriptor for rank_score field.
-	workblockerDescRankScore := workblockerFields[52].Descriptor()
+	workblockerDescRankScore := workblockerFields[53].Descriptor()
 	// workblocker.DefaultRankScore holds the default value on creation for the rank_score field.
 	workblocker.DefaultRankScore = workblockerDescRankScore.Default.(float64)
 	// workblockerDescCreatedAt is the schema descriptor for created_at field.
-	workblockerDescCreatedAt := workblockerFields[53].Descriptor()
+	workblockerDescCreatedAt := workblockerFields[54].Descriptor()
 	// workblocker.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workblocker.DefaultCreatedAt = workblockerDescCreatedAt.Default.(func() time.Time)
 	// workblockerDescUpdatedAt is the schema descriptor for updated_at field.
-	workblockerDescUpdatedAt := workblockerFields[54].Descriptor()
+	workblockerDescUpdatedAt := workblockerFields[55].Descriptor()
 	// workblocker.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workblocker.DefaultUpdatedAt = workblockerDescUpdatedAt.Default.(func() time.Time)
 	// workblocker.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -1139,39 +1169,39 @@ func init() {
 	// workblockerimpact.AffectedKeyValidator is a validator for the "affected_key" field. It is called by the builders before save.
 	workblockerimpact.AffectedKeyValidator = workblockerimpactDescAffectedKey.Validators[0].(func(string) error)
 	// workblockerimpactDescSubjectKey is the schema descriptor for subject_key field.
-	workblockerimpactDescSubjectKey := workblockerimpactFields[14].Descriptor()
+	workblockerimpactDescSubjectKey := workblockerimpactFields[15].Descriptor()
 	// workblockerimpact.SubjectKeyValidator is a validator for the "subject_key" field. It is called by the builders before save.
 	workblockerimpact.SubjectKeyValidator = workblockerimpactDescSubjectKey.Validators[0].(func(string) error)
 	// workblockerimpactDescPathLength is the schema descriptor for path_length field.
-	workblockerimpactDescPathLength := workblockerimpactFields[15].Descriptor()
+	workblockerimpactDescPathLength := workblockerimpactFields[16].Descriptor()
 	// workblockerimpact.DefaultPathLength holds the default value on creation for the path_length field.
 	workblockerimpact.DefaultPathLength = workblockerimpactDescPathLength.Default.(int)
 	// workblockerimpactDescTitle is the schema descriptor for title field.
-	workblockerimpactDescTitle := workblockerimpactFields[17].Descriptor()
+	workblockerimpactDescTitle := workblockerimpactFields[18].Descriptor()
 	// workblockerimpact.TitleValidator is a validator for the "title" field. It is called by the builders before save.
 	workblockerimpact.TitleValidator = workblockerimpactDescTitle.Validators[0].(func(string) error)
 	// workblockerimpactDescEvidenceCount is the schema descriptor for evidence_count field.
-	workblockerimpactDescEvidenceCount := workblockerimpactFields[27].Descriptor()
+	workblockerimpactDescEvidenceCount := workblockerimpactFields[28].Descriptor()
 	// workblockerimpact.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workblockerimpact.DefaultEvidenceCount = workblockerimpactDescEvidenceCount.Default.(int)
 	// workblockerimpactDescConfidence is the schema descriptor for confidence field.
-	workblockerimpactDescConfidence := workblockerimpactFields[30].Descriptor()
+	workblockerimpactDescConfidence := workblockerimpactFields[31].Descriptor()
 	// workblockerimpact.DefaultConfidence holds the default value on creation for the confidence field.
 	workblockerimpact.DefaultConfidence = workblockerimpactDescConfidence.Default.(float64)
 	// workblockerimpactDescEventCount is the schema descriptor for event_count field.
-	workblockerimpactDescEventCount := workblockerimpactFields[31].Descriptor()
+	workblockerimpactDescEventCount := workblockerimpactFields[32].Descriptor()
 	// workblockerimpact.DefaultEventCount holds the default value on creation for the event_count field.
 	workblockerimpact.DefaultEventCount = workblockerimpactDescEventCount.Default.(int)
 	// workblockerimpactDescRankScore is the schema descriptor for rank_score field.
-	workblockerimpactDescRankScore := workblockerimpactFields[34].Descriptor()
+	workblockerimpactDescRankScore := workblockerimpactFields[35].Descriptor()
 	// workblockerimpact.DefaultRankScore holds the default value on creation for the rank_score field.
 	workblockerimpact.DefaultRankScore = workblockerimpactDescRankScore.Default.(float64)
 	// workblockerimpactDescCreatedAt is the schema descriptor for created_at field.
-	workblockerimpactDescCreatedAt := workblockerimpactFields[35].Descriptor()
+	workblockerimpactDescCreatedAt := workblockerimpactFields[36].Descriptor()
 	// workblockerimpact.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workblockerimpact.DefaultCreatedAt = workblockerimpactDescCreatedAt.Default.(func() time.Time)
 	// workblockerimpactDescUpdatedAt is the schema descriptor for updated_at field.
-	workblockerimpactDescUpdatedAt := workblockerimpactFields[36].Descriptor()
+	workblockerimpactDescUpdatedAt := workblockerimpactFields[37].Descriptor()
 	// workblockerimpact.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workblockerimpact.DefaultUpdatedAt = workblockerimpactDescUpdatedAt.Default.(func() time.Time)
 	// workblockerimpact.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -1263,27 +1293,27 @@ func init() {
 	// workdependencyedge.ToKeyValidator is a validator for the "to_key" field. It is called by the builders before save.
 	workdependencyedge.ToKeyValidator = workdependencyedgeDescToKey.Validators[0].(func(string) error)
 	// workdependencyedgeDescEvidenceCount is the schema descriptor for evidence_count field.
-	workdependencyedgeDescEvidenceCount := workdependencyedgeFields[34].Descriptor()
+	workdependencyedgeDescEvidenceCount := workdependencyedgeFields[35].Descriptor()
 	// workdependencyedge.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workdependencyedge.DefaultEvidenceCount = workdependencyedgeDescEvidenceCount.Default.(int)
 	// workdependencyedgeDescConfidence is the schema descriptor for confidence field.
-	workdependencyedgeDescConfidence := workdependencyedgeFields[37].Descriptor()
+	workdependencyedgeDescConfidence := workdependencyedgeFields[38].Descriptor()
 	// workdependencyedge.DefaultConfidence holds the default value on creation for the confidence field.
 	workdependencyedge.DefaultConfidence = workdependencyedgeDescConfidence.Default.(float64)
 	// workdependencyedgeDescEventCount is the schema descriptor for event_count field.
-	workdependencyedgeDescEventCount := workdependencyedgeFields[38].Descriptor()
+	workdependencyedgeDescEventCount := workdependencyedgeFields[39].Descriptor()
 	// workdependencyedge.DefaultEventCount holds the default value on creation for the event_count field.
 	workdependencyedge.DefaultEventCount = workdependencyedgeDescEventCount.Default.(int)
 	// workdependencyedgeDescRankScore is the schema descriptor for rank_score field.
-	workdependencyedgeDescRankScore := workdependencyedgeFields[41].Descriptor()
+	workdependencyedgeDescRankScore := workdependencyedgeFields[42].Descriptor()
 	// workdependencyedge.DefaultRankScore holds the default value on creation for the rank_score field.
 	workdependencyedge.DefaultRankScore = workdependencyedgeDescRankScore.Default.(float64)
 	// workdependencyedgeDescCreatedAt is the schema descriptor for created_at field.
-	workdependencyedgeDescCreatedAt := workdependencyedgeFields[42].Descriptor()
+	workdependencyedgeDescCreatedAt := workdependencyedgeFields[43].Descriptor()
 	// workdependencyedge.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workdependencyedge.DefaultCreatedAt = workdependencyedgeDescCreatedAt.Default.(func() time.Time)
 	// workdependencyedgeDescUpdatedAt is the schema descriptor for updated_at field.
-	workdependencyedgeDescUpdatedAt := workdependencyedgeFields[43].Descriptor()
+	workdependencyedgeDescUpdatedAt := workdependencyedgeFields[44].Descriptor()
 	// workdependencyedge.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workdependencyedge.DefaultUpdatedAt = workdependencyedgeDescUpdatedAt.Default.(func() time.Time)
 	// workdependencyedge.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -1403,39 +1433,39 @@ func init() {
 	// workinsight.KeyValidator is a validator for the "key" field. It is called by the builders before save.
 	workinsight.KeyValidator = workinsightDescKey.Validators[0].(func(string) error)
 	// workinsightDescSubjectKey is the schema descriptor for subject_key field.
-	workinsightDescSubjectKey := workinsightFields[5].Descriptor()
+	workinsightDescSubjectKey := workinsightFields[6].Descriptor()
 	// workinsight.SubjectKeyValidator is a validator for the "subject_key" field. It is called by the builders before save.
 	workinsight.SubjectKeyValidator = workinsightDescSubjectKey.Validators[0].(func(string) error)
 	// workinsightDescTitle is the schema descriptor for title field.
-	workinsightDescTitle := workinsightFields[8].Descriptor()
+	workinsightDescTitle := workinsightFields[9].Descriptor()
 	// workinsight.TitleValidator is a validator for the "title" field. It is called by the builders before save.
 	workinsight.TitleValidator = workinsightDescTitle.Validators[0].(func(string) error)
 	// workinsightDescScore is the schema descriptor for score field.
-	workinsightDescScore := workinsightFields[14].Descriptor()
+	workinsightDescScore := workinsightFields[15].Descriptor()
 	// workinsight.DefaultScore holds the default value on creation for the score field.
 	workinsight.DefaultScore = workinsightDescScore.Default.(float64)
 	// workinsightDescEvidenceCount is the schema descriptor for evidence_count field.
-	workinsightDescEvidenceCount := workinsightFields[17].Descriptor()
+	workinsightDescEvidenceCount := workinsightFields[18].Descriptor()
 	// workinsight.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workinsight.DefaultEvidenceCount = workinsightDescEvidenceCount.Default.(int)
 	// workinsightDescConfidence is the schema descriptor for confidence field.
-	workinsightDescConfidence := workinsightFields[38].Descriptor()
+	workinsightDescConfidence := workinsightFields[39].Descriptor()
 	// workinsight.DefaultConfidence holds the default value on creation for the confidence field.
 	workinsight.DefaultConfidence = workinsightDescConfidence.Default.(float64)
 	// workinsightDescEventCount is the schema descriptor for event_count field.
-	workinsightDescEventCount := workinsightFields[39].Descriptor()
+	workinsightDescEventCount := workinsightFields[40].Descriptor()
 	// workinsight.DefaultEventCount holds the default value on creation for the event_count field.
 	workinsight.DefaultEventCount = workinsightDescEventCount.Default.(int)
 	// workinsightDescRankScore is the schema descriptor for rank_score field.
-	workinsightDescRankScore := workinsightFields[42].Descriptor()
+	workinsightDescRankScore := workinsightFields[43].Descriptor()
 	// workinsight.DefaultRankScore holds the default value on creation for the rank_score field.
 	workinsight.DefaultRankScore = workinsightDescRankScore.Default.(float64)
 	// workinsightDescCreatedAt is the schema descriptor for created_at field.
-	workinsightDescCreatedAt := workinsightFields[43].Descriptor()
+	workinsightDescCreatedAt := workinsightFields[44].Descriptor()
 	// workinsight.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workinsight.DefaultCreatedAt = workinsightDescCreatedAt.Default.(func() time.Time)
 	// workinsightDescUpdatedAt is the schema descriptor for updated_at field.
-	workinsightDescUpdatedAt := workinsightFields[44].Descriptor()
+	workinsightDescUpdatedAt := workinsightFields[45].Descriptor()
 	// workinsight.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workinsight.DefaultUpdatedAt = workinsightDescUpdatedAt.Default.(func() time.Time)
 	// workinsight.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -1713,39 +1743,39 @@ func init() {
 	// workitemforecast.KeyValidator is a validator for the "key" field. It is called by the builders before save.
 	workitemforecast.KeyValidator = workitemforecastDescKey.Validators[0].(func(string) error)
 	// workitemforecastDescSubjectKey is the schema descriptor for subject_key field.
-	workitemforecastDescSubjectKey := workitemforecastFields[3].Descriptor()
+	workitemforecastDescSubjectKey := workitemforecastFields[4].Descriptor()
 	// workitemforecast.SubjectKeyValidator is a validator for the "subject_key" field. It is called by the builders before save.
 	workitemforecast.SubjectKeyValidator = workitemforecastDescSubjectKey.Validators[0].(func(string) error)
 	// workitemforecastDescRiskScore is the schema descriptor for risk_score field.
-	workitemforecastDescRiskScore := workitemforecastFields[14].Descriptor()
+	workitemforecastDescRiskScore := workitemforecastFields[16].Descriptor()
 	// workitemforecast.DefaultRiskScore holds the default value on creation for the risk_score field.
 	workitemforecast.DefaultRiskScore = workitemforecastDescRiskScore.Default.(float64)
 	// workitemforecastDescReadyForEta is the schema descriptor for ready_for_eta field.
-	workitemforecastDescReadyForEta := workitemforecastFields[17].Descriptor()
+	workitemforecastDescReadyForEta := workitemforecastFields[19].Descriptor()
 	// workitemforecast.DefaultReadyForEta holds the default value on creation for the ready_for_eta field.
 	workitemforecast.DefaultReadyForEta = workitemforecastDescReadyForEta.Default.(bool)
 	// workitemforecastDescEvidenceCount is the schema descriptor for evidence_count field.
-	workitemforecastDescEvidenceCount := workitemforecastFields[26].Descriptor()
+	workitemforecastDescEvidenceCount := workitemforecastFields[28].Descriptor()
 	// workitemforecast.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workitemforecast.DefaultEvidenceCount = workitemforecastDescEvidenceCount.Default.(int)
 	// workitemforecastDescConfidence is the schema descriptor for confidence field.
-	workitemforecastDescConfidence := workitemforecastFields[29].Descriptor()
+	workitemforecastDescConfidence := workitemforecastFields[31].Descriptor()
 	// workitemforecast.DefaultConfidence holds the default value on creation for the confidence field.
 	workitemforecast.DefaultConfidence = workitemforecastDescConfidence.Default.(float64)
 	// workitemforecastDescEventCount is the schema descriptor for event_count field.
-	workitemforecastDescEventCount := workitemforecastFields[30].Descriptor()
+	workitemforecastDescEventCount := workitemforecastFields[32].Descriptor()
 	// workitemforecast.DefaultEventCount holds the default value on creation for the event_count field.
 	workitemforecast.DefaultEventCount = workitemforecastDescEventCount.Default.(int)
 	// workitemforecastDescRankScore is the schema descriptor for rank_score field.
-	workitemforecastDescRankScore := workitemforecastFields[33].Descriptor()
+	workitemforecastDescRankScore := workitemforecastFields[35].Descriptor()
 	// workitemforecast.DefaultRankScore holds the default value on creation for the rank_score field.
 	workitemforecast.DefaultRankScore = workitemforecastDescRankScore.Default.(float64)
 	// workitemforecastDescCreatedAt is the schema descriptor for created_at field.
-	workitemforecastDescCreatedAt := workitemforecastFields[34].Descriptor()
+	workitemforecastDescCreatedAt := workitemforecastFields[36].Descriptor()
 	// workitemforecast.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workitemforecast.DefaultCreatedAt = workitemforecastDescCreatedAt.Default.(func() time.Time)
 	// workitemforecastDescUpdatedAt is the schema descriptor for updated_at field.
-	workitemforecastDescUpdatedAt := workitemforecastFields[35].Descriptor()
+	workitemforecastDescUpdatedAt := workitemforecastFields[37].Descriptor()
 	// workitemforecast.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workitemforecast.DefaultUpdatedAt = workitemforecastDescUpdatedAt.Default.(func() time.Time)
 	// workitemforecast.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -1757,35 +1787,35 @@ func init() {
 	// workitemstatesnapshot.KeyValidator is a validator for the "key" field. It is called by the builders before save.
 	workitemstatesnapshot.KeyValidator = workitemstatesnapshotDescKey.Validators[0].(func(string) error)
 	// workitemstatesnapshotDescSubjectKey is the schema descriptor for subject_key field.
-	workitemstatesnapshotDescSubjectKey := workitemstatesnapshotFields[2].Descriptor()
+	workitemstatesnapshotDescSubjectKey := workitemstatesnapshotFields[3].Descriptor()
 	// workitemstatesnapshot.SubjectKeyValidator is a validator for the "subject_key" field. It is called by the builders before save.
 	workitemstatesnapshot.SubjectKeyValidator = workitemstatesnapshotDescSubjectKey.Validators[0].(func(string) error)
 	// workitemstatesnapshotDescRiskScore is the schema descriptor for risk_score field.
-	workitemstatesnapshotDescRiskScore := workitemstatesnapshotFields[16].Descriptor()
+	workitemstatesnapshotDescRiskScore := workitemstatesnapshotFields[17].Descriptor()
 	// workitemstatesnapshot.DefaultRiskScore holds the default value on creation for the risk_score field.
 	workitemstatesnapshot.DefaultRiskScore = workitemstatesnapshotDescRiskScore.Default.(float64)
 	// workitemstatesnapshotDescEvidenceCount is the schema descriptor for evidence_count field.
-	workitemstatesnapshotDescEvidenceCount := workitemstatesnapshotFields[39].Descriptor()
+	workitemstatesnapshotDescEvidenceCount := workitemstatesnapshotFields[40].Descriptor()
 	// workitemstatesnapshot.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workitemstatesnapshot.DefaultEvidenceCount = workitemstatesnapshotDescEvidenceCount.Default.(int)
 	// workitemstatesnapshotDescConfidence is the schema descriptor for confidence field.
-	workitemstatesnapshotDescConfidence := workitemstatesnapshotFields[42].Descriptor()
+	workitemstatesnapshotDescConfidence := workitemstatesnapshotFields[43].Descriptor()
 	// workitemstatesnapshot.DefaultConfidence holds the default value on creation for the confidence field.
 	workitemstatesnapshot.DefaultConfidence = workitemstatesnapshotDescConfidence.Default.(float64)
 	// workitemstatesnapshotDescEventCount is the schema descriptor for event_count field.
-	workitemstatesnapshotDescEventCount := workitemstatesnapshotFields[43].Descriptor()
+	workitemstatesnapshotDescEventCount := workitemstatesnapshotFields[44].Descriptor()
 	// workitemstatesnapshot.DefaultEventCount holds the default value on creation for the event_count field.
 	workitemstatesnapshot.DefaultEventCount = workitemstatesnapshotDescEventCount.Default.(int)
 	// workitemstatesnapshotDescRankScore is the schema descriptor for rank_score field.
-	workitemstatesnapshotDescRankScore := workitemstatesnapshotFields[46].Descriptor()
+	workitemstatesnapshotDescRankScore := workitemstatesnapshotFields[47].Descriptor()
 	// workitemstatesnapshot.DefaultRankScore holds the default value on creation for the rank_score field.
 	workitemstatesnapshot.DefaultRankScore = workitemstatesnapshotDescRankScore.Default.(float64)
 	// workitemstatesnapshotDescCreatedAt is the schema descriptor for created_at field.
-	workitemstatesnapshotDescCreatedAt := workitemstatesnapshotFields[47].Descriptor()
+	workitemstatesnapshotDescCreatedAt := workitemstatesnapshotFields[48].Descriptor()
 	// workitemstatesnapshot.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workitemstatesnapshot.DefaultCreatedAt = workitemstatesnapshotDescCreatedAt.Default.(func() time.Time)
 	// workitemstatesnapshotDescUpdatedAt is the schema descriptor for updated_at field.
-	workitemstatesnapshotDescUpdatedAt := workitemstatesnapshotFields[48].Descriptor()
+	workitemstatesnapshotDescUpdatedAt := workitemstatesnapshotFields[49].Descriptor()
 	// workitemstatesnapshot.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workitemstatesnapshot.DefaultUpdatedAt = workitemstatesnapshotDescUpdatedAt.Default.(func() time.Time)
 	// workitemstatesnapshot.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -1797,43 +1827,43 @@ func init() {
 	// workitemstatetransition.KeyValidator is a validator for the "key" field. It is called by the builders before save.
 	workitemstatetransition.KeyValidator = workitemstatetransitionDescKey.Validators[0].(func(string) error)
 	// workitemstatetransitionDescSubjectKey is the schema descriptor for subject_key field.
-	workitemstatetransitionDescSubjectKey := workitemstatetransitionFields[2].Descriptor()
+	workitemstatetransitionDescSubjectKey := workitemstatetransitionFields[3].Descriptor()
 	// workitemstatetransition.SubjectKeyValidator is a validator for the "subject_key" field. It is called by the builders before save.
 	workitemstatetransition.SubjectKeyValidator = workitemstatetransitionDescSubjectKey.Validators[0].(func(string) error)
 	// workitemstatetransitionDescTransitionConfidence is the schema descriptor for transition_confidence field.
-	workitemstatetransitionDescTransitionConfidence := workitemstatetransitionFields[12].Descriptor()
+	workitemstatetransitionDescTransitionConfidence := workitemstatetransitionFields[13].Descriptor()
 	// workitemstatetransition.DefaultTransitionConfidence holds the default value on creation for the transition_confidence field.
 	workitemstatetransition.DefaultTransitionConfidence = workitemstatetransitionDescTransitionConfidence.Default.(float64)
 	// workitemstatetransitionDescTerminal is the schema descriptor for terminal field.
-	workitemstatetransitionDescTerminal := workitemstatetransitionFields[15].Descriptor()
+	workitemstatetransitionDescTerminal := workitemstatetransitionFields[16].Descriptor()
 	// workitemstatetransition.DefaultTerminal holds the default value on creation for the terminal field.
 	workitemstatetransition.DefaultTerminal = workitemstatetransitionDescTerminal.Default.(bool)
 	// workitemstatetransitionDescRequiresCloseout is the schema descriptor for requires_closeout field.
-	workitemstatetransitionDescRequiresCloseout := workitemstatetransitionFields[16].Descriptor()
+	workitemstatetransitionDescRequiresCloseout := workitemstatetransitionFields[17].Descriptor()
 	// workitemstatetransition.DefaultRequiresCloseout holds the default value on creation for the requires_closeout field.
 	workitemstatetransition.DefaultRequiresCloseout = workitemstatetransitionDescRequiresCloseout.Default.(bool)
 	// workitemstatetransitionDescEvidenceCount is the schema descriptor for evidence_count field.
-	workitemstatetransitionDescEvidenceCount := workitemstatetransitionFields[24].Descriptor()
+	workitemstatetransitionDescEvidenceCount := workitemstatetransitionFields[25].Descriptor()
 	// workitemstatetransition.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workitemstatetransition.DefaultEvidenceCount = workitemstatetransitionDescEvidenceCount.Default.(int)
 	// workitemstatetransitionDescConfidence is the schema descriptor for confidence field.
-	workitemstatetransitionDescConfidence := workitemstatetransitionFields[27].Descriptor()
+	workitemstatetransitionDescConfidence := workitemstatetransitionFields[28].Descriptor()
 	// workitemstatetransition.DefaultConfidence holds the default value on creation for the confidence field.
 	workitemstatetransition.DefaultConfidence = workitemstatetransitionDescConfidence.Default.(float64)
 	// workitemstatetransitionDescEventCount is the schema descriptor for event_count field.
-	workitemstatetransitionDescEventCount := workitemstatetransitionFields[28].Descriptor()
+	workitemstatetransitionDescEventCount := workitemstatetransitionFields[29].Descriptor()
 	// workitemstatetransition.DefaultEventCount holds the default value on creation for the event_count field.
 	workitemstatetransition.DefaultEventCount = workitemstatetransitionDescEventCount.Default.(int)
 	// workitemstatetransitionDescRankScore is the schema descriptor for rank_score field.
-	workitemstatetransitionDescRankScore := workitemstatetransitionFields[31].Descriptor()
+	workitemstatetransitionDescRankScore := workitemstatetransitionFields[32].Descriptor()
 	// workitemstatetransition.DefaultRankScore holds the default value on creation for the rank_score field.
 	workitemstatetransition.DefaultRankScore = workitemstatetransitionDescRankScore.Default.(float64)
 	// workitemstatetransitionDescCreatedAt is the schema descriptor for created_at field.
-	workitemstatetransitionDescCreatedAt := workitemstatetransitionFields[32].Descriptor()
+	workitemstatetransitionDescCreatedAt := workitemstatetransitionFields[33].Descriptor()
 	// workitemstatetransition.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workitemstatetransition.DefaultCreatedAt = workitemstatetransitionDescCreatedAt.Default.(func() time.Time)
 	// workitemstatetransitionDescUpdatedAt is the schema descriptor for updated_at field.
-	workitemstatetransitionDescUpdatedAt := workitemstatetransitionFields[33].Descriptor()
+	workitemstatetransitionDescUpdatedAt := workitemstatetransitionFields[34].Descriptor()
 	// workitemstatetransition.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workitemstatetransition.DefaultUpdatedAt = workitemstatetransitionDescUpdatedAt.Default.(func() time.Time)
 	// workitemstatetransition.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -2391,43 +2421,83 @@ func init() {
 	// workprogramitem.WorkstreamKeyValidator is a validator for the "workstream_key" field. It is called by the builders before save.
 	workprogramitem.WorkstreamKeyValidator = workprogramitemDescWorkstreamKey.Validators[0].(func(string) error)
 	// workprogramitemDescSubjectKey is the schema descriptor for subject_key field.
-	workprogramitemDescSubjectKey := workprogramitemFields[7].Descriptor()
+	workprogramitemDescSubjectKey := workprogramitemFields[8].Descriptor()
 	// workprogramitem.SubjectKeyValidator is a validator for the "subject_key" field. It is called by the builders before save.
 	workprogramitem.SubjectKeyValidator = workprogramitemDescSubjectKey.Validators[0].(func(string) error)
 	// workprogramitemDescTitle is the schema descriptor for title field.
-	workprogramitemDescTitle := workprogramitemFields[10].Descriptor()
+	workprogramitemDescTitle := workprogramitemFields[11].Descriptor()
 	// workprogramitem.TitleValidator is a validator for the "title" field. It is called by the builders before save.
 	workprogramitem.TitleValidator = workprogramitemDescTitle.Validators[0].(func(string) error)
 	// workprogramitemDescRiskScore is the schema descriptor for risk_score field.
-	workprogramitemDescRiskScore := workprogramitemFields[26].Descriptor()
+	workprogramitemDescRiskScore := workprogramitemFields[27].Descriptor()
 	// workprogramitem.DefaultRiskScore holds the default value on creation for the risk_score field.
 	workprogramitem.DefaultRiskScore = workprogramitemDescRiskScore.Default.(float64)
 	// workprogramitemDescEvidenceCount is the schema descriptor for evidence_count field.
-	workprogramitemDescEvidenceCount := workprogramitemFields[40].Descriptor()
+	workprogramitemDescEvidenceCount := workprogramitemFields[41].Descriptor()
 	// workprogramitem.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workprogramitem.DefaultEvidenceCount = workprogramitemDescEvidenceCount.Default.(int)
 	// workprogramitemDescConfidence is the schema descriptor for confidence field.
-	workprogramitemDescConfidence := workprogramitemFields[43].Descriptor()
+	workprogramitemDescConfidence := workprogramitemFields[44].Descriptor()
 	// workprogramitem.DefaultConfidence holds the default value on creation for the confidence field.
 	workprogramitem.DefaultConfidence = workprogramitemDescConfidence.Default.(float64)
 	// workprogramitemDescEventCount is the schema descriptor for event_count field.
-	workprogramitemDescEventCount := workprogramitemFields[44].Descriptor()
+	workprogramitemDescEventCount := workprogramitemFields[45].Descriptor()
 	// workprogramitem.DefaultEventCount holds the default value on creation for the event_count field.
 	workprogramitem.DefaultEventCount = workprogramitemDescEventCount.Default.(int)
 	// workprogramitemDescRankScore is the schema descriptor for rank_score field.
-	workprogramitemDescRankScore := workprogramitemFields[47].Descriptor()
+	workprogramitemDescRankScore := workprogramitemFields[48].Descriptor()
 	// workprogramitem.DefaultRankScore holds the default value on creation for the rank_score field.
 	workprogramitem.DefaultRankScore = workprogramitemDescRankScore.Default.(float64)
 	// workprogramitemDescCreatedAt is the schema descriptor for created_at field.
-	workprogramitemDescCreatedAt := workprogramitemFields[48].Descriptor()
+	workprogramitemDescCreatedAt := workprogramitemFields[49].Descriptor()
 	// workprogramitem.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workprogramitem.DefaultCreatedAt = workprogramitemDescCreatedAt.Default.(func() time.Time)
 	// workprogramitemDescUpdatedAt is the schema descriptor for updated_at field.
-	workprogramitemDescUpdatedAt := workprogramitemFields[49].Descriptor()
+	workprogramitemDescUpdatedAt := workprogramitemFields[50].Descriptor()
 	// workprogramitem.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workprogramitem.DefaultUpdatedAt = workprogramitemDescUpdatedAt.Default.(func() time.Time)
 	// workprogramitem.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	workprogramitem.UpdateDefaultUpdatedAt = workprogramitemDescUpdatedAt.UpdateDefault.(func() time.Time)
+	workprogramitemlinkFields := schema.WorkProgramItemLink{}.Fields()
+	_ = workprogramitemlinkFields
+	// workprogramitemlinkDescKey is the schema descriptor for key field.
+	workprogramitemlinkDescKey := workprogramitemlinkFields[0].Descriptor()
+	// workprogramitemlink.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	workprogramitemlink.KeyValidator = workprogramitemlinkDescKey.Validators[0].(func(string) error)
+	// workprogramitemlinkDescTargetObjectType is the schema descriptor for target_object_type field.
+	workprogramitemlinkDescTargetObjectType := workprogramitemlinkFields[7].Descriptor()
+	// workprogramitemlink.TargetObjectTypeValidator is a validator for the "target_object_type" field. It is called by the builders before save.
+	workprogramitemlink.TargetObjectTypeValidator = workprogramitemlinkDescTargetObjectType.Validators[0].(func(string) error)
+	// workprogramitemlinkDescTargetKey is the schema descriptor for target_key field.
+	workprogramitemlinkDescTargetKey := workprogramitemlinkFields[8].Descriptor()
+	// workprogramitemlink.TargetKeyValidator is a validator for the "target_key" field. It is called by the builders before save.
+	workprogramitemlink.TargetKeyValidator = workprogramitemlinkDescTargetKey.Validators[0].(func(string) error)
+	// workprogramitemlinkDescEvidenceCount is the schema descriptor for evidence_count field.
+	workprogramitemlinkDescEvidenceCount := workprogramitemlinkFields[18].Descriptor()
+	// workprogramitemlink.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
+	workprogramitemlink.DefaultEvidenceCount = workprogramitemlinkDescEvidenceCount.Default.(int)
+	// workprogramitemlinkDescConfidence is the schema descriptor for confidence field.
+	workprogramitemlinkDescConfidence := workprogramitemlinkFields[21].Descriptor()
+	// workprogramitemlink.DefaultConfidence holds the default value on creation for the confidence field.
+	workprogramitemlink.DefaultConfidence = workprogramitemlinkDescConfidence.Default.(float64)
+	// workprogramitemlinkDescEventCount is the schema descriptor for event_count field.
+	workprogramitemlinkDescEventCount := workprogramitemlinkFields[22].Descriptor()
+	// workprogramitemlink.DefaultEventCount holds the default value on creation for the event_count field.
+	workprogramitemlink.DefaultEventCount = workprogramitemlinkDescEventCount.Default.(int)
+	// workprogramitemlinkDescRankScore is the schema descriptor for rank_score field.
+	workprogramitemlinkDescRankScore := workprogramitemlinkFields[25].Descriptor()
+	// workprogramitemlink.DefaultRankScore holds the default value on creation for the rank_score field.
+	workprogramitemlink.DefaultRankScore = workprogramitemlinkDescRankScore.Default.(float64)
+	// workprogramitemlinkDescCreatedAt is the schema descriptor for created_at field.
+	workprogramitemlinkDescCreatedAt := workprogramitemlinkFields[26].Descriptor()
+	// workprogramitemlink.DefaultCreatedAt holds the default value on creation for the created_at field.
+	workprogramitemlink.DefaultCreatedAt = workprogramitemlinkDescCreatedAt.Default.(func() time.Time)
+	// workprogramitemlinkDescUpdatedAt is the schema descriptor for updated_at field.
+	workprogramitemlinkDescUpdatedAt := workprogramitemlinkFields[27].Descriptor()
+	// workprogramitemlink.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	workprogramitemlink.DefaultUpdatedAt = workprogramitemlinkDescUpdatedAt.Default.(func() time.Time)
+	// workprogramitemlink.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	workprogramitemlink.UpdateDefaultUpdatedAt = workprogramitemlinkDescUpdatedAt.UpdateDefault.(func() time.Time)
 	workprogrammilestoneFields := schema.WorkProgramMilestone{}.Fields()
 	_ = workprogrammilestoneFields
 	// workprogrammilestoneDescKey is the schema descriptor for key field.
@@ -2439,51 +2509,51 @@ func init() {
 	// workprogrammilestone.WorkstreamKeyValidator is a validator for the "workstream_key" field. It is called by the builders before save.
 	workprogrammilestone.WorkstreamKeyValidator = workprogrammilestoneDescWorkstreamKey.Validators[0].(func(string) error)
 	// workprogrammilestoneDescSubjectKey is the schema descriptor for subject_key field.
-	workprogrammilestoneDescSubjectKey := workprogrammilestoneFields[6].Descriptor()
+	workprogrammilestoneDescSubjectKey := workprogrammilestoneFields[7].Descriptor()
 	// workprogrammilestone.SubjectKeyValidator is a validator for the "subject_key" field. It is called by the builders before save.
 	workprogrammilestone.SubjectKeyValidator = workprogrammilestoneDescSubjectKey.Validators[0].(func(string) error)
 	// workprogrammilestoneDescMilestoneName is the schema descriptor for milestone_name field.
-	workprogrammilestoneDescMilestoneName := workprogrammilestoneFields[8].Descriptor()
+	workprogrammilestoneDescMilestoneName := workprogrammilestoneFields[9].Descriptor()
 	// workprogrammilestone.MilestoneNameValidator is a validator for the "milestone_name" field. It is called by the builders before save.
 	workprogrammilestone.MilestoneNameValidator = workprogrammilestoneDescMilestoneName.Validators[0].(func(string) error)
 	// workprogrammilestoneDescDateClaimAllowed is the schema descriptor for date_claim_allowed field.
-	workprogrammilestoneDescDateClaimAllowed := workprogrammilestoneFields[13].Descriptor()
+	workprogrammilestoneDescDateClaimAllowed := workprogrammilestoneFields[14].Descriptor()
 	// workprogrammilestone.DefaultDateClaimAllowed holds the default value on creation for the date_claim_allowed field.
 	workprogrammilestone.DefaultDateClaimAllowed = workprogrammilestoneDescDateClaimAllowed.Default.(bool)
 	// workprogrammilestoneDescDeliveryCommitmentAllowed is the schema descriptor for delivery_commitment_allowed field.
-	workprogrammilestoneDescDeliveryCommitmentAllowed := workprogrammilestoneFields[14].Descriptor()
+	workprogrammilestoneDescDeliveryCommitmentAllowed := workprogrammilestoneFields[15].Descriptor()
 	// workprogrammilestone.DefaultDeliveryCommitmentAllowed holds the default value on creation for the delivery_commitment_allowed field.
 	workprogrammilestone.DefaultDeliveryCommitmentAllowed = workprogrammilestoneDescDeliveryCommitmentAllowed.Default.(bool)
 	// workprogrammilestoneDescClaimGateReason is the schema descriptor for claim_gate_reason field.
-	workprogrammilestoneDescClaimGateReason := workprogrammilestoneFields[15].Descriptor()
+	workprogrammilestoneDescClaimGateReason := workprogrammilestoneFields[16].Descriptor()
 	// workprogrammilestone.ClaimGateReasonValidator is a validator for the "claim_gate_reason" field. It is called by the builders before save.
 	workprogrammilestone.ClaimGateReasonValidator = workprogrammilestoneDescClaimGateReason.Validators[0].(func(string) error)
 	// workprogrammilestoneDescSourceField is the schema descriptor for source_field field.
-	workprogrammilestoneDescSourceField := workprogrammilestoneFields[16].Descriptor()
+	workprogrammilestoneDescSourceField := workprogrammilestoneFields[17].Descriptor()
 	// workprogrammilestone.SourceFieldValidator is a validator for the "source_field" field. It is called by the builders before save.
 	workprogrammilestone.SourceFieldValidator = workprogrammilestoneDescSourceField.Validators[0].(func(string) error)
 	// workprogrammilestoneDescEvidenceCount is the schema descriptor for evidence_count field.
-	workprogrammilestoneDescEvidenceCount := workprogrammilestoneFields[26].Descriptor()
+	workprogrammilestoneDescEvidenceCount := workprogrammilestoneFields[27].Descriptor()
 	// workprogrammilestone.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workprogrammilestone.DefaultEvidenceCount = workprogrammilestoneDescEvidenceCount.Default.(int)
 	// workprogrammilestoneDescConfidence is the schema descriptor for confidence field.
-	workprogrammilestoneDescConfidence := workprogrammilestoneFields[29].Descriptor()
+	workprogrammilestoneDescConfidence := workprogrammilestoneFields[30].Descriptor()
 	// workprogrammilestone.DefaultConfidence holds the default value on creation for the confidence field.
 	workprogrammilestone.DefaultConfidence = workprogrammilestoneDescConfidence.Default.(float64)
 	// workprogrammilestoneDescEventCount is the schema descriptor for event_count field.
-	workprogrammilestoneDescEventCount := workprogrammilestoneFields[30].Descriptor()
+	workprogrammilestoneDescEventCount := workprogrammilestoneFields[31].Descriptor()
 	// workprogrammilestone.DefaultEventCount holds the default value on creation for the event_count field.
 	workprogrammilestone.DefaultEventCount = workprogrammilestoneDescEventCount.Default.(int)
 	// workprogrammilestoneDescRankScore is the schema descriptor for rank_score field.
-	workprogrammilestoneDescRankScore := workprogrammilestoneFields[33].Descriptor()
+	workprogrammilestoneDescRankScore := workprogrammilestoneFields[34].Descriptor()
 	// workprogrammilestone.DefaultRankScore holds the default value on creation for the rank_score field.
 	workprogrammilestone.DefaultRankScore = workprogrammilestoneDescRankScore.Default.(float64)
 	// workprogrammilestoneDescCreatedAt is the schema descriptor for created_at field.
-	workprogrammilestoneDescCreatedAt := workprogrammilestoneFields[34].Descriptor()
+	workprogrammilestoneDescCreatedAt := workprogrammilestoneFields[35].Descriptor()
 	// workprogrammilestone.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workprogrammilestone.DefaultCreatedAt = workprogrammilestoneDescCreatedAt.Default.(func() time.Time)
 	// workprogrammilestoneDescUpdatedAt is the schema descriptor for updated_at field.
-	workprogrammilestoneDescUpdatedAt := workprogrammilestoneFields[35].Descriptor()
+	workprogrammilestoneDescUpdatedAt := workprogrammilestoneFields[36].Descriptor()
 	// workprogrammilestone.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workprogrammilestone.DefaultUpdatedAt = workprogrammilestoneDescUpdatedAt.Default.(func() time.Time)
 	// workprogrammilestone.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -2639,35 +2709,35 @@ func init() {
 	// workprogramriskdriver.DriverKindValidator is a validator for the "driver_kind" field. It is called by the builders before save.
 	workprogramriskdriver.DriverKindValidator = workprogramriskdriverDescDriverKind.Validators[0].(func(string) error)
 	// workprogramriskdriverDescTitle is the schema descriptor for title field.
-	workprogramriskdriverDescTitle := workprogramriskdriverFields[8].Descriptor()
+	workprogramriskdriverDescTitle := workprogramriskdriverFields[9].Descriptor()
 	// workprogramriskdriver.TitleValidator is a validator for the "title" field. It is called by the builders before save.
 	workprogramriskdriver.TitleValidator = workprogramriskdriverDescTitle.Validators[0].(func(string) error)
 	// workprogramriskdriverDescStatus is the schema descriptor for status field.
-	workprogramriskdriverDescStatus := workprogramriskdriverFields[9].Descriptor()
+	workprogramriskdriverDescStatus := workprogramriskdriverFields[10].Descriptor()
 	// workprogramriskdriver.StatusValidator is a validator for the "status" field. It is called by the builders before save.
 	workprogramriskdriver.StatusValidator = workprogramriskdriverDescStatus.Validators[0].(func(string) error)
 	// workprogramriskdriverDescEvidenceCount is the schema descriptor for evidence_count field.
-	workprogramriskdriverDescEvidenceCount := workprogramriskdriverFields[22].Descriptor()
+	workprogramriskdriverDescEvidenceCount := workprogramriskdriverFields[23].Descriptor()
 	// workprogramriskdriver.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workprogramriskdriver.DefaultEvidenceCount = workprogramriskdriverDescEvidenceCount.Default.(int)
 	// workprogramriskdriverDescConfidence is the schema descriptor for confidence field.
-	workprogramriskdriverDescConfidence := workprogramriskdriverFields[25].Descriptor()
+	workprogramriskdriverDescConfidence := workprogramriskdriverFields[26].Descriptor()
 	// workprogramriskdriver.DefaultConfidence holds the default value on creation for the confidence field.
 	workprogramriskdriver.DefaultConfidence = workprogramriskdriverDescConfidence.Default.(float64)
 	// workprogramriskdriverDescEventCount is the schema descriptor for event_count field.
-	workprogramriskdriverDescEventCount := workprogramriskdriverFields[26].Descriptor()
+	workprogramriskdriverDescEventCount := workprogramriskdriverFields[27].Descriptor()
 	// workprogramriskdriver.DefaultEventCount holds the default value on creation for the event_count field.
 	workprogramriskdriver.DefaultEventCount = workprogramriskdriverDescEventCount.Default.(int)
 	// workprogramriskdriverDescRankScore is the schema descriptor for rank_score field.
-	workprogramriskdriverDescRankScore := workprogramriskdriverFields[29].Descriptor()
+	workprogramriskdriverDescRankScore := workprogramriskdriverFields[30].Descriptor()
 	// workprogramriskdriver.DefaultRankScore holds the default value on creation for the rank_score field.
 	workprogramriskdriver.DefaultRankScore = workprogramriskdriverDescRankScore.Default.(float64)
 	// workprogramriskdriverDescCreatedAt is the schema descriptor for created_at field.
-	workprogramriskdriverDescCreatedAt := workprogramriskdriverFields[30].Descriptor()
+	workprogramriskdriverDescCreatedAt := workprogramriskdriverFields[31].Descriptor()
 	// workprogramriskdriver.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workprogramriskdriver.DefaultCreatedAt = workprogramriskdriverDescCreatedAt.Default.(func() time.Time)
 	// workprogramriskdriverDescUpdatedAt is the schema descriptor for updated_at field.
-	workprogramriskdriverDescUpdatedAt := workprogramriskdriverFields[31].Descriptor()
+	workprogramriskdriverDescUpdatedAt := workprogramriskdriverFields[32].Descriptor()
 	// workprogramriskdriver.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workprogramriskdriver.DefaultUpdatedAt = workprogramriskdriverDescUpdatedAt.Default.(func() time.Time)
 	// workprogramriskdriver.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -3013,35 +3083,35 @@ func init() {
 	// workresponsibility.KeyValidator is a validator for the "key" field. It is called by the builders before save.
 	workresponsibility.KeyValidator = workresponsibilityDescKey.Validators[0].(func(string) error)
 	// workresponsibilityDescSubjectKey is the schema descriptor for subject_key field.
-	workresponsibilityDescSubjectKey := workresponsibilityFields[11].Descriptor()
+	workresponsibilityDescSubjectKey := workresponsibilityFields[12].Descriptor()
 	// workresponsibility.SubjectKeyValidator is a validator for the "subject_key" field. It is called by the builders before save.
 	workresponsibility.SubjectKeyValidator = workresponsibilityDescSubjectKey.Validators[0].(func(string) error)
 	// workresponsibilityDescPartyKey is the schema descriptor for party_key field.
-	workresponsibilityDescPartyKey := workresponsibilityFields[13].Descriptor()
+	workresponsibilityDescPartyKey := workresponsibilityFields[14].Descriptor()
 	// workresponsibility.PartyKeyValidator is a validator for the "party_key" field. It is called by the builders before save.
 	workresponsibility.PartyKeyValidator = workresponsibilityDescPartyKey.Validators[0].(func(string) error)
 	// workresponsibilityDescEvidenceCount is the schema descriptor for evidence_count field.
-	workresponsibilityDescEvidenceCount := workresponsibilityFields[29].Descriptor()
+	workresponsibilityDescEvidenceCount := workresponsibilityFields[30].Descriptor()
 	// workresponsibility.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workresponsibility.DefaultEvidenceCount = workresponsibilityDescEvidenceCount.Default.(int)
 	// workresponsibilityDescConfidence is the schema descriptor for confidence field.
-	workresponsibilityDescConfidence := workresponsibilityFields[32].Descriptor()
+	workresponsibilityDescConfidence := workresponsibilityFields[33].Descriptor()
 	// workresponsibility.DefaultConfidence holds the default value on creation for the confidence field.
 	workresponsibility.DefaultConfidence = workresponsibilityDescConfidence.Default.(float64)
 	// workresponsibilityDescEventCount is the schema descriptor for event_count field.
-	workresponsibilityDescEventCount := workresponsibilityFields[33].Descriptor()
+	workresponsibilityDescEventCount := workresponsibilityFields[34].Descriptor()
 	// workresponsibility.DefaultEventCount holds the default value on creation for the event_count field.
 	workresponsibility.DefaultEventCount = workresponsibilityDescEventCount.Default.(int)
 	// workresponsibilityDescRankScore is the schema descriptor for rank_score field.
-	workresponsibilityDescRankScore := workresponsibilityFields[36].Descriptor()
+	workresponsibilityDescRankScore := workresponsibilityFields[37].Descriptor()
 	// workresponsibility.DefaultRankScore holds the default value on creation for the rank_score field.
 	workresponsibility.DefaultRankScore = workresponsibilityDescRankScore.Default.(float64)
 	// workresponsibilityDescCreatedAt is the schema descriptor for created_at field.
-	workresponsibilityDescCreatedAt := workresponsibilityFields[37].Descriptor()
+	workresponsibilityDescCreatedAt := workresponsibilityFields[38].Descriptor()
 	// workresponsibility.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workresponsibility.DefaultCreatedAt = workresponsibilityDescCreatedAt.Default.(func() time.Time)
 	// workresponsibilityDescUpdatedAt is the schema descriptor for updated_at field.
-	workresponsibilityDescUpdatedAt := workresponsibilityFields[38].Descriptor()
+	workresponsibilityDescUpdatedAt := workresponsibilityFields[39].Descriptor()
 	// workresponsibility.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workresponsibility.DefaultUpdatedAt = workresponsibilityDescUpdatedAt.Default.(func() time.Time)
 	// workresponsibility.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -3189,31 +3259,31 @@ func init() {
 	// workstreamstandupsection.WorkstreamKeyValidator is a validator for the "workstream_key" field. It is called by the builders before save.
 	workstreamstandupsection.WorkstreamKeyValidator = workstreamstandupsectionDescWorkstreamKey.Validators[0].(func(string) error)
 	// workstreamstandupsectionDescSummary is the schema descriptor for summary field.
-	workstreamstandupsectionDescSummary := workstreamstandupsectionFields[14].Descriptor()
+	workstreamstandupsectionDescSummary := workstreamstandupsectionFields[15].Descriptor()
 	// workstreamstandupsection.SummaryValidator is a validator for the "summary" field. It is called by the builders before save.
 	workstreamstandupsection.SummaryValidator = workstreamstandupsectionDescSummary.Validators[0].(func(string) error)
 	// workstreamstandupsectionDescEvidenceCount is the schema descriptor for evidence_count field.
-	workstreamstandupsectionDescEvidenceCount := workstreamstandupsectionFields[23].Descriptor()
+	workstreamstandupsectionDescEvidenceCount := workstreamstandupsectionFields[24].Descriptor()
 	// workstreamstandupsection.DefaultEvidenceCount holds the default value on creation for the evidence_count field.
 	workstreamstandupsection.DefaultEvidenceCount = workstreamstandupsectionDescEvidenceCount.Default.(int)
 	// workstreamstandupsectionDescConfidence is the schema descriptor for confidence field.
-	workstreamstandupsectionDescConfidence := workstreamstandupsectionFields[26].Descriptor()
+	workstreamstandupsectionDescConfidence := workstreamstandupsectionFields[27].Descriptor()
 	// workstreamstandupsection.DefaultConfidence holds the default value on creation for the confidence field.
 	workstreamstandupsection.DefaultConfidence = workstreamstandupsectionDescConfidence.Default.(float64)
 	// workstreamstandupsectionDescEventCount is the schema descriptor for event_count field.
-	workstreamstandupsectionDescEventCount := workstreamstandupsectionFields[27].Descriptor()
+	workstreamstandupsectionDescEventCount := workstreamstandupsectionFields[28].Descriptor()
 	// workstreamstandupsection.DefaultEventCount holds the default value on creation for the event_count field.
 	workstreamstandupsection.DefaultEventCount = workstreamstandupsectionDescEventCount.Default.(int)
 	// workstreamstandupsectionDescRankScore is the schema descriptor for rank_score field.
-	workstreamstandupsectionDescRankScore := workstreamstandupsectionFields[30].Descriptor()
+	workstreamstandupsectionDescRankScore := workstreamstandupsectionFields[31].Descriptor()
 	// workstreamstandupsection.DefaultRankScore holds the default value on creation for the rank_score field.
 	workstreamstandupsection.DefaultRankScore = workstreamstandupsectionDescRankScore.Default.(float64)
 	// workstreamstandupsectionDescCreatedAt is the schema descriptor for created_at field.
-	workstreamstandupsectionDescCreatedAt := workstreamstandupsectionFields[31].Descriptor()
+	workstreamstandupsectionDescCreatedAt := workstreamstandupsectionFields[32].Descriptor()
 	// workstreamstandupsection.DefaultCreatedAt holds the default value on creation for the created_at field.
 	workstreamstandupsection.DefaultCreatedAt = workstreamstandupsectionDescCreatedAt.Default.(func() time.Time)
 	// workstreamstandupsectionDescUpdatedAt is the schema descriptor for updated_at field.
-	workstreamstandupsectionDescUpdatedAt := workstreamstandupsectionFields[32].Descriptor()
+	workstreamstandupsectionDescUpdatedAt := workstreamstandupsectionFields[33].Descriptor()
 	// workstreamstandupsection.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	workstreamstandupsection.DefaultUpdatedAt = workstreamstandupsectionDescUpdatedAt.Default.(func() time.Time)
 	// workstreamstandupsection.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

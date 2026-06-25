@@ -223,6 +223,26 @@ func (_u *WorkstreamStandupSectionUpdate) SetNillableSubjectKind(v *workstreamst
 	return _u
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkstreamStandupSectionUpdate) SetSubjectObjectType(v string) *WorkstreamStandupSectionUpdate {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkstreamStandupSectionUpdate) SetNillableSubjectObjectType(v *string) *WorkstreamStandupSectionUpdate {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkstreamStandupSectionUpdate) ClearSubjectObjectType() *WorkstreamStandupSectionUpdate {
+	_u.mutation.ClearSubjectObjectType()
+	return _u
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_u *WorkstreamStandupSectionUpdate) SetSubjectKey(v string) *WorkstreamStandupSectionUpdate {
 	_u.mutation.SetSubjectKey(v)
@@ -790,6 +810,12 @@ func (_u *WorkstreamStandupSectionUpdate) sqlSave(ctx context.Context) (_node in
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workstreamstandupsection.FieldSubjectKind, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workstreamstandupsection.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workstreamstandupsection.FieldSubjectObjectType, field.TypeString)
+	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workstreamstandupsection.FieldSubjectKey, field.TypeString, value)
 	}
@@ -1222,6 +1248,26 @@ func (_u *WorkstreamStandupSectionUpdateOne) SetNillableSubjectKind(v *workstrea
 	if v != nil {
 		_u.SetSubjectKind(*v)
 	}
+	return _u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_u *WorkstreamStandupSectionUpdateOne) SetSubjectObjectType(v string) *WorkstreamStandupSectionUpdateOne {
+	_u.mutation.SetSubjectObjectType(v)
+	return _u
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_u *WorkstreamStandupSectionUpdateOne) SetNillableSubjectObjectType(v *string) *WorkstreamStandupSectionUpdateOne {
+	if v != nil {
+		_u.SetSubjectObjectType(*v)
+	}
+	return _u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (_u *WorkstreamStandupSectionUpdateOne) ClearSubjectObjectType() *WorkstreamStandupSectionUpdateOne {
+	_u.mutation.ClearSubjectObjectType()
 	return _u
 }
 
@@ -1821,6 +1867,12 @@ func (_u *WorkstreamStandupSectionUpdateOne) sqlSave(ctx context.Context) (_node
 	}
 	if value, ok := _u.mutation.SubjectKind(); ok {
 		_spec.SetField(workstreamstandupsection.FieldSubjectKind, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workstreamstandupsection.FieldSubjectObjectType, field.TypeString, value)
+	}
+	if _u.mutation.SubjectObjectTypeCleared() {
+		_spec.ClearField(workstreamstandupsection.FieldSubjectObjectType, field.TypeString)
 	}
 	if value, ok := _u.mutation.SubjectKey(); ok {
 		_spec.SetField(workstreamstandupsection.FieldSubjectKey, field.TypeString, value)

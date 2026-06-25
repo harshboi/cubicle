@@ -6,6 +6,7 @@ import (
 	"context"
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/predicate"
+	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workaction"
 	"cubicle/services/ontology-service/ent/workblocker"
 	"cubicle/services/ontology-service/ent/workdependencyedge"
@@ -308,6 +309,26 @@ func (_u *WorkDependencyEdgeUpdate) AddPullRequestID(v int) *WorkDependencyEdgeU
 // ClearPullRequestID clears the value of the "pull_request_id" field.
 func (_u *WorkDependencyEdgeUpdate) ClearPullRequestID() *WorkDependencyEdgeUpdate {
 	_u.mutation.ClearPullRequestID()
+	return _u
+}
+
+// SetTicketPullRequestID sets the "ticket_pull_request_id" field.
+func (_u *WorkDependencyEdgeUpdate) SetTicketPullRequestID(v int) *WorkDependencyEdgeUpdate {
+	_u.mutation.SetTicketPullRequestID(v)
+	return _u
+}
+
+// SetNillableTicketPullRequestID sets the "ticket_pull_request_id" field if the given value is not nil.
+func (_u *WorkDependencyEdgeUpdate) SetNillableTicketPullRequestID(v *int) *WorkDependencyEdgeUpdate {
+	if v != nil {
+		_u.SetTicketPullRequestID(*v)
+	}
+	return _u
+}
+
+// ClearTicketPullRequestID clears the value of the "ticket_pull_request_id" field.
+func (_u *WorkDependencyEdgeUpdate) ClearTicketPullRequestID() *WorkDependencyEdgeUpdate {
+	_u.mutation.ClearTicketPullRequestID()
 	return _u
 }
 
@@ -854,6 +875,11 @@ func (_u *WorkDependencyEdgeUpdate) SetWorkAction(v *WorkAction) *WorkDependency
 	return _u.SetWorkActionID(v.ID)
 }
 
+// SetTicketPullRequest sets the "ticket_pull_request" edge to the TicketPullRequest entity.
+func (_u *WorkDependencyEdgeUpdate) SetTicketPullRequest(v *TicketPullRequest) *WorkDependencyEdgeUpdate {
+	return _u.SetTicketPullRequestID(v.ID)
+}
+
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *WorkDependencyEdgeUpdate) SetLatestEvidence(v *Evidence) *WorkDependencyEdgeUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -888,6 +914,12 @@ func (_u *WorkDependencyEdgeUpdate) ClearWorkBlocker() *WorkDependencyEdgeUpdate
 // ClearWorkAction clears the "work_action" edge to the WorkAction entity.
 func (_u *WorkDependencyEdgeUpdate) ClearWorkAction() *WorkDependencyEdgeUpdate {
 	_u.mutation.ClearWorkAction()
+	return _u
+}
+
+// ClearTicketPullRequest clears the "ticket_pull_request" edge to the TicketPullRequest entity.
+func (_u *WorkDependencyEdgeUpdate) ClearTicketPullRequest() *WorkDependencyEdgeUpdate {
+	_u.mutation.ClearTicketPullRequest()
 	return _u
 }
 
@@ -1305,6 +1337,35 @@ func (_u *WorkDependencyEdgeUpdate) sqlSave(ctx context.Context) (_node int, err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.TicketPullRequestCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workdependencyedge.TicketPullRequestTable,
+			Columns: []string{workdependencyedge.TicketPullRequestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticketpullrequest.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TicketPullRequestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workdependencyedge.TicketPullRequestTable,
+			Columns: []string{workdependencyedge.TicketPullRequestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticketpullrequest.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.LatestEvidenceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -1675,6 +1736,26 @@ func (_u *WorkDependencyEdgeUpdateOne) AddPullRequestID(v int) *WorkDependencyEd
 // ClearPullRequestID clears the value of the "pull_request_id" field.
 func (_u *WorkDependencyEdgeUpdateOne) ClearPullRequestID() *WorkDependencyEdgeUpdateOne {
 	_u.mutation.ClearPullRequestID()
+	return _u
+}
+
+// SetTicketPullRequestID sets the "ticket_pull_request_id" field.
+func (_u *WorkDependencyEdgeUpdateOne) SetTicketPullRequestID(v int) *WorkDependencyEdgeUpdateOne {
+	_u.mutation.SetTicketPullRequestID(v)
+	return _u
+}
+
+// SetNillableTicketPullRequestID sets the "ticket_pull_request_id" field if the given value is not nil.
+func (_u *WorkDependencyEdgeUpdateOne) SetNillableTicketPullRequestID(v *int) *WorkDependencyEdgeUpdateOne {
+	if v != nil {
+		_u.SetTicketPullRequestID(*v)
+	}
+	return _u
+}
+
+// ClearTicketPullRequestID clears the value of the "ticket_pull_request_id" field.
+func (_u *WorkDependencyEdgeUpdateOne) ClearTicketPullRequestID() *WorkDependencyEdgeUpdateOne {
+	_u.mutation.ClearTicketPullRequestID()
 	return _u
 }
 
@@ -2221,6 +2302,11 @@ func (_u *WorkDependencyEdgeUpdateOne) SetWorkAction(v *WorkAction) *WorkDepende
 	return _u.SetWorkActionID(v.ID)
 }
 
+// SetTicketPullRequest sets the "ticket_pull_request" edge to the TicketPullRequest entity.
+func (_u *WorkDependencyEdgeUpdateOne) SetTicketPullRequest(v *TicketPullRequest) *WorkDependencyEdgeUpdateOne {
+	return _u.SetTicketPullRequestID(v.ID)
+}
+
 // SetLatestEvidence sets the "latest_evidence" edge to the Evidence entity.
 func (_u *WorkDependencyEdgeUpdateOne) SetLatestEvidence(v *Evidence) *WorkDependencyEdgeUpdateOne {
 	return _u.SetLatestEvidenceID(v.ID)
@@ -2255,6 +2341,12 @@ func (_u *WorkDependencyEdgeUpdateOne) ClearWorkBlocker() *WorkDependencyEdgeUpd
 // ClearWorkAction clears the "work_action" edge to the WorkAction entity.
 func (_u *WorkDependencyEdgeUpdateOne) ClearWorkAction() *WorkDependencyEdgeUpdateOne {
 	_u.mutation.ClearWorkAction()
+	return _u
+}
+
+// ClearTicketPullRequest clears the "ticket_pull_request" edge to the TicketPullRequest entity.
+func (_u *WorkDependencyEdgeUpdateOne) ClearTicketPullRequest() *WorkDependencyEdgeUpdateOne {
+	_u.mutation.ClearTicketPullRequest()
 	return _u
 }
 
@@ -2695,6 +2787,35 @@ func (_u *WorkDependencyEdgeUpdateOne) sqlSave(ctx context.Context) (_node *Work
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TicketPullRequestCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workdependencyedge.TicketPullRequestTable,
+			Columns: []string{workdependencyedge.TicketPullRequestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticketpullrequest.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TicketPullRequestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   workdependencyedge.TicketPullRequestTable,
+			Columns: []string{workdependencyedge.TicketPullRequestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ticketpullrequest.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

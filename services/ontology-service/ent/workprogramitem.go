@@ -36,6 +36,8 @@ type WorkProgramItem struct {
 	WorkstreamKey string `json:"workstream_key,omitempty"`
 	// Typed product kind this program item is about.
 	SubjectKind workprogramitem.SubjectKind `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Stable product key or source-neutral subject key this item is about.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Display list of ticket keys linked to this item.
@@ -140,9 +142,11 @@ type WorkProgramItemEdges struct {
 	Ticket *Ticket `json:"ticket,omitempty"`
 	// Most recent evidence supporting this register item.
 	LatestEvidence *Evidence `json:"latest_evidence,omitempty"`
+	// Structured product and open-graph links attached to this register item.
+	Links []*WorkProgramItemLink `json:"links,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [6]bool
 }
 
 // WorkstreamOrErr returns the Workstream value or an error if the edge
@@ -200,6 +204,15 @@ func (e WorkProgramItemEdges) LatestEvidenceOrErr() (*Evidence, error) {
 	return nil, &NotLoadedError{edge: "latest_evidence"}
 }
 
+// LinksOrErr returns the Links value or an error if the edge
+// was not loaded in eager-loading.
+func (e WorkProgramItemEdges) LinksOrErr() ([]*WorkProgramItemLink, error) {
+	if e.loadedTypes[5] {
+		return e.Links, nil
+	}
+	return nil, &NotLoadedError{edge: "links"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*WorkProgramItem) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -209,7 +222,7 @@ func (*WorkProgramItem) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case workprogramitem.FieldID, workprogramitem.FieldWorkstreamID, workprogramitem.FieldWorkActionID, workprogramitem.FieldPullRequestID, workprogramitem.FieldTicketID, workprogramitem.FieldLatestEvidenceID, workprogramitem.FieldEvidenceCount, workprogramitem.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workprogramitem.FieldKey, workprogramitem.FieldWorkstreamKey, workprogramitem.FieldSubjectKind, workprogramitem.FieldSubjectKey, workprogramitem.FieldLinkedTicketKeys, workprogramitem.FieldLinkedPullRequestKeys, workprogramitem.FieldTitle, workprogramitem.FieldProgramStatus, workprogramitem.FieldTpmBucket, workprogramitem.FieldOwnerKey, workprogramitem.FieldOwnerSource, workprogramitem.FieldAuthorDri, workprogramitem.FieldRequestedReviewerKeys, workprogramitem.FieldReviewerOrApprover, workprogramitem.FieldNextAction, workprogramitem.FieldDecisionNeeded, workprogramitem.FieldDecisionState, workprogramitem.FieldDecisionGateReason, workprogramitem.FieldDueBucket, workprogramitem.FieldBlockerLabelState, workprogramitem.FieldCiSignal, workprogramitem.FieldTransitionState, workprogramitem.FieldDependencySummary, workprogramitem.FieldSourceCoverageState, workprogramitem.FieldLabelQuality, workprogramitem.FieldSourceSystem, workprogramitem.FieldSourceInstance, workprogramitem.FieldExternalKind, workprogramitem.FieldExternalID, workprogramitem.FieldSourceURL, workprogramitem.FieldFreshnessState, workprogramitem.FieldVisibility:
+		case workprogramitem.FieldKey, workprogramitem.FieldWorkstreamKey, workprogramitem.FieldSubjectKind, workprogramitem.FieldSubjectObjectType, workprogramitem.FieldSubjectKey, workprogramitem.FieldLinkedTicketKeys, workprogramitem.FieldLinkedPullRequestKeys, workprogramitem.FieldTitle, workprogramitem.FieldProgramStatus, workprogramitem.FieldTpmBucket, workprogramitem.FieldOwnerKey, workprogramitem.FieldOwnerSource, workprogramitem.FieldAuthorDri, workprogramitem.FieldRequestedReviewerKeys, workprogramitem.FieldReviewerOrApprover, workprogramitem.FieldNextAction, workprogramitem.FieldDecisionNeeded, workprogramitem.FieldDecisionState, workprogramitem.FieldDecisionGateReason, workprogramitem.FieldDueBucket, workprogramitem.FieldBlockerLabelState, workprogramitem.FieldCiSignal, workprogramitem.FieldTransitionState, workprogramitem.FieldDependencySummary, workprogramitem.FieldSourceCoverageState, workprogramitem.FieldLabelQuality, workprogramitem.FieldSourceSystem, workprogramitem.FieldSourceInstance, workprogramitem.FieldExternalKind, workprogramitem.FieldExternalID, workprogramitem.FieldSourceURL, workprogramitem.FieldFreshnessState, workprogramitem.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workprogramitem.FieldLastSourceUpdateAt, workprogramitem.FieldRegisterUpdatedAt, workprogramitem.FieldFirstSeenAt, workprogramitem.FieldLastActivityAt, workprogramitem.FieldCreatedAt, workprogramitem.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -275,6 +288,12 @@ func (_m *WorkProgramItem) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field subject_kind", values[i])
 			} else if value.Valid {
 				_m.SubjectKind = workprogramitem.SubjectKind(value.String)
+			}
+		case workprogramitem.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
 			}
 		case workprogramitem.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -572,6 +591,11 @@ func (_m *WorkProgramItem) QueryLatestEvidence() *EvidenceQuery {
 	return NewWorkProgramItemClient(_m.config).QueryLatestEvidence(_m)
 }
 
+// QueryLinks queries the "links" edge of the WorkProgramItem entity.
+func (_m *WorkProgramItem) QueryLinks() *WorkProgramItemLinkQuery {
+	return NewWorkProgramItemClient(_m.config).QueryLinks(_m)
+}
+
 // Update returns a builder for updating this WorkProgramItem.
 // Note that you need to call WorkProgramItem.Unwrap() before calling this method if this WorkProgramItem
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -615,6 +639,9 @@ func (_m *WorkProgramItem) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("subject_kind=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SubjectKind))
+	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
 	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)

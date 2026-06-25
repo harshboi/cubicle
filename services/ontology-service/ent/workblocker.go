@@ -32,6 +32,8 @@ type WorkBlocker struct {
 	Severity workblocker.Severity `json:"severity,omitempty"`
 	// Typed product kind this blocker is about.
 	SubjectKind workblocker.SubjectKind `json:"subject_kind,omitempty"`
+	// Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.
+	SubjectObjectType string `json:"subject_object_type,omitempty"`
 	// Stable product key this blocker is about.
 	SubjectKey string `json:"subject_key,omitempty"`
 	// Optional PullRequest subject when the blocker has a typed PR target.
@@ -221,7 +223,7 @@ func (*WorkBlocker) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case workblocker.FieldID, workblocker.FieldPullRequestID, workblocker.FieldTicketID, workblocker.FieldWorkActionID, workblocker.FieldWorkInsightID, workblocker.FieldSourceScopeStateID, workblocker.FieldLatestEvidenceID, workblocker.FieldEvidenceCount, workblocker.FieldEventCount:
 			values[i] = new(sql.NullInt64)
-		case workblocker.FieldKey, workblocker.FieldBlockerKind, workblocker.FieldBlockerState, workblocker.FieldSeverity, workblocker.FieldSubjectKind, workblocker.FieldSubjectKey, workblocker.FieldOwnerKey, workblocker.FieldOwnerSource, workblocker.FieldDecisionState, workblocker.FieldSourceCoverageState, workblocker.FieldReviewState, workblocker.FieldTruthLabel, workblocker.FieldActionabilityLabel, workblocker.FieldLabelQuality, workblocker.FieldReviewerKind, workblocker.FieldReviewerKey, workblocker.FieldLabelSet, workblocker.FieldTitle, workblocker.FieldRecommendedAction, workblocker.FieldSummary, workblocker.FieldSearchText, workblocker.FieldSourceSystem, workblocker.FieldSourceInstance, workblocker.FieldExternalKind, workblocker.FieldExternalID, workblocker.FieldSourceURL, workblocker.FieldSourceVersion, workblocker.FieldContentHash, workblocker.FieldDeletionState, workblocker.FieldACLPolicyKey, workblocker.FieldVisibilityHash, workblocker.FieldACLState, workblocker.FieldFreshnessState, workblocker.FieldVisibility:
+		case workblocker.FieldKey, workblocker.FieldBlockerKind, workblocker.FieldBlockerState, workblocker.FieldSeverity, workblocker.FieldSubjectKind, workblocker.FieldSubjectObjectType, workblocker.FieldSubjectKey, workblocker.FieldOwnerKey, workblocker.FieldOwnerSource, workblocker.FieldDecisionState, workblocker.FieldSourceCoverageState, workblocker.FieldReviewState, workblocker.FieldTruthLabel, workblocker.FieldActionabilityLabel, workblocker.FieldLabelQuality, workblocker.FieldReviewerKind, workblocker.FieldReviewerKey, workblocker.FieldLabelSet, workblocker.FieldTitle, workblocker.FieldRecommendedAction, workblocker.FieldSummary, workblocker.FieldSearchText, workblocker.FieldSourceSystem, workblocker.FieldSourceInstance, workblocker.FieldExternalKind, workblocker.FieldExternalID, workblocker.FieldSourceURL, workblocker.FieldSourceVersion, workblocker.FieldContentHash, workblocker.FieldDeletionState, workblocker.FieldACLPolicyKey, workblocker.FieldVisibilityHash, workblocker.FieldACLState, workblocker.FieldFreshnessState, workblocker.FieldVisibility:
 			values[i] = new(sql.NullString)
 		case workblocker.FieldSourceUpdatedAt, workblocker.FieldDeletedAt, workblocker.FieldACLCheckedAt, workblocker.FieldFreshnessCheckedAt, workblocker.FieldLastConfirmedAt, workblocker.FieldLastChangedAt, workblocker.FieldFirstSeenAt, workblocker.FieldLastActivityAt, workblocker.FieldCreatedAt, workblocker.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -275,6 +277,12 @@ func (_m *WorkBlocker) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field subject_kind", values[i])
 			} else if value.Valid {
 				_m.SubjectKind = workblocker.SubjectKind(value.String)
+			}
+		case workblocker.FieldSubjectObjectType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field subject_object_type", values[i])
+			} else if value.Valid {
+				_m.SubjectObjectType = value.String
 			}
 		case workblocker.FieldSubjectKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -651,6 +659,9 @@ func (_m *WorkBlocker) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("subject_kind=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SubjectKind))
+	builder.WriteString(", ")
+	builder.WriteString("subject_object_type=")
+	builder.WriteString(_m.SubjectObjectType)
 	builder.WriteString(", ")
 	builder.WriteString("subject_key=")
 	builder.WriteString(_m.SubjectKey)

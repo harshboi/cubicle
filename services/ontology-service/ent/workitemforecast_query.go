@@ -9,6 +9,7 @@ import (
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
 	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workforecastevaluation"
 	"cubicle/services/ontology-service/ent/workitemforecast"
 	"fmt"
 	"math"
@@ -22,14 +23,15 @@ import (
 // WorkItemForecastQuery is the builder for querying WorkItemForecast entities.
 type WorkItemForecastQuery struct {
 	config
-	ctx                *QueryContext
-	order              []workitemforecast.OrderOption
-	inters             []Interceptor
-	predicates         []predicate.WorkItemForecast
-	withPullRequest    *PullRequestQuery
-	withTicket         *TicketQuery
-	withWorkAction     *WorkActionQuery
-	withLatestEvidence *EvidenceQuery
+	ctx                    *QueryContext
+	order                  []workitemforecast.OrderOption
+	inters                 []Interceptor
+	predicates             []predicate.WorkItemForecast
+	withPullRequest        *PullRequestQuery
+	withTicket             *TicketQuery
+	withWorkAction         *WorkActionQuery
+	withForecastEvaluation *WorkForecastEvaluationQuery
+	withLatestEvidence     *EvidenceQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -125,6 +127,28 @@ func (_q *WorkItemForecastQuery) QueryWorkAction() *WorkActionQuery {
 			sqlgraph.From(workitemforecast.Table, workitemforecast.FieldID, selector),
 			sqlgraph.To(workaction.Table, workaction.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, workitemforecast.WorkActionTable, workitemforecast.WorkActionColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryForecastEvaluation chains the current query on the "forecast_evaluation" edge.
+func (_q *WorkItemForecastQuery) QueryForecastEvaluation() *WorkForecastEvaluationQuery {
+	query := (&WorkForecastEvaluationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(workitemforecast.Table, workitemforecast.FieldID, selector),
+			sqlgraph.To(workforecastevaluation.Table, workforecastevaluation.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, workitemforecast.ForecastEvaluationTable, workitemforecast.ForecastEvaluationColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -341,15 +365,16 @@ func (_q *WorkItemForecastQuery) Clone() *WorkItemForecastQuery {
 		return nil
 	}
 	return &WorkItemForecastQuery{
-		config:             _q.config,
-		ctx:                _q.ctx.Clone(),
-		order:              append([]workitemforecast.OrderOption{}, _q.order...),
-		inters:             append([]Interceptor{}, _q.inters...),
-		predicates:         append([]predicate.WorkItemForecast{}, _q.predicates...),
-		withPullRequest:    _q.withPullRequest.Clone(),
-		withTicket:         _q.withTicket.Clone(),
-		withWorkAction:     _q.withWorkAction.Clone(),
-		withLatestEvidence: _q.withLatestEvidence.Clone(),
+		config:                 _q.config,
+		ctx:                    _q.ctx.Clone(),
+		order:                  append([]workitemforecast.OrderOption{}, _q.order...),
+		inters:                 append([]Interceptor{}, _q.inters...),
+		predicates:             append([]predicate.WorkItemForecast{}, _q.predicates...),
+		withPullRequest:        _q.withPullRequest.Clone(),
+		withTicket:             _q.withTicket.Clone(),
+		withWorkAction:         _q.withWorkAction.Clone(),
+		withForecastEvaluation: _q.withForecastEvaluation.Clone(),
+		withLatestEvidence:     _q.withLatestEvidence.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -386,6 +411,17 @@ func (_q *WorkItemForecastQuery) WithWorkAction(opts ...func(*WorkActionQuery)) 
 		opt(query)
 	}
 	_q.withWorkAction = query
+	return _q
+}
+
+// WithForecastEvaluation tells the query-builder to eager-load the nodes that are connected to
+// the "forecast_evaluation" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *WorkItemForecastQuery) WithForecastEvaluation(opts ...func(*WorkForecastEvaluationQuery)) *WorkItemForecastQuery {
+	query := (&WorkForecastEvaluationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withForecastEvaluation = query
 	return _q
 }
 
@@ -478,10 +514,11 @@ func (_q *WorkItemForecastQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 	var (
 		nodes       = []*WorkItemForecast{}
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			_q.withPullRequest != nil,
 			_q.withTicket != nil,
 			_q.withWorkAction != nil,
+			_q.withForecastEvaluation != nil,
 			_q.withLatestEvidence != nil,
 		}
 	)
@@ -518,6 +555,12 @@ func (_q *WorkItemForecastQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 	if query := _q.withWorkAction; query != nil {
 		if err := _q.loadWorkAction(ctx, query, nodes, nil,
 			func(n *WorkItemForecast, e *WorkAction) { n.Edges.WorkAction = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withForecastEvaluation; query != nil {
+		if err := _q.loadForecastEvaluation(ctx, query, nodes, nil,
+			func(n *WorkItemForecast, e *WorkForecastEvaluation) { n.Edges.ForecastEvaluation = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -617,6 +660,35 @@ func (_q *WorkItemForecastQuery) loadWorkAction(ctx context.Context, query *Work
 	}
 	return nil
 }
+func (_q *WorkItemForecastQuery) loadForecastEvaluation(ctx context.Context, query *WorkForecastEvaluationQuery, nodes []*WorkItemForecast, init func(*WorkItemForecast), assign func(*WorkItemForecast, *WorkForecastEvaluation)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*WorkItemForecast)
+	for i := range nodes {
+		fk := nodes[i].ForecastEvaluationID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(workforecastevaluation.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "forecast_evaluation_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 func (_q *WorkItemForecastQuery) loadLatestEvidence(ctx context.Context, query *EvidenceQuery, nodes []*WorkItemForecast, init func(*WorkItemForecast), assign func(*WorkItemForecast, *Evidence)) error {
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*WorkItemForecast)
@@ -680,6 +752,9 @@ func (_q *WorkItemForecastQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if _q.withWorkAction != nil {
 			_spec.Node.AddColumnOnce(workitemforecast.FieldWorkActionID)
+		}
+		if _q.withForecastEvaluation != nil {
+			_spec.Node.AddColumnOnce(workitemforecast.FieldForecastEvaluationID)
 		}
 		if _q.withLatestEvidence != nil {
 			_spec.Node.AddColumnOnce(workitemforecast.FieldLatestEvidenceID)

@@ -192,6 +192,20 @@ func (_c *WorkBlockerImpactCreate) SetNillableSubjectKind(v *workblockerimpact.S
 	return _c
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkBlockerImpactCreate) SetSubjectObjectType(v string) *WorkBlockerImpactCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkBlockerImpactCreate) SetNillableSubjectObjectType(v *string) *WorkBlockerImpactCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
+	}
+	return _c
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_c *WorkBlockerImpactCreate) SetSubjectKey(v string) *WorkBlockerImpactCreate {
 	_c.mutation.SetSubjectKey(v)
@@ -806,6 +820,10 @@ func (_c *WorkBlockerImpactCreate) createSpec() (*WorkBlockerImpact, *sqlgraph.C
 		_spec.SetField(workblockerimpact.FieldSubjectKind, field.TypeEnum, value)
 		_node.SubjectKind = value
 	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workblockerimpact.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
+	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workblockerimpact.FieldSubjectKey, field.TypeString, value)
 		_node.SubjectKey = value
@@ -1249,6 +1267,24 @@ func (u *WorkBlockerImpactUpsert) SetSubjectKind(v workblockerimpact.SubjectKind
 // UpdateSubjectKind sets the "subject_kind" field to the value that was provided on create.
 func (u *WorkBlockerImpactUpsert) UpdateSubjectKind() *WorkBlockerImpactUpsert {
 	u.SetExcluded(workblockerimpact.FieldSubjectKind)
+	return u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkBlockerImpactUpsert) SetSubjectObjectType(v string) *WorkBlockerImpactUpsert {
+	u.Set(workblockerimpact.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkBlockerImpactUpsert) UpdateSubjectObjectType() *WorkBlockerImpactUpsert {
+	u.SetExcluded(workblockerimpact.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkBlockerImpactUpsert) ClearSubjectObjectType() *WorkBlockerImpactUpsert {
+	u.SetNull(workblockerimpact.FieldSubjectObjectType)
 	return u
 }
 
@@ -1898,6 +1934,27 @@ func (u *WorkBlockerImpactUpsertOne) SetSubjectKind(v workblockerimpact.SubjectK
 func (u *WorkBlockerImpactUpsertOne) UpdateSubjectKind() *WorkBlockerImpactUpsertOne {
 	return u.Update(func(s *WorkBlockerImpactUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkBlockerImpactUpsertOne) SetSubjectObjectType(v string) *WorkBlockerImpactUpsertOne {
+	return u.Update(func(s *WorkBlockerImpactUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkBlockerImpactUpsertOne) UpdateSubjectObjectType() *WorkBlockerImpactUpsertOne {
+	return u.Update(func(s *WorkBlockerImpactUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkBlockerImpactUpsertOne) ClearSubjectObjectType() *WorkBlockerImpactUpsertOne {
+	return u.Update(func(s *WorkBlockerImpactUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
@@ -2774,6 +2831,27 @@ func (u *WorkBlockerImpactUpsertBulk) SetSubjectKind(v workblockerimpact.Subject
 func (u *WorkBlockerImpactUpsertBulk) UpdateSubjectKind() *WorkBlockerImpactUpsertBulk {
 	return u.Update(func(s *WorkBlockerImpactUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkBlockerImpactUpsertBulk) SetSubjectObjectType(v string) *WorkBlockerImpactUpsertBulk {
+	return u.Update(func(s *WorkBlockerImpactUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkBlockerImpactUpsertBulk) UpdateSubjectObjectType() *WorkBlockerImpactUpsertBulk {
+	return u.Update(func(s *WorkBlockerImpactUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkBlockerImpactUpsertBulk) ClearSubjectObjectType() *WorkBlockerImpactUpsertBulk {
+	return u.Update(func(s *WorkBlockerImpactUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 

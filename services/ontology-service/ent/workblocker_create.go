@@ -89,6 +89,20 @@ func (_c *WorkBlockerCreate) SetNillableSubjectKind(v *workblocker.SubjectKind) 
 	return _c
 }
 
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (_c *WorkBlockerCreate) SetSubjectObjectType(v string) *WorkBlockerCreate {
+	_c.mutation.SetSubjectObjectType(v)
+	return _c
+}
+
+// SetNillableSubjectObjectType sets the "subject_object_type" field if the given value is not nil.
+func (_c *WorkBlockerCreate) SetNillableSubjectObjectType(v *string) *WorkBlockerCreate {
+	if v != nil {
+		_c.SetSubjectObjectType(*v)
+	}
+	return _c
+}
+
 // SetSubjectKey sets the "subject_key" field.
 func (_c *WorkBlockerCreate) SetSubjectKey(v string) *WorkBlockerCreate {
 	_c.mutation.SetSubjectKey(v)
@@ -1125,6 +1139,10 @@ func (_c *WorkBlockerCreate) createSpec() (*WorkBlocker, *sqlgraph.CreateSpec) {
 		_spec.SetField(workblocker.FieldSubjectKind, field.TypeEnum, value)
 		_node.SubjectKind = value
 	}
+	if value, ok := _c.mutation.SubjectObjectType(); ok {
+		_spec.SetField(workblocker.FieldSubjectObjectType, field.TypeString, value)
+		_node.SubjectObjectType = value
+	}
 	if value, ok := _c.mutation.SubjectKey(); ok {
 		_spec.SetField(workblocker.FieldSubjectKey, field.TypeString, value)
 		_node.SubjectKey = value
@@ -1499,6 +1517,24 @@ func (u *WorkBlockerUpsert) SetSubjectKind(v workblocker.SubjectKind) *WorkBlock
 // UpdateSubjectKind sets the "subject_kind" field to the value that was provided on create.
 func (u *WorkBlockerUpsert) UpdateSubjectKind() *WorkBlockerUpsert {
 	u.SetExcluded(workblocker.FieldSubjectKind)
+	return u
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkBlockerUpsert) SetSubjectObjectType(v string) *WorkBlockerUpsert {
+	u.Set(workblocker.FieldSubjectObjectType, v)
+	return u
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkBlockerUpsert) UpdateSubjectObjectType() *WorkBlockerUpsert {
+	u.SetExcluded(workblocker.FieldSubjectObjectType)
+	return u
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkBlockerUpsert) ClearSubjectObjectType() *WorkBlockerUpsert {
+	u.SetNull(workblocker.FieldSubjectObjectType)
 	return u
 }
 
@@ -2418,6 +2454,27 @@ func (u *WorkBlockerUpsertOne) SetSubjectKind(v workblocker.SubjectKind) *WorkBl
 func (u *WorkBlockerUpsertOne) UpdateSubjectKind() *WorkBlockerUpsertOne {
 	return u.Update(func(s *WorkBlockerUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkBlockerUpsertOne) SetSubjectObjectType(v string) *WorkBlockerUpsertOne {
+	return u.Update(func(s *WorkBlockerUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkBlockerUpsertOne) UpdateSubjectObjectType() *WorkBlockerUpsertOne {
+	return u.Update(func(s *WorkBlockerUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkBlockerUpsertOne) ClearSubjectObjectType() *WorkBlockerUpsertOne {
+	return u.Update(func(s *WorkBlockerUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
@@ -3637,6 +3694,27 @@ func (u *WorkBlockerUpsertBulk) SetSubjectKind(v workblocker.SubjectKind) *WorkB
 func (u *WorkBlockerUpsertBulk) UpdateSubjectKind() *WorkBlockerUpsertBulk {
 	return u.Update(func(s *WorkBlockerUpsert) {
 		s.UpdateSubjectKind()
+	})
+}
+
+// SetSubjectObjectType sets the "subject_object_type" field.
+func (u *WorkBlockerUpsertBulk) SetSubjectObjectType(v string) *WorkBlockerUpsertBulk {
+	return u.Update(func(s *WorkBlockerUpsert) {
+		s.SetSubjectObjectType(v)
+	})
+}
+
+// UpdateSubjectObjectType sets the "subject_object_type" field to the value that was provided on create.
+func (u *WorkBlockerUpsertBulk) UpdateSubjectObjectType() *WorkBlockerUpsertBulk {
+	return u.Update(func(s *WorkBlockerUpsert) {
+		s.UpdateSubjectObjectType()
+	})
+}
+
+// ClearSubjectObjectType clears the value of the "subject_object_type" field.
+func (u *WorkBlockerUpsertBulk) ClearSubjectObjectType() *WorkBlockerUpsertBulk {
+	return u.Update(func(s *WorkBlockerUpsert) {
+		s.ClearSubjectObjectType()
 	})
 }
 
