@@ -58,6 +58,7 @@ func workProgramItemModelWithClaimPolicy(row *genent.WorkProgramItem, claimPolic
 		SourceInstance:        optionalString(row.SourceInstance),
 		WorkstreamKey:         row.WorkstreamKey,
 		SubjectKind:           row.SubjectKind.String(),
+		SubjectObjectType:     optionalString(row.SubjectObjectType),
 		SubjectKey:            row.SubjectKey,
 		LinkedTicketKeys:      splitDisplayList(row.LinkedTicketKeys),
 		LinkedPullRequestKeys: splitDisplayList(row.LinkedPullRequestKeys),
@@ -93,6 +94,7 @@ func workProgramItemModelWithClaimPolicy(row *genent.WorkProgramItem, claimPolic
 		Evidence:              workEvidenceSummary(row.Edges.LatestEvidence),
 		Badges:                workProgramItemBadges(row, claimPolicy),
 		Action:                action,
+		Links:                 []*model.WorkProgramItemLink{},
 	}
 }
 

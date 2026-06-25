@@ -1354,7 +1354,7 @@ func TestGraphQLWorkDependencyEdgesExposeAuthorityAndEndpoints(t *testing.T) {
 		SetVisibility(pullrequest.VisibilityUnknown).
 		SetLastActivityAt(now).
 		SaveX(ctx)
-	store.Client().TicketPullRequest.Create().
+	relationshipRow := store.Client().TicketPullRequest.Create().
 		SetTicket(ticketRow).
 		SetPullRequest(prRow).
 		SetTicketPullRequestKind(ticketpullrequest.TicketPullRequestKindImplementedBy).
@@ -1370,6 +1370,7 @@ func TestGraphQLWorkDependencyEdgesExposeAuthorityAndEndpoints(t *testing.T) {
 		SetToKey("apache/flink-kubernetes-operator#42").
 		SetTicketID(ticketRow.ID).
 		SetPullRequestID(prRow.ID).
+		SetTicketPullRequestID(relationshipRow.ID).
 		SetSourceCoverageState("observed:jira_remote_link").
 		SetSourceSystem("cubicle_analytics").
 		SetSourceInstance(source).

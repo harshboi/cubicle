@@ -23,6 +23,8 @@ func workstreamStandupSectionModel(row *genent.WorkstreamStandupSection) *model.
 		FreshnessState:    row.FreshnessState.String(),
 		Confidence:        row.Confidence,
 		OwnerKey:          optionalString(row.OwnerKey),
+		SubjectKind:       row.SubjectKind.String(),
+		SubjectObjectType: optionalString(row.SubjectObjectType),
 		SubjectKey:        optionalString(row.SubjectKey),
 		ActionType:        optionalString(row.ActionType),
 		StatusSignal:      optionalString(row.StatusSignal),

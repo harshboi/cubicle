@@ -11,6 +11,8 @@ func workProgramRiskDriverModel(row *genent.WorkProgramRiskDriver) *model.WorkPr
 	return &model.WorkProgramBriefRiskDriver{
 		Key:               workProgramRiskDriverDisplayKey(row),
 		DriverKind:        row.DriverKind,
+		SubjectKind:       optionalString(row.SubjectKind),
+		SubjectObjectType: optionalString(row.SubjectObjectType),
 		SubjectKey:        optionalString(row.SubjectKey),
 		Title:             row.Title,
 		Status:            row.Status,

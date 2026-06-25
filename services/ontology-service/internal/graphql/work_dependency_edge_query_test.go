@@ -8,6 +8,7 @@ import (
 
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/workaction"
 	"cubicle/services/ontology-service/ent/workblocker"
 	"cubicle/services/ontology-service/ent/workdependencyedge"
@@ -419,6 +420,21 @@ func TestWorkDependencyEdgesExposeRelationshipAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create pull request: %v", err)
 	}
+	relationRow, err := store.Client().TicketPullRequest.Create().
+		SetTicketID(ticketRow.ID).
+		SetPullRequestID(prRow.ID).
+		SetTicketPullRequestKind(ticketpullrequest.TicketPullRequestKindImplementedBy).
+		SetSourceSystem("jira").
+		SetSourceInstance(source).
+		SetExternalKind("jira_remote_link").
+		SetExternalID("FLINK-12345:apache/flink-kubernetes-operator#42").
+		SetFreshnessState(ticketpullrequest.FreshnessStateFresh).
+		SetVisibility(ticketpullrequest.VisibilityUnknown).
+		SetConfidence(0.95).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("create ticket pull request: %v", err)
+	}
 	_, err = store.Client().WorkDependencyEdge.Create().
 		SetKey("work-dependency-edge:canonical-ticket-pr").
 		SetEdgeKind(workdependencyedge.EdgeKindTicketPr).
@@ -430,6 +446,7 @@ func TestWorkDependencyEdgesExposeRelationshipAuthority(t *testing.T) {
 		SetToKey("apache/flink-kubernetes-operator#42").
 		SetTicketID(ticketRow.ID).
 		SetPullRequestID(prRow.ID).
+		SetTicketPullRequestID(relationRow.ID).
 		SetSourceCoverageState("observed:jira_remote_link").
 		SetSourceSystem("cubicle_analytics").
 		SetSourceInstance(source).

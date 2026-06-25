@@ -11,6 +11,7 @@ func workProgramMilestoneModel(row *genent.WorkProgramMilestone) *model.WorkProg
 		SourceInstance:            optionalString(row.SourceInstance),
 		WorkstreamKey:             row.WorkstreamKey,
 		SubjectKind:               row.SubjectKind.String(),
+		SubjectObjectType:         optionalString(row.SubjectObjectType),
 		SubjectKey:                row.SubjectKey,
 		SubjectTitle:              optionalString(workProgramMilestoneSubjectTitle(row)),
 		SubjectURL:                optionalString(workProgramMilestoneSubjectURL(row)),

@@ -269,6 +269,7 @@ func workProgramAllBriefRiskDrivers(summary *model.WorkProgramSummary) []*model.
 		drivers = append(drivers, &model.WorkProgramBriefRiskDriver{
 			Key:               blocker.Key,
 			DriverKind:        "blocker",
+			SubjectKind:       optionalString(blocker.SubjectKind),
 			SubjectKey:        optionalString(blocker.SubjectKey),
 			Title:             blocker.Title,
 			Status:            blocker.BlockerState,
@@ -282,6 +283,7 @@ func workProgramAllBriefRiskDrivers(summary *model.WorkProgramSummary) []*model.
 		drivers = append(drivers, &model.WorkProgramBriefRiskDriver{
 			Key:               impact.Key,
 			DriverKind:        "blocker_impact",
+			SubjectKind:       optionalString(impact.SubjectKind),
 			SubjectKey:        optionalString(impact.AffectedKey),
 			Title:             impact.Title,
 			Status:            impact.ImpactState,
@@ -295,6 +297,7 @@ func workProgramAllBriefRiskDrivers(summary *model.WorkProgramSummary) []*model.
 		drivers = append(drivers, &model.WorkProgramBriefRiskDriver{
 			Key:               dependency.Key,
 			DriverKind:        "dependency",
+			SubjectKind:       optionalString(dependency.FromKind),
 			SubjectKey:        optionalString(dependency.FromKey),
 			Title:             edgeKindLabelString(dependency.EdgeKind),
 			Status:            dependency.EdgeKind,
@@ -308,6 +311,7 @@ func workProgramAllBriefRiskDrivers(summary *model.WorkProgramSummary) []*model.
 		drivers = append(drivers, &model.WorkProgramBriefRiskDriver{
 			Key:               forecast.Key,
 			DriverKind:        "forecast_risk",
+			SubjectKind:       optionalString(forecast.SubjectKind),
 			SubjectKey:        optionalString(forecast.SubjectKey),
 			Title:             workProgramForecastDriverTitle(forecast),
 			Status:            forecast.ActionabilityState,
@@ -324,6 +328,7 @@ func workProgramAllBriefRiskDrivers(summary *model.WorkProgramSummary) []*model.
 		drivers = append(drivers, &model.WorkProgramBriefRiskDriver{
 			Key:               ownerLoad.Key,
 			DriverKind:        "owner_load",
+			SubjectKind:       optionalString("owner"),
 			SubjectKey:        optionalString(ownerLoad.OwnerKey),
 			Title:             workProgramOwnerLoadDriverTitle(ownerLoad),
 			Status:            ownerLoad.LoadStatus,
