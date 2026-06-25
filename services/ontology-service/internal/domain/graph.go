@@ -125,6 +125,39 @@ type AssociationMetadata struct {
 	// Associations should be queryable only when they can explain their origin.
 	EvidenceKey string `json:"evidence_key"`
 
+	// EvidenceClaimKind is the source evidence claim kind when known. Confirmed
+	// relationship claims should be backed by relationship evidence, not object
+	// or generated-summary evidence reused as a shortcut.
+	EvidenceClaimKind string `json:"evidence_claim_kind,omitempty"`
+
+	// EvidenceRelationshipKind is the relationship kind recorded on the evidence
+	// row when known. It lets claim policy reject a typed edge backed by evidence
+	// for a different relationship.
+	EvidenceRelationshipKind string `json:"evidence_relationship_kind,omitempty"`
+
+	// EvidenceProofState records whether the backing proof row is current,
+	// generated, superseded, or otherwise not product-claimable.
+	EvidenceProofState string `json:"evidence_proof_state,omitempty"`
+
+	// EvidenceSource names the connector that produced the resolved evidence
+	// row. Relationship source authority must be proven here, not self-attested
+	// by the association row.
+	EvidenceSource string `json:"evidence_source,omitempty"`
+
+	// EvidenceSourceInstance scopes EvidenceSource to the repo, workspace, Jira
+	// instance, or other tenant that produced the evidence row.
+	EvidenceSourceInstance string `json:"evidence_source_instance,omitempty"`
+
+	// EvidenceLocatorKind records the source-specific evidence shape, such as
+	// Jira remote link, GitHub PR metadata, markdown link, or chat message.
+	EvidenceLocatorKind string `json:"evidence_locator_kind,omitempty"`
+
+	// EvidenceCount records how many evidence rows are known to support this
+	// relationship. When only latest evidence is surfaced, counts above one
+	// require either source-authority policy for that latest evidence or a
+	// merge/review policy before product prose can confirm the link.
+	EvidenceCount int `json:"evidence_count,omitempty"`
+
 	// Source names the connector or fixture that observed the relationship.
 	Source string `json:"source,omitempty"`
 
@@ -188,6 +221,27 @@ type Association struct {
 	Metadata AssociationMetadata `json:"metadata"`
 }
 
+// ExpandReadFilter is the authorization boundary for graph expansion.
+//
+// The functions are intentionally not serialized. API callers should receive
+// stable graph DTOs, while server-side resolvers attach the principal-specific
+// read policy before traversal. A nil predicate permits that row; callers that
+// need public-only reads should pass explicit predicates.
+type ExpandReadFilter struct {
+	// PrincipalKey is an audit label for the policy applied to this expansion.
+	// It is not enough by itself to authorize rows; the predicates below do the
+	// actual filtering.
+	PrincipalKey string `json:"-"`
+
+	// ObjectAllowed returns whether an object can be read and used as a
+	// traversal endpoint.
+	ObjectAllowed func(Object) bool `json:"-"`
+
+	// AssociationAllowed returns whether a relationship can be traversed and
+	// returned.
+	AssociationAllowed func(Association) bool `json:"-"`
+}
+
 // ExpandRequest asks the store for a bounded association neighborhood.
 //
 // Depth and LimitPerObject are required because workplace graphs quickly develop
@@ -207,6 +261,11 @@ type ExpandRequest struct {
 
 	// LimitPerObject caps fan-out from every object visited during expansion.
 	LimitPerObject int `json:"limit_per_object"`
+
+	// ReadFilter is applied by stores before traversal so unreadable hubs,
+	// descendants, and edges are not reached or counted as fan-out. It is not
+	// serialized because it carries server-side authorization predicates.
+	ReadFilter ExpandReadFilter `json:"-"`
 }
 
 // Neighborhood is the bounded graph slice returned by expansion APIs.

@@ -1,0 +1,93 @@
+{
+  "relationship_authority": {
+    "approver": {
+      "absence_sources": ["github"],
+      "presence_locator_kinds": {
+        "github": ["github_pull_request_review"]
+      },
+      "presence_sources": ["github"]
+    },
+    "assignee": {
+      "absence_sources": ["jira"],
+      "presence_locator_kinds": {
+        "jira": ["ticket_field"]
+      },
+      "presence_sources": ["jira"]
+    },
+    "author": {
+      "absence_sources": ["github"],
+      "presence_locator_kinds": {
+        "chat": ["chat_message"],
+        "docs": ["markdown_author", "markdown_link"],
+        "github": ["github_pull_request"]
+      },
+      "presence_sources": ["github", "docs", "chat"]
+    },
+    "changes_file": {
+      "absence_sources": ["github"],
+      "presence_locator_kinds": {
+        "github": ["github_pull_request", "github_pull_request_file"]
+      },
+      "presence_sources": ["github"]
+    },
+    "commenter": {
+      "absence_sources": ["github"],
+      "presence_locator_kinds": {
+        "github": ["github_issue_comment", "github_pull_request_comment"]
+      },
+      "presence_sources": ["github"]
+    },
+    "creator": {
+      "absence_sources": ["github"],
+      "presence_locator_kinds": {
+        "github": ["github_pull_request"]
+      },
+      "presence_sources": ["github"]
+    },
+    "discussed_in": {
+      "absence_sources": ["chat"],
+      "presence_locator_kinds": {
+        "chat": ["chat_message"],
+        "jira": ["jira_comment"]
+      },
+      "presence_sources": ["chat", "jira"]
+    },
+    "documented_by": {
+      "absence_sources": ["docs"],
+      "presence_locator_kinds": {
+        "docs": ["markdown_link"],
+        "jira": ["remote_link", "jira_issue_link"]
+      },
+      "presence_sources": ["docs", "jira"]
+    },
+    "implemented_by": {
+      "absence_sources": ["jira"],
+      "presence_locator_kinds": {
+        "github": ["github_pull_request"],
+        "jira": ["jira_remote_link", "remote_link"]
+      },
+      "presence_sources": ["jira", "github"]
+    },
+    "links_to": {
+      "absence_sources": ["docs"],
+      "presence_locator_kinds": {
+        "docs": ["markdown_link"]
+      },
+      "presence_sources": ["docs"]
+    },
+    "requested_reviewer": {
+      "absence_sources": ["github"],
+      "presence_locator_kinds": {
+        "github": ["github_pull_request_review_request"]
+      },
+      "presence_sources": ["github"]
+    },
+    "reviewer": {
+      "absence_sources": ["github"],
+      "presence_locator_kinds": {
+        "github": ["github_pull_request_review"]
+      },
+      "presence_sources": ["github"]
+    }
+  }
+}

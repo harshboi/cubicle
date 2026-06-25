@@ -77,9 +77,8 @@ const (
 	// discussed it.
 	AssocDiscussedIn domain.AssociationType = "discussed_in"
 
-	// AssocDocuments connects a fragment, document, or note to the object it
-	// explains.
-	AssocDocuments domain.AssociationType = "documents"
+	// AssocDocuments connects an object to the document or note that explains it.
+	AssocDocuments domain.AssociationType = "documented_by"
 
 	// AssocSupports connects evidence-like objects to the claim or object they
 	// strengthen.
@@ -171,7 +170,7 @@ func BuiltinRegistry() Registry {
 		{Type: AssocImplementedBy, DisplayName: "Implemented by"},
 		{Type: AssocChangesFile, DisplayName: "Changes file"},
 		{Type: AssocDiscussedIn, DisplayName: "Discussed in"},
-		{Type: AssocDocuments, DisplayName: "Documents"},
+		{Type: AssocDocuments, DisplayName: "Documented by"},
 		{Type: AssocSupports, DisplayName: "Supports"},
 		{Type: AssocBlockedBy, DisplayName: "Blocked by"},
 		{Type: AssocOwnedBy, DisplayName: "Owned by"},
