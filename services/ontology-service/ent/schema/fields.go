@@ -130,6 +130,15 @@ func objectEvidenceFields() []ent.Field {
 	}
 }
 
+// genericSubjectObjectTypeField lets Work* projections address any graph
+// object family while older subject_kind enums continue to accelerate the
+// pull_request/ticket cases.
+func genericSubjectObjectTypeField() ent.Field {
+	return field.String("subject_object_type").
+		Optional().
+		Comment("Open graph object type for the subject_key, such as pull_request, ticket, document, message, or connector-specific types.")
+}
+
 // textFields returns the summary/search columns that make objects easier for
 // LLM crawlers to inspect before vector or FTS search exists.
 func textFields() []ent.Field {

@@ -197,6 +197,13 @@ const (
 )
 
 const (
+	evidenceAttachmentCurrent    = "current"    // evidenceAttachmentCurrent means this attachment is the active proof for the claim.
+	evidenceAttachmentCandidate  = "candidate"  // evidenceAttachmentCandidate means this proof has not earned product-claim use.
+	evidenceAttachmentSuperseded = "superseded" // evidenceAttachmentSuperseded means a newer attachment replaces this proof link.
+	evidenceAttachmentRejected   = "rejected"   // evidenceAttachmentRejected means review rejected this proof link.
+)
+
+const (
 	referenceURL        = "url"         // referenceURL means a URL was observed in source content.
 	referenceIssueKey   = "issue_key"   // referenceIssueKey means a Jira/Linear-style issue key was observed.
 	referencePRNumber   = "pr_number"   // referencePRNumber means a pull request number/reference was observed.
@@ -595,6 +602,10 @@ func proofStateValues() []string {
 
 func claimKindValues() []string {
 	return []string{claimKindObjectState, claimKindRelationship, claimKindIdentity, claimKindCandidate, claimKindGeneratedSummary}
+}
+
+func evidenceAttachmentStateValues() []string {
+	return []string{evidenceAttachmentCurrent, evidenceAttachmentCandidate, evidenceAttachmentSuperseded, evidenceAttachmentRejected}
 }
 
 func referenceKindValues() []string {
