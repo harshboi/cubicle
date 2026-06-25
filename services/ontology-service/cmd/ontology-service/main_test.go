@@ -263,7 +263,7 @@ func TestExportWorkProgramGraphContextWritesGraphQLPayload(t *testing.T) {
 	workstream := "flink-kubernetes-operator"
 	queryWorkstream := "workstream:" + workstream
 	generatedAt := time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC)
-	_, err = store.Client().WorkProgramRun.Create().
+	run, err := store.Client().WorkProgramRun.Create().
 		SetKey("work-program-run:" + workstream + ":export").
 		SetWorkstreamKey(workstream).
 		SetGeneratedAt(generatedAt).
@@ -281,7 +281,7 @@ func TestExportWorkProgramGraphContextWritesGraphQLPayload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create work program run: %v", err)
 	}
-	_, err = store.Client().WorkProgramItem.Create().
+	item, err := store.Client().WorkProgramItem.Create().
 		SetKey("work-program-item:export:subject").
 		SetWorkstreamKey(workstream).
 		SetSubjectKind(workprogramitem.SubjectKindUnknown).
@@ -303,6 +303,20 @@ func TestExportWorkProgramGraphContextWritesGraphQLPayload(t *testing.T) {
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("create program item: %v", err)
+	}
+	_, err = store.Client().WorkProgramRunMember.Create().
+		SetWorkProgramRunID(run.ID).
+		SetRunKey(run.Key).
+		SetMemberTable("work_program_items").
+		SetMemberID(item.ID).
+		SetMemberKey(item.Key).
+		SetMemberExternalKind(item.ExternalKind).
+		SetMemberExternalID(item.ExternalID).
+		SetMemberRankScore(item.RankScore).
+		SetCreatedAt(generatedAt).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("create work program item run member: %v", err)
 	}
 	if err := store.Close(); err != nil {
 		t.Fatalf("close ent store: %v", err)
@@ -962,6 +976,47 @@ graphql.playground_enabled = true
 	}
 	if cfg.GraphQLPlaygroundEnabled {
 		t.Fatal("GraphQLPlaygroundEnabled = true, want false")
+	}
+}
+
+// TestParseServeConfigAcceptsSourceAuthorityPath keeps GraphQL relationship
+// authority policy available on the normal serve path, not only export tools.
+func TestParseServeConfigAcceptsSourceAuthorityPath(t *testing.T) {
+	policyPath := filepath.Join(t.TempDir(), "source-authority.json")
+	cfg, err := parseServeConfigWithEnv([]string{
+		"serve",
+		"--source-authority-json", policyPath,
+	}, func(string) string { return "" })
+	if err != nil {
+		t.Fatalf("parse serve source authority config: %v", err)
+	}
+	if cfg.SourceAuthorityPath != policyPath {
+		t.Fatalf("SourceAuthorityPath = %q, want %q", cfg.SourceAuthorityPath, policyPath)
+	}
+}
+
+func TestServeSourceAuthorityPolicyLoadsConfiguredJSON(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "source-authority.json")
+	if err := os.WriteFile(path, []byte(`{
+	  "relationship_authority": {
+	    "affected_by": {
+	      "presence_sources": ["pagerduty"],
+	      "presence_locator_kinds": {
+	        "pagerduty": ["incident_link"]
+	      }
+	    }
+	  }
+	}`), 0o644); err != nil {
+		t.Fatalf("write source authority policy: %v", err)
+	}
+
+	policy, err := serveSourceAuthorityPolicy(serveConfig{SourceAuthorityPath: path})
+	if err != nil {
+		t.Fatalf("load serve source authority: %v", err)
+	}
+	affectedBy := policy.RelationshipAuthority["affected_by"]
+	if len(affectedBy.PresenceSources) != 1 || affectedBy.PresenceSources[0] != "pagerduty" {
+		t.Fatalf("affected_by policy = %#v, want pagerduty authority", affectedBy)
 	}
 }
 

@@ -134,6 +134,49 @@ func TestBuildBoundedGraphContextSupportsDocumentMessageTicketGraph(t *testing.T
 	}
 }
 
+func TestBuildBoundedGraphContextDefaultReadFilterRejectsBlankVisibility(t *testing.T) {
+	ctx := context.Background()
+	store := graphstore.NewMemoryStore()
+	start := domain.Object{
+		ObjectType:     ontology.ObjectDocument,
+		Key:            "doc:public-start",
+		Title:          "Public start",
+		Visibility:     domain.VisibilityPublic,
+		FreshnessState: domain.FreshnessFresh,
+	}
+	blank := domain.Object{
+		ObjectType:     ontology.ObjectMessage,
+		Key:            "message:blank-visibility",
+		Title:          "Blank visibility message",
+		FreshnessState: domain.FreshnessFresh,
+	}
+	for _, object := range []domain.Object{start, blank} {
+		if err := store.UpsertObject(ctx, object); err != nil {
+			t.Fatalf("upsert object %s: %v", object.Key, err)
+		}
+	}
+	association := testAssociation(start.Ref(), blank.Ref(), "mentions", "evidence:blank-visibility", 1, time.Date(2026, 6, 24, 12, 0, 0, 0, time.UTC))
+	association.Metadata.Visibility = ""
+	if err := store.UpsertAssociation(ctx, association); err != nil {
+		t.Fatalf("upsert association: %v", err)
+	}
+
+	graphContext, err := Build(ctx, store, domain.ExpandRequest{
+		Start:          start.Ref(),
+		Depth:          1,
+		LimitPerObject: 4,
+	}, Options{Coverage: CoveragePolicy{CoverageState: "sparse"}})
+	if err != nil {
+		t.Fatalf("build bounded graph context: %v", err)
+	}
+	if len(graphContext.Objects) != 1 || graphContext.Objects[0].Key != start.Key {
+		t.Fatalf("objects = %#v, want only the public start object", graphContext.Objects)
+	}
+	if len(graphContext.Associations) != 0 {
+		t.Fatalf("associations = %#v, want blank-visibility edge filtered out", graphContext.Associations)
+	}
+}
+
 func TestBuildBoundedGraphContextOmitsRestrictedRowsBeforePromptProjection(t *testing.T) {
 	ctx := context.Background()
 	store := graphstore.NewMemoryStore()
@@ -454,7 +497,13 @@ func TestBuildBoundedGraphContextRequiresRelationScopedCoverageForAbsenceClaims(
 func TestBuildBoundedGraphContextHashIsStable(t *testing.T) {
 	ctx := context.Background()
 	store := graphstore.NewMemoryStore()
-	object := domain.Object{ObjectType: ontology.ObjectDocument, Key: "doc:stable", Title: "Stable doc"}
+	object := domain.Object{
+		ObjectType:     ontology.ObjectDocument,
+		Key:            "doc:stable",
+		Title:          "Stable doc",
+		Visibility:     domain.VisibilityPublic,
+		FreshnessState: domain.FreshnessFresh,
+	}
 	if err := store.UpsertObject(ctx, object); err != nil {
 		t.Fatalf("upsert object: %v", err)
 	}

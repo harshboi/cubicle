@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	genent "cubicle/services/ontology-service/ent"
 	"cubicle/services/ontology-service/ent/workaction"
 	"cubicle/services/ontology-service/ent/workdependencyedge"
 	"cubicle/services/ontology-service/ent/workinsight"
@@ -79,7 +80,7 @@ func TestWorkProgramGraphContextBuildsTypedLLMContext(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create program item: %v", err)
 	}
-	_, err = store.Client().WorkDependencyEdge.Create().
+	dependency, err := store.Client().WorkDependencyEdge.Create().
 		SetKey("work-dependency-edge:graph-context:needs-action").
 		SetEdgeKind(workdependencyedge.EdgeKindNeedsAction).
 		SetFromKind(workdependencyedge.FromKindPullRequest).
@@ -167,7 +168,7 @@ func TestWorkProgramGraphContextBuildsTypedLLMContext(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create misclassified generated summary insight: %v", err)
 	}
-	_, err = store.Client().WorkProgramRun.Create().
+	run, err := store.Client().WorkProgramRun.Create().
 		SetKey("work-program-run:" + workstream + ":graph-context").
 		SetWorkstreamKey(workstream).
 		SetGeneratedAt(generatedAt).
@@ -185,6 +186,9 @@ func TestWorkProgramGraphContextBuildsTypedLLMContext(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create work program run: %v", err)
 	}
+	seedWorkProgramGraphContextRunMember(t, ctx, store.Client(), run.ID, run.Key, generatedAt, workProgramRunMemberTableItems, item.ID, item.Key, item.ExternalKind, item.ExternalID, item.RankScore)
+	seedWorkProgramGraphContextRunMember(t, ctx, store.Client(), run.ID, run.Key, generatedAt, workProgramRunMemberTableDependencyEdges, dependency.ID, dependency.Key, dependency.ExternalKind, dependency.ExternalID, dependency.RankScore)
+	seedWorkProgramGraphContextRunMember(t, ctx, store.Client(), run.ID, run.Key, generatedAt, workProgramRunMemberTableInsights, insight.ID, insight.Key, insight.ExternalKind, insight.ExternalID, insight.RankScore)
 	_, err = store.Client().WorkProgramItem.Create().
 		SetKey("work-program-item:graph-context:decoy").
 		SetWorkstreamKey(workstream).
@@ -217,14 +221,14 @@ func TestWorkProgramGraphContextBuildsTypedLLMContext(t *testing.T) {
 	if got.WorkstreamKey != queryWorkstream || got.SourceInstance == nil || *got.SourceInstance != source {
 		t.Fatalf("context scope = workstream:%q source:%#v, want %s/%s", got.WorkstreamKey, got.SourceInstance, queryWorkstream, source)
 	}
-	if got.ScopeMode != "explicit_source:latest_run:work_program_run_packet_boundary_latest_graph_rows" {
+	if got.ScopeMode != "explicit_source:latest_run:work_program_run_boundary" {
 		t.Fatalf("scopeMode = %q, want explicit run-bound scope", got.ScopeMode)
 	}
-	if !strings.Contains(got.LlmTask, "graph rows are latest scoped rows") {
-		t.Fatalf("llmTask = %q, want latest-graph-row caveat", got.LlmTask)
+	if !strings.Contains(got.LlmTask, "hard run boundary") {
+		t.Fatalf("llmTask = %q, want hard run boundary instruction", got.LlmTask)
 	}
-	if !hasWorkGraphContextBadge(got.Badges, "graph_context:latest_graph_rows") {
-		t.Fatalf("badges = %#v, want latest graph rows warning", got.Badges)
+	if !hasWorkGraphContextBadge(got.Badges, "graph_context:run_boundary") {
+		t.Fatalf("badges = %#v, want run boundary badge", got.Badges)
 	}
 	if got.RunKey == nil || *got.RunKey != "work-program-run:"+workstream+":graph-context" {
 		t.Fatalf("runKey = %#v, want seeded run", got.RunKey)
@@ -295,8 +299,26 @@ func TestWorkProgramGraphContextBuildsTypedLLMContext(t *testing.T) {
 	if byRun.SourceInstance == nil || *byRun.SourceInstance != source || byRun.RunKey == nil || *byRun.RunKey != runKey {
 		t.Fatalf("run-key scoped context = source:%#v run:%#v, want %s/%s", byRun.SourceInstance, byRun.RunKey, source, runKey)
 	}
-	if byRun.ScopeMode != "latest_source:explicit_run_key:work_program_run_packet_boundary_latest_graph_rows" {
+	if byRun.ScopeMode != "latest_source:explicit_run_key:work_program_run_boundary" {
 		t.Fatalf("run-key scopeMode = %q, want explicit run-key scope", byRun.ScopeMode)
+	}
+}
+
+func seedWorkProgramGraphContextRunMember(t *testing.T, ctx context.Context, client *genent.Client, runID int, runKey string, createdAt time.Time, memberTable string, memberID int, memberKey string, memberExternalKind string, memberExternalID string, memberRankScore float64) {
+	t.Helper()
+	_, err := client.WorkProgramRunMember.Create().
+		SetWorkProgramRunID(runID).
+		SetRunKey(runKey).
+		SetMemberTable(memberTable).
+		SetMemberID(memberID).
+		SetMemberKey(memberKey).
+		SetMemberExternalKind(memberExternalKind).
+		SetMemberExternalID(memberExternalID).
+		SetMemberRankScore(memberRankScore).
+		SetCreatedAt(createdAt).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("create graph context run member: %v", err)
 	}
 }
 
@@ -329,7 +351,7 @@ func TestWorkProgramGraphCitationEvidencePolicyDoesNotQuoteGeneratedEvidence(t *
 	}
 }
 
-func TestWorkProgramGraphContextRunKeyUsesLatestGraphRowsWithCaveat(t *testing.T) {
+func TestWorkProgramGraphContextRunKeyUsesRunMembersNotLatestRows(t *testing.T) {
 	ctx := context.Background()
 	store, err := entstore.Open(ctx, entstore.Config{
 		DatabasePath: filepath.Join(t.TempDir(), "ontology.db"),
@@ -346,7 +368,7 @@ func TestWorkProgramGraphContextRunKeyUsesLatestGraphRowsWithCaveat(t *testing.T
 	newRunAt := oldRunAt.Add(2 * time.Hour)
 	oldRunKey := "work-program-run:" + workstream + ":old"
 
-	_, err = store.Client().WorkProgramRun.Create().
+	oldRun, err := store.Client().WorkProgramRun.Create().
 		SetKey(oldRunKey).
 		SetWorkstreamKey(workstream).
 		SetGeneratedAt(oldRunAt).
@@ -354,6 +376,7 @@ func TestWorkProgramGraphContextRunKeyUsesLatestGraphRowsWithCaveat(t *testing.T
 		SetReadinessScore(40).
 		SetAutonomousActionReady(false).
 		SetHumanReviewRequired(true).
+		SetMemberCount(1).
 		SetSourceSystem("cubicle_analytics").
 		SetSourceInstance(source).
 		SetExternalKind("tpm_work_program_run").
@@ -363,7 +386,7 @@ func TestWorkProgramGraphContextRunKeyUsesLatestGraphRowsWithCaveat(t *testing.T
 	if err != nil {
 		t.Fatalf("create old run: %v", err)
 	}
-	_, err = store.Client().WorkProgramRun.Create().
+	newRun, err := store.Client().WorkProgramRun.Create().
 		SetKey("work-program-run:" + workstream + ":new").
 		SetWorkstreamKey(workstream).
 		SetGeneratedAt(newRunAt).
@@ -371,6 +394,7 @@ func TestWorkProgramGraphContextRunKeyUsesLatestGraphRowsWithCaveat(t *testing.T
 		SetReadinessScore(70).
 		SetAutonomousActionReady(false).
 		SetHumanReviewRequired(true).
+		SetMemberCount(1).
 		SetSourceSystem("cubicle_analytics").
 		SetSourceInstance(source).
 		SetExternalKind("tpm_work_program_run").
@@ -380,7 +404,7 @@ func TestWorkProgramGraphContextRunKeyUsesLatestGraphRowsWithCaveat(t *testing.T
 	if err != nil {
 		t.Fatalf("create new run: %v", err)
 	}
-	_, err = store.Client().WorkProgramItem.Create().
+	oldItem, err := store.Client().WorkProgramItem.Create().
 		SetKey("work-program-item:old-run-row").
 		SetWorkstreamKey(workstream).
 		SetSubjectKind(workprogramitem.SubjectKindUnknown).
@@ -403,7 +427,7 @@ func TestWorkProgramGraphContextRunKeyUsesLatestGraphRowsWithCaveat(t *testing.T
 	if err != nil {
 		t.Fatalf("create old item: %v", err)
 	}
-	_, err = store.Client().WorkProgramItem.Create().
+	newItem, err := store.Client().WorkProgramItem.Create().
 		SetKey("work-program-item:newer-graph-row").
 		SetWorkstreamKey(workstream).
 		SetSubjectKind(workprogramitem.SubjectKindUnknown).
@@ -426,6 +450,8 @@ func TestWorkProgramGraphContextRunKeyUsesLatestGraphRowsWithCaveat(t *testing.T
 	if err != nil {
 		t.Fatalf("create newer item: %v", err)
 	}
+	seedWorkProgramGraphContextRunMember(t, ctx, store.Client(), oldRun.ID, oldRun.Key, oldRunAt, workProgramRunMemberTableItems, oldItem.ID, oldItem.Key, oldItem.ExternalKind, oldItem.ExternalID, oldItem.RankScore)
+	seedWorkProgramGraphContextRunMember(t, ctx, store.Client(), newRun.ID, newRun.Key, newRunAt, workProgramRunMemberTableItems, newItem.ID, newItem.Key, newItem.ExternalKind, newItem.ExternalID, newItem.RankScore)
 
 	itemLimit := 1
 	resolver := (&Resolver{EntClient: store.Client()}).Query().(*queryResolver)
@@ -437,17 +463,17 @@ func TestWorkProgramGraphContextRunKeyUsesLatestGraphRowsWithCaveat(t *testing.T
 	if got.RunKey == nil || *got.RunKey != oldRunKey {
 		t.Fatalf("runKey = %#v, want old run key %s", got.RunKey, oldRunKey)
 	}
-	if got.ScopeMode != "latest_source:explicit_run_key:work_program_run_packet_boundary_latest_graph_rows" {
-		t.Fatalf("scopeMode = %q, want explicit packet-boundary latest-row caveat", got.ScopeMode)
+	if got.ScopeMode != "latest_source:explicit_run_key:work_program_run_boundary" {
+		t.Fatalf("scopeMode = %q, want explicit run boundary", got.ScopeMode)
 	}
-	if !strings.Contains(got.LlmTask, "packet boundary only") || !strings.Contains(got.LlmTask, "graph rows are latest scoped rows") {
-		t.Fatalf("llmTask = %q, want packet-boundary/latest-rows caveat", got.LlmTask)
+	if !strings.Contains(got.LlmTask, "hard run boundary") {
+		t.Fatalf("llmTask = %q, want hard run boundary instruction", got.LlmTask)
 	}
-	if !hasWorkGraphContextBadge(got.Badges, "graph_context:latest_graph_rows") {
-		t.Fatalf("badges = %#v, want latest graph rows warning", got.Badges)
+	if !hasWorkGraphContextBadge(got.Badges, "graph_context:run_boundary") {
+		t.Fatalf("badges = %#v, want run boundary badge", got.Badges)
 	}
-	if got.ItemCount != 1 || len(got.Items) != 1 || got.Items[0].Key != "work-program-item:newer-graph-row" {
-		t.Fatalf("items = %#v, want newer latest graph row despite old run key", got.Items)
+	if got.ItemCount != 1 || len(got.Items) != 1 || got.Items[0].Key != oldItem.Key {
+		t.Fatalf("items = %#v, want old run member row %s", got.Items, oldItem.Key)
 	}
 }
 

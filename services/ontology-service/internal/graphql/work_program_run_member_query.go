@@ -17,7 +17,11 @@ const (
 	workProgramRunMemberTableAdversarialChecks    = "work_program_adversarial_checks"
 	workProgramRunMemberTableBriefCaveats         = "work_program_brief_caveats"
 	workProgramRunMemberTableBriefSnapshots       = "work_program_brief_snapshots"
+	workProgramRunMemberTableDependencyEdges      = "work_dependency_edges"
 	workProgramRunMemberTableEvidenceNeeds        = "work_program_evidence_needs"
+	workProgramRunMemberTableForecasts            = "work_item_forecasts"
+	workProgramRunMemberTableInsights             = "work_insights"
+	workProgramRunMemberTableItems                = "work_program_items"
 	workProgramRunMemberTableMilestones           = "work_program_milestones"
 	workProgramRunMemberTableOwnerRollupSnapshots = "work_program_owner_rollup_snapshots"
 	workProgramRunMemberTableQualityGates         = "work_program_quality_gates"
@@ -34,6 +38,49 @@ func (r *queryResolver) latestWorkProgramRunMemberIDs(ctx context.Context, sourc
 	run, err := r.workProgramRunAnchorForGeneratedAt(ctx, sourceFilter, workstreamKey, generatedAt)
 	if err != nil || run == nil {
 		return nil, false, err
+	}
+	runPredicate := workProgramRunMemberRunPredicate(run)
+	if runPredicate == nil {
+		return nil, false, nil
+	}
+	members, err := r.EntClient.WorkProgramRunMember.Query().
+		Where(runPredicate, workprogramrunmember.MemberTableEQ(memberTable)).
+		Order(
+			workprogramrunmember.ByMemberRankScore(entsql.OrderDesc()),
+			workprogramrunmember.ByMemberID(),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	if len(members) == 0 {
+		hasRunMembers, err := r.EntClient.WorkProgramRunMember.Query().
+			Where(runPredicate).
+			Exist(ctx)
+		if err != nil {
+			return nil, false, err
+		}
+		if !hasRunMembers && run.MemberCount <= 0 {
+			return nil, false, nil
+		}
+		return []int{}, true, nil
+	}
+	seen := map[int]bool{}
+	ids := make([]int, 0, len(members))
+	for _, member := range members {
+		if member.MemberID <= 0 || seen[member.MemberID] {
+			continue
+		}
+		seen[member.MemberID] = true
+		ids = append(ids, member.MemberID)
+	}
+	return ids, true, nil
+}
+
+func (r *queryResolver) workProgramRunMemberIDsForRun(ctx context.Context, run *genent.WorkProgramRun, memberTable string) ([]int, bool, error) {
+	memberTable = strings.TrimSpace(memberTable)
+	if memberTable == "" {
+		return nil, false, nil
 	}
 	runPredicate := workProgramRunMemberRunPredicate(run)
 	if runPredicate == nil {

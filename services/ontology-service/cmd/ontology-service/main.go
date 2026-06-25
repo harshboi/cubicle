@@ -52,6 +52,7 @@ type serveConfig struct {
 	DatabasePath             string        // DatabasePath is the SQLite file path used for local ontology storage.
 	SQLiteBusyTimeout        time.Duration // SQLiteBusyTimeout is SQLite's local lock wait timeout.
 	GraphQLPlaygroundEnabled bool          // GraphQLPlaygroundEnabled controls whether GET /playground is mounted.
+	SourceAuthorityPath      string        // SourceAuthorityPath optionally loads relationship source-authority policy for GraphQL.
 }
 
 // flinkFixtureSummaryConfig points at a source-capture fixture for coverage counts.
@@ -302,6 +303,7 @@ func parseServeConfigWithEnv(args []string, getenv func(string) string) (serveCo
 	flags.DurationVar(&cfg.SQLiteBusyTimeout, "sqlite-busy-timeout", cfg.SQLiteBusyTimeout, "SQLite busy timeout")
 	flags.BoolVar(&cfg.GraphQLPlaygroundEnabled, "graphql-playground", cfg.GraphQLPlaygroundEnabled, "mount the local GraphQL playground")
 	flags.BoolVar(&cfg.AllowPublicBind, "allow-public-bind", cfg.AllowPublicBind, "allow binding outside localhost for development")
+	flags.StringVar(&cfg.SourceAuthorityPath, "source-authority-json", cfg.SourceAuthorityPath, "optional relationship source-authority JSON for Ent-backed bounded graph GraphQL reads")
 	if err := flags.Parse(args[1:]); err != nil {
 		return serveConfig{}, err
 	}
@@ -1456,7 +1458,13 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 		"database_path", cfg.DatabasePath,
 		"sqlite_busy_timeout_ms", cfg.SQLiteBusyTimeout.Milliseconds(),
 		"graphql_playground_enabled", cfg.GraphQLPlaygroundEnabled,
+		"source_authority_path", cfg.SourceAuthorityPath,
 	)
+
+	sourceAuthorityPolicy, err := serveSourceAuthorityPolicy(cfg)
+	if err != nil {
+		return err
+	}
 
 	graphStore, err := entstore.Open(context.Background(), entstore.Config{
 		DatabasePath: cfg.DatabasePath,
@@ -1469,13 +1477,21 @@ func serve(cfg serveConfig, logger *slog.Logger) error {
 	logger.Info("ontology_ent_ready")
 
 	router := httpapi.NewRouterWithOptions(logger, httpapi.RouterOptions{
-		GraphQLPlaygroundEnabled: cfg.GraphQLPlaygroundEnabled,
-		EntClient:                graphStore.Client(),
+		GraphQLPlaygroundEnabled:    cfg.GraphQLPlaygroundEnabled,
+		EntClient:                   graphStore.Client(),
+		BoundedGraphSourceAuthority: sourceAuthorityPolicy,
 	})
 	server := newHTTPServer(cfg, router)
 
 	logger.Info("ontology_service_listening", "url", "http://"+cfg.Listen)
 	return server.ListenAndServe()
+}
+
+func serveSourceAuthorityPolicy(cfg serveConfig) (graphcontext.SourceAuthorityPolicy, error) {
+	if strings.TrimSpace(cfg.SourceAuthorityPath) == "" {
+		return graphcontext.SourceAuthorityPolicy{}, nil
+	}
+	return loadSourceAuthorityPolicy(cfg.SourceAuthorityPath)
 }
 
 // newHTTPServer applies fixed HTTP timeouts around the ontology API.

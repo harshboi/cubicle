@@ -260,7 +260,7 @@ func readFilterAssociationAllowed(filter domain.ExpandReadFilter, association do
 
 func promptVisibleValue(value string) bool {
 	value = strings.TrimSpace(value)
-	return value == "" || value == domain.VisibilityPublic
+	return value == domain.VisibilityPublic
 }
 
 func objectRefKey(ref domain.ObjectRef) string {

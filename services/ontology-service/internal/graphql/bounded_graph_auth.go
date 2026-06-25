@@ -49,7 +49,6 @@ func (r *Resolver) boundedGraphReadFilter(ctx context.Context) domain.ExpandRead
 
 func boundedGraphReadFilterFromPrincipalAccess(access BoundedGraphPrincipalAccess) domain.ExpandReadFilter {
 	allowedVisibility := map[string]bool{
-		"":                      true,
 		domain.VisibilityPublic: true,
 	}
 	for _, value := range access.AllowedVisibilityClasses {

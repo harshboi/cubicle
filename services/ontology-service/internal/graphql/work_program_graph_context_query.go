@@ -91,8 +91,12 @@ func (r *queryResolver) workProgramGraphContext(
 	if run != nil {
 		selectedRunKey = optionalString(run.Key)
 	}
+	runScope, err := r.workProgramGraphContextRunScope(ctx, run)
+	if err != nil {
+		return nil, err
+	}
 
-	items, err := r.workProgramItemRowsForSource(ctx, itemRowLimit, workstreamFilter, nil, nil, nil, sourceFilter)
+	items, err := r.workProgramItemRowsForSourceWithRunMembers(ctx, itemRowLimit, workstreamFilter, nil, nil, nil, sourceFilter, runScope.itemIDs, runScope.itemScoped)
 	if err != nil {
 		return nil, err
 	}
@@ -107,12 +111,12 @@ func (r *queryResolver) workProgramGraphContext(
 		return nil, err
 	}
 
-	dependencyRows, reachedKeys, err := r.workProgramGraphContextDependencyRows(ctx, sourceFilter, scope, edgeRowLimit, depth)
+	dependencyRows, reachedKeys, err := r.workProgramGraphContextDependencyRows(ctx, sourceFilter, scope, edgeRowLimit, depth, runScope.dependencyIDs, runScope.dependencyScoped)
 	if err != nil {
 		return nil, err
 	}
 	subjectKeys := workProgramGraphContextSubjectKeys(workstreamKey, items, actions, dependencyRows, reachedKeys)
-	insightRows, err := r.workProgramGraphContextInsightRows(ctx, sourceFilter, subjectKeys, insightRowLimit)
+	insightRows, err := r.workProgramGraphContextInsightRows(ctx, sourceFilter, subjectKeys, insightRowLimit, runScope.insightIDs, runScope.insightScoped)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +125,7 @@ func (r *queryResolver) workProgramGraphContext(
 	if err != nil {
 		return nil, err
 	}
-	forecastRows, _, err := r.topWorkProgramForecastRowsAndCount(ctx, sourceFilter, scope, forecastRowLimit)
+	forecastRows, _, err := r.topWorkProgramForecastRowsAndCountWithRunMembers(ctx, sourceFilter, scope, forecastRowLimit, runScope.forecastIDs, runScope.forecastScoped)
 	if err != nil {
 		return nil, err
 	}
@@ -239,6 +243,49 @@ func workProgramGraphContextDepth(value *int) int {
 	return depth
 }
 
+type workProgramGraphContextRunScope struct {
+	itemIDs          []int
+	itemScoped       bool
+	dependencyIDs    []int
+	dependencyScoped bool
+	insightIDs       []int
+	insightScoped    bool
+	forecastIDs      []int
+	forecastScoped   bool
+}
+
+func (r *queryResolver) workProgramGraphContextRunScope(ctx context.Context, run *genent.WorkProgramRun) (workProgramGraphContextRunScope, error) {
+	if run == nil {
+		return workProgramGraphContextRunScope{}, nil
+	}
+	itemIDs, itemScoped, err := r.workProgramRunMemberIDsForRun(ctx, run, workProgramRunMemberTableItems)
+	if err != nil {
+		return workProgramGraphContextRunScope{}, err
+	}
+	dependencyIDs, dependencyScoped, err := r.workProgramRunMemberIDsForRun(ctx, run, workProgramRunMemberTableDependencyEdges)
+	if err != nil {
+		return workProgramGraphContextRunScope{}, err
+	}
+	insightIDs, insightScoped, err := r.workProgramRunMemberIDsForRun(ctx, run, workProgramRunMemberTableInsights)
+	if err != nil {
+		return workProgramGraphContextRunScope{}, err
+	}
+	forecastIDs, forecastScoped, err := r.workProgramRunMemberIDsForRun(ctx, run, workProgramRunMemberTableForecasts)
+	if err != nil {
+		return workProgramGraphContextRunScope{}, err
+	}
+	return workProgramGraphContextRunScope{
+		itemIDs:          itemIDs,
+		itemScoped:       itemScoped,
+		dependencyIDs:    dependencyIDs,
+		dependencyScoped: dependencyScoped,
+		insightIDs:       insightIDs,
+		insightScoped:    insightScoped,
+		forecastIDs:      forecastIDs,
+		forecastScoped:   forecastScoped,
+	}, nil
+}
+
 func workProgramGraphContextGeneratedAtArgument(value *string) (*time.Time, error) {
 	if value == nil {
 		return nil, nil
@@ -305,7 +352,7 @@ func workProgramGraphContextScopeMode(sourceInstance *string, runKey *string, ge
 		runMode = "explicit_generated_at"
 	}
 	if run != nil {
-		return sourceMode + ":" + runMode + ":work_program_run_packet_boundary_latest_graph_rows"
+		return sourceMode + ":" + runMode + ":work_program_run_boundary"
 	}
 	return sourceMode + ":" + runMode + ":latest_graph_rows_without_run_boundary"
 }
@@ -342,11 +389,14 @@ func workProgramGraphContextItemModelsWithClaimPolicies(rows []*genent.WorkProgr
 	return out
 }
 
-func (r *queryResolver) workProgramGraphContextDependencyRows(ctx context.Context, sourceFilter *string, scope workProgramRiskScope, limit int, depth int) ([]*genent.WorkDependencyEdge, []string, error) {
+func (r *queryResolver) workProgramGraphContextDependencyRows(ctx context.Context, sourceFilter *string, scope workProgramRiskScope, limit int, depth int, runMemberIDs []int, runMemberScoped bool) ([]*genent.WorkDependencyEdge, []string, error) {
 	if sourceFilter == nil || strings.TrimSpace(*sourceFilter) == "" {
 		return []*genent.WorkDependencyEdge{}, nil, nil
 	}
 	if scope.scoped && len(scope.dependencyKeys) == 0 && len(scope.workstreamIDs) == 0 {
+		return []*genent.WorkDependencyEdge{}, nil, nil
+	}
+	if runMemberScoped && len(runMemberIDs) == 0 {
 		return []*genent.WorkDependencyEdge{}, nil, nil
 	}
 	seenEdges := map[string]bool{}
@@ -360,6 +410,9 @@ func (r *queryResolver) workProgramGraphContextDependencyRows(ctx context.Contex
 	rows := []*genent.WorkDependencyEdge{}
 	for step := 0; step < depth && len(rows) < limit; step++ {
 		query := r.workProgramGraphContextDependencyQuery(sourceFilter, limit)
+		if runMemberScoped {
+			query = query.Where(workdependencyedge.IDIn(runMemberIDs...))
+		}
 		if step == 0 {
 			query = query.Where(workProgramDependencyScopePredicate(scope))
 		} else {
@@ -478,8 +531,11 @@ func workProgramGraphContextReachedSubjectKeys(keys []string) []string {
 	return workProgramUniqueStrings(keys)
 }
 
-func (r *queryResolver) workProgramGraphContextInsightRows(ctx context.Context, sourceFilter *string, subjectKeys []string, limit int) ([]*genent.WorkInsight, error) {
+func (r *queryResolver) workProgramGraphContextInsightRows(ctx context.Context, sourceFilter *string, subjectKeys []string, limit int, runMemberIDs []int, runMemberScoped bool) ([]*genent.WorkInsight, error) {
 	if sourceFilter == nil || strings.TrimSpace(*sourceFilter) == "" || len(subjectKeys) == 0 {
+		return []*genent.WorkInsight{}, nil
+	}
+	if runMemberScoped && len(runMemberIDs) == 0 {
 		return []*genent.WorkInsight{}, nil
 	}
 	query := r.EntClient.WorkInsight.Query().
@@ -514,6 +570,9 @@ func (r *queryResolver) workProgramGraphContextInsightRows(ctx context.Context, 
 			workinsight.ByUpdatedAt(entsql.OrderDesc()),
 		).
 		Limit(limit)
+	if runMemberScoped {
+		query = query.Where(workinsight.IDIn(runMemberIDs...))
+	}
 	return query.All(ctx)
 }
 
@@ -1168,7 +1227,9 @@ func workProgramGraphContextSummary(
 
 func workProgramGraphContextLLMTask(workstreamKey string, scopeMode string) string {
 	task := fmt.Sprintf("Summarize the bounded typed Cubicle graph for %s. Use only allowed citations, preserve source-coverage and guardrail limits, and frame forecasts as risk triage unless the forecast packet says ETA is ready.", workstreamKey)
-	if strings.Contains(scopeMode, "packet_boundary_latest_graph_rows") || strings.Contains(scopeMode, "latest_graph_rows") {
+	if strings.Contains(scopeMode, "work_program_run_boundary") {
+		task += " Treat runKey/generatedAt as a hard run boundary for graph rows that have WorkProgramRunMember membership."
+	} else if strings.Contains(scopeMode, "latest_graph_rows") {
 		task += " Treat runKey/generatedAt as a packet boundary only; graph rows are latest scoped rows unless a future context snapshot says otherwise."
 	}
 	return task
@@ -1228,7 +1289,14 @@ func workProgramGraphContextBadges(scopeMode string, guardrail *model.WorkProgra
 	badges := []*model.WorkActionBadge{
 		{Key: "graph_context:typed_rows", Label: "Typed graph context", Tone: "success"},
 	}
-	if strings.Contains(scopeMode, "latest_graph_rows") {
+	if strings.Contains(scopeMode, "work_program_run_boundary") {
+		badges = append(badges, &model.WorkActionBadge{
+			Key:    "graph_context:run_boundary",
+			Label:  "Run boundary",
+			Tone:   "success",
+			Detail: optionalString("graph rows are filtered through WorkProgramRunMember membership when available"),
+		})
+	} else if strings.Contains(scopeMode, "latest_graph_rows") {
 		badges = append(badges, &model.WorkActionBadge{
 			Key:    "graph_context:latest_graph_rows",
 			Label:  "Latest graph rows",

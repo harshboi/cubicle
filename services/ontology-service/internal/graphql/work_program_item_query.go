@@ -54,6 +54,23 @@ func (r *queryResolver) workProgramItemRowsForSource(
 	ownerKey *string,
 	sourceFilter *string,
 ) ([]*genent.WorkProgramItem, error) {
+	return r.workProgramItemRowsForSourceWithRunMembers(ctx, limit, workstreamKey, programStatus, tpmBucket, ownerKey, sourceFilter, nil, false)
+}
+
+func (r *queryResolver) workProgramItemRowsForSourceWithRunMembers(
+	ctx context.Context,
+	limit int,
+	workstreamKey *string,
+	programStatus *string,
+	tpmBucket *string,
+	ownerKey *string,
+	sourceFilter *string,
+	runMemberIDs []int,
+	runMemberScoped bool,
+) ([]*genent.WorkProgramItem, error) {
+	if runMemberScoped && len(runMemberIDs) == 0 {
+		return []*genent.WorkProgramItem{}, nil
+	}
 	query := r.EntClient.WorkProgramItem.Query().
 		WithLatestEvidence().
 		WithWorkAction(func(q *genent.WorkActionQuery) {
@@ -114,6 +131,9 @@ func (r *queryResolver) workProgramItemRowsForSource(
 		Limit(limit)
 	if sourceFilter != nil {
 		query = query.Where(workprogramitem.SourceInstanceEQ(*sourceFilter))
+	}
+	if runMemberScoped {
+		query = query.Where(workprogramitem.IDIn(runMemberIDs...))
 	}
 	if workstreamKey != nil && strings.TrimSpace(*workstreamKey) != "" {
 		filterKeys := workProgramWorkstreamFilterKeys(*workstreamKey)
@@ -514,10 +534,17 @@ func (r *queryResolver) topWorkProgramForecastRows(ctx context.Context, sourceFi
 }
 
 func (r *queryResolver) topWorkProgramForecastRowsAndCount(ctx context.Context, sourceFilter *string, scope workProgramRiskScope, limit int) ([]*genent.WorkItemForecast, int, error) {
+	return r.topWorkProgramForecastRowsAndCountWithRunMembers(ctx, sourceFilter, scope, limit, nil, false)
+}
+
+func (r *queryResolver) topWorkProgramForecastRowsAndCountWithRunMembers(ctx context.Context, sourceFilter *string, scope workProgramRiskScope, limit int, runMemberIDs []int, runMemberScoped bool) ([]*genent.WorkItemForecast, int, error) {
 	if sourceFilter == nil || strings.TrimSpace(*sourceFilter) == "" {
 		return []*genent.WorkItemForecast{}, 0, nil
 	}
 	if scope.scoped && len(scope.subjectKeys) == 0 {
+		return []*genent.WorkItemForecast{}, 0, nil
+	}
+	if runMemberScoped && len(runMemberIDs) == 0 {
 		return []*genent.WorkItemForecast{}, 0, nil
 	}
 	source := strings.TrimSpace(*sourceFilter)
@@ -532,6 +559,9 @@ func (r *queryResolver) topWorkProgramForecastRowsAndCount(ctx context.Context, 
 			)
 		if scope.scoped {
 			query = query.Where(workitemforecast.SubjectKeyIn(scope.subjectKeys...))
+		}
+		if runMemberScoped {
+			query = query.Where(workitemforecast.IDIn(runMemberIDs...))
 		}
 		return query
 	}
