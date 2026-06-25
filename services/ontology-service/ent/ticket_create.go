@@ -12,6 +12,11 @@ import (
 	"cubicle/services/ontology-service/ent/ticketdocument"
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
+	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workinsight"
+	"cubicle/services/ontology-service/ent/workitemstatesnapshot"
+	"cubicle/services/ontology-service/ent/workitemstatetransition"
+	"cubicle/services/ontology-service/ent/workprogrammilestone"
 	"cubicle/services/ontology-service/ent/workstream"
 	"errors"
 	"fmt"
@@ -583,6 +588,81 @@ func (_c *TicketCreate) SetLatestEvidence(v *Evidence) *TicketCreate {
 	return _c.SetLatestEvidenceID(v.ID)
 }
 
+// AddInsightIDs adds the "insights" edge to the WorkInsight entity by IDs.
+func (_c *TicketCreate) AddInsightIDs(ids ...int) *TicketCreate {
+	_c.mutation.AddInsightIDs(ids...)
+	return _c
+}
+
+// AddInsights adds the "insights" edges to the WorkInsight entity.
+func (_c *TicketCreate) AddInsights(v ...*WorkInsight) *TicketCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddInsightIDs(ids...)
+}
+
+// AddActionIDs adds the "actions" edge to the WorkAction entity by IDs.
+func (_c *TicketCreate) AddActionIDs(ids ...int) *TicketCreate {
+	_c.mutation.AddActionIDs(ids...)
+	return _c
+}
+
+// AddActions adds the "actions" edges to the WorkAction entity.
+func (_c *TicketCreate) AddActions(v ...*WorkAction) *TicketCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddActionIDs(ids...)
+}
+
+// AddStateSnapshotIDs adds the "state_snapshots" edge to the WorkItemStateSnapshot entity by IDs.
+func (_c *TicketCreate) AddStateSnapshotIDs(ids ...int) *TicketCreate {
+	_c.mutation.AddStateSnapshotIDs(ids...)
+	return _c
+}
+
+// AddStateSnapshots adds the "state_snapshots" edges to the WorkItemStateSnapshot entity.
+func (_c *TicketCreate) AddStateSnapshots(v ...*WorkItemStateSnapshot) *TicketCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddStateSnapshotIDs(ids...)
+}
+
+// AddStateTransitionIDs adds the "state_transitions" edge to the WorkItemStateTransition entity by IDs.
+func (_c *TicketCreate) AddStateTransitionIDs(ids ...int) *TicketCreate {
+	_c.mutation.AddStateTransitionIDs(ids...)
+	return _c
+}
+
+// AddStateTransitions adds the "state_transitions" edges to the WorkItemStateTransition entity.
+func (_c *TicketCreate) AddStateTransitions(v ...*WorkItemStateTransition) *TicketCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddStateTransitionIDs(ids...)
+}
+
+// AddMilestoneIDs adds the "milestones" edge to the WorkProgramMilestone entity by IDs.
+func (_c *TicketCreate) AddMilestoneIDs(ids ...int) *TicketCreate {
+	_c.mutation.AddMilestoneIDs(ids...)
+	return _c
+}
+
+// AddMilestones adds the "milestones" edges to the WorkProgramMilestone entity.
+func (_c *TicketCreate) AddMilestones(v ...*WorkProgramMilestone) *TicketCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddMilestoneIDs(ids...)
+}
+
 // AddTicketPullRequestIDs adds the "ticket_pull_requests" edge to the TicketPullRequest entity by IDs.
 func (_c *TicketCreate) AddTicketPullRequestIDs(ids ...int) *TicketCreate {
 	_c.mutation.AddTicketPullRequestIDs(ids...)
@@ -1043,6 +1123,86 @@ func (_c *TicketCreate) createSpec() (*Ticket, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.LatestEvidenceID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.InsightsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.InsightsTable,
+			Columns: []string{ticket.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.ActionsTable,
+			Columns: []string{ticket.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.StateSnapshotsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateSnapshotsTable,
+			Columns: []string{ticket.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.StateTransitionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateTransitionsTable,
+			Columns: []string{ticket.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.MilestonesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.MilestonesTable,
+			Columns: []string{ticket.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.TicketPullRequestsIDs(); len(nodes) > 0 {

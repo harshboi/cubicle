@@ -28,8 +28,28 @@ type PullRequest struct {
 	Title string `json:"title,omitempty"`
 	// Normalized pull-request state.
 	State pullrequest.State `json:"state,omitempty"`
+	// Source-reported pull-request creation time, used for age and cycle analysis.
+	SourceCreatedAt time.Time `json:"source_created_at,omitempty"`
 	// Time the pull request merged, when available.
 	MergedAt time.Time `json:"merged_at,omitempty"`
+	// Time the pull request closed without necessarily merging, when available.
+	ClosedAt time.Time `json:"closed_at,omitempty"`
+	// Source-reported lines added in the pull request diff.
+	Additions *int `json:"additions,omitempty"`
+	// Source-reported lines deleted in the pull request diff.
+	Deletions *int `json:"deletions,omitempty"`
+	// Source-reported number of files changed by the pull request.
+	ChangedFilesCount *int `json:"changed_files_count,omitempty"`
+	// Source-reported number of commits in the pull request.
+	CommitCount *int `json:"commit_count,omitempty"`
+	// Source-reported number of issue-thread comments on the pull request.
+	IssueCommentCount *int `json:"issue_comment_count,omitempty"`
+	// Source-reported number of code review comments on the pull request.
+	ReviewCommentCount *int `json:"review_comment_count,omitempty"`
+	// Whether the pull request is marked draft by the source.
+	IsDraft *bool `json:"is_draft,omitempty"`
+	// Whether the source currently reports the pull request as mergeable; unset means unknown.
+	IsMergeable *bool `json:"is_mergeable,omitempty"`
 	// Short object summary for UI, search snippets, and future LLM context.
 	Summary string `json:"summary,omitempty"`
 	// Normalized text used by V0 Ent-filter search before FTS/vector indexes exist.
@@ -104,9 +124,19 @@ type PullRequestEdges struct {
 	Tickets []*Ticket `json:"tickets,omitempty"`
 	// Most recent evidence supporting this pull request state.
 	LatestEvidence *Evidence `json:"latest_evidence,omitempty"`
+	// Generated TPM/product insights about this pull request.
+	Insights []*WorkInsight `json:"insights,omitempty"`
+	// Gated TPM actions about this pull request.
+	Actions []*WorkAction `json:"actions,omitempty"`
+	// Observed state snapshots for this pull request.
+	StateSnapshots []*WorkItemStateSnapshot `json:"state_snapshots,omitempty"`
+	// Observed state transitions for this pull request.
+	StateTransitions []*WorkItemStateTransition `json:"state_transitions,omitempty"`
+	// Source-backed milestone and date signals for this pull request.
+	Milestones []*WorkProgramMilestone `json:"milestones,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [7]bool
 }
 
 // TicketsOrErr returns the Tickets value or an error if the edge
@@ -129,18 +159,65 @@ func (e PullRequestEdges) LatestEvidenceOrErr() (*Evidence, error) {
 	return nil, &NotLoadedError{edge: "latest_evidence"}
 }
 
+// InsightsOrErr returns the Insights value or an error if the edge
+// was not loaded in eager-loading.
+func (e PullRequestEdges) InsightsOrErr() ([]*WorkInsight, error) {
+	if e.loadedTypes[2] {
+		return e.Insights, nil
+	}
+	return nil, &NotLoadedError{edge: "insights"}
+}
+
+// ActionsOrErr returns the Actions value or an error if the edge
+// was not loaded in eager-loading.
+func (e PullRequestEdges) ActionsOrErr() ([]*WorkAction, error) {
+	if e.loadedTypes[3] {
+		return e.Actions, nil
+	}
+	return nil, &NotLoadedError{edge: "actions"}
+}
+
+// StateSnapshotsOrErr returns the StateSnapshots value or an error if the edge
+// was not loaded in eager-loading.
+func (e PullRequestEdges) StateSnapshotsOrErr() ([]*WorkItemStateSnapshot, error) {
+	if e.loadedTypes[4] {
+		return e.StateSnapshots, nil
+	}
+	return nil, &NotLoadedError{edge: "state_snapshots"}
+}
+
+// StateTransitionsOrErr returns the StateTransitions value or an error if the edge
+// was not loaded in eager-loading.
+func (e PullRequestEdges) StateTransitionsOrErr() ([]*WorkItemStateTransition, error) {
+	if e.loadedTypes[5] {
+		return e.StateTransitions, nil
+	}
+	return nil, &NotLoadedError{edge: "state_transitions"}
+}
+
+// MilestonesOrErr returns the Milestones value or an error if the edge
+// was not loaded in eager-loading.
+func (e PullRequestEdges) MilestonesOrErr() ([]*WorkProgramMilestone, error) {
+	if e.loadedTypes[6] {
+		return e.Milestones, nil
+	}
+	return nil, &NotLoadedError{edge: "milestones"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*PullRequest) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case pullrequest.FieldIsDraft, pullrequest.FieldIsMergeable:
+			values[i] = new(sql.NullBool)
 		case pullrequest.FieldConfidence, pullrequest.FieldRankScore:
 			values[i] = new(sql.NullFloat64)
-		case pullrequest.FieldID, pullrequest.FieldNumber, pullrequest.FieldSourceScopeStateID, pullrequest.FieldLatestEvidenceID, pullrequest.FieldEvidenceCount, pullrequest.FieldEventCount:
+		case pullrequest.FieldID, pullrequest.FieldNumber, pullrequest.FieldAdditions, pullrequest.FieldDeletions, pullrequest.FieldChangedFilesCount, pullrequest.FieldCommitCount, pullrequest.FieldIssueCommentCount, pullrequest.FieldReviewCommentCount, pullrequest.FieldSourceScopeStateID, pullrequest.FieldLatestEvidenceID, pullrequest.FieldEvidenceCount, pullrequest.FieldEventCount:
 			values[i] = new(sql.NullInt64)
 		case pullrequest.FieldKey, pullrequest.FieldRepository, pullrequest.FieldTitle, pullrequest.FieldState, pullrequest.FieldSummary, pullrequest.FieldSearchText, pullrequest.FieldSourceSystem, pullrequest.FieldSourceInstance, pullrequest.FieldExternalKind, pullrequest.FieldExternalID, pullrequest.FieldSourceURL, pullrequest.FieldSourceVersion, pullrequest.FieldContentHash, pullrequest.FieldDeletionState, pullrequest.FieldACLPolicyKey, pullrequest.FieldVisibilityHash, pullrequest.FieldACLState, pullrequest.FieldFreshnessState, pullrequest.FieldVisibility:
 			values[i] = new(sql.NullString)
-		case pullrequest.FieldMergedAt, pullrequest.FieldSourceUpdatedAt, pullrequest.FieldDeletedAt, pullrequest.FieldACLCheckedAt, pullrequest.FieldFreshnessCheckedAt, pullrequest.FieldLastConfirmedAt, pullrequest.FieldLastChangedAt, pullrequest.FieldFirstSeenAt, pullrequest.FieldLastActivityAt, pullrequest.FieldCreatedAt, pullrequest.FieldUpdatedAt:
+		case pullrequest.FieldSourceCreatedAt, pullrequest.FieldMergedAt, pullrequest.FieldClosedAt, pullrequest.FieldSourceUpdatedAt, pullrequest.FieldDeletedAt, pullrequest.FieldACLCheckedAt, pullrequest.FieldFreshnessCheckedAt, pullrequest.FieldLastConfirmedAt, pullrequest.FieldLastChangedAt, pullrequest.FieldFirstSeenAt, pullrequest.FieldLastActivityAt, pullrequest.FieldCreatedAt, pullrequest.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -193,11 +270,79 @@ func (_m *PullRequest) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.State = pullrequest.State(value.String)
 			}
+		case pullrequest.FieldSourceCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field source_created_at", values[i])
+			} else if value.Valid {
+				_m.SourceCreatedAt = value.Time
+			}
 		case pullrequest.FieldMergedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field merged_at", values[i])
 			} else if value.Valid {
 				_m.MergedAt = value.Time
+			}
+		case pullrequest.FieldClosedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field closed_at", values[i])
+			} else if value.Valid {
+				_m.ClosedAt = value.Time
+			}
+		case pullrequest.FieldAdditions:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field additions", values[i])
+			} else if value.Valid {
+				_m.Additions = new(int)
+				*_m.Additions = int(value.Int64)
+			}
+		case pullrequest.FieldDeletions:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field deletions", values[i])
+			} else if value.Valid {
+				_m.Deletions = new(int)
+				*_m.Deletions = int(value.Int64)
+			}
+		case pullrequest.FieldChangedFilesCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field changed_files_count", values[i])
+			} else if value.Valid {
+				_m.ChangedFilesCount = new(int)
+				*_m.ChangedFilesCount = int(value.Int64)
+			}
+		case pullrequest.FieldCommitCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field commit_count", values[i])
+			} else if value.Valid {
+				_m.CommitCount = new(int)
+				*_m.CommitCount = int(value.Int64)
+			}
+		case pullrequest.FieldIssueCommentCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field issue_comment_count", values[i])
+			} else if value.Valid {
+				_m.IssueCommentCount = new(int)
+				*_m.IssueCommentCount = int(value.Int64)
+			}
+		case pullrequest.FieldReviewCommentCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field review_comment_count", values[i])
+			} else if value.Valid {
+				_m.ReviewCommentCount = new(int)
+				*_m.ReviewCommentCount = int(value.Int64)
+			}
+		case pullrequest.FieldIsDraft:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_draft", values[i])
+			} else if value.Valid {
+				_m.IsDraft = new(bool)
+				*_m.IsDraft = value.Bool
+			}
+		case pullrequest.FieldIsMergeable:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_mergeable", values[i])
+			} else if value.Valid {
+				_m.IsMergeable = new(bool)
+				*_m.IsMergeable = value.Bool
 			}
 		case pullrequest.FieldSummary:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -408,6 +553,31 @@ func (_m *PullRequest) QueryLatestEvidence() *EvidenceQuery {
 	return NewPullRequestClient(_m.config).QueryLatestEvidence(_m)
 }
 
+// QueryInsights queries the "insights" edge of the PullRequest entity.
+func (_m *PullRequest) QueryInsights() *WorkInsightQuery {
+	return NewPullRequestClient(_m.config).QueryInsights(_m)
+}
+
+// QueryActions queries the "actions" edge of the PullRequest entity.
+func (_m *PullRequest) QueryActions() *WorkActionQuery {
+	return NewPullRequestClient(_m.config).QueryActions(_m)
+}
+
+// QueryStateSnapshots queries the "state_snapshots" edge of the PullRequest entity.
+func (_m *PullRequest) QueryStateSnapshots() *WorkItemStateSnapshotQuery {
+	return NewPullRequestClient(_m.config).QueryStateSnapshots(_m)
+}
+
+// QueryStateTransitions queries the "state_transitions" edge of the PullRequest entity.
+func (_m *PullRequest) QueryStateTransitions() *WorkItemStateTransitionQuery {
+	return NewPullRequestClient(_m.config).QueryStateTransitions(_m)
+}
+
+// QueryMilestones queries the "milestones" edge of the PullRequest entity.
+func (_m *PullRequest) QueryMilestones() *WorkProgramMilestoneQuery {
+	return NewPullRequestClient(_m.config).QueryMilestones(_m)
+}
+
 // Update returns a builder for updating this PullRequest.
 // Note that you need to call PullRequest.Unwrap() before calling this method if this PullRequest
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -446,8 +616,54 @@ func (_m *PullRequest) String() string {
 	builder.WriteString("state=")
 	builder.WriteString(fmt.Sprintf("%v", _m.State))
 	builder.WriteString(", ")
+	builder.WriteString("source_created_at=")
+	builder.WriteString(_m.SourceCreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
 	builder.WriteString("merged_at=")
 	builder.WriteString(_m.MergedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("closed_at=")
+	builder.WriteString(_m.ClosedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	if v := _m.Additions; v != nil {
+		builder.WriteString("additions=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.Deletions; v != nil {
+		builder.WriteString("deletions=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.ChangedFilesCount; v != nil {
+		builder.WriteString("changed_files_count=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.CommitCount; v != nil {
+		builder.WriteString("commit_count=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.IssueCommentCount; v != nil {
+		builder.WriteString("issue_comment_count=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.ReviewCommentCount; v != nil {
+		builder.WriteString("review_comment_count=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.IsDraft; v != nil {
+		builder.WriteString("is_draft=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.IsMergeable; v != nil {
+		builder.WriteString("is_mergeable=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("summary=")
 	builder.WriteString(_m.Summary)

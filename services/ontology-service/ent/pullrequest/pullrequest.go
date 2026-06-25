@@ -25,8 +25,28 @@ const (
 	FieldTitle = "title"
 	// FieldState holds the string denoting the state field in the database.
 	FieldState = "state"
+	// FieldSourceCreatedAt holds the string denoting the source_created_at field in the database.
+	FieldSourceCreatedAt = "source_created_at"
 	// FieldMergedAt holds the string denoting the merged_at field in the database.
 	FieldMergedAt = "merged_at"
+	// FieldClosedAt holds the string denoting the closed_at field in the database.
+	FieldClosedAt = "closed_at"
+	// FieldAdditions holds the string denoting the additions field in the database.
+	FieldAdditions = "additions"
+	// FieldDeletions holds the string denoting the deletions field in the database.
+	FieldDeletions = "deletions"
+	// FieldChangedFilesCount holds the string denoting the changed_files_count field in the database.
+	FieldChangedFilesCount = "changed_files_count"
+	// FieldCommitCount holds the string denoting the commit_count field in the database.
+	FieldCommitCount = "commit_count"
+	// FieldIssueCommentCount holds the string denoting the issue_comment_count field in the database.
+	FieldIssueCommentCount = "issue_comment_count"
+	// FieldReviewCommentCount holds the string denoting the review_comment_count field in the database.
+	FieldReviewCommentCount = "review_comment_count"
+	// FieldIsDraft holds the string denoting the is_draft field in the database.
+	FieldIsDraft = "is_draft"
+	// FieldIsMergeable holds the string denoting the is_mergeable field in the database.
+	FieldIsMergeable = "is_mergeable"
 	// FieldSummary holds the string denoting the summary field in the database.
 	FieldSummary = "summary"
 	// FieldSearchText holds the string denoting the search_text field in the database.
@@ -93,6 +113,16 @@ const (
 	EdgeTickets = "tickets"
 	// EdgeLatestEvidence holds the string denoting the latest_evidence edge name in mutations.
 	EdgeLatestEvidence = "latest_evidence"
+	// EdgeInsights holds the string denoting the insights edge name in mutations.
+	EdgeInsights = "insights"
+	// EdgeActions holds the string denoting the actions edge name in mutations.
+	EdgeActions = "actions"
+	// EdgeStateSnapshots holds the string denoting the state_snapshots edge name in mutations.
+	EdgeStateSnapshots = "state_snapshots"
+	// EdgeStateTransitions holds the string denoting the state_transitions edge name in mutations.
+	EdgeStateTransitions = "state_transitions"
+	// EdgeMilestones holds the string denoting the milestones edge name in mutations.
+	EdgeMilestones = "milestones"
 	// Table holds the table name of the pullrequest in the database.
 	Table = "pull_requests"
 	// TicketsTable is the table that holds the tickets relation/edge. The primary key declared below.
@@ -107,6 +137,41 @@ const (
 	LatestEvidenceInverseTable = "evidences"
 	// LatestEvidenceColumn is the table column denoting the latest_evidence relation/edge.
 	LatestEvidenceColumn = "latest_evidence_id"
+	// InsightsTable is the table that holds the insights relation/edge.
+	InsightsTable = "work_insights"
+	// InsightsInverseTable is the table name for the WorkInsight entity.
+	// It exists in this package in order to avoid circular dependency with the "workinsight" package.
+	InsightsInverseTable = "work_insights"
+	// InsightsColumn is the table column denoting the insights relation/edge.
+	InsightsColumn = "pull_request_id"
+	// ActionsTable is the table that holds the actions relation/edge.
+	ActionsTable = "work_actions"
+	// ActionsInverseTable is the table name for the WorkAction entity.
+	// It exists in this package in order to avoid circular dependency with the "workaction" package.
+	ActionsInverseTable = "work_actions"
+	// ActionsColumn is the table column denoting the actions relation/edge.
+	ActionsColumn = "pull_request_id"
+	// StateSnapshotsTable is the table that holds the state_snapshots relation/edge.
+	StateSnapshotsTable = "work_item_state_snapshots"
+	// StateSnapshotsInverseTable is the table name for the WorkItemStateSnapshot entity.
+	// It exists in this package in order to avoid circular dependency with the "workitemstatesnapshot" package.
+	StateSnapshotsInverseTable = "work_item_state_snapshots"
+	// StateSnapshotsColumn is the table column denoting the state_snapshots relation/edge.
+	StateSnapshotsColumn = "pull_request_id"
+	// StateTransitionsTable is the table that holds the state_transitions relation/edge.
+	StateTransitionsTable = "work_item_state_transitions"
+	// StateTransitionsInverseTable is the table name for the WorkItemStateTransition entity.
+	// It exists in this package in order to avoid circular dependency with the "workitemstatetransition" package.
+	StateTransitionsInverseTable = "work_item_state_transitions"
+	// StateTransitionsColumn is the table column denoting the state_transitions relation/edge.
+	StateTransitionsColumn = "pull_request_id"
+	// MilestonesTable is the table that holds the milestones relation/edge.
+	MilestonesTable = "work_program_milestones"
+	// MilestonesInverseTable is the table name for the WorkProgramMilestone entity.
+	// It exists in this package in order to avoid circular dependency with the "workprogrammilestone" package.
+	MilestonesInverseTable = "work_program_milestones"
+	// MilestonesColumn is the table column denoting the milestones relation/edge.
+	MilestonesColumn = "pull_request_id"
 )
 
 // Columns holds all SQL columns for pullrequest fields.
@@ -117,7 +182,17 @@ var Columns = []string{
 	FieldNumber,
 	FieldTitle,
 	FieldState,
+	FieldSourceCreatedAt,
 	FieldMergedAt,
+	FieldClosedAt,
+	FieldAdditions,
+	FieldDeletions,
+	FieldChangedFilesCount,
+	FieldCommitCount,
+	FieldIssueCommentCount,
+	FieldReviewCommentCount,
+	FieldIsDraft,
+	FieldIsMergeable,
 	FieldSummary,
 	FieldSearchText,
 	FieldSourceSystem,
@@ -362,9 +437,59 @@ func ByState(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldState, opts...).ToFunc()
 }
 
+// BySourceCreatedAt orders the results by the source_created_at field.
+func BySourceCreatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSourceCreatedAt, opts...).ToFunc()
+}
+
 // ByMergedAt orders the results by the merged_at field.
 func ByMergedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMergedAt, opts...).ToFunc()
+}
+
+// ByClosedAt orders the results by the closed_at field.
+func ByClosedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldClosedAt, opts...).ToFunc()
+}
+
+// ByAdditions orders the results by the additions field.
+func ByAdditions(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAdditions, opts...).ToFunc()
+}
+
+// ByDeletions orders the results by the deletions field.
+func ByDeletions(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletions, opts...).ToFunc()
+}
+
+// ByChangedFilesCount orders the results by the changed_files_count field.
+func ByChangedFilesCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldChangedFilesCount, opts...).ToFunc()
+}
+
+// ByCommitCount orders the results by the commit_count field.
+func ByCommitCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCommitCount, opts...).ToFunc()
+}
+
+// ByIssueCommentCount orders the results by the issue_comment_count field.
+func ByIssueCommentCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIssueCommentCount, opts...).ToFunc()
+}
+
+// ByReviewCommentCount orders the results by the review_comment_count field.
+func ByReviewCommentCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReviewCommentCount, opts...).ToFunc()
+}
+
+// ByIsDraft orders the results by the is_draft field.
+func ByIsDraft(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsDraft, opts...).ToFunc()
+}
+
+// ByIsMergeable orders the results by the is_mergeable field.
+func ByIsMergeable(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsMergeable, opts...).ToFunc()
 }
 
 // BySummary orders the results by the summary field.
@@ -542,6 +667,76 @@ func ByLatestEvidenceField(field string, opts ...sql.OrderTermOption) OrderOptio
 		sqlgraph.OrderByNeighborTerms(s, newLatestEvidenceStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByInsightsCount orders the results by insights count.
+func ByInsightsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newInsightsStep(), opts...)
+	}
+}
+
+// ByInsights orders the results by insights terms.
+func ByInsights(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newInsightsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByActionsCount orders the results by actions count.
+func ByActionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newActionsStep(), opts...)
+	}
+}
+
+// ByActions orders the results by actions terms.
+func ByActions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newActionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByStateSnapshotsCount orders the results by state_snapshots count.
+func ByStateSnapshotsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newStateSnapshotsStep(), opts...)
+	}
+}
+
+// ByStateSnapshots orders the results by state_snapshots terms.
+func ByStateSnapshots(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newStateSnapshotsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByStateTransitionsCount orders the results by state_transitions count.
+func ByStateTransitionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newStateTransitionsStep(), opts...)
+	}
+}
+
+// ByStateTransitions orders the results by state_transitions terms.
+func ByStateTransitions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newStateTransitionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByMilestonesCount orders the results by milestones count.
+func ByMilestonesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newMilestonesStep(), opts...)
+	}
+}
+
+// ByMilestones orders the results by milestones terms.
+func ByMilestones(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMilestonesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newTicketsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -554,5 +749,40 @@ func newLatestEvidenceStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(LatestEvidenceInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, LatestEvidenceTable, LatestEvidenceColumn),
+	)
+}
+func newInsightsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(InsightsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, InsightsTable, InsightsColumn),
+	)
+}
+func newActionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ActionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, ActionsTable, ActionsColumn),
+	)
+}
+func newStateSnapshotsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(StateSnapshotsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, StateSnapshotsTable, StateSnapshotsColumn),
+	)
+}
+func newStateTransitionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(StateTransitionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, StateTransitionsTable, StateTransitionsColumn),
+	)
+}
+func newMilestonesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MilestonesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, MilestonesTable, MilestonesColumn),
 	)
 }

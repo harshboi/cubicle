@@ -13,6 +13,11 @@ import (
 	"cubicle/services/ontology-service/ent/ticketdocument"
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
+	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workinsight"
+	"cubicle/services/ontology-service/ent/workitemstatesnapshot"
+	"cubicle/services/ontology-service/ent/workitemstatetransition"
+	"cubicle/services/ontology-service/ent/workprogrammilestone"
 	"cubicle/services/ontology-service/ent/workstream"
 	"errors"
 	"fmt"
@@ -756,6 +761,81 @@ func (_u *TicketUpdate) SetLatestEvidence(v *Evidence) *TicketUpdate {
 	return _u.SetLatestEvidenceID(v.ID)
 }
 
+// AddInsightIDs adds the "insights" edge to the WorkInsight entity by IDs.
+func (_u *TicketUpdate) AddInsightIDs(ids ...int) *TicketUpdate {
+	_u.mutation.AddInsightIDs(ids...)
+	return _u
+}
+
+// AddInsights adds the "insights" edges to the WorkInsight entity.
+func (_u *TicketUpdate) AddInsights(v ...*WorkInsight) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddInsightIDs(ids...)
+}
+
+// AddActionIDs adds the "actions" edge to the WorkAction entity by IDs.
+func (_u *TicketUpdate) AddActionIDs(ids ...int) *TicketUpdate {
+	_u.mutation.AddActionIDs(ids...)
+	return _u
+}
+
+// AddActions adds the "actions" edges to the WorkAction entity.
+func (_u *TicketUpdate) AddActions(v ...*WorkAction) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddActionIDs(ids...)
+}
+
+// AddStateSnapshotIDs adds the "state_snapshots" edge to the WorkItemStateSnapshot entity by IDs.
+func (_u *TicketUpdate) AddStateSnapshotIDs(ids ...int) *TicketUpdate {
+	_u.mutation.AddStateSnapshotIDs(ids...)
+	return _u
+}
+
+// AddStateSnapshots adds the "state_snapshots" edges to the WorkItemStateSnapshot entity.
+func (_u *TicketUpdate) AddStateSnapshots(v ...*WorkItemStateSnapshot) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddStateSnapshotIDs(ids...)
+}
+
+// AddStateTransitionIDs adds the "state_transitions" edge to the WorkItemStateTransition entity by IDs.
+func (_u *TicketUpdate) AddStateTransitionIDs(ids ...int) *TicketUpdate {
+	_u.mutation.AddStateTransitionIDs(ids...)
+	return _u
+}
+
+// AddStateTransitions adds the "state_transitions" edges to the WorkItemStateTransition entity.
+func (_u *TicketUpdate) AddStateTransitions(v ...*WorkItemStateTransition) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddStateTransitionIDs(ids...)
+}
+
+// AddMilestoneIDs adds the "milestones" edge to the WorkProgramMilestone entity by IDs.
+func (_u *TicketUpdate) AddMilestoneIDs(ids ...int) *TicketUpdate {
+	_u.mutation.AddMilestoneIDs(ids...)
+	return _u
+}
+
+// AddMilestones adds the "milestones" edges to the WorkProgramMilestone entity.
+func (_u *TicketUpdate) AddMilestones(v ...*WorkProgramMilestone) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddMilestoneIDs(ids...)
+}
+
 // AddTicketPullRequestIDs adds the "ticket_pull_requests" edge to the TicketPullRequest entity by IDs.
 func (_u *TicketUpdate) AddTicketPullRequestIDs(ids ...int) *TicketUpdate {
 	_u.mutation.AddTicketPullRequestIDs(ids...)
@@ -894,6 +974,111 @@ func (_u *TicketUpdate) RemoveMessages(v ...*Message) *TicketUpdate {
 func (_u *TicketUpdate) ClearLatestEvidence() *TicketUpdate {
 	_u.mutation.ClearLatestEvidence()
 	return _u
+}
+
+// ClearInsights clears all "insights" edges to the WorkInsight entity.
+func (_u *TicketUpdate) ClearInsights() *TicketUpdate {
+	_u.mutation.ClearInsights()
+	return _u
+}
+
+// RemoveInsightIDs removes the "insights" edge to WorkInsight entities by IDs.
+func (_u *TicketUpdate) RemoveInsightIDs(ids ...int) *TicketUpdate {
+	_u.mutation.RemoveInsightIDs(ids...)
+	return _u
+}
+
+// RemoveInsights removes "insights" edges to WorkInsight entities.
+func (_u *TicketUpdate) RemoveInsights(v ...*WorkInsight) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveInsightIDs(ids...)
+}
+
+// ClearActions clears all "actions" edges to the WorkAction entity.
+func (_u *TicketUpdate) ClearActions() *TicketUpdate {
+	_u.mutation.ClearActions()
+	return _u
+}
+
+// RemoveActionIDs removes the "actions" edge to WorkAction entities by IDs.
+func (_u *TicketUpdate) RemoveActionIDs(ids ...int) *TicketUpdate {
+	_u.mutation.RemoveActionIDs(ids...)
+	return _u
+}
+
+// RemoveActions removes "actions" edges to WorkAction entities.
+func (_u *TicketUpdate) RemoveActions(v ...*WorkAction) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveActionIDs(ids...)
+}
+
+// ClearStateSnapshots clears all "state_snapshots" edges to the WorkItemStateSnapshot entity.
+func (_u *TicketUpdate) ClearStateSnapshots() *TicketUpdate {
+	_u.mutation.ClearStateSnapshots()
+	return _u
+}
+
+// RemoveStateSnapshotIDs removes the "state_snapshots" edge to WorkItemStateSnapshot entities by IDs.
+func (_u *TicketUpdate) RemoveStateSnapshotIDs(ids ...int) *TicketUpdate {
+	_u.mutation.RemoveStateSnapshotIDs(ids...)
+	return _u
+}
+
+// RemoveStateSnapshots removes "state_snapshots" edges to WorkItemStateSnapshot entities.
+func (_u *TicketUpdate) RemoveStateSnapshots(v ...*WorkItemStateSnapshot) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveStateSnapshotIDs(ids...)
+}
+
+// ClearStateTransitions clears all "state_transitions" edges to the WorkItemStateTransition entity.
+func (_u *TicketUpdate) ClearStateTransitions() *TicketUpdate {
+	_u.mutation.ClearStateTransitions()
+	return _u
+}
+
+// RemoveStateTransitionIDs removes the "state_transitions" edge to WorkItemStateTransition entities by IDs.
+func (_u *TicketUpdate) RemoveStateTransitionIDs(ids ...int) *TicketUpdate {
+	_u.mutation.RemoveStateTransitionIDs(ids...)
+	return _u
+}
+
+// RemoveStateTransitions removes "state_transitions" edges to WorkItemStateTransition entities.
+func (_u *TicketUpdate) RemoveStateTransitions(v ...*WorkItemStateTransition) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveStateTransitionIDs(ids...)
+}
+
+// ClearMilestones clears all "milestones" edges to the WorkProgramMilestone entity.
+func (_u *TicketUpdate) ClearMilestones() *TicketUpdate {
+	_u.mutation.ClearMilestones()
+	return _u
+}
+
+// RemoveMilestoneIDs removes the "milestones" edge to WorkProgramMilestone entities by IDs.
+func (_u *TicketUpdate) RemoveMilestoneIDs(ids ...int) *TicketUpdate {
+	_u.mutation.RemoveMilestoneIDs(ids...)
+	return _u
+}
+
+// RemoveMilestones removes "milestones" edges to WorkProgramMilestone entities.
+func (_u *TicketUpdate) RemoveMilestones(v ...*WorkProgramMilestone) *TicketUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveMilestoneIDs(ids...)
 }
 
 // ClearTicketPullRequests clears all "ticket_pull_requests" edges to the TicketPullRequest entity.
@@ -1468,6 +1653,231 @@ func (_u *TicketUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(evidence.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.InsightsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.InsightsTable,
+			Columns: []string{ticket.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedInsightsIDs(); len(nodes) > 0 && !_u.mutation.InsightsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.InsightsTable,
+			Columns: []string{ticket.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.InsightsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.InsightsTable,
+			Columns: []string{ticket.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.ActionsTable,
+			Columns: []string{ticket.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedActionsIDs(); len(nodes) > 0 && !_u.mutation.ActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.ActionsTable,
+			Columns: []string{ticket.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.ActionsTable,
+			Columns: []string{ticket.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StateSnapshotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateSnapshotsTable,
+			Columns: []string{ticket.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedStateSnapshotsIDs(); len(nodes) > 0 && !_u.mutation.StateSnapshotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateSnapshotsTable,
+			Columns: []string{ticket.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StateSnapshotsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateSnapshotsTable,
+			Columns: []string{ticket.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StateTransitionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateTransitionsTable,
+			Columns: []string{ticket.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedStateTransitionsIDs(); len(nodes) > 0 && !_u.mutation.StateTransitionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateTransitionsTable,
+			Columns: []string{ticket.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StateTransitionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateTransitionsTable,
+			Columns: []string{ticket.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.MilestonesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.MilestonesTable,
+			Columns: []string{ticket.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedMilestonesIDs(); len(nodes) > 0 && !_u.mutation.MilestonesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.MilestonesTable,
+			Columns: []string{ticket.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MilestonesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.MilestonesTable,
+			Columns: []string{ticket.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -2350,6 +2760,81 @@ func (_u *TicketUpdateOne) SetLatestEvidence(v *Evidence) *TicketUpdateOne {
 	return _u.SetLatestEvidenceID(v.ID)
 }
 
+// AddInsightIDs adds the "insights" edge to the WorkInsight entity by IDs.
+func (_u *TicketUpdateOne) AddInsightIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.AddInsightIDs(ids...)
+	return _u
+}
+
+// AddInsights adds the "insights" edges to the WorkInsight entity.
+func (_u *TicketUpdateOne) AddInsights(v ...*WorkInsight) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddInsightIDs(ids...)
+}
+
+// AddActionIDs adds the "actions" edge to the WorkAction entity by IDs.
+func (_u *TicketUpdateOne) AddActionIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.AddActionIDs(ids...)
+	return _u
+}
+
+// AddActions adds the "actions" edges to the WorkAction entity.
+func (_u *TicketUpdateOne) AddActions(v ...*WorkAction) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddActionIDs(ids...)
+}
+
+// AddStateSnapshotIDs adds the "state_snapshots" edge to the WorkItemStateSnapshot entity by IDs.
+func (_u *TicketUpdateOne) AddStateSnapshotIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.AddStateSnapshotIDs(ids...)
+	return _u
+}
+
+// AddStateSnapshots adds the "state_snapshots" edges to the WorkItemStateSnapshot entity.
+func (_u *TicketUpdateOne) AddStateSnapshots(v ...*WorkItemStateSnapshot) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddStateSnapshotIDs(ids...)
+}
+
+// AddStateTransitionIDs adds the "state_transitions" edge to the WorkItemStateTransition entity by IDs.
+func (_u *TicketUpdateOne) AddStateTransitionIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.AddStateTransitionIDs(ids...)
+	return _u
+}
+
+// AddStateTransitions adds the "state_transitions" edges to the WorkItemStateTransition entity.
+func (_u *TicketUpdateOne) AddStateTransitions(v ...*WorkItemStateTransition) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddStateTransitionIDs(ids...)
+}
+
+// AddMilestoneIDs adds the "milestones" edge to the WorkProgramMilestone entity by IDs.
+func (_u *TicketUpdateOne) AddMilestoneIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.AddMilestoneIDs(ids...)
+	return _u
+}
+
+// AddMilestones adds the "milestones" edges to the WorkProgramMilestone entity.
+func (_u *TicketUpdateOne) AddMilestones(v ...*WorkProgramMilestone) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddMilestoneIDs(ids...)
+}
+
 // AddTicketPullRequestIDs adds the "ticket_pull_requests" edge to the TicketPullRequest entity by IDs.
 func (_u *TicketUpdateOne) AddTicketPullRequestIDs(ids ...int) *TicketUpdateOne {
 	_u.mutation.AddTicketPullRequestIDs(ids...)
@@ -2488,6 +2973,111 @@ func (_u *TicketUpdateOne) RemoveMessages(v ...*Message) *TicketUpdateOne {
 func (_u *TicketUpdateOne) ClearLatestEvidence() *TicketUpdateOne {
 	_u.mutation.ClearLatestEvidence()
 	return _u
+}
+
+// ClearInsights clears all "insights" edges to the WorkInsight entity.
+func (_u *TicketUpdateOne) ClearInsights() *TicketUpdateOne {
+	_u.mutation.ClearInsights()
+	return _u
+}
+
+// RemoveInsightIDs removes the "insights" edge to WorkInsight entities by IDs.
+func (_u *TicketUpdateOne) RemoveInsightIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.RemoveInsightIDs(ids...)
+	return _u
+}
+
+// RemoveInsights removes "insights" edges to WorkInsight entities.
+func (_u *TicketUpdateOne) RemoveInsights(v ...*WorkInsight) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveInsightIDs(ids...)
+}
+
+// ClearActions clears all "actions" edges to the WorkAction entity.
+func (_u *TicketUpdateOne) ClearActions() *TicketUpdateOne {
+	_u.mutation.ClearActions()
+	return _u
+}
+
+// RemoveActionIDs removes the "actions" edge to WorkAction entities by IDs.
+func (_u *TicketUpdateOne) RemoveActionIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.RemoveActionIDs(ids...)
+	return _u
+}
+
+// RemoveActions removes "actions" edges to WorkAction entities.
+func (_u *TicketUpdateOne) RemoveActions(v ...*WorkAction) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveActionIDs(ids...)
+}
+
+// ClearStateSnapshots clears all "state_snapshots" edges to the WorkItemStateSnapshot entity.
+func (_u *TicketUpdateOne) ClearStateSnapshots() *TicketUpdateOne {
+	_u.mutation.ClearStateSnapshots()
+	return _u
+}
+
+// RemoveStateSnapshotIDs removes the "state_snapshots" edge to WorkItemStateSnapshot entities by IDs.
+func (_u *TicketUpdateOne) RemoveStateSnapshotIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.RemoveStateSnapshotIDs(ids...)
+	return _u
+}
+
+// RemoveStateSnapshots removes "state_snapshots" edges to WorkItemStateSnapshot entities.
+func (_u *TicketUpdateOne) RemoveStateSnapshots(v ...*WorkItemStateSnapshot) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveStateSnapshotIDs(ids...)
+}
+
+// ClearStateTransitions clears all "state_transitions" edges to the WorkItemStateTransition entity.
+func (_u *TicketUpdateOne) ClearStateTransitions() *TicketUpdateOne {
+	_u.mutation.ClearStateTransitions()
+	return _u
+}
+
+// RemoveStateTransitionIDs removes the "state_transitions" edge to WorkItemStateTransition entities by IDs.
+func (_u *TicketUpdateOne) RemoveStateTransitionIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.RemoveStateTransitionIDs(ids...)
+	return _u
+}
+
+// RemoveStateTransitions removes "state_transitions" edges to WorkItemStateTransition entities.
+func (_u *TicketUpdateOne) RemoveStateTransitions(v ...*WorkItemStateTransition) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveStateTransitionIDs(ids...)
+}
+
+// ClearMilestones clears all "milestones" edges to the WorkProgramMilestone entity.
+func (_u *TicketUpdateOne) ClearMilestones() *TicketUpdateOne {
+	_u.mutation.ClearMilestones()
+	return _u
+}
+
+// RemoveMilestoneIDs removes the "milestones" edge to WorkProgramMilestone entities by IDs.
+func (_u *TicketUpdateOne) RemoveMilestoneIDs(ids ...int) *TicketUpdateOne {
+	_u.mutation.RemoveMilestoneIDs(ids...)
+	return _u
+}
+
+// RemoveMilestones removes "milestones" edges to WorkProgramMilestone entities.
+func (_u *TicketUpdateOne) RemoveMilestones(v ...*WorkProgramMilestone) *TicketUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveMilestoneIDs(ids...)
 }
 
 // ClearTicketPullRequests clears all "ticket_pull_requests" edges to the TicketPullRequest entity.
@@ -3092,6 +3682,231 @@ func (_u *TicketUpdateOne) sqlSave(ctx context.Context) (_node *Ticket, err erro
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(evidence.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.InsightsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.InsightsTable,
+			Columns: []string{ticket.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedInsightsIDs(); len(nodes) > 0 && !_u.mutation.InsightsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.InsightsTable,
+			Columns: []string{ticket.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.InsightsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.InsightsTable,
+			Columns: []string{ticket.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.ActionsTable,
+			Columns: []string{ticket.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedActionsIDs(); len(nodes) > 0 && !_u.mutation.ActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.ActionsTable,
+			Columns: []string{ticket.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.ActionsTable,
+			Columns: []string{ticket.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StateSnapshotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateSnapshotsTable,
+			Columns: []string{ticket.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedStateSnapshotsIDs(); len(nodes) > 0 && !_u.mutation.StateSnapshotsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateSnapshotsTable,
+			Columns: []string{ticket.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StateSnapshotsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateSnapshotsTable,
+			Columns: []string{ticket.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StateTransitionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateTransitionsTable,
+			Columns: []string{ticket.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedStateTransitionsIDs(); len(nodes) > 0 && !_u.mutation.StateTransitionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateTransitionsTable,
+			Columns: []string{ticket.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StateTransitionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.StateTransitionsTable,
+			Columns: []string{ticket.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.MilestonesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.MilestonesTable,
+			Columns: []string{ticket.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedMilestonesIDs(); len(nodes) > 0 && !_u.mutation.MilestonesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.MilestonesTable,
+			Columns: []string{ticket.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MilestonesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   ticket.MilestonesTable,
+			Columns: []string{ticket.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

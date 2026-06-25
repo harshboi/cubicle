@@ -116,6 +116,30 @@ func (f MessageMentionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MessageMentionMutation", m)
 }
 
+// The OpenGraphAssociationFunc type is an adapter to allow the use of ordinary
+// function as OpenGraphAssociation mutator.
+type OpenGraphAssociationFunc func(context.Context, *ent.OpenGraphAssociationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f OpenGraphAssociationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.OpenGraphAssociationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OpenGraphAssociationMutation", m)
+}
+
+// The OpenGraphObjectFunc type is an adapter to allow the use of ordinary
+// function as OpenGraphObject mutator.
+type OpenGraphObjectFunc func(context.Context, *ent.OpenGraphObjectMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f OpenGraphObjectFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.OpenGraphObjectMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OpenGraphObjectMutation", m)
+}
+
 // The PersonFunc type is an adapter to allow the use of ordinary
 // function as Person mutator.
 type PersonFunc func(context.Context, *ent.PersonMutation) (ent.Value, error)
@@ -356,6 +380,30 @@ func (f UnresolvedReferenceFunc) Mutate(ctx context.Context, m ent.Mutation) (en
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UnresolvedReferenceMutation", m)
 }
 
+// The WorkActionFunc type is an adapter to allow the use of ordinary
+// function as WorkAction mutator.
+type WorkActionFunc func(context.Context, *ent.WorkActionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkActionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkActionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkActionMutation", m)
+}
+
+// The WorkActionObservationFunc type is an adapter to allow the use of ordinary
+// function as WorkActionObservation mutator.
+type WorkActionObservationFunc func(context.Context, *ent.WorkActionObservationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkActionObservationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkActionObservationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkActionObservationMutation", m)
+}
+
 // The WorkAreaFunc type is an adapter to allow the use of ordinary
 // function as WorkArea mutator.
 type WorkAreaFunc func(context.Context, *ent.WorkAreaMutation) (ent.Value, error)
@@ -366,6 +414,162 @@ func (f WorkAreaFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkAreaMutation", m)
+}
+
+// The WorkBlockerFunc type is an adapter to allow the use of ordinary
+// function as WorkBlocker mutator.
+type WorkBlockerFunc func(context.Context, *ent.WorkBlockerMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkBlockerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkBlockerMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkBlockerMutation", m)
+}
+
+// The WorkBlockerImpactFunc type is an adapter to allow the use of ordinary
+// function as WorkBlockerImpact mutator.
+type WorkBlockerImpactFunc func(context.Context, *ent.WorkBlockerImpactMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkBlockerImpactFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkBlockerImpactMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkBlockerImpactMutation", m)
+}
+
+// The WorkDecisionTargetEvaluationFunc type is an adapter to allow the use of ordinary
+// function as WorkDecisionTargetEvaluation mutator.
+type WorkDecisionTargetEvaluationFunc func(context.Context, *ent.WorkDecisionTargetEvaluationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkDecisionTargetEvaluationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkDecisionTargetEvaluationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkDecisionTargetEvaluationMutation", m)
+}
+
+// The WorkDependencyEdgeFunc type is an adapter to allow the use of ordinary
+// function as WorkDependencyEdge mutator.
+type WorkDependencyEdgeFunc func(context.Context, *ent.WorkDependencyEdgeMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkDependencyEdgeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkDependencyEdgeMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkDependencyEdgeMutation", m)
+}
+
+// The WorkDependencyEndpointFunc type is an adapter to allow the use of ordinary
+// function as WorkDependencyEndpoint mutator.
+type WorkDependencyEndpointFunc func(context.Context, *ent.WorkDependencyEndpointMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkDependencyEndpointFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkDependencyEndpointMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkDependencyEndpointMutation", m)
+}
+
+// The WorkForecastEvaluationFunc type is an adapter to allow the use of ordinary
+// function as WorkForecastEvaluation mutator.
+type WorkForecastEvaluationFunc func(context.Context, *ent.WorkForecastEvaluationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkForecastEvaluationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkForecastEvaluationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkForecastEvaluationMutation", m)
+}
+
+// The WorkInsightFunc type is an adapter to allow the use of ordinary
+// function as WorkInsight mutator.
+type WorkInsightFunc func(context.Context, *ent.WorkInsightMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkInsightFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkInsightMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkInsightMutation", m)
+}
+
+// The WorkInsightEvaluationSnapshotFunc type is an adapter to allow the use of ordinary
+// function as WorkInsightEvaluationSnapshot mutator.
+type WorkInsightEvaluationSnapshotFunc func(context.Context, *ent.WorkInsightEvaluationSnapshotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkInsightEvaluationSnapshotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkInsightEvaluationSnapshotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkInsightEvaluationSnapshotMutation", m)
+}
+
+// The WorkInsightKindEvaluationSnapshotFunc type is an adapter to allow the use of ordinary
+// function as WorkInsightKindEvaluationSnapshot mutator.
+type WorkInsightKindEvaluationSnapshotFunc func(context.Context, *ent.WorkInsightKindEvaluationSnapshotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkInsightKindEvaluationSnapshotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkInsightKindEvaluationSnapshotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkInsightKindEvaluationSnapshotMutation", m)
+}
+
+// The WorkInsightReviewFunc type is an adapter to allow the use of ordinary
+// function as WorkInsightReview mutator.
+type WorkInsightReviewFunc func(context.Context, *ent.WorkInsightReviewMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkInsightReviewFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkInsightReviewMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkInsightReviewMutation", m)
+}
+
+// The WorkItemForecastFunc type is an adapter to allow the use of ordinary
+// function as WorkItemForecast mutator.
+type WorkItemForecastFunc func(context.Context, *ent.WorkItemForecastMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkItemForecastFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkItemForecastMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkItemForecastMutation", m)
+}
+
+// The WorkItemStateSnapshotFunc type is an adapter to allow the use of ordinary
+// function as WorkItemStateSnapshot mutator.
+type WorkItemStateSnapshotFunc func(context.Context, *ent.WorkItemStateSnapshotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkItemStateSnapshotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkItemStateSnapshotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkItemStateSnapshotMutation", m)
+}
+
+// The WorkItemStateTransitionFunc type is an adapter to allow the use of ordinary
+// function as WorkItemStateTransition mutator.
+type WorkItemStateTransitionFunc func(context.Context, *ent.WorkItemStateTransitionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkItemStateTransitionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkItemStateTransitionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkItemStateTransitionMutation", m)
 }
 
 // The WorkLensFunc type is an adapter to allow the use of ordinary
@@ -392,6 +596,198 @@ func (f WorkLensWindowFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkLensWindowMutation", m)
 }
 
+// The WorkOwnerLoadSnapshotFunc type is an adapter to allow the use of ordinary
+// function as WorkOwnerLoadSnapshot mutator.
+type WorkOwnerLoadSnapshotFunc func(context.Context, *ent.WorkOwnerLoadSnapshotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkOwnerLoadSnapshotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkOwnerLoadSnapshotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkOwnerLoadSnapshotMutation", m)
+}
+
+// The WorkProgramAdversarialCheckFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramAdversarialCheck mutator.
+type WorkProgramAdversarialCheckFunc func(context.Context, *ent.WorkProgramAdversarialCheckMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramAdversarialCheckFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramAdversarialCheckMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramAdversarialCheckMutation", m)
+}
+
+// The WorkProgramAutomationReadinessFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramAutomationReadiness mutator.
+type WorkProgramAutomationReadinessFunc func(context.Context, *ent.WorkProgramAutomationReadinessMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramAutomationReadinessFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramAutomationReadinessMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramAutomationReadinessMutation", m)
+}
+
+// The WorkProgramBriefCaveatFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramBriefCaveat mutator.
+type WorkProgramBriefCaveatFunc func(context.Context, *ent.WorkProgramBriefCaveatMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramBriefCaveatFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramBriefCaveatMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramBriefCaveatMutation", m)
+}
+
+// The WorkProgramBriefSnapshotFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramBriefSnapshot mutator.
+type WorkProgramBriefSnapshotFunc func(context.Context, *ent.WorkProgramBriefSnapshotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramBriefSnapshotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramBriefSnapshotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramBriefSnapshotMutation", m)
+}
+
+// The WorkProgramEvidenceNeedFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramEvidenceNeed mutator.
+type WorkProgramEvidenceNeedFunc func(context.Context, *ent.WorkProgramEvidenceNeedMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramEvidenceNeedFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramEvidenceNeedMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramEvidenceNeedMutation", m)
+}
+
+// The WorkProgramItemFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramItem mutator.
+type WorkProgramItemFunc func(context.Context, *ent.WorkProgramItemMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramItemFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramItemMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramItemMutation", m)
+}
+
+// The WorkProgramMilestoneFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramMilestone mutator.
+type WorkProgramMilestoneFunc func(context.Context, *ent.WorkProgramMilestoneMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramMilestoneFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramMilestoneMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramMilestoneMutation", m)
+}
+
+// The WorkProgramOwnerRollupSnapshotFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramOwnerRollupSnapshot mutator.
+type WorkProgramOwnerRollupSnapshotFunc func(context.Context, *ent.WorkProgramOwnerRollupSnapshotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramOwnerRollupSnapshotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramOwnerRollupSnapshotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramOwnerRollupSnapshotMutation", m)
+}
+
+// The WorkProgramQualityGateFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramQualityGate mutator.
+type WorkProgramQualityGateFunc func(context.Context, *ent.WorkProgramQualityGateMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramQualityGateFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramQualityGateMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramQualityGateMutation", m)
+}
+
+// The WorkProgramRiskDriverFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramRiskDriver mutator.
+type WorkProgramRiskDriverFunc func(context.Context, *ent.WorkProgramRiskDriverMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramRiskDriverFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramRiskDriverMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramRiskDriverMutation", m)
+}
+
+// The WorkProgramRunFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramRun mutator.
+type WorkProgramRunFunc func(context.Context, *ent.WorkProgramRunMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramRunFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramRunMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramRunMutation", m)
+}
+
+// The WorkProgramRunMemberFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramRunMember mutator.
+type WorkProgramRunMemberFunc func(context.Context, *ent.WorkProgramRunMemberMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramRunMemberFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramRunMemberMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramRunMemberMutation", m)
+}
+
+// The WorkProgramSummarySnapshotFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramSummarySnapshot mutator.
+type WorkProgramSummarySnapshotFunc func(context.Context, *ent.WorkProgramSummarySnapshotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramSummarySnapshotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramSummarySnapshotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramSummarySnapshotMutation", m)
+}
+
+// The WorkProgramTPMFunctionReadinessFunc type is an adapter to allow the use of ordinary
+// function as WorkProgramTPMFunctionReadiness mutator.
+type WorkProgramTPMFunctionReadinessFunc func(context.Context, *ent.WorkProgramTPMFunctionReadinessMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkProgramTPMFunctionReadinessFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkProgramTPMFunctionReadinessMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkProgramTPMFunctionReadinessMutation", m)
+}
+
+// The WorkResponsibilityFunc type is an adapter to allow the use of ordinary
+// function as WorkResponsibility mutator.
+type WorkResponsibilityFunc func(context.Context, *ent.WorkResponsibilityMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkResponsibilityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkResponsibilityMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkResponsibilityMutation", m)
+}
+
 // The WorkstreamFunc type is an adapter to allow the use of ordinary
 // function as Workstream mutator.
 type WorkstreamFunc func(context.Context, *ent.WorkstreamMutation) (ent.Value, error)
@@ -402,6 +798,30 @@ func (f WorkstreamFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkstreamMutation", m)
+}
+
+// The WorkstreamHealthSnapshotFunc type is an adapter to allow the use of ordinary
+// function as WorkstreamHealthSnapshot mutator.
+type WorkstreamHealthSnapshotFunc func(context.Context, *ent.WorkstreamHealthSnapshotMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkstreamHealthSnapshotFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkstreamHealthSnapshotMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkstreamHealthSnapshotMutation", m)
+}
+
+// The WorkstreamStandupSectionFunc type is an adapter to allow the use of ordinary
+// function as WorkstreamStandupSection mutator.
+type WorkstreamStandupSectionFunc func(context.Context, *ent.WorkstreamStandupSectionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f WorkstreamStandupSectionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.WorkstreamStandupSectionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.WorkstreamStandupSectionMutation", m)
 }
 
 // The WorkstreamTicketFunc type is an adapter to allow the use of ordinary

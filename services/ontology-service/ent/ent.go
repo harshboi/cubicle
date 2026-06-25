@@ -13,6 +13,8 @@ import (
 	"cubicle/services/ontology-service/ent/messageauthorship"
 	"cubicle/services/ontology-service/ent/messagelensresult"
 	"cubicle/services/ontology-service/ent/messagemention"
+	"cubicle/services/ontology-service/ent/opengraphassociation"
+	"cubicle/services/ontology-service/ent/opengraphobject"
 	"cubicle/services/ontology-service/ent/person"
 	"cubicle/services/ontology-service/ent/personidentity"
 	"cubicle/services/ontology-service/ent/pullrequest"
@@ -33,10 +35,43 @@ import (
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
 	"cubicle/services/ontology-service/ent/unresolvedreference"
+	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workactionobservation"
 	"cubicle/services/ontology-service/ent/workarea"
+	"cubicle/services/ontology-service/ent/workblocker"
+	"cubicle/services/ontology-service/ent/workblockerimpact"
+	"cubicle/services/ontology-service/ent/workdecisiontargetevaluation"
+	"cubicle/services/ontology-service/ent/workdependencyedge"
+	"cubicle/services/ontology-service/ent/workdependencyendpoint"
+	"cubicle/services/ontology-service/ent/workforecastevaluation"
+	"cubicle/services/ontology-service/ent/workinsight"
+	"cubicle/services/ontology-service/ent/workinsightevaluationsnapshot"
+	"cubicle/services/ontology-service/ent/workinsightkindevaluationsnapshot"
+	"cubicle/services/ontology-service/ent/workinsightreview"
+	"cubicle/services/ontology-service/ent/workitemforecast"
+	"cubicle/services/ontology-service/ent/workitemstatesnapshot"
+	"cubicle/services/ontology-service/ent/workitemstatetransition"
 	"cubicle/services/ontology-service/ent/worklens"
 	"cubicle/services/ontology-service/ent/worklenswindow"
+	"cubicle/services/ontology-service/ent/workownerloadsnapshot"
+	"cubicle/services/ontology-service/ent/workprogramadversarialcheck"
+	"cubicle/services/ontology-service/ent/workprogramautomationreadiness"
+	"cubicle/services/ontology-service/ent/workprogrambriefcaveat"
+	"cubicle/services/ontology-service/ent/workprogrambriefsnapshot"
+	"cubicle/services/ontology-service/ent/workprogramevidenceneed"
+	"cubicle/services/ontology-service/ent/workprogramitem"
+	"cubicle/services/ontology-service/ent/workprogrammilestone"
+	"cubicle/services/ontology-service/ent/workprogramownerrollupsnapshot"
+	"cubicle/services/ontology-service/ent/workprogramqualitygate"
+	"cubicle/services/ontology-service/ent/workprogramriskdriver"
+	"cubicle/services/ontology-service/ent/workprogramrun"
+	"cubicle/services/ontology-service/ent/workprogramrunmember"
+	"cubicle/services/ontology-service/ent/workprogramsummarysnapshot"
+	"cubicle/services/ontology-service/ent/workprogramtpmfunctionreadiness"
+	"cubicle/services/ontology-service/ent/workresponsibility"
 	"cubicle/services/ontology-service/ent/workstream"
+	"cubicle/services/ontology-service/ent/workstreamhealthsnapshot"
+	"cubicle/services/ontology-service/ent/workstreamstandupsection"
 	"cubicle/services/ontology-service/ent/workstreamticket"
 	"errors"
 	"fmt"
@@ -106,40 +141,75 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			document.Table:              document.ValidColumn,
-			documentauthorship.Table:    documentauthorship.ValidColumn,
-			documentlensresult.Table:    documentlensresult.ValidColumn,
-			documentlink.Table:          documentlink.ValidColumn,
-			evidence.Table:              evidence.ValidColumn,
-			message.Table:               message.ValidColumn,
-			messageauthorship.Table:     messageauthorship.ValidColumn,
-			messagelensresult.Table:     messagelensresult.ValidColumn,
-			messagemention.Table:        messagemention.ValidColumn,
-			person.Table:                person.ValidColumn,
-			personidentity.Table:        personidentity.ValidColumn,
-			pullrequest.Table:           pullrequest.ValidColumn,
-			pullrequestauthorship.Table: pullrequestauthorship.ValidColumn,
-			pullrequestlensresult.Table: pullrequestlensresult.ValidColumn,
-			pullrequestreview.Table:     pullrequestreview.ValidColumn,
-			sourcealias.Table:           sourcealias.ValidColumn,
-			sourceconnection.Table:      sourceconnection.ValidColumn,
-			sourcescope.Table:           sourcescope.ValidColumn,
-			sourcescopestate.Table:      sourcescopestate.ValidColumn,
-			sourcesyncissue.Table:       sourcesyncissue.ValidColumn,
-			sourcesyncrun.Table:         sourcesyncrun.ValidColumn,
-			ticket.Table:                ticket.ValidColumn,
-			ticketassignment.Table:      ticketassignment.ValidColumn,
-			ticketdocument.Table:        ticketdocument.ValidColumn,
-			ticketlensresult.Table:      ticketlensresult.ValidColumn,
-			ticketmention.Table:         ticketmention.ValidColumn,
-			ticketmessage.Table:         ticketmessage.ValidColumn,
-			ticketpullrequest.Table:     ticketpullrequest.ValidColumn,
-			unresolvedreference.Table:   unresolvedreference.ValidColumn,
-			workarea.Table:              workarea.ValidColumn,
-			worklens.Table:              worklens.ValidColumn,
-			worklenswindow.Table:        worklenswindow.ValidColumn,
-			workstream.Table:            workstream.ValidColumn,
-			workstreamticket.Table:      workstreamticket.ValidColumn,
+			document.Table:                          document.ValidColumn,
+			documentauthorship.Table:                documentauthorship.ValidColumn,
+			documentlensresult.Table:                documentlensresult.ValidColumn,
+			documentlink.Table:                      documentlink.ValidColumn,
+			evidence.Table:                          evidence.ValidColumn,
+			message.Table:                           message.ValidColumn,
+			messageauthorship.Table:                 messageauthorship.ValidColumn,
+			messagelensresult.Table:                 messagelensresult.ValidColumn,
+			messagemention.Table:                    messagemention.ValidColumn,
+			opengraphassociation.Table:              opengraphassociation.ValidColumn,
+			opengraphobject.Table:                   opengraphobject.ValidColumn,
+			person.Table:                            person.ValidColumn,
+			personidentity.Table:                    personidentity.ValidColumn,
+			pullrequest.Table:                       pullrequest.ValidColumn,
+			pullrequestauthorship.Table:             pullrequestauthorship.ValidColumn,
+			pullrequestlensresult.Table:             pullrequestlensresult.ValidColumn,
+			pullrequestreview.Table:                 pullrequestreview.ValidColumn,
+			sourcealias.Table:                       sourcealias.ValidColumn,
+			sourceconnection.Table:                  sourceconnection.ValidColumn,
+			sourcescope.Table:                       sourcescope.ValidColumn,
+			sourcescopestate.Table:                  sourcescopestate.ValidColumn,
+			sourcesyncissue.Table:                   sourcesyncissue.ValidColumn,
+			sourcesyncrun.Table:                     sourcesyncrun.ValidColumn,
+			ticket.Table:                            ticket.ValidColumn,
+			ticketassignment.Table:                  ticketassignment.ValidColumn,
+			ticketdocument.Table:                    ticketdocument.ValidColumn,
+			ticketlensresult.Table:                  ticketlensresult.ValidColumn,
+			ticketmention.Table:                     ticketmention.ValidColumn,
+			ticketmessage.Table:                     ticketmessage.ValidColumn,
+			ticketpullrequest.Table:                 ticketpullrequest.ValidColumn,
+			unresolvedreference.Table:               unresolvedreference.ValidColumn,
+			workaction.Table:                        workaction.ValidColumn,
+			workactionobservation.Table:             workactionobservation.ValidColumn,
+			workarea.Table:                          workarea.ValidColumn,
+			workblocker.Table:                       workblocker.ValidColumn,
+			workblockerimpact.Table:                 workblockerimpact.ValidColumn,
+			workdecisiontargetevaluation.Table:      workdecisiontargetevaluation.ValidColumn,
+			workdependencyedge.Table:                workdependencyedge.ValidColumn,
+			workdependencyendpoint.Table:            workdependencyendpoint.ValidColumn,
+			workforecastevaluation.Table:            workforecastevaluation.ValidColumn,
+			workinsight.Table:                       workinsight.ValidColumn,
+			workinsightevaluationsnapshot.Table:     workinsightevaluationsnapshot.ValidColumn,
+			workinsightkindevaluationsnapshot.Table: workinsightkindevaluationsnapshot.ValidColumn,
+			workinsightreview.Table:                 workinsightreview.ValidColumn,
+			workitemforecast.Table:                  workitemforecast.ValidColumn,
+			workitemstatesnapshot.Table:             workitemstatesnapshot.ValidColumn,
+			workitemstatetransition.Table:           workitemstatetransition.ValidColumn,
+			worklens.Table:                          worklens.ValidColumn,
+			worklenswindow.Table:                    worklenswindow.ValidColumn,
+			workownerloadsnapshot.Table:             workownerloadsnapshot.ValidColumn,
+			workprogramadversarialcheck.Table:       workprogramadversarialcheck.ValidColumn,
+			workprogramautomationreadiness.Table:    workprogramautomationreadiness.ValidColumn,
+			workprogrambriefcaveat.Table:            workprogrambriefcaveat.ValidColumn,
+			workprogrambriefsnapshot.Table:          workprogrambriefsnapshot.ValidColumn,
+			workprogramevidenceneed.Table:           workprogramevidenceneed.ValidColumn,
+			workprogramitem.Table:                   workprogramitem.ValidColumn,
+			workprogrammilestone.Table:              workprogrammilestone.ValidColumn,
+			workprogramownerrollupsnapshot.Table:    workprogramownerrollupsnapshot.ValidColumn,
+			workprogramqualitygate.Table:            workprogramqualitygate.ValidColumn,
+			workprogramriskdriver.Table:             workprogramriskdriver.ValidColumn,
+			workprogramrun.Table:                    workprogramrun.ValidColumn,
+			workprogramrunmember.Table:              workprogramrunmember.ValidColumn,
+			workprogramsummarysnapshot.Table:        workprogramsummarysnapshot.ValidColumn,
+			workprogramtpmfunctionreadiness.Table:   workprogramtpmfunctionreadiness.ValidColumn,
+			workresponsibility.Table:                workresponsibility.ValidColumn,
+			workstream.Table:                        workstream.ValidColumn,
+			workstreamhealthsnapshot.Table:          workstreamhealthsnapshot.ValidColumn,
+			workstreamstandupsection.Table:          workstreamstandupsection.ValidColumn,
+			workstreamticket.Table:                  workstreamticket.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

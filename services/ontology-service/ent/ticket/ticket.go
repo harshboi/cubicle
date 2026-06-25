@@ -97,6 +97,16 @@ const (
 	EdgeMessages = "messages"
 	// EdgeLatestEvidence holds the string denoting the latest_evidence edge name in mutations.
 	EdgeLatestEvidence = "latest_evidence"
+	// EdgeInsights holds the string denoting the insights edge name in mutations.
+	EdgeInsights = "insights"
+	// EdgeActions holds the string denoting the actions edge name in mutations.
+	EdgeActions = "actions"
+	// EdgeStateSnapshots holds the string denoting the state_snapshots edge name in mutations.
+	EdgeStateSnapshots = "state_snapshots"
+	// EdgeStateTransitions holds the string denoting the state_transitions edge name in mutations.
+	EdgeStateTransitions = "state_transitions"
+	// EdgeMilestones holds the string denoting the milestones edge name in mutations.
+	EdgeMilestones = "milestones"
 	// EdgeTicketPullRequests holds the string denoting the ticket_pull_requests edge name in mutations.
 	EdgeTicketPullRequests = "ticket_pull_requests"
 	// EdgeTicketDocuments holds the string denoting the ticket_documents edge name in mutations.
@@ -132,6 +142,41 @@ const (
 	LatestEvidenceInverseTable = "evidences"
 	// LatestEvidenceColumn is the table column denoting the latest_evidence relation/edge.
 	LatestEvidenceColumn = "latest_evidence_id"
+	// InsightsTable is the table that holds the insights relation/edge.
+	InsightsTable = "work_insights"
+	// InsightsInverseTable is the table name for the WorkInsight entity.
+	// It exists in this package in order to avoid circular dependency with the "workinsight" package.
+	InsightsInverseTable = "work_insights"
+	// InsightsColumn is the table column denoting the insights relation/edge.
+	InsightsColumn = "ticket_id"
+	// ActionsTable is the table that holds the actions relation/edge.
+	ActionsTable = "work_actions"
+	// ActionsInverseTable is the table name for the WorkAction entity.
+	// It exists in this package in order to avoid circular dependency with the "workaction" package.
+	ActionsInverseTable = "work_actions"
+	// ActionsColumn is the table column denoting the actions relation/edge.
+	ActionsColumn = "ticket_id"
+	// StateSnapshotsTable is the table that holds the state_snapshots relation/edge.
+	StateSnapshotsTable = "work_item_state_snapshots"
+	// StateSnapshotsInverseTable is the table name for the WorkItemStateSnapshot entity.
+	// It exists in this package in order to avoid circular dependency with the "workitemstatesnapshot" package.
+	StateSnapshotsInverseTable = "work_item_state_snapshots"
+	// StateSnapshotsColumn is the table column denoting the state_snapshots relation/edge.
+	StateSnapshotsColumn = "ticket_id"
+	// StateTransitionsTable is the table that holds the state_transitions relation/edge.
+	StateTransitionsTable = "work_item_state_transitions"
+	// StateTransitionsInverseTable is the table name for the WorkItemStateTransition entity.
+	// It exists in this package in order to avoid circular dependency with the "workitemstatetransition" package.
+	StateTransitionsInverseTable = "work_item_state_transitions"
+	// StateTransitionsColumn is the table column denoting the state_transitions relation/edge.
+	StateTransitionsColumn = "ticket_id"
+	// MilestonesTable is the table that holds the milestones relation/edge.
+	MilestonesTable = "work_program_milestones"
+	// MilestonesInverseTable is the table name for the WorkProgramMilestone entity.
+	// It exists in this package in order to avoid circular dependency with the "workprogrammilestone" package.
+	MilestonesInverseTable = "work_program_milestones"
+	// MilestonesColumn is the table column denoting the milestones relation/edge.
+	MilestonesColumn = "ticket_id"
 	// TicketPullRequestsTable is the table that holds the ticket_pull_requests relation/edge.
 	TicketPullRequestsTable = "ticket_pull_requests"
 	// TicketPullRequestsInverseTable is the table name for the TicketPullRequest entity.
@@ -633,6 +678,76 @@ func ByLatestEvidenceField(field string, opts ...sql.OrderTermOption) OrderOptio
 	}
 }
 
+// ByInsightsCount orders the results by insights count.
+func ByInsightsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newInsightsStep(), opts...)
+	}
+}
+
+// ByInsights orders the results by insights terms.
+func ByInsights(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newInsightsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByActionsCount orders the results by actions count.
+func ByActionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newActionsStep(), opts...)
+	}
+}
+
+// ByActions orders the results by actions terms.
+func ByActions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newActionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByStateSnapshotsCount orders the results by state_snapshots count.
+func ByStateSnapshotsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newStateSnapshotsStep(), opts...)
+	}
+}
+
+// ByStateSnapshots orders the results by state_snapshots terms.
+func ByStateSnapshots(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newStateSnapshotsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByStateTransitionsCount orders the results by state_transitions count.
+func ByStateTransitionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newStateTransitionsStep(), opts...)
+	}
+}
+
+// ByStateTransitions orders the results by state_transitions terms.
+func ByStateTransitions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newStateTransitionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByMilestonesCount orders the results by milestones count.
+func ByMilestonesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newMilestonesStep(), opts...)
+	}
+}
+
+// ByMilestones orders the results by milestones terms.
+func ByMilestones(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMilestonesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByTicketPullRequestsCount orders the results by ticket_pull_requests count.
 func ByTicketPullRequestsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -707,6 +822,41 @@ func newLatestEvidenceStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(LatestEvidenceInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, LatestEvidenceTable, LatestEvidenceColumn),
+	)
+}
+func newInsightsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(InsightsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, InsightsTable, InsightsColumn),
+	)
+}
+func newActionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ActionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, ActionsTable, ActionsColumn),
+	)
+}
+func newStateSnapshotsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(StateSnapshotsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, StateSnapshotsTable, StateSnapshotsColumn),
+	)
+}
+func newStateTransitionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(StateTransitionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, StateTransitionsTable, StateTransitionsColumn),
+	)
+}
+func newMilestonesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MilestonesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, MilestonesTable, MilestonesColumn),
 	)
 }
 func newTicketPullRequestsStep() *sqlgraph.Step {

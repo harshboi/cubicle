@@ -7,6 +7,11 @@ import (
 	"cubicle/services/ontology-service/ent/evidence"
 	"cubicle/services/ontology-service/ent/pullrequest"
 	"cubicle/services/ontology-service/ent/ticket"
+	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workinsight"
+	"cubicle/services/ontology-service/ent/workitemstatesnapshot"
+	"cubicle/services/ontology-service/ent/workitemstatetransition"
+	"cubicle/services/ontology-service/ent/workprogrammilestone"
 	"errors"
 	"fmt"
 	"time"
@@ -78,6 +83,20 @@ func (_c *PullRequestCreate) SetNillableState(v *pullrequest.State) *PullRequest
 	return _c
 }
 
+// SetSourceCreatedAt sets the "source_created_at" field.
+func (_c *PullRequestCreate) SetSourceCreatedAt(v time.Time) *PullRequestCreate {
+	_c.mutation.SetSourceCreatedAt(v)
+	return _c
+}
+
+// SetNillableSourceCreatedAt sets the "source_created_at" field if the given value is not nil.
+func (_c *PullRequestCreate) SetNillableSourceCreatedAt(v *time.Time) *PullRequestCreate {
+	if v != nil {
+		_c.SetSourceCreatedAt(*v)
+	}
+	return _c
+}
+
 // SetMergedAt sets the "merged_at" field.
 func (_c *PullRequestCreate) SetMergedAt(v time.Time) *PullRequestCreate {
 	_c.mutation.SetMergedAt(v)
@@ -88,6 +107,132 @@ func (_c *PullRequestCreate) SetMergedAt(v time.Time) *PullRequestCreate {
 func (_c *PullRequestCreate) SetNillableMergedAt(v *time.Time) *PullRequestCreate {
 	if v != nil {
 		_c.SetMergedAt(*v)
+	}
+	return _c
+}
+
+// SetClosedAt sets the "closed_at" field.
+func (_c *PullRequestCreate) SetClosedAt(v time.Time) *PullRequestCreate {
+	_c.mutation.SetClosedAt(v)
+	return _c
+}
+
+// SetNillableClosedAt sets the "closed_at" field if the given value is not nil.
+func (_c *PullRequestCreate) SetNillableClosedAt(v *time.Time) *PullRequestCreate {
+	if v != nil {
+		_c.SetClosedAt(*v)
+	}
+	return _c
+}
+
+// SetAdditions sets the "additions" field.
+func (_c *PullRequestCreate) SetAdditions(v int) *PullRequestCreate {
+	_c.mutation.SetAdditions(v)
+	return _c
+}
+
+// SetNillableAdditions sets the "additions" field if the given value is not nil.
+func (_c *PullRequestCreate) SetNillableAdditions(v *int) *PullRequestCreate {
+	if v != nil {
+		_c.SetAdditions(*v)
+	}
+	return _c
+}
+
+// SetDeletions sets the "deletions" field.
+func (_c *PullRequestCreate) SetDeletions(v int) *PullRequestCreate {
+	_c.mutation.SetDeletions(v)
+	return _c
+}
+
+// SetNillableDeletions sets the "deletions" field if the given value is not nil.
+func (_c *PullRequestCreate) SetNillableDeletions(v *int) *PullRequestCreate {
+	if v != nil {
+		_c.SetDeletions(*v)
+	}
+	return _c
+}
+
+// SetChangedFilesCount sets the "changed_files_count" field.
+func (_c *PullRequestCreate) SetChangedFilesCount(v int) *PullRequestCreate {
+	_c.mutation.SetChangedFilesCount(v)
+	return _c
+}
+
+// SetNillableChangedFilesCount sets the "changed_files_count" field if the given value is not nil.
+func (_c *PullRequestCreate) SetNillableChangedFilesCount(v *int) *PullRequestCreate {
+	if v != nil {
+		_c.SetChangedFilesCount(*v)
+	}
+	return _c
+}
+
+// SetCommitCount sets the "commit_count" field.
+func (_c *PullRequestCreate) SetCommitCount(v int) *PullRequestCreate {
+	_c.mutation.SetCommitCount(v)
+	return _c
+}
+
+// SetNillableCommitCount sets the "commit_count" field if the given value is not nil.
+func (_c *PullRequestCreate) SetNillableCommitCount(v *int) *PullRequestCreate {
+	if v != nil {
+		_c.SetCommitCount(*v)
+	}
+	return _c
+}
+
+// SetIssueCommentCount sets the "issue_comment_count" field.
+func (_c *PullRequestCreate) SetIssueCommentCount(v int) *PullRequestCreate {
+	_c.mutation.SetIssueCommentCount(v)
+	return _c
+}
+
+// SetNillableIssueCommentCount sets the "issue_comment_count" field if the given value is not nil.
+func (_c *PullRequestCreate) SetNillableIssueCommentCount(v *int) *PullRequestCreate {
+	if v != nil {
+		_c.SetIssueCommentCount(*v)
+	}
+	return _c
+}
+
+// SetReviewCommentCount sets the "review_comment_count" field.
+func (_c *PullRequestCreate) SetReviewCommentCount(v int) *PullRequestCreate {
+	_c.mutation.SetReviewCommentCount(v)
+	return _c
+}
+
+// SetNillableReviewCommentCount sets the "review_comment_count" field if the given value is not nil.
+func (_c *PullRequestCreate) SetNillableReviewCommentCount(v *int) *PullRequestCreate {
+	if v != nil {
+		_c.SetReviewCommentCount(*v)
+	}
+	return _c
+}
+
+// SetIsDraft sets the "is_draft" field.
+func (_c *PullRequestCreate) SetIsDraft(v bool) *PullRequestCreate {
+	_c.mutation.SetIsDraft(v)
+	return _c
+}
+
+// SetNillableIsDraft sets the "is_draft" field if the given value is not nil.
+func (_c *PullRequestCreate) SetNillableIsDraft(v *bool) *PullRequestCreate {
+	if v != nil {
+		_c.SetIsDraft(*v)
+	}
+	return _c
+}
+
+// SetIsMergeable sets the "is_mergeable" field.
+func (_c *PullRequestCreate) SetIsMergeable(v bool) *PullRequestCreate {
+	_c.mutation.SetIsMergeable(v)
+	return _c
+}
+
+// SetNillableIsMergeable sets the "is_mergeable" field if the given value is not nil.
+func (_c *PullRequestCreate) SetNillableIsMergeable(v *bool) *PullRequestCreate {
+	if v != nil {
+		_c.SetIsMergeable(*v)
 	}
 	return _c
 }
@@ -546,6 +691,81 @@ func (_c *PullRequestCreate) SetLatestEvidence(v *Evidence) *PullRequestCreate {
 	return _c.SetLatestEvidenceID(v.ID)
 }
 
+// AddInsightIDs adds the "insights" edge to the WorkInsight entity by IDs.
+func (_c *PullRequestCreate) AddInsightIDs(ids ...int) *PullRequestCreate {
+	_c.mutation.AddInsightIDs(ids...)
+	return _c
+}
+
+// AddInsights adds the "insights" edges to the WorkInsight entity.
+func (_c *PullRequestCreate) AddInsights(v ...*WorkInsight) *PullRequestCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddInsightIDs(ids...)
+}
+
+// AddActionIDs adds the "actions" edge to the WorkAction entity by IDs.
+func (_c *PullRequestCreate) AddActionIDs(ids ...int) *PullRequestCreate {
+	_c.mutation.AddActionIDs(ids...)
+	return _c
+}
+
+// AddActions adds the "actions" edges to the WorkAction entity.
+func (_c *PullRequestCreate) AddActions(v ...*WorkAction) *PullRequestCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddActionIDs(ids...)
+}
+
+// AddStateSnapshotIDs adds the "state_snapshots" edge to the WorkItemStateSnapshot entity by IDs.
+func (_c *PullRequestCreate) AddStateSnapshotIDs(ids ...int) *PullRequestCreate {
+	_c.mutation.AddStateSnapshotIDs(ids...)
+	return _c
+}
+
+// AddStateSnapshots adds the "state_snapshots" edges to the WorkItemStateSnapshot entity.
+func (_c *PullRequestCreate) AddStateSnapshots(v ...*WorkItemStateSnapshot) *PullRequestCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddStateSnapshotIDs(ids...)
+}
+
+// AddStateTransitionIDs adds the "state_transitions" edge to the WorkItemStateTransition entity by IDs.
+func (_c *PullRequestCreate) AddStateTransitionIDs(ids ...int) *PullRequestCreate {
+	_c.mutation.AddStateTransitionIDs(ids...)
+	return _c
+}
+
+// AddStateTransitions adds the "state_transitions" edges to the WorkItemStateTransition entity.
+func (_c *PullRequestCreate) AddStateTransitions(v ...*WorkItemStateTransition) *PullRequestCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddStateTransitionIDs(ids...)
+}
+
+// AddMilestoneIDs adds the "milestones" edge to the WorkProgramMilestone entity by IDs.
+func (_c *PullRequestCreate) AddMilestoneIDs(ids ...int) *PullRequestCreate {
+	_c.mutation.AddMilestoneIDs(ids...)
+	return _c
+}
+
+// AddMilestones adds the "milestones" edges to the WorkProgramMilestone entity.
+func (_c *PullRequestCreate) AddMilestones(v ...*WorkProgramMilestone) *PullRequestCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddMilestoneIDs(ids...)
+}
+
 // Mutation returns the PullRequestMutation object of the builder.
 func (_c *PullRequestCreate) Mutation() *PullRequestMutation {
 	return _c.mutation
@@ -750,9 +970,49 @@ func (_c *PullRequestCreate) createSpec() (*PullRequest, *sqlgraph.CreateSpec) {
 		_spec.SetField(pullrequest.FieldState, field.TypeEnum, value)
 		_node.State = value
 	}
+	if value, ok := _c.mutation.SourceCreatedAt(); ok {
+		_spec.SetField(pullrequest.FieldSourceCreatedAt, field.TypeTime, value)
+		_node.SourceCreatedAt = value
+	}
 	if value, ok := _c.mutation.MergedAt(); ok {
 		_spec.SetField(pullrequest.FieldMergedAt, field.TypeTime, value)
 		_node.MergedAt = value
+	}
+	if value, ok := _c.mutation.ClosedAt(); ok {
+		_spec.SetField(pullrequest.FieldClosedAt, field.TypeTime, value)
+		_node.ClosedAt = value
+	}
+	if value, ok := _c.mutation.Additions(); ok {
+		_spec.SetField(pullrequest.FieldAdditions, field.TypeInt, value)
+		_node.Additions = &value
+	}
+	if value, ok := _c.mutation.Deletions(); ok {
+		_spec.SetField(pullrequest.FieldDeletions, field.TypeInt, value)
+		_node.Deletions = &value
+	}
+	if value, ok := _c.mutation.ChangedFilesCount(); ok {
+		_spec.SetField(pullrequest.FieldChangedFilesCount, field.TypeInt, value)
+		_node.ChangedFilesCount = &value
+	}
+	if value, ok := _c.mutation.CommitCount(); ok {
+		_spec.SetField(pullrequest.FieldCommitCount, field.TypeInt, value)
+		_node.CommitCount = &value
+	}
+	if value, ok := _c.mutation.IssueCommentCount(); ok {
+		_spec.SetField(pullrequest.FieldIssueCommentCount, field.TypeInt, value)
+		_node.IssueCommentCount = &value
+	}
+	if value, ok := _c.mutation.ReviewCommentCount(); ok {
+		_spec.SetField(pullrequest.FieldReviewCommentCount, field.TypeInt, value)
+		_node.ReviewCommentCount = &value
+	}
+	if value, ok := _c.mutation.IsDraft(); ok {
+		_spec.SetField(pullrequest.FieldIsDraft, field.TypeBool, value)
+		_node.IsDraft = &value
+	}
+	if value, ok := _c.mutation.IsMergeable(); ok {
+		_spec.SetField(pullrequest.FieldIsMergeable, field.TypeBool, value)
+		_node.IsMergeable = &value
 	}
 	if value, ok := _c.mutation.Summary(); ok {
 		_spec.SetField(pullrequest.FieldSummary, field.TypeString, value)
@@ -907,6 +1167,86 @@ func (_c *PullRequestCreate) createSpec() (*PullRequest, *sqlgraph.CreateSpec) {
 		_node.LatestEvidenceID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := _c.mutation.InsightsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.InsightsTable,
+			Columns: []string{pullrequest.InsightsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workinsight.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.ActionsTable,
+			Columns: []string{pullrequest.ActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workaction.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.StateSnapshotsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateSnapshotsTable,
+			Columns: []string{pullrequest.StateSnapshotsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatesnapshot.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.StateTransitionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.StateTransitionsTable,
+			Columns: []string{pullrequest.StateTransitionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workitemstatetransition.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.MilestonesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   pullrequest.MilestonesTable,
+			Columns: []string{pullrequest.MilestonesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(workprogrammilestone.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -1037,6 +1377,24 @@ func (u *PullRequestUpsert) UpdateState() *PullRequestUpsert {
 	return u
 }
 
+// SetSourceCreatedAt sets the "source_created_at" field.
+func (u *PullRequestUpsert) SetSourceCreatedAt(v time.Time) *PullRequestUpsert {
+	u.Set(pullrequest.FieldSourceCreatedAt, v)
+	return u
+}
+
+// UpdateSourceCreatedAt sets the "source_created_at" field to the value that was provided on create.
+func (u *PullRequestUpsert) UpdateSourceCreatedAt() *PullRequestUpsert {
+	u.SetExcluded(pullrequest.FieldSourceCreatedAt)
+	return u
+}
+
+// ClearSourceCreatedAt clears the value of the "source_created_at" field.
+func (u *PullRequestUpsert) ClearSourceCreatedAt() *PullRequestUpsert {
+	u.SetNull(pullrequest.FieldSourceCreatedAt)
+	return u
+}
+
 // SetMergedAt sets the "merged_at" field.
 func (u *PullRequestUpsert) SetMergedAt(v time.Time) *PullRequestUpsert {
 	u.Set(pullrequest.FieldMergedAt, v)
@@ -1052,6 +1410,204 @@ func (u *PullRequestUpsert) UpdateMergedAt() *PullRequestUpsert {
 // ClearMergedAt clears the value of the "merged_at" field.
 func (u *PullRequestUpsert) ClearMergedAt() *PullRequestUpsert {
 	u.SetNull(pullrequest.FieldMergedAt)
+	return u
+}
+
+// SetClosedAt sets the "closed_at" field.
+func (u *PullRequestUpsert) SetClosedAt(v time.Time) *PullRequestUpsert {
+	u.Set(pullrequest.FieldClosedAt, v)
+	return u
+}
+
+// UpdateClosedAt sets the "closed_at" field to the value that was provided on create.
+func (u *PullRequestUpsert) UpdateClosedAt() *PullRequestUpsert {
+	u.SetExcluded(pullrequest.FieldClosedAt)
+	return u
+}
+
+// ClearClosedAt clears the value of the "closed_at" field.
+func (u *PullRequestUpsert) ClearClosedAt() *PullRequestUpsert {
+	u.SetNull(pullrequest.FieldClosedAt)
+	return u
+}
+
+// SetAdditions sets the "additions" field.
+func (u *PullRequestUpsert) SetAdditions(v int) *PullRequestUpsert {
+	u.Set(pullrequest.FieldAdditions, v)
+	return u
+}
+
+// UpdateAdditions sets the "additions" field to the value that was provided on create.
+func (u *PullRequestUpsert) UpdateAdditions() *PullRequestUpsert {
+	u.SetExcluded(pullrequest.FieldAdditions)
+	return u
+}
+
+// AddAdditions adds v to the "additions" field.
+func (u *PullRequestUpsert) AddAdditions(v int) *PullRequestUpsert {
+	u.Add(pullrequest.FieldAdditions, v)
+	return u
+}
+
+// ClearAdditions clears the value of the "additions" field.
+func (u *PullRequestUpsert) ClearAdditions() *PullRequestUpsert {
+	u.SetNull(pullrequest.FieldAdditions)
+	return u
+}
+
+// SetDeletions sets the "deletions" field.
+func (u *PullRequestUpsert) SetDeletions(v int) *PullRequestUpsert {
+	u.Set(pullrequest.FieldDeletions, v)
+	return u
+}
+
+// UpdateDeletions sets the "deletions" field to the value that was provided on create.
+func (u *PullRequestUpsert) UpdateDeletions() *PullRequestUpsert {
+	u.SetExcluded(pullrequest.FieldDeletions)
+	return u
+}
+
+// AddDeletions adds v to the "deletions" field.
+func (u *PullRequestUpsert) AddDeletions(v int) *PullRequestUpsert {
+	u.Add(pullrequest.FieldDeletions, v)
+	return u
+}
+
+// ClearDeletions clears the value of the "deletions" field.
+func (u *PullRequestUpsert) ClearDeletions() *PullRequestUpsert {
+	u.SetNull(pullrequest.FieldDeletions)
+	return u
+}
+
+// SetChangedFilesCount sets the "changed_files_count" field.
+func (u *PullRequestUpsert) SetChangedFilesCount(v int) *PullRequestUpsert {
+	u.Set(pullrequest.FieldChangedFilesCount, v)
+	return u
+}
+
+// UpdateChangedFilesCount sets the "changed_files_count" field to the value that was provided on create.
+func (u *PullRequestUpsert) UpdateChangedFilesCount() *PullRequestUpsert {
+	u.SetExcluded(pullrequest.FieldChangedFilesCount)
+	return u
+}
+
+// AddChangedFilesCount adds v to the "changed_files_count" field.
+func (u *PullRequestUpsert) AddChangedFilesCount(v int) *PullRequestUpsert {
+	u.Add(pullrequest.FieldChangedFilesCount, v)
+	return u
+}
+
+// ClearChangedFilesCount clears the value of the "changed_files_count" field.
+func (u *PullRequestUpsert) ClearChangedFilesCount() *PullRequestUpsert {
+	u.SetNull(pullrequest.FieldChangedFilesCount)
+	return u
+}
+
+// SetCommitCount sets the "commit_count" field.
+func (u *PullRequestUpsert) SetCommitCount(v int) *PullRequestUpsert {
+	u.Set(pullrequest.FieldCommitCount, v)
+	return u
+}
+
+// UpdateCommitCount sets the "commit_count" field to the value that was provided on create.
+func (u *PullRequestUpsert) UpdateCommitCount() *PullRequestUpsert {
+	u.SetExcluded(pullrequest.FieldCommitCount)
+	return u
+}
+
+// AddCommitCount adds v to the "commit_count" field.
+func (u *PullRequestUpsert) AddCommitCount(v int) *PullRequestUpsert {
+	u.Add(pullrequest.FieldCommitCount, v)
+	return u
+}
+
+// ClearCommitCount clears the value of the "commit_count" field.
+func (u *PullRequestUpsert) ClearCommitCount() *PullRequestUpsert {
+	u.SetNull(pullrequest.FieldCommitCount)
+	return u
+}
+
+// SetIssueCommentCount sets the "issue_comment_count" field.
+func (u *PullRequestUpsert) SetIssueCommentCount(v int) *PullRequestUpsert {
+	u.Set(pullrequest.FieldIssueCommentCount, v)
+	return u
+}
+
+// UpdateIssueCommentCount sets the "issue_comment_count" field to the value that was provided on create.
+func (u *PullRequestUpsert) UpdateIssueCommentCount() *PullRequestUpsert {
+	u.SetExcluded(pullrequest.FieldIssueCommentCount)
+	return u
+}
+
+// AddIssueCommentCount adds v to the "issue_comment_count" field.
+func (u *PullRequestUpsert) AddIssueCommentCount(v int) *PullRequestUpsert {
+	u.Add(pullrequest.FieldIssueCommentCount, v)
+	return u
+}
+
+// ClearIssueCommentCount clears the value of the "issue_comment_count" field.
+func (u *PullRequestUpsert) ClearIssueCommentCount() *PullRequestUpsert {
+	u.SetNull(pullrequest.FieldIssueCommentCount)
+	return u
+}
+
+// SetReviewCommentCount sets the "review_comment_count" field.
+func (u *PullRequestUpsert) SetReviewCommentCount(v int) *PullRequestUpsert {
+	u.Set(pullrequest.FieldReviewCommentCount, v)
+	return u
+}
+
+// UpdateReviewCommentCount sets the "review_comment_count" field to the value that was provided on create.
+func (u *PullRequestUpsert) UpdateReviewCommentCount() *PullRequestUpsert {
+	u.SetExcluded(pullrequest.FieldReviewCommentCount)
+	return u
+}
+
+// AddReviewCommentCount adds v to the "review_comment_count" field.
+func (u *PullRequestUpsert) AddReviewCommentCount(v int) *PullRequestUpsert {
+	u.Add(pullrequest.FieldReviewCommentCount, v)
+	return u
+}
+
+// ClearReviewCommentCount clears the value of the "review_comment_count" field.
+func (u *PullRequestUpsert) ClearReviewCommentCount() *PullRequestUpsert {
+	u.SetNull(pullrequest.FieldReviewCommentCount)
+	return u
+}
+
+// SetIsDraft sets the "is_draft" field.
+func (u *PullRequestUpsert) SetIsDraft(v bool) *PullRequestUpsert {
+	u.Set(pullrequest.FieldIsDraft, v)
+	return u
+}
+
+// UpdateIsDraft sets the "is_draft" field to the value that was provided on create.
+func (u *PullRequestUpsert) UpdateIsDraft() *PullRequestUpsert {
+	u.SetExcluded(pullrequest.FieldIsDraft)
+	return u
+}
+
+// ClearIsDraft clears the value of the "is_draft" field.
+func (u *PullRequestUpsert) ClearIsDraft() *PullRequestUpsert {
+	u.SetNull(pullrequest.FieldIsDraft)
+	return u
+}
+
+// SetIsMergeable sets the "is_mergeable" field.
+func (u *PullRequestUpsert) SetIsMergeable(v bool) *PullRequestUpsert {
+	u.Set(pullrequest.FieldIsMergeable, v)
+	return u
+}
+
+// UpdateIsMergeable sets the "is_mergeable" field to the value that was provided on create.
+func (u *PullRequestUpsert) UpdateIsMergeable() *PullRequestUpsert {
+	u.SetExcluded(pullrequest.FieldIsMergeable)
+	return u
+}
+
+// ClearIsMergeable clears the value of the "is_mergeable" field.
+func (u *PullRequestUpsert) ClearIsMergeable() *PullRequestUpsert {
+	u.SetNull(pullrequest.FieldIsMergeable)
 	return u
 }
 
@@ -1707,6 +2263,27 @@ func (u *PullRequestUpsertOne) UpdateState() *PullRequestUpsertOne {
 	})
 }
 
+// SetSourceCreatedAt sets the "source_created_at" field.
+func (u *PullRequestUpsertOne) SetSourceCreatedAt(v time.Time) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetSourceCreatedAt(v)
+	})
+}
+
+// UpdateSourceCreatedAt sets the "source_created_at" field to the value that was provided on create.
+func (u *PullRequestUpsertOne) UpdateSourceCreatedAt() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateSourceCreatedAt()
+	})
+}
+
+// ClearSourceCreatedAt clears the value of the "source_created_at" field.
+func (u *PullRequestUpsertOne) ClearSourceCreatedAt() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearSourceCreatedAt()
+	})
+}
+
 // SetMergedAt sets the "merged_at" field.
 func (u *PullRequestUpsertOne) SetMergedAt(v time.Time) *PullRequestUpsertOne {
 	return u.Update(func(s *PullRequestUpsert) {
@@ -1725,6 +2302,237 @@ func (u *PullRequestUpsertOne) UpdateMergedAt() *PullRequestUpsertOne {
 func (u *PullRequestUpsertOne) ClearMergedAt() *PullRequestUpsertOne {
 	return u.Update(func(s *PullRequestUpsert) {
 		s.ClearMergedAt()
+	})
+}
+
+// SetClosedAt sets the "closed_at" field.
+func (u *PullRequestUpsertOne) SetClosedAt(v time.Time) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetClosedAt(v)
+	})
+}
+
+// UpdateClosedAt sets the "closed_at" field to the value that was provided on create.
+func (u *PullRequestUpsertOne) UpdateClosedAt() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateClosedAt()
+	})
+}
+
+// ClearClosedAt clears the value of the "closed_at" field.
+func (u *PullRequestUpsertOne) ClearClosedAt() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearClosedAt()
+	})
+}
+
+// SetAdditions sets the "additions" field.
+func (u *PullRequestUpsertOne) SetAdditions(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetAdditions(v)
+	})
+}
+
+// AddAdditions adds v to the "additions" field.
+func (u *PullRequestUpsertOne) AddAdditions(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddAdditions(v)
+	})
+}
+
+// UpdateAdditions sets the "additions" field to the value that was provided on create.
+func (u *PullRequestUpsertOne) UpdateAdditions() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateAdditions()
+	})
+}
+
+// ClearAdditions clears the value of the "additions" field.
+func (u *PullRequestUpsertOne) ClearAdditions() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearAdditions()
+	})
+}
+
+// SetDeletions sets the "deletions" field.
+func (u *PullRequestUpsertOne) SetDeletions(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetDeletions(v)
+	})
+}
+
+// AddDeletions adds v to the "deletions" field.
+func (u *PullRequestUpsertOne) AddDeletions(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddDeletions(v)
+	})
+}
+
+// UpdateDeletions sets the "deletions" field to the value that was provided on create.
+func (u *PullRequestUpsertOne) UpdateDeletions() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateDeletions()
+	})
+}
+
+// ClearDeletions clears the value of the "deletions" field.
+func (u *PullRequestUpsertOne) ClearDeletions() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearDeletions()
+	})
+}
+
+// SetChangedFilesCount sets the "changed_files_count" field.
+func (u *PullRequestUpsertOne) SetChangedFilesCount(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetChangedFilesCount(v)
+	})
+}
+
+// AddChangedFilesCount adds v to the "changed_files_count" field.
+func (u *PullRequestUpsertOne) AddChangedFilesCount(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddChangedFilesCount(v)
+	})
+}
+
+// UpdateChangedFilesCount sets the "changed_files_count" field to the value that was provided on create.
+func (u *PullRequestUpsertOne) UpdateChangedFilesCount() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateChangedFilesCount()
+	})
+}
+
+// ClearChangedFilesCount clears the value of the "changed_files_count" field.
+func (u *PullRequestUpsertOne) ClearChangedFilesCount() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearChangedFilesCount()
+	})
+}
+
+// SetCommitCount sets the "commit_count" field.
+func (u *PullRequestUpsertOne) SetCommitCount(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetCommitCount(v)
+	})
+}
+
+// AddCommitCount adds v to the "commit_count" field.
+func (u *PullRequestUpsertOne) AddCommitCount(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddCommitCount(v)
+	})
+}
+
+// UpdateCommitCount sets the "commit_count" field to the value that was provided on create.
+func (u *PullRequestUpsertOne) UpdateCommitCount() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateCommitCount()
+	})
+}
+
+// ClearCommitCount clears the value of the "commit_count" field.
+func (u *PullRequestUpsertOne) ClearCommitCount() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearCommitCount()
+	})
+}
+
+// SetIssueCommentCount sets the "issue_comment_count" field.
+func (u *PullRequestUpsertOne) SetIssueCommentCount(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetIssueCommentCount(v)
+	})
+}
+
+// AddIssueCommentCount adds v to the "issue_comment_count" field.
+func (u *PullRequestUpsertOne) AddIssueCommentCount(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddIssueCommentCount(v)
+	})
+}
+
+// UpdateIssueCommentCount sets the "issue_comment_count" field to the value that was provided on create.
+func (u *PullRequestUpsertOne) UpdateIssueCommentCount() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateIssueCommentCount()
+	})
+}
+
+// ClearIssueCommentCount clears the value of the "issue_comment_count" field.
+func (u *PullRequestUpsertOne) ClearIssueCommentCount() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearIssueCommentCount()
+	})
+}
+
+// SetReviewCommentCount sets the "review_comment_count" field.
+func (u *PullRequestUpsertOne) SetReviewCommentCount(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetReviewCommentCount(v)
+	})
+}
+
+// AddReviewCommentCount adds v to the "review_comment_count" field.
+func (u *PullRequestUpsertOne) AddReviewCommentCount(v int) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddReviewCommentCount(v)
+	})
+}
+
+// UpdateReviewCommentCount sets the "review_comment_count" field to the value that was provided on create.
+func (u *PullRequestUpsertOne) UpdateReviewCommentCount() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateReviewCommentCount()
+	})
+}
+
+// ClearReviewCommentCount clears the value of the "review_comment_count" field.
+func (u *PullRequestUpsertOne) ClearReviewCommentCount() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearReviewCommentCount()
+	})
+}
+
+// SetIsDraft sets the "is_draft" field.
+func (u *PullRequestUpsertOne) SetIsDraft(v bool) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetIsDraft(v)
+	})
+}
+
+// UpdateIsDraft sets the "is_draft" field to the value that was provided on create.
+func (u *PullRequestUpsertOne) UpdateIsDraft() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateIsDraft()
+	})
+}
+
+// ClearIsDraft clears the value of the "is_draft" field.
+func (u *PullRequestUpsertOne) ClearIsDraft() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearIsDraft()
+	})
+}
+
+// SetIsMergeable sets the "is_mergeable" field.
+func (u *PullRequestUpsertOne) SetIsMergeable(v bool) *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetIsMergeable(v)
+	})
+}
+
+// UpdateIsMergeable sets the "is_mergeable" field to the value that was provided on create.
+func (u *PullRequestUpsertOne) UpdateIsMergeable() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateIsMergeable()
+	})
+}
+
+// ClearIsMergeable clears the value of the "is_mergeable" field.
+func (u *PullRequestUpsertOne) ClearIsMergeable() *PullRequestUpsertOne {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearIsMergeable()
 	})
 }
 
@@ -2632,6 +3440,27 @@ func (u *PullRequestUpsertBulk) UpdateState() *PullRequestUpsertBulk {
 	})
 }
 
+// SetSourceCreatedAt sets the "source_created_at" field.
+func (u *PullRequestUpsertBulk) SetSourceCreatedAt(v time.Time) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetSourceCreatedAt(v)
+	})
+}
+
+// UpdateSourceCreatedAt sets the "source_created_at" field to the value that was provided on create.
+func (u *PullRequestUpsertBulk) UpdateSourceCreatedAt() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateSourceCreatedAt()
+	})
+}
+
+// ClearSourceCreatedAt clears the value of the "source_created_at" field.
+func (u *PullRequestUpsertBulk) ClearSourceCreatedAt() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearSourceCreatedAt()
+	})
+}
+
 // SetMergedAt sets the "merged_at" field.
 func (u *PullRequestUpsertBulk) SetMergedAt(v time.Time) *PullRequestUpsertBulk {
 	return u.Update(func(s *PullRequestUpsert) {
@@ -2650,6 +3479,237 @@ func (u *PullRequestUpsertBulk) UpdateMergedAt() *PullRequestUpsertBulk {
 func (u *PullRequestUpsertBulk) ClearMergedAt() *PullRequestUpsertBulk {
 	return u.Update(func(s *PullRequestUpsert) {
 		s.ClearMergedAt()
+	})
+}
+
+// SetClosedAt sets the "closed_at" field.
+func (u *PullRequestUpsertBulk) SetClosedAt(v time.Time) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetClosedAt(v)
+	})
+}
+
+// UpdateClosedAt sets the "closed_at" field to the value that was provided on create.
+func (u *PullRequestUpsertBulk) UpdateClosedAt() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateClosedAt()
+	})
+}
+
+// ClearClosedAt clears the value of the "closed_at" field.
+func (u *PullRequestUpsertBulk) ClearClosedAt() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearClosedAt()
+	})
+}
+
+// SetAdditions sets the "additions" field.
+func (u *PullRequestUpsertBulk) SetAdditions(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetAdditions(v)
+	})
+}
+
+// AddAdditions adds v to the "additions" field.
+func (u *PullRequestUpsertBulk) AddAdditions(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddAdditions(v)
+	})
+}
+
+// UpdateAdditions sets the "additions" field to the value that was provided on create.
+func (u *PullRequestUpsertBulk) UpdateAdditions() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateAdditions()
+	})
+}
+
+// ClearAdditions clears the value of the "additions" field.
+func (u *PullRequestUpsertBulk) ClearAdditions() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearAdditions()
+	})
+}
+
+// SetDeletions sets the "deletions" field.
+func (u *PullRequestUpsertBulk) SetDeletions(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetDeletions(v)
+	})
+}
+
+// AddDeletions adds v to the "deletions" field.
+func (u *PullRequestUpsertBulk) AddDeletions(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddDeletions(v)
+	})
+}
+
+// UpdateDeletions sets the "deletions" field to the value that was provided on create.
+func (u *PullRequestUpsertBulk) UpdateDeletions() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateDeletions()
+	})
+}
+
+// ClearDeletions clears the value of the "deletions" field.
+func (u *PullRequestUpsertBulk) ClearDeletions() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearDeletions()
+	})
+}
+
+// SetChangedFilesCount sets the "changed_files_count" field.
+func (u *PullRequestUpsertBulk) SetChangedFilesCount(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetChangedFilesCount(v)
+	})
+}
+
+// AddChangedFilesCount adds v to the "changed_files_count" field.
+func (u *PullRequestUpsertBulk) AddChangedFilesCount(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddChangedFilesCount(v)
+	})
+}
+
+// UpdateChangedFilesCount sets the "changed_files_count" field to the value that was provided on create.
+func (u *PullRequestUpsertBulk) UpdateChangedFilesCount() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateChangedFilesCount()
+	})
+}
+
+// ClearChangedFilesCount clears the value of the "changed_files_count" field.
+func (u *PullRequestUpsertBulk) ClearChangedFilesCount() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearChangedFilesCount()
+	})
+}
+
+// SetCommitCount sets the "commit_count" field.
+func (u *PullRequestUpsertBulk) SetCommitCount(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetCommitCount(v)
+	})
+}
+
+// AddCommitCount adds v to the "commit_count" field.
+func (u *PullRequestUpsertBulk) AddCommitCount(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddCommitCount(v)
+	})
+}
+
+// UpdateCommitCount sets the "commit_count" field to the value that was provided on create.
+func (u *PullRequestUpsertBulk) UpdateCommitCount() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateCommitCount()
+	})
+}
+
+// ClearCommitCount clears the value of the "commit_count" field.
+func (u *PullRequestUpsertBulk) ClearCommitCount() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearCommitCount()
+	})
+}
+
+// SetIssueCommentCount sets the "issue_comment_count" field.
+func (u *PullRequestUpsertBulk) SetIssueCommentCount(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetIssueCommentCount(v)
+	})
+}
+
+// AddIssueCommentCount adds v to the "issue_comment_count" field.
+func (u *PullRequestUpsertBulk) AddIssueCommentCount(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddIssueCommentCount(v)
+	})
+}
+
+// UpdateIssueCommentCount sets the "issue_comment_count" field to the value that was provided on create.
+func (u *PullRequestUpsertBulk) UpdateIssueCommentCount() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateIssueCommentCount()
+	})
+}
+
+// ClearIssueCommentCount clears the value of the "issue_comment_count" field.
+func (u *PullRequestUpsertBulk) ClearIssueCommentCount() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearIssueCommentCount()
+	})
+}
+
+// SetReviewCommentCount sets the "review_comment_count" field.
+func (u *PullRequestUpsertBulk) SetReviewCommentCount(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetReviewCommentCount(v)
+	})
+}
+
+// AddReviewCommentCount adds v to the "review_comment_count" field.
+func (u *PullRequestUpsertBulk) AddReviewCommentCount(v int) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.AddReviewCommentCount(v)
+	})
+}
+
+// UpdateReviewCommentCount sets the "review_comment_count" field to the value that was provided on create.
+func (u *PullRequestUpsertBulk) UpdateReviewCommentCount() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateReviewCommentCount()
+	})
+}
+
+// ClearReviewCommentCount clears the value of the "review_comment_count" field.
+func (u *PullRequestUpsertBulk) ClearReviewCommentCount() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearReviewCommentCount()
+	})
+}
+
+// SetIsDraft sets the "is_draft" field.
+func (u *PullRequestUpsertBulk) SetIsDraft(v bool) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetIsDraft(v)
+	})
+}
+
+// UpdateIsDraft sets the "is_draft" field to the value that was provided on create.
+func (u *PullRequestUpsertBulk) UpdateIsDraft() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateIsDraft()
+	})
+}
+
+// ClearIsDraft clears the value of the "is_draft" field.
+func (u *PullRequestUpsertBulk) ClearIsDraft() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearIsDraft()
+	})
+}
+
+// SetIsMergeable sets the "is_mergeable" field.
+func (u *PullRequestUpsertBulk) SetIsMergeable(v bool) *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.SetIsMergeable(v)
+	})
+}
+
+// UpdateIsMergeable sets the "is_mergeable" field to the value that was provided on create.
+func (u *PullRequestUpsertBulk) UpdateIsMergeable() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.UpdateIsMergeable()
+	})
+}
+
+// ClearIsMergeable clears the value of the "is_mergeable" field.
+func (u *PullRequestUpsertBulk) ClearIsMergeable() *PullRequestUpsertBulk {
+	return u.Update(func(s *PullRequestUpsert) {
+		s.ClearIsMergeable()
 	})
 }
 

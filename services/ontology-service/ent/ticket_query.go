@@ -13,6 +13,11 @@ import (
 	"cubicle/services/ontology-service/ent/ticketdocument"
 	"cubicle/services/ontology-service/ent/ticketmessage"
 	"cubicle/services/ontology-service/ent/ticketpullrequest"
+	"cubicle/services/ontology-service/ent/workaction"
+	"cubicle/services/ontology-service/ent/workinsight"
+	"cubicle/services/ontology-service/ent/workitemstatesnapshot"
+	"cubicle/services/ontology-service/ent/workitemstatetransition"
+	"cubicle/services/ontology-service/ent/workprogrammilestone"
 	"cubicle/services/ontology-service/ent/workstream"
 	"database/sql/driver"
 	"fmt"
@@ -36,6 +41,11 @@ type TicketQuery struct {
 	withDocuments          *DocumentQuery
 	withMessages           *MessageQuery
 	withLatestEvidence     *EvidenceQuery
+	withInsights           *WorkInsightQuery
+	withActions            *WorkActionQuery
+	withStateSnapshots     *WorkItemStateSnapshotQuery
+	withStateTransitions   *WorkItemStateTransitionQuery
+	withMilestones         *WorkProgramMilestoneQuery
 	withTicketPullRequests *TicketPullRequestQuery
 	withTicketDocuments    *TicketDocumentQuery
 	withTicketMessages     *TicketMessageQuery
@@ -178,6 +188,116 @@ func (_q *TicketQuery) QueryLatestEvidence() *EvidenceQuery {
 			sqlgraph.From(ticket.Table, ticket.FieldID, selector),
 			sqlgraph.To(evidence.Table, evidence.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, ticket.LatestEvidenceTable, ticket.LatestEvidenceColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryInsights chains the current query on the "insights" edge.
+func (_q *TicketQuery) QueryInsights() *WorkInsightQuery {
+	query := (&WorkInsightClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, selector),
+			sqlgraph.To(workinsight.Table, workinsight.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.InsightsTable, ticket.InsightsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryActions chains the current query on the "actions" edge.
+func (_q *TicketQuery) QueryActions() *WorkActionQuery {
+	query := (&WorkActionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, selector),
+			sqlgraph.To(workaction.Table, workaction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.ActionsTable, ticket.ActionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryStateSnapshots chains the current query on the "state_snapshots" edge.
+func (_q *TicketQuery) QueryStateSnapshots() *WorkItemStateSnapshotQuery {
+	query := (&WorkItemStateSnapshotClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, selector),
+			sqlgraph.To(workitemstatesnapshot.Table, workitemstatesnapshot.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.StateSnapshotsTable, ticket.StateSnapshotsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryStateTransitions chains the current query on the "state_transitions" edge.
+func (_q *TicketQuery) QueryStateTransitions() *WorkItemStateTransitionQuery {
+	query := (&WorkItemStateTransitionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, selector),
+			sqlgraph.To(workitemstatetransition.Table, workitemstatetransition.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.StateTransitionsTable, ticket.StateTransitionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryMilestones chains the current query on the "milestones" edge.
+func (_q *TicketQuery) QueryMilestones() *WorkProgramMilestoneQuery {
+	query := (&WorkProgramMilestoneClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ticket.Table, ticket.FieldID, selector),
+			sqlgraph.To(workprogrammilestone.Table, workprogrammilestone.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, ticket.MilestonesTable, ticket.MilestonesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -448,6 +568,11 @@ func (_q *TicketQuery) Clone() *TicketQuery {
 		withDocuments:          _q.withDocuments.Clone(),
 		withMessages:           _q.withMessages.Clone(),
 		withLatestEvidence:     _q.withLatestEvidence.Clone(),
+		withInsights:           _q.withInsights.Clone(),
+		withActions:            _q.withActions.Clone(),
+		withStateSnapshots:     _q.withStateSnapshots.Clone(),
+		withStateTransitions:   _q.withStateTransitions.Clone(),
+		withMilestones:         _q.withMilestones.Clone(),
 		withTicketPullRequests: _q.withTicketPullRequests.Clone(),
 		withTicketDocuments:    _q.withTicketDocuments.Clone(),
 		withTicketMessages:     _q.withTicketMessages.Clone(),
@@ -509,6 +634,61 @@ func (_q *TicketQuery) WithLatestEvidence(opts ...func(*EvidenceQuery)) *TicketQ
 		opt(query)
 	}
 	_q.withLatestEvidence = query
+	return _q
+}
+
+// WithInsights tells the query-builder to eager-load the nodes that are connected to
+// the "insights" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TicketQuery) WithInsights(opts ...func(*WorkInsightQuery)) *TicketQuery {
+	query := (&WorkInsightClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withInsights = query
+	return _q
+}
+
+// WithActions tells the query-builder to eager-load the nodes that are connected to
+// the "actions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TicketQuery) WithActions(opts ...func(*WorkActionQuery)) *TicketQuery {
+	query := (&WorkActionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withActions = query
+	return _q
+}
+
+// WithStateSnapshots tells the query-builder to eager-load the nodes that are connected to
+// the "state_snapshots" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TicketQuery) WithStateSnapshots(opts ...func(*WorkItemStateSnapshotQuery)) *TicketQuery {
+	query := (&WorkItemStateSnapshotClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withStateSnapshots = query
+	return _q
+}
+
+// WithStateTransitions tells the query-builder to eager-load the nodes that are connected to
+// the "state_transitions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TicketQuery) WithStateTransitions(opts ...func(*WorkItemStateTransitionQuery)) *TicketQuery {
+	query := (&WorkItemStateTransitionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withStateTransitions = query
+	return _q
+}
+
+// WithMilestones tells the query-builder to eager-load the nodes that are connected to
+// the "milestones" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TicketQuery) WithMilestones(opts ...func(*WorkProgramMilestoneQuery)) *TicketQuery {
+	query := (&WorkProgramMilestoneClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withMilestones = query
 	return _q
 }
 
@@ -623,12 +803,17 @@ func (_q *TicketQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ticke
 	var (
 		nodes       = []*Ticket{}
 		_spec       = _q.querySpec()
-		loadedTypes = [8]bool{
+		loadedTypes = [13]bool{
 			_q.withWorkstreams != nil,
 			_q.withPullRequests != nil,
 			_q.withDocuments != nil,
 			_q.withMessages != nil,
 			_q.withLatestEvidence != nil,
+			_q.withInsights != nil,
+			_q.withActions != nil,
+			_q.withStateSnapshots != nil,
+			_q.withStateTransitions != nil,
+			_q.withMilestones != nil,
 			_q.withTicketPullRequests != nil,
 			_q.withTicketDocuments != nil,
 			_q.withTicketMessages != nil,
@@ -683,6 +868,43 @@ func (_q *TicketQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Ticke
 	if query := _q.withLatestEvidence; query != nil {
 		if err := _q.loadLatestEvidence(ctx, query, nodes, nil,
 			func(n *Ticket, e *Evidence) { n.Edges.LatestEvidence = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withInsights; query != nil {
+		if err := _q.loadInsights(ctx, query, nodes,
+			func(n *Ticket) { n.Edges.Insights = []*WorkInsight{} },
+			func(n *Ticket, e *WorkInsight) { n.Edges.Insights = append(n.Edges.Insights, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withActions; query != nil {
+		if err := _q.loadActions(ctx, query, nodes,
+			func(n *Ticket) { n.Edges.Actions = []*WorkAction{} },
+			func(n *Ticket, e *WorkAction) { n.Edges.Actions = append(n.Edges.Actions, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withStateSnapshots; query != nil {
+		if err := _q.loadStateSnapshots(ctx, query, nodes,
+			func(n *Ticket) { n.Edges.StateSnapshots = []*WorkItemStateSnapshot{} },
+			func(n *Ticket, e *WorkItemStateSnapshot) { n.Edges.StateSnapshots = append(n.Edges.StateSnapshots, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withStateTransitions; query != nil {
+		if err := _q.loadStateTransitions(ctx, query, nodes,
+			func(n *Ticket) { n.Edges.StateTransitions = []*WorkItemStateTransition{} },
+			func(n *Ticket, e *WorkItemStateTransition) {
+				n.Edges.StateTransitions = append(n.Edges.StateTransitions, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withMilestones; query != nil {
+		if err := _q.loadMilestones(ctx, query, nodes,
+			func(n *Ticket) { n.Edges.Milestones = []*WorkProgramMilestone{} },
+			func(n *Ticket, e *WorkProgramMilestone) { n.Edges.Milestones = append(n.Edges.Milestones, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -982,6 +1204,156 @@ func (_q *TicketQuery) loadLatestEvidence(ctx context.Context, query *EvidenceQu
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (_q *TicketQuery) loadInsights(ctx context.Context, query *WorkInsightQuery, nodes []*Ticket, init func(*Ticket), assign func(*Ticket, *WorkInsight)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Ticket)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workinsight.FieldTicketID)
+	}
+	query.Where(predicate.WorkInsight(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(ticket.InsightsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TicketID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "ticket_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *TicketQuery) loadActions(ctx context.Context, query *WorkActionQuery, nodes []*Ticket, init func(*Ticket), assign func(*Ticket, *WorkAction)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Ticket)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workaction.FieldTicketID)
+	}
+	query.Where(predicate.WorkAction(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(ticket.ActionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TicketID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "ticket_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *TicketQuery) loadStateSnapshots(ctx context.Context, query *WorkItemStateSnapshotQuery, nodes []*Ticket, init func(*Ticket), assign func(*Ticket, *WorkItemStateSnapshot)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Ticket)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workitemstatesnapshot.FieldTicketID)
+	}
+	query.Where(predicate.WorkItemStateSnapshot(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(ticket.StateSnapshotsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TicketID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "ticket_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *TicketQuery) loadStateTransitions(ctx context.Context, query *WorkItemStateTransitionQuery, nodes []*Ticket, init func(*Ticket), assign func(*Ticket, *WorkItemStateTransition)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Ticket)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workitemstatetransition.FieldTicketID)
+	}
+	query.Where(predicate.WorkItemStateTransition(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(ticket.StateTransitionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TicketID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "ticket_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *TicketQuery) loadMilestones(ctx context.Context, query *WorkProgramMilestoneQuery, nodes []*Ticket, init func(*Ticket), assign func(*Ticket, *WorkProgramMilestone)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Ticket)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(workprogrammilestone.FieldTicketID)
+	}
+	query.Where(predicate.WorkProgramMilestone(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(ticket.MilestonesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TicketID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "ticket_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }
