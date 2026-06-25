@@ -2,6 +2,9 @@ package schema
 
 import "cubicle/services/ontology-service/internal/ontology"
 
+// Ent enum values are the persistence contract. Some values mirror
+// internal/ontology aliases, but schema migrations and replay fixtures depend
+// on these strings remaining stable across serving-layer refactors.
 const (
 	freshnessFresh   = "fresh"   // freshnessFresh means Cubicle believes the fact is current for its source.
 	freshnessPartial = "partial" // freshnessPartial means at least one source gap or incomplete crawl affects the fact.

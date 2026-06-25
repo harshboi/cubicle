@@ -2,11 +2,1592 @@ schema {
   query: Query
 }
 
+"""
+Cubicle serves bounded product packets, not raw Ent table dumps.
+Each query keeps freshness, evidence, and claim gates visible at the API boundary.
+"""
 type Query {
   health: Health!
+  workActions(limit: Int = 20, decisionState: String, actionState: String = "open", ownerKey: String, sourceInstance: String): [WorkAction!]!
+  workProgramItems(limit: Int = 50, workstreamKey: String, programStatus: String, tpmBucket: String, ownerKey: String, sourceInstance: String): [WorkProgramItem!]!
+  workProgramMilestonePacket(workstreamKey: String!, limit: Int = 50, sourceInstance: String): WorkProgramMilestonePacket!
+  workProgramSummary(workstreamKey: String, sourceInstance: String): WorkProgramSummary!
+  workProgramBrief(workstreamKey: String, sourceInstance: String): WorkProgramBrief!
+  workProgramGraphBrief(workstreamKey: String!, sourceInstance: String, promptMode: String = "operating"): WorkProgramGraphBrief
+  """
+  Returns a TPM-facing graph packet without making generated WorkProgram rows
+  claim authorities. Evidence and guardrail fields decide what can be stated.
+  """
+  workProgramGraphContext(workstreamKey: String!, itemLimit: Int = 20, actionLimit: Int = 20, edgeLimit: Int = 50, insightLimit: Int = 20, forecastLimit: Int = 20, evidenceLimit: Int = 50, traversalDepth: Int = 2, runKey: String, generatedAt: String, sourceInstance: String): WorkProgramGraphContext!
+  """
+  Traverses typed and OpenGraph associations under explicit depth/fanout limits.
+  Source coverage decides whether missing edges can support absence claims.
+  """
+  boundedGraphContext(startObjectType: String!, startKey: String!, associationTypes: [String!], depth: Int = 2, limitPerObject: Int = 4): BoundedGraphContext!
+  workProgramEvidenceNeeds(limit: Int = 50, workstreamKey: String, gateKey: String, evidenceKind: String, executionState: String, ownerKey: String, actionKey: String, actionState: String, sourceInstance: String): [WorkProgramAutomationEvidenceNeed!]!
+  workResponsibilities(limit: Int = 50, subjectKind: String, subjectKey: String, partyKind: String, partyKey: String, responsibilityKind: String, responsibilityState: String, basisKind: String, sourceInstance: String): [WorkResponsibility!]!
+  workProgramAttentionPacket(workstreamKey: String!, limit: Int = 20, evidenceLimit: Int = 50, sourceInstance: String): WorkProgramAttentionPacket!
+  workProgramAutomationPlanPacket(workstreamKey: String!, actionState: String = "open", actionLimit: Int = 20, evidenceLimit: Int = 50, reviewLimit: Int = 20, sourceInstance: String): WorkProgramAutomationPlanPacket!
+  workProgramExecutionPacket(workstreamKey: String!, actionState: String = "open", actionLimit: Int = 20, evidenceLimit: Int = 50, reviewLimit: Int = 20, sourceInstance: String): WorkProgramExecutionPacket!
+  workProgramOwnerPacket(workstreamKey: String!, ownerKey: String!, actionState: String = "open", actionLimit: Int = 20, evidenceLimit: Int = 50, sourceInstance: String): WorkProgramOwnerPacket!
+  workProgramBlockerPacket(workstreamKey: String!, blockerState: String = "open", limit: Int = 20, evidenceLimit: Int = 50, sourceInstance: String): WorkProgramBlockerPacket!
+  workProgramForecastPacket(workstreamKey: String!, limit: Int = 20, evidenceLimit: Int = 50, sourceInstance: String): WorkProgramForecastPacket!
+  workProgramGuardrailPacket(workstreamKey: String!, limit: Int = 20, evidenceLimit: Int = 50, sourceInstance: String): WorkProgramGuardrailPacket!
+  workProgramSourceCoveragePacket(workstreamKey: String!, limit: Int = 50, evidenceLimit: Int = 50, sourceInstance: String): WorkProgramSourceCoveragePacket!
+  workProgramTpmReadinessPacket(workstreamKey: String!, functionLimit: Int = 20, evidenceLimit: Int = 50, reviewLimit: Int = 20, sourceInstance: String): WorkProgramTpmReadinessPacket!
+  workDecisionTargetEvaluations(limit: Int = 20, targetKind: String, evaluationKind: String, productActionGateState: String, sourceInstance: String): [WorkDecisionTargetEvaluation!]!
+  workDecisionTargetReadiness(limit: Int = 20, sourceInstance: String): WorkDecisionTargetReadiness!
+  workItemForecasts(limit: Int = 20, riskBand: String, subjectState: String = "open", sourceInstance: String!): [WorkItemForecast!]!
+  forecastReadiness(sourceInstance: String!, actionState: String = "open"): WorkForecastReadiness!
+  workItemStateSnapshots(subjectKind: String!, subjectKey: String!, limit: Int = 20, sourceInstance: String): [WorkItemStateSnapshot!]!
+  workItemStateTransitions(limit: Int = 20, subjectKind: String, subjectKey: String, transitionKind: String, requiresCloseout: Boolean, sourceInstance: String): [WorkItemStateTransition!]!
+  workActionSummary(actionState: String = "open", sourceInstance: String): WorkActionSummary!
+  workInsightEvaluation(sourceInstance: String): WorkInsightEvaluation!
+  workInsightMeasurementPacket(sourceInstance: String, reviewLimit: Int = 20, insightKind: String): WorkInsightMeasurementPacket!
+  workInsightReviews(limit: Int = 50, sourceInstance: String, reviewState: String, reviewKind: String, insightKind: String, measurementEligible: Boolean): [WorkInsightReview!]!
+  workstreams(limit: Int = 20, actionState: String = "open", sourceInstance: String): [WorkstreamRegister!]!
+  ownerLoadSnapshots(limit: Int = 20, workstreamKey: String!, ownerKey: String, sourceInstance: String): [WorkOwnerLoadSnapshot!]!
+  workstreamStandup(actionState: String = "open", sourceInstance: String): WorkstreamStandup!
+  workstreamStandupSections(limit: Int = 30, workstreamKey: String, sectionKind: String, sourceInstance: String): [WorkstreamStandupSection!]!
+  workstreamHealthSnapshots(limit: Int = 20, workstreamKey: String, sourceInstance: String): [WorkstreamHealthSnapshot!]!
+  workLensWindows(limit: Int = 20, targetKind: String, lensKind: String, resultLimit: Int = 20): [WorkLensWindow!]!
+  workBlockers(limit: Int = 20, blockerState: String = "open", subjectKind: String, subjectKey: String, sourceInstance: String): [WorkBlocker!]!
+  workDependencyEdges(limit: Int = 100, fromKind: String, fromKey: String, edgeKind: String, sourceInstance: String): [WorkDependencyEdge!]!
+  workBlockerImpacts(limit: Int = 20, impactState: String = "open", affectedKind: String, affectedKey: String, workstreamKey: String, sourceInstance: String): [WorkBlockerImpact!]!
 }
 
 type Health {
   ok: Boolean!
   service: String!
+}
+
+"""
+Durable follow-up ledger for generated and source-backed operating signals.
+Actions carry decision gates so an insight does not become product action by accident.
+"""
+type WorkAction {
+  key: ID!
+  sourceInstance: String
+  actionType: String!
+  actionState: String!
+  decisionState: String!
+  decision: String
+  decisionReason: String
+  subjectKind: String!
+  subjectKey: String!
+  subjectTitle: String
+  subjectUrl: String
+  relatedTicketKeys: [String!]!
+  relatedPullRequestKeys: [String!]!
+  ownerKey: String
+  ownerSource: String
+  dueBucket: String!
+  rankScore: Float!
+  sourceUrl: String
+  decisionNeeded: String
+  recommendedAction: String
+  claimUse: String!
+  claimGateReason: String!
+  productActionAllowed: Boolean!
+  absenceClaimAllowed: Boolean!
+  etaClaimAllowed: Boolean!
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  badges: [WorkActionBadge!]!
+  observations: [WorkActionObservation!]!
+  sourceInsights: [WorkInsightSummary!]!
+}
+
+type WorkActionSummary {
+  sourceInstance: String
+  actionState: String!
+  totalCount: Int!
+  productActionCount: Int!
+  validationLeadCount: Int!
+  sourceRepairCount: Int!
+  closeoutReviewCount: Int!
+  modelOrRuleQaCount: Int!
+  suppressedSignalCount: Int!
+  nowCount: Int!
+  thisWeekCount: Int!
+  watchCount: Int!
+  unscheduledCount: Int!
+  highPriorityCount: Int!
+  supportsActionObservationCount: Int!
+  badges: [WorkActionBadge!]!
+  breakdowns: [WorkActionBreakdown!]!
+  ownerRollups: [WorkActionOwnerRollup!]!
+  forecastReadiness: WorkForecastReadiness!
+  topActions: [WorkAction!]!
+}
+
+"""
+WorkProgramItem is the workstream register row that TPM views page over.
+It references product work while keeping generated status and claim gates separate.
+"""
+type WorkProgramItem {
+  key: ID!
+  sourceInstance: String
+  workstreamKey: String!
+  subjectKind: String!
+  subjectKey: String!
+  linkedTicketKeys: [String!]!
+  linkedPullRequestKeys: [String!]!
+  title: String!
+  programStatus: String!
+  tpmBucket: String!
+  ownerKey: String
+  ownerSource: String
+  authorDri: String
+  requestedReviewerKeys: [String!]!
+  reviewerOrApprover: String
+  nextAction: String
+  decisionNeeded: String
+  decisionState: String!
+  decisionGateReason: String
+  claimUse: String!
+  claimGateReason: String!
+  productActionAllowed: Boolean!
+  absenceClaimAllowed: Boolean!
+  etaClaimAllowed: Boolean!
+  dueBucket: String!
+  lastSourceUpdateAt: String
+  ageDays: Float
+  staleDays: Float
+  riskScore: Float!
+  blockerLabelState: String
+  ciSignal: String
+  transitionState: String
+  dependencySummary: String
+  sourceCoverageState: String
+  labelQuality: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  badges: [WorkActionBadge!]!
+  action: WorkAction
+}
+
+"""
+Responsibility rows model accountable parties with evidence and basis.
+They avoid hiding ownership inside free-form owner_key text.
+"""
+type WorkResponsibility {
+  key: ID!
+  sourceInstance: String
+  workstreamKey: String
+  subjectKind: String!
+  subjectKey: String!
+  subjectTitle: String
+  subjectUrl: String
+  partyKind: String!
+  partyKey: String!
+  partySource: String
+  personKey: String
+  personDisplayName: String
+  responsibilityKind: String!
+  basisKind: String!
+  basisDetail: String
+  responsibilityState: String!
+  responsibilityStateReason: String
+  sourceUrl: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+  rankScore: Float!
+  badges: [WorkActionBadge!]!
+  action: WorkAction
+  blocker: WorkBlocker
+  programItem: WorkProgramItem
+  evidenceNeed: WorkProgramAutomationEvidenceNeed
+}
+
+type WorkProgramMilestonePacket {
+  sourceInstance: String
+  workstreamKey: String!
+  generatedAt: String
+  totalCount: Int!
+  releaseTargetCount: Int!
+  datedReleaseTargetCount: Int!
+  explicitDueDateCount: Int!
+  deliveryCommitmentCount: Int!
+  outcomeFactCount: Int!
+  dateClaimAllowedCount: Int!
+  deliveryCommitmentAllowedCount: Int!
+  milestones: [WorkProgramMilestone!]!
+  badges: [WorkActionBadge!]!
+}
+
+type WorkProgramMilestone {
+  key: ID!
+  sourceInstance: String
+  workstreamKey: String!
+  subjectKind: String!
+  subjectKey: String!
+  subjectTitle: String
+  subjectUrl: String
+  milestoneKind: String!
+  milestoneName: String!
+  targetDate: String
+  outcomeDate: String
+  milestoneState: String!
+  commitmentStrength: String!
+  dateClaimAllowed: Boolean!
+  deliveryCommitmentAllowed: Boolean!
+  claimGateReason: String!
+  sourceField: String!
+  sourcePayloadKey: String
+  sourceUrl: String
+  capturedAt: String
+  generatedAt: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  badges: [WorkActionBadge!]!
+}
+
+type WorkProgramSummary {
+  sourceInstance: String
+  workstreamKey: String
+  totalCount: Int!
+  needsDecisionCount: Int!
+  validateSignalCount: Int!
+  ciFailingCount: Int!
+  waitingReviewCount: Int!
+  sourceRepairCount: Int!
+  closedPendingReviewCount: Int!
+  modelQualityCount: Int!
+  closureCandidateCount: Int!
+  dismissedCount: Int!
+  nowCount: Int!
+  highRiskCount: Int!
+  unassignedCount: Int!
+  productActionCount: Int!
+  validationLeadCount: Int!
+  sourceCoverageLimitedCount: Int!
+  ownerLoadStatus: String!
+  ownerLoadActionCount: Int!
+  overloadedOwnerCount: Int!
+  attentionOwnerCount: Int!
+  unassignedActionCount: Int!
+  blockerCount: Int!
+  activeBlockerCount: Int!
+  validatingBlockerCount: Int!
+  blockerImpactCount: Int!
+  activeBlockerImpactCount: Int!
+  dependencyEdgeCount: Int!
+  blockingDependencyCount: Int!
+  needsActionDependencyCount: Int!
+  operatingStatus: String!
+  decisionPressure: String!
+  forecastState: String!
+  primaryRisk: String
+  recommendedFocus: String!
+  capabilityGaps: [String!]!
+  forecastReadiness: WorkForecastReadiness!
+  badges: [WorkActionBadge!]!
+  breakdowns: [WorkActionBreakdown!]!
+  ownerRollups: [WorkProgramOwnerRollup!]!
+  topOwnerLoads: [WorkOwnerLoadSnapshot!]!
+  topItems: [WorkProgramItem!]!
+  topBlockers: [WorkBlocker!]!
+  topBlockerImpacts: [WorkBlockerImpact!]!
+  topDependencies: [WorkDependencyEdge!]!
+  topForecasts: [WorkItemForecast!]!
+}
+
+type WorkProgramOwnerRollup {
+  ownerKey: String!
+  ownerSource: String
+  itemCount: Int!
+  needsDecisionCount: Int!
+  validateSignalCount: Int!
+  ciFailingCount: Int!
+  waitingReviewCount: Int!
+  sourceRepairCount: Int!
+  closureCandidateCount: Int!
+  nowCount: Int!
+  highRiskCount: Int!
+  maxRiskScore: Float!
+  badges: [WorkActionBadge!]!
+  topItems: [WorkProgramItem!]!
+}
+
+type WorkProgramOwnerPacket {
+  sourceInstance: String
+  generatedAt: String
+  workstreamKey: String!
+  ownerKey: String!
+  loadStatus: String!
+  recommendedFocus: String
+  actionCount: Int!
+  evidenceNeedCount: Int!
+  responsibilityCount: Int!
+  activeResponsibilityCount: Int!
+  candidateResponsibilityCount: Int!
+  unassignedResponsibilityCount: Int!
+  humanRequired: Boolean!
+  automationSummary: String!
+  ownerLoad: WorkOwnerLoadSnapshot
+  actions: [WorkAction!]!
+  evidenceNeeds: [WorkProgramAutomationEvidenceNeed!]!
+  responsibilities: [WorkResponsibility!]!
+}
+
+type WorkProgramAttentionPacket {
+  sourceInstance: String
+  generatedAt: String
+  workstreamKey: String!
+  attentionState: String!
+  priorityCount: Int!
+  urgentCount: Int!
+  humanRequiredCount: Int!
+  evidenceNeedCount: Int!
+  automationSummary: String!
+  recommendedFocus: String
+  tpmReadiness: WorkProgramTpmReadinessPacket!
+  priorities: [WorkProgramAttentionPriority!]!
+  evidenceNeeds: [WorkProgramAutomationEvidenceNeed!]!
+}
+
+type WorkProgramAttentionPriority {
+  key: ID!
+  priorityKind: String!
+  priorityState: String!
+  subjectKind: String
+  subjectKey: String
+  title: String!
+  reason: String!
+  recommendedAction: String
+  urgency: String!
+  rankScore: Float!
+  claimUse: String
+  claimGateReason: String
+  productActionAllowed: Boolean!
+  humanRequired: Boolean!
+  sourceUrl: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  action: WorkAction
+  blocker: WorkBlocker
+  blockerImpact: WorkBlockerImpact
+  forecast: WorkItemForecast
+  evidenceNeed: WorkProgramAutomationEvidenceNeed
+  responsibility: WorkResponsibility
+}
+
+type WorkProgramAutomationPlanPacket {
+  sourceInstance: String
+  generatedAt: String
+  workstreamKey: String!
+  actionState: String!
+  planState: String!
+  autonomyLevel: String!
+  autonomousActionReady: Boolean!
+  humanReviewRequired: Boolean!
+  absenceClaimsAllowed: Boolean!
+  safeAutomationAreas: [String!]!
+  humanRequiredAreas: [String!]!
+  blockedAutomationAreas: [String!]!
+  autonomousActionCount: Int!
+  humanReviewActionCount: Int!
+  blockedActionCount: Int!
+  evidenceNeedCount: Int!
+  responsibilityValidationCount: Int!
+  readyFunctionCount: Int!
+  supervisedFunctionCount: Int!
+  blockedFunctionCount: Int!
+  automationSummary: String!
+  recommendedFocus: String
+  executionPacket: WorkProgramExecutionPacket!
+  autonomousActions: [WorkAction!]!
+  humanReviewActions: [WorkAction!]!
+  blockedActions: [WorkAction!]!
+  safeFunctions: [WorkProgramTpmFunctionReadiness!]!
+  supervisedFunctions: [WorkProgramTpmFunctionReadiness!]!
+  blockedFunctions: [WorkProgramTpmFunctionReadiness!]!
+  evidenceNeeds: [WorkProgramAutomationEvidenceNeed!]!
+  responsibilities: [WorkResponsibility!]!
+  actionPlans: [WorkProgramAutomationActionPlan!]!
+}
+
+type WorkProgramAutomationActionPlan {
+  action: WorkAction!
+  disposition: String!
+  autonomyLevel: String!
+  reason: String!
+  blockingAreas: [String!]!
+  evidenceNeeds: [WorkProgramAutomationEvidenceNeed!]!
+  recommendedAction: String
+}
+
+type WorkProgramExecutionPacket {
+  sourceInstance: String
+  generatedAt: String
+  workstreamKey: String!
+  actionState: String!
+  executionState: String!
+  autonomousActionReady: Boolean!
+  humanReviewRequired: Boolean!
+  sourceCoverageState: String!
+  sourceCoverageLimitedCount: Int!
+  sourceCoverageUnknownCount: Int!
+  absenceClaimsAllowed: Boolean!
+  actionCount: Int!
+  productActionCount: Int!
+  validationLeadCount: Int!
+  sourceRepairCount: Int!
+  closeoutReviewCount: Int!
+  modelOrRuleQaCount: Int!
+  evidenceNeedCount: Int!
+  automationSummary: String!
+  recommendedFocus: String
+  tpmReadiness: WorkProgramTpmReadinessPacket!
+  actions: [WorkAction!]!
+  evidenceNeeds: [WorkProgramAutomationEvidenceNeed!]!
+}
+
+type WorkProgramBlockerPacket {
+  sourceInstance: String
+  generatedAt: String
+  workstreamKey: String!
+  blockerState: String!
+  blockerCount: Int!
+  impactCount: Int!
+  highRiskForecastCount: Int!
+  evidenceNeedCount: Int!
+  humanRequired: Boolean!
+  automationSummary: String!
+  recommendedFocus: String
+  blockers: [WorkBlocker!]!
+  impacts: [WorkBlockerImpact!]!
+  forecasts: [WorkItemForecast!]!
+  evidenceNeeds: [WorkProgramAutomationEvidenceNeed!]!
+}
+
+type WorkProgramForecastReliability {
+  forecastProduct: String!
+  readinessState: String!
+  productSafe: Boolean!
+  safeUse: String!
+  bestModel: String!
+  primaryMetric: String!
+  metricValue: String!
+  nextEvidence: String!
+  guardrail: String!
+}
+
+type WorkProgramForecastPacket {
+  sourceInstance: String
+  generatedAt: String
+  workstreamKey: String!
+  readinessState: String!
+  etaForecastReady: Boolean!
+  forecastMethod: String
+  highRiskForecastCount: Int!
+  etaReadyForecastCount: Int!
+  decisionTargetEvaluationState: String!
+  decisionTargetEvaluationCount: Int!
+  productReadyDecisionTargetEvaluationCount: Int!
+  evidenceNeedCount: Int!
+  humanRequired: Boolean!
+  automationSummary: String!
+  recommendedFocus: String
+  readiness: WorkForecastReadiness!
+  decisionTargetReadiness: WorkDecisionTargetReadiness!
+  forecastReliability: [WorkProgramForecastReliability!]!
+  forecasts: [WorkItemForecast!]!
+  decisionTargetEvaluations: [WorkDecisionTargetEvaluation!]!
+  evidenceNeeds: [WorkProgramAutomationEvidenceNeed!]!
+}
+
+type WorkProgramGuardrailPacket {
+  sourceInstance: String
+  generatedAt: String
+  workstreamKey: String!
+  guardrailState: String!
+  readinessState: String!
+  autonomousActionReady: Boolean!
+  humanReviewRequired: Boolean!
+  blockingGateCount: Int!
+  failedCheckCount: Int!
+  failedAdversarialCheckCount: Int!
+  warningCheckCount: Int!
+  warningAdversarialCheckCount: Int!
+  caveatCount: Int!
+  evidenceNeedCount: Int!
+  responsibilityValidationCount: Int!
+  automationSummary: String!
+  recommendedFocus: String
+  automationReadiness: WorkProgramAutomationReadiness
+  qualityGates: [WorkProgramBriefQualityGate!]!
+  adversarialChecks: [WorkProgramAdversarialCheck!]!
+  caveats: [WorkProgramBriefCaveat!]!
+  evidenceNeeds: [WorkProgramAutomationEvidenceNeed!]!
+  responsibilities: [WorkResponsibility!]!
+}
+
+type WorkProgramSourceCoveragePacket {
+  sourceInstance: String
+  generatedAt: String
+  workstreamKey: String!
+  coverageState: String!
+  completeItemCount: Int!
+  limitedItemCount: Int!
+  unknownItemCount: Int!
+  sourceSyncIssueCount: Int!
+  authOrRateLimitIssueCount: Int!
+  evidenceNeedCount: Int!
+  absenceClaimsAllowed: Boolean!
+  absenceClaimGateReason: String!
+  humanReviewRequired: Boolean!
+  automationSummary: String!
+  recommendedFocus: String
+  affectedItems: [WorkProgramItem!]!
+  sourceSyncIssues: [SourceSyncIssue!]!
+  evidenceNeeds: [WorkProgramAutomationEvidenceNeed!]!
+}
+
+type SourceSyncIssue {
+  key: ID!
+  sourceInstance: String
+  sourceSystem: String
+  externalKind: String
+  externalId: String
+  issueCode: String!
+  severity: String!
+  message: String
+  sourceUrl: String
+}
+
+"""
+Readiness packets expose whether each TPM function is measured, gated, or only a lead.
+The packet is intentionally separate from source truth rows.
+"""
+type WorkProgramTpmReadinessPacket {
+  sourceInstance: String
+  workstreamKey: String!
+  generatedAt: String
+  replacementState: String!
+  autonomousActionReady: Boolean!
+  humanReviewRequired: Boolean!
+  totalFunctionCount: Int!
+  readyFunctionCount: Int!
+  supervisedFunctionCount: Int!
+  blockedFunctionCount: Int!
+  humanRequiredFunctionCount: Int!
+  blockingGateCount: Int!
+  failedCheckCount: Int!
+  failedAdversarialCheckCount: Int!
+  failingCheckPullRequestCount: Int!
+  openFailingCheckPullRequestCount: Int!
+  evidenceNeedCount: Int!
+  measurementState: String!
+  measurementProductActionReady: Boolean!
+  measurementGapCount: Int!
+  measurementMissingLabelCount: Int!
+  forecastReadinessState: String!
+  forecastEtaReady: Boolean!
+  decisionTargetEvaluationState: String!
+  decisionTargetEvaluationCount: Int!
+  productReadyDecisionTargetEvaluationCount: Int!
+  sourceCoverageState: String!
+  sourceCoverageLimitedCount: Int!
+  sourceCoverageUnknownCount: Int!
+  absenceClaimsAllowed: Boolean!
+  responsibilityValidationCount: Int!
+  automationSummary: String!
+  recommendedFocus: String
+  guardrailPacket: WorkProgramGuardrailPacket!
+  sourceCoveragePacket: WorkProgramSourceCoveragePacket!
+  measurementPacket: WorkInsightMeasurementPacket!
+  automationReadiness: WorkProgramAutomationReadiness
+  tpmFunctionReadiness: [WorkProgramTpmFunctionReadiness!]!
+  decisionTargetReadiness: WorkDecisionTargetReadiness!
+  decisionTargetEvaluations: [WorkDecisionTargetEvaluation!]!
+  qualityGates: [WorkProgramBriefQualityGate!]!
+  evidenceNeeds: [WorkProgramAutomationEvidenceNeed!]!
+  responsibilities: [WorkResponsibility!]!
+}
+
+type WorkProgramBrief {
+  sourceInstance: String
+  workstreamKey: String
+  generatedAt: String
+  operatingStatus: String!
+  decisionPressure: String!
+  forecastState: String!
+  primaryRisk: String
+  executiveSummary: String!
+  recommendedFocus: String!
+  nextCadenceFocus: String!
+  capabilityGaps: [String!]!
+  summary: WorkProgramSummary!
+  standupSections: [WorkstreamStandupSection!]!
+  immediateActions: [WorkstreamStandupSection!]!
+  validationQueue: [WorkstreamStandupSection!]!
+  riskDrivers: [WorkProgramBriefRiskDriver!]!
+  riskDriverBuckets: [WorkProgramBriefRiskDriverBucket!]!
+  forecastReadiness: WorkForecastReadiness!
+  insightEvaluation: WorkInsightEvaluation!
+  automationReadiness: WorkProgramAutomationReadiness!
+  tpmFunctionReadiness: [WorkProgramTpmFunctionReadiness!]!
+  adversarialChecks: [WorkProgramAdversarialCheck!]!
+  qualityGates: [WorkProgramBriefQualityGate!]!
+  caveats: [WorkProgramBriefCaveat!]!
+  badges: [WorkActionBadge!]!
+}
+
+type WorkProgramGraphBrief {
+  sourceInstance: String
+  workstreamKey: String!
+  briefMode: String!
+  generatedAt: String
+  contextHash: String!
+  modelName: String
+  modelVersion: String
+  modelMethod: String
+  evaluationSummary: String
+  briefMarkdown: String!
+  snapshotKey: ID
+  runKey: ID
+  insight: WorkInsightSummary!
+  evidence: WorkEvidenceSummary
+  badges: [WorkActionBadge!]!
+}
+
+"""
+Graph context is the prompt/building-block DTO for AI summaries.
+The server decides which rows are evidence, guardrails, or non-claimable diagnostics.
+"""
+type WorkProgramGraphContext {
+  sourceInstance: String
+  generatedAt: String
+  scopeMode: String!
+  runKey: String
+  workstreamKey: String!
+  contextHash: String!
+  traversalDepth: Int!
+  itemCount: Int!
+  actionCount: Int!
+  dependencyEdgeCount: Int!
+  insightCount: Int!
+  forecastCount: Int!
+  graphSummary: String!
+  llmTask: String!
+  reachedSubjectKeys: [String!]!
+  allowedCitations: [String!]!
+  citations: [WorkGraphCitation!]!
+  items: [WorkProgramItem!]!
+  actions: [WorkAction!]!
+  dependencyEdges: [WorkDependencyEdge!]!
+  insights: [WorkInsightSummary!]!
+  forecasts: [WorkItemForecast!]!
+  qualityGates: [WorkProgramBriefQualityGate!]!
+  evidenceNeeds: [WorkProgramAutomationEvidenceNeed!]!
+  forecastPacket: WorkProgramForecastPacket!
+  guardrailPacket: WorkProgramGuardrailPacket!
+  sourceCoveragePacket: WorkProgramSourceCoveragePacket!
+  badges: [WorkActionBadge!]!
+}
+
+"""
+Generic bounded traversal output for connectors that have not earned typed schemas.
+Callers must inspect coverage and evidence before making product claims.
+"""
+type BoundedGraphContext {
+  contextHash: String!
+  seed: BoundedGraphRef!
+  depth: Int!
+  limitPerObject: Int!
+  scopeMode: String!
+  coverage: BoundedGraphCoverage!
+  guardrails: [String!]!
+  objects: [BoundedGraphObject!]!
+  associations: [BoundedGraphAssociation!]!
+  evidence: [BoundedGraphEvidence!]!
+}
+
+type BoundedGraphRef {
+  objectType: String!
+  key: String!
+}
+
+"""
+Coverage explains what the traversal was allowed to see.
+Sparse or stale coverage keeps absence claims out of product answers.
+"""
+type BoundedGraphCoverage {
+  coverageState: String!
+  absenceClaimsAllowed: Boolean!
+  absenceClaimGateReason: String!
+  absenceClaimAssociationTypes: [String!]!
+  sourceSystem: String
+  sourceInstance: String
+  coverageWindowStart: String
+  coverageWindowEnd: String
+  summary: String
+}
+
+type BoundedGraphObject {
+  objectType: String!
+  key: String!
+  title: String!
+  source: String
+  sourceInstance: String
+  externalID: String
+  visibility: String
+  freshnessState: String
+  proofState: String!
+  claimAllowed: Boolean!
+  claimGateReason: String!
+  sourceCoverageState: String
+  rankScore: Float!
+}
+
+"""
+Association rows are candidate context until claimAllowed is true.
+This keeps high-rank but private/stale/generated links from becoming facts.
+"""
+type BoundedGraphAssociation {
+  key: String!
+  associationType: String!
+  from: BoundedGraphRef!
+  to: BoundedGraphRef!
+  evidenceKey: String
+  confidence: Float!
+  visibility: String
+  freshnessState: String
+  proofState: String!
+  claimAllowed: Boolean!
+  claimGateReason: String!
+}
+
+type BoundedGraphEvidence {
+  key: String!
+  source: String
+  sourceInstance: String
+  locatorKind: String
+  visibility: String
+  freshnessState: String
+  confidence: Float!
+}
+
+type WorkGraphCitation {
+  ref: String!
+  citationKind: String!
+  nodeKind: String!
+  nodeKey: String!
+  sourceInstance: String
+  evidenceRef: String
+  proofState: String!
+  freshnessState: String!
+  visibility: String!
+  claimUse: String
+  claimGateReason: String
+  claimAllowed: Boolean!
+  excerptAllowed: Boolean!
+  sourceUrlAllowed: Boolean!
+  detail: String
+}
+
+type WorkProgramBriefRiskDriver {
+  key: ID!
+  driverKind: String!
+  subjectKey: String
+  title: String!
+  status: String!
+  recommendedAction: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  rankScore: Float!
+  badges: [WorkActionBadge!]!
+}
+
+type WorkProgramBriefRiskDriverBucket {
+  driverKind: String!
+  title: String!
+  riskDriverCount: Int!
+  topRiskDrivers: [WorkProgramBriefRiskDriver!]!
+}
+
+type WorkProgramAutomationReadiness {
+  readinessState: String!
+  readinessScore: Float!
+  autonomousActionReady: Boolean!
+  humanReviewRequired: Boolean!
+  safeAutomationAreas: [String!]!
+  humanRequiredAreas: [String!]!
+  rationale: String!
+  requiredEvidence: [String!]!
+  evidenceWorkQueue: [WorkProgramAutomationEvidenceNeed!]!
+  gates: [WorkProgramBriefQualityGate!]!
+}
+
+type WorkProgramAutomationEvidenceNeed {
+  key: ID!
+  gateKey: String!
+  evidenceKind: String!
+  priority: String!
+  targetKind: String!
+  targetKey: String
+  ownerKey: String
+  actionKey: String
+  actionState: String
+  metricKey: String
+  executionState: String!
+  backingActionCount: Int!
+  currentCount: Int!
+  requiredCount: Int!
+  missingCount: Int!
+  currentRate: Float
+  requiredRate: Float
+  recommendedAction: String!
+  nextExecutionStep: String!
+  sourceUrl: String
+  evidence: WorkEvidenceSummary
+  qualityGate: WorkProgramBriefQualityGate
+  action: WorkAction
+}
+
+type WorkProgramTpmFunctionReadiness {
+  functionKey: ID!
+  functionName: String!
+  readinessState: String!
+  automationState: String!
+  humanRequired: Boolean!
+  supportingSignalCount: Int!
+  blockingGateKeys: [String!]!
+  blockingGates: [WorkProgramBriefQualityGate!]!
+  detail: String!
+  recommendedAction: String!
+}
+
+type WorkProgramAdversarialCheck {
+  key: ID!
+  checkKind: String!
+  checkState: String!
+  severity: String!
+  title: String!
+  detail: String!
+  recommendedAction: String!
+  blockingGateKeys: [String!]!
+  evidenceRefs: [String!]!
+}
+
+type WorkProgramBriefQualityGate {
+  key: ID!
+  gateState: String!
+  blocking: Boolean!
+  detail: String!
+  recommendedAction: String
+}
+
+type WorkProgramBriefCaveat {
+  key: ID!
+  severity: String!
+  title: String!
+  detail: String!
+  recommendedAction: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+}
+
+type WorkForecastReadiness {
+  sourceInstance: String
+  evaluatedAt: String
+  etaForecastReady: Boolean!
+  readinessState: String!
+  forecastMethod: String
+  bestBacktestModel: String
+  medianBaselineMaeDays: Float
+  heuristicMaeDays: Float
+  randomForestMaeDays: Float
+  bestKfoldModel: String
+  bestKfoldMaeDays: Float
+  bestChronologicalHoldoutModel: String
+  bestChronologicalHoldoutMaeDays: Float
+  sourceEventAsOfKfoldModel: String
+  sourceEventAsOfKfoldMaeDays: Float
+  sourceEventAsOfChronologicalHoldoutModel: String
+  sourceEventAsOfChronologicalHoldoutMaeDays: Float
+  survivalModel: String
+  survivalMaeDays: Float
+  etaReadinessBlockingReason: String
+  baselineSampleCount: Int!
+  openCandidateCount: Int!
+  closedUnmergedCount: Int!
+  observedSnapshotTimeCount: Int!
+  transitionCandidateCount: Int!
+  terminalTransitionCandidateCount: Int!
+  transitionHistoryReady: Boolean!
+  medianCycleDays: Float
+  p75CycleDays: Float
+  typedEvaluationCount: Int!
+  gatedForecastLeadCount: Int!
+  badges: [WorkActionBadge!]!
+  qualityAction: WorkAction
+  detail: String
+  readinessReason: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+}
+
+type WorkDecisionTargetReadiness {
+  sourceInstance: String
+  evaluatedAt: String
+  evaluationState: String!
+  productActionReady: Boolean!
+  evaluationCount: Int!
+  productReadyEvaluationCount: Int!
+  validationGatedEvaluationCount: Int!
+  coverageGateState: String!
+  coverageGateReason: String!
+  coverageStratum: String
+  generatedEvidenceOnly: Boolean!
+  automationSummary: String!
+  recommendedFocus: String
+  evaluations: [WorkDecisionTargetEvaluation!]!
+  badges: [WorkActionBadge!]!
+}
+
+type WorkDecisionTargetEvaluation {
+  key: ID!
+  sourceInstance: String
+  targetKind: String!
+  evaluationKind: String!
+  modelName: String!
+  fold: Int!
+  trainCount: Int!
+  testCount: Int!
+  positiveCount: Int!
+  baselinePositiveRate: Float
+  precisionAt10pct: Float
+  liftAt10pct: Float
+  rocAuc: Float
+  averagePrecision: Float
+  coverageStratum: String
+  readyForProductAction: Boolean!
+  productActionAllowed: Boolean!
+  productActionGateState: String!
+  productActionGateReason: String!
+  decisionClaimUse: String!
+  decisionClaimGateReason: String!
+  note: String
+  evaluatedAt: String
+  evidenceCount: Int!
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+  rankScore: Float!
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  badges: [WorkActionBadge!]!
+}
+
+"""
+Evidence summaries are compact citations for product packets.
+They point back to source-backed proof without exposing raw connector payloads.
+"""
+type WorkEvidenceSummary {
+  key: ID!
+  ref: String!
+  claimKind: String!
+  claimTargetKind: String
+  claimField: String
+  relationshipKind: String
+  locatorKind: String
+  locator: String
+  sourceSpanKey: String
+  ordinal: Int!
+  spanStart: Int!
+  spanEnd: Int!
+  sourceSystem: String
+  sourceInstance: String
+  externalKind: String
+  externalId: String
+  sourceUrl: String
+  proofState: String!
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+  observedAt: String
+  excerpt: String
+  excerptTruncated: Boolean!
+}
+
+type WorkItemForecast {
+  key: ID!
+  sourceInstance: String!
+  forecastKind: String!
+  subjectKind: String!
+  subjectKey: String!
+  subjectTitle: String
+  subjectUrl: String
+  subjectState: String
+  forecastMethod: String
+  modelName: String
+  ageDays: Float
+  predictedTotalCycleDays: Float
+  predictedRemainingDays: Float
+  overdueDays: Float
+  riskScore: Float!
+  riskBand: String!
+  readinessState: String!
+  etaForecastReady: Boolean!
+  etaClaimAllowed: Boolean!
+  forecastClaimUse: String!
+  forecastClaimGateReason: String!
+  readinessReason: String
+  actionabilityState: String!
+  recommendedAction: String!
+  interpretation: String!
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  action: WorkAction
+  badges: [WorkActionBadge!]!
+}
+
+type WorkItemStateSnapshot {
+  key: ID!
+  sourceInstance: String
+  subjectKind: String!
+  subjectKey: String!
+  subjectTitle: String
+  subjectUrl: String
+  state: String
+  observedAt: String
+  capturedAt: String
+  sourceUpdatedAt: String
+  ageDays: Float
+  staleDays: Float
+  cycleTimeDays: Float
+  riskScore: Float!
+  riskBand: String!
+  forecastMethod: String
+  sourceCurrentCoverageState: String
+  sourceCurrentDetailState: String
+  sourceCurrentIssueCodes: String
+  sourceCurrentIssueKinds: String
+  priority: String
+  linkedPullRequestCount: Int!
+  freshPullRequestLinkCount: Int!
+  partialPullRequestLinkCount: Int!
+  commentCount: Int!
+  participantCount: Int!
+  blockerKeywordCount: Int!
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  badges: [WorkActionBadge!]!
+}
+
+type WorkItemStateTransition {
+  key: ID!
+  sourceInstance: String
+  subjectKind: String!
+  subjectKey: String!
+  subjectTitle: String
+  subjectUrl: String
+  fromObservedAt: String
+  toObservedAt: String
+  fromState: String
+  toState: String
+  transitionKind: String!
+  transitionConfidence: Float!
+  confidenceBasis: String!
+  verificationState: String!
+  terminal: Boolean!
+  requiresCloseout: Boolean!
+  note: String
+  fromSnapshot: WorkItemStateSnapshot
+  toSnapshot: WorkItemStateSnapshot
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  badges: [WorkActionBadge!]!
+}
+
+type WorkLensWindow {
+  key: ID!
+  lensKey: ID!
+  lensKind: String!
+  lensTargetKind: String!
+  displayName: String!
+  windowKind: String!
+  resultCount: Int!
+  isComplete: Boolean!
+  lastIndexedAt: String
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+  badges: [WorkActionBadge!]!
+  pullRequestResults: [WorkLensPullRequestResult!]!
+  ticketResults: [WorkLensTicketResult!]!
+}
+
+type WorkLensPullRequestResult {
+  key: ID!
+  relationKind: String!
+  rankScore: Float!
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+  subjectKey: String!
+  title: String
+  state: String
+  sourceUrl: String
+  relatedTicketKeys: [String!]!
+  badges: [WorkActionBadge!]!
+}
+
+type WorkLensTicketResult {
+  key: ID!
+  relationKind: String!
+  rankScore: Float!
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+  subjectKey: String!
+  title: String
+  state: String
+  sourceUrl: String
+  relatedPullRequestKeys: [String!]!
+  badges: [WorkActionBadge!]!
+}
+
+type WorkstreamStandup {
+  sourceInstance: String
+  actionState: String!
+  operatingStatus: String!
+  actionItemCount: Int!
+  productActionCount: Int!
+  validationLeadCount: Int!
+  criticalOrHighValidationLeadCount: Int!
+  modelOrRuleQaCount: Int!
+  closeoutReviewCount: Int!
+  ownerCount: Int!
+  topOwnerActionCount: Int!
+  nowCount: Int!
+  anonymousObservationCount: Int!
+  coverageLimitedCount: Int!
+  etaForecastReady: Boolean!
+  recommendedCadenceFocus: String!
+  forecastReadiness: WorkForecastReadiness!
+  sections: [WorkstreamStandupSection!]!
+}
+
+type WorkstreamStandupSection {
+  sourceInstance: String
+  generatedAt: String
+  sectionRank: Int!
+  sectionKind: String!
+  urgency: String!
+  freshnessState: String!
+  confidence: Float!
+  ownerKey: String
+  subjectKey: String
+  actionType: String
+  statusSignal: String
+  summary: String!
+  recommendedAction: String!
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  action: WorkAction
+}
+
+type WorkOwnerLoadSnapshot {
+  key: ID!
+  workstreamKey: String!
+  sourceInstance: String!
+  ownerKey: String!
+  ownerDisplayName: String
+  personKey: String
+  generatedAt: String
+  loadStatus: String!
+  actionCount: Int!
+  productActionCount: Int!
+  validationLeadCount: Int!
+  modelOrRuleQaCount: Int!
+  criticalOrHighCount: Int!
+  maxPriorityScore: Float!
+  avgPriorityScore: Float!
+  decisionFollowupCount: Int!
+  validateSignalCount: Int!
+  ciCheckFollowupCount: Int!
+  reviewWaitFollowupCount: Int!
+  coverageLimitedCount: Int!
+  anonymousObservationCount: Int!
+  needsHumanReviewCount: Int!
+  topActionType: String
+  topSubjects: String
+  topActions: [WorkAction!]!
+  recommendedFocus: String
+  freshnessState: String!
+  confidence: Float!
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  badges: [WorkActionBadge!]!
+}
+
+type WorkstreamHealthSnapshot {
+  key: ID!
+  sourceInstance: String
+  workstreamKey: String!
+  workstreamTitle: String
+  generatedAt: String
+  operatingStatus: String!
+  actionItemCount: Int!
+  productActionCount: Int!
+  validationLeadCount: Int!
+  criticalOrHighValidationLeadCount: Int!
+  modelOrRuleQaCount: Int!
+  closeoutReviewCount: Int!
+  ownerCount: Int!
+  topOwnerActionCount: Int!
+  failingCheckPullRequestCount: Int!
+  openFailingCheckPullRequestCount: Int!
+  sourceRepairCount: Int!
+  coverageLimitedCount: Int!
+  anonymousObservationCount: Int!
+  terminalTransitionCount: Int!
+  terminalTransitionSubjects: String
+  etaForecastReady: Boolean!
+  truthLabelCoverage: String
+  actionabilityLabelCoverage: String
+  recommendedCadenceFocus: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  badges: [WorkActionBadge!]!
+}
+
+type WorkActionOwnerRollup {
+  ownerKey: String!
+  ownerSource: String
+  actionCount: Int!
+  productActionCount: Int!
+  validationLeadCount: Int!
+  nowCount: Int!
+  highPriorityCount: Int!
+  maxRankScore: Float!
+  badges: [WorkActionBadge!]!
+  topActions: [WorkAction!]!
+}
+
+type WorkActionBreakdown {
+  dimension: String!
+  key: String!
+  count: Int!
+}
+
+type WorkActionBadge {
+  key: String!
+  label: String!
+  tone: String!
+  detail: String
+}
+
+type WorkActionObservation {
+  key: ID!
+  observationKind: String!
+  sourceCoverageState: String
+  authState: String
+  currentState: String
+  ciSignal: String
+  ciRequiredCheckCoverageState: String
+  ciRequiredCheckMatchState: String
+  ciRequiredContextCount: Int!
+  ciFailingRequiredContextCount: Int!
+  ciPendingRequiredContextCount: Int!
+  ciMissingRequiredContextCount: Int!
+  ciFailingRequiredContexts: String
+  ciPendingRequiredContexts: String
+  ciMissingRequiredContexts: String
+  ciFailingContextCount: Int!
+  ciPendingContextCount: Int!
+  ciFailingContexts: String
+  ciPendingContexts: String
+  supportsAction: Boolean!
+  observedAt: String
+  sourceUrl: String
+}
+
+type WorkBlocker {
+  key: ID!
+  sourceInstance: String
+  blockerKind: String!
+  blockerState: String!
+  severity: String!
+  subjectKind: String!
+  subjectKey: String!
+  title: String!
+  summary: String
+  recommendedAction: String
+  ownerKey: String
+  ownerSource: String
+  decisionState: String!
+  sourceCoverageState: String
+  reviewState: String!
+  truthLabel: String!
+  actionabilityLabel: String!
+  labelQuality: String!
+  measurementEligible: Boolean!
+  reviewerKind: String!
+  reviewerKey: String
+  labelSet: String
+  claimUse: String!
+  claimGateReason: String!
+  productActionAllowed: Boolean!
+  blockerClaimAllowed: Boolean!
+  absenceClaimAllowed: Boolean!
+  actionKey: String
+  sourceInsightKey: String
+  sourceUrl: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  rankScore: Float!
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+  badges: [WorkActionBadge!]!
+}
+
+type WorkDependencyEdge {
+  key: ID!
+  sourceInstance: String
+  edgeKind: String!
+  relationshipAuthority: String!
+  canonicalRelationshipKind: String
+  fromKind: String!
+  fromKey: String!
+  toKind: String!
+  toKey: String!
+  fromEndpoint: WorkDependencyEndpoint
+  toEndpoint: WorkDependencyEndpoint
+  endpoints: [WorkDependencyEndpoint!]!
+  riskSignal: String
+  sourceCoverageState: String
+  claimUse: String!
+  claimGateReason: String!
+  relationshipClaimAllowed: Boolean!
+  sourceUrl: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  rankScore: Float!
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+  badges: [WorkActionBadge!]!
+}
+
+type WorkDependencyEndpoint {
+  key: ID!
+  endpointRole: String!
+  nodeKind: String!
+  nodeKey: String!
+  resolutionState: String!
+  resolutionReason: String
+  sourceUrl: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  rankScore: Float!
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+}
+
+type WorkBlockerImpact {
+  key: ID!
+  sourceInstance: String
+  impactKind: String!
+  impactState: String!
+  impactScore: Float!
+  severity: String!
+  blockerKind: String!
+  blockerKey: String
+  blockerState: String!
+  actionKey: String
+  workstreamKey: String
+  affectedKind: String!
+  affectedKey: String!
+  subjectKind: String!
+  subjectKey: String!
+  pathLength: Int!
+  title: String!
+  summary: String
+  recommendedAction: String
+  sourceCoverageState: String
+  claimUse: String!
+  claimGateReason: String!
+  impactClaimAllowed: Boolean!
+  sourceUrl: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  rankScore: Float!
+  freshnessState: String!
+  visibility: String!
+  confidence: Float!
+  badges: [WorkActionBadge!]!
+}
+
+type WorkInsightSummary {
+  key: ID!
+  insightKind: String!
+  severity: String!
+  subjectKind: String!
+  subjectKey: String!
+  title: String!
+  details: String
+  recommendedAction: String
+  modelMethod: String
+  score: Float!
+  scoreExplanation: String
+  confidence: Float!
+  sourceUrl: String
+  evidenceRef: String
+  evidence: WorkEvidenceSummary
+  evidenceExcerpt: String
+  reviewKind: String
+  reviewState: String
+  truthLabel: String
+  actionabilityLabel: String
+  labelQuality: String
+  measurementEligible: Boolean!
+  reviewerKind: String
+  reviewerKey: String
+  labelSet: String
+  reviewNextAction: String
+  reviewRationale: String
+  badges: [WorkActionBadge!]!
+}
+
+type WorkInsightEvaluation {
+  sourceInstance: String
+  currentInsightCount: Int!
+  reviewRowCount: Int!
+  measurementLabelCount: Int!
+  openReviewRequestCount: Int!
+  minLabeledTotalRequired: Int!
+  minLabeledPerKindRequired: Int!
+  minPrecisionRateForProductAction: Float!
+  minUsefulSignalRateForProductAction: Float!
+  minActionabilityRateForProductAction: Float!
+  precisionRate: Float!
+  usefulSignalRate: Float!
+  actionabilityRate: Float!
+  falsePositiveRate: Float!
+  measurementCoverageRate: Float!
+  readyToMeasurePrecision: Boolean!
+  readyToMeasureActionability: Boolean!
+  readyInsightKindCount: Int!
+  productActionReadyKindCount: Int!
+  qualityGatedInsightKindCount: Int!
+  gatedInsightKindCount: Int!
+  recommendedNextStep: String!
+  badges: [WorkActionBadge!]!
+  kinds: [WorkInsightKindEvaluation!]!
+}
+
+type WorkInsightMeasurementPacket {
+  sourceInstance: String
+  generatedAt: String
+  insightKind: String
+  measurementState: String!
+  readyToMeasure: Boolean!
+  productActionReady: Boolean!
+  currentInsightCount: Int!
+  measurementLabelCount: Int!
+  openReviewRequestCount: Int!
+  reviewQueueCount: Int!
+  reviewQueueTotalCount: Int!
+  readyInsightKindCount: Int!
+  productActionReadyKindCount: Int!
+  qualityGatedInsightKindCount: Int!
+  gatedInsightKindCount: Int!
+  measurementGapCount: Int!
+  measurementMissingLabelCount: Int!
+  measurementGapReviewQueueCount: Int!
+  measurementGapReviewQueueTotalCount: Int!
+  precisionRate: Float!
+  usefulSignalRate: Float!
+  actionabilityRate: Float!
+  measurementCoverageRate: Float!
+  automationSummary: String!
+  recommendedFocus: String
+  evaluation: WorkInsightEvaluation!
+  measurementGaps: [WorkInsightKindEvaluation!]!
+  measurementGapReviewQueue: [WorkInsightReview!]!
+  reviewQueue: [WorkInsightReview!]!
+}
+
+"""
+Review rows are the feedback loop for generated insights.
+Measurement gates should use reviewed labels, not producer confidence alone.
+"""
+type WorkInsightReview {
+  key: ID!
+  sourceInstance: String
+  sourceSystem: String!
+  externalKind: String!
+  reviewKind: String!
+  reviewState: String!
+  truthLabel: String!
+  actionabilityLabel: String!
+  labelQuality: String!
+  measurementEligible: Boolean!
+  reviewerKind: String!
+  reviewerKey: String
+  ownerKey: String
+  labelSet: String
+  reviewNextAction: String
+  reviewRationale: String
+  reviewedAt: String
+  insight: WorkInsightSummary!
+  badges: [WorkActionBadge!]!
+}
+
+type WorkInsightKindEvaluation {
+  insightKind: String!
+  measurementScope: String!
+  currentInsightCount: Int!
+  reviewRowCount: Int!
+  measurementLabelCount: Int!
+  openReviewRequestCount: Int!
+  truthLabeledCount: Int!
+  actionabilityLabeledCount: Int!
+  truePositiveCount: Int!
+  falsePositiveCount: Int!
+  partialCount: Int!
+  actionableCount: Int!
+  needsOwnerCount: Int!
+  precisionRate: Float!
+  usefulSignalRate: Float!
+  actionabilityRate: Float!
+  falsePositiveRate: Float!
+  measurementCoverageRate: Float!
+  requiredLabelCount: Int!
+  readyToMeasure: Boolean!
+  readyForProductAction: Boolean!
+  productActionGateState: String!
+  productActionGateReason: String!
+  recommendedAction: String!
+  badges: [WorkActionBadge!]!
+}
+
+type WorkstreamRegister {
+  key: ID!
+  sourceInstance: String
+  title: String!
+  status: String!
+  summary: String
+  sourceUrl: String
+  ticketCount: Int!
+  actionItemCount: Int!
+  productActionCount: Int!
+  validationLeadCount: Int!
+  closeoutReviewCount: Int!
+  modelOrRuleQaCount: Int!
+  nowCount: Int!
+  topRiskScore: Float!
+  forecastReadiness: WorkForecastReadiness!
+  badges: [WorkActionBadge!]!
+  topActions: [WorkAction!]!
 }
