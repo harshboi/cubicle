@@ -1,0 +1,82 @@
+{
+  "name": "company-ai-first-minimum-message",
+  "required_categories": [
+    "message-ticket",
+    "ticket-document",
+    "ticket-pr",
+    "sparse-coverage"
+  ],
+  "required_source_coverage_states": [
+    "sparse"
+  ],
+  "questions": [
+    {
+      "key": "message:discussion",
+      "category": "message-ticket",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer cite the message as discussing the ticket?",
+      "expected_facts": [
+        {
+          "text": "ticket:COMP-101` -> `message:launch-standup",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "discussed_in",
+          "citation_prefix": "[graph_associations:"
+        }
+      ]
+    },
+    {
+      "key": "message:ticket-pr",
+      "category": "ticket-pr",
+      "source_coverage_state": "sparse",
+      "question": "Does traversal from the message reach the ticket's PR?",
+      "expected_facts": [
+        {
+          "text": "ticket:COMP-101` -> `pull-request:company/app#42",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "implemented_by",
+          "citation_prefix": "[graph_associations:"
+        }
+      ]
+    },
+    {
+      "key": "message:ticket-document",
+      "category": "ticket-document",
+      "source_coverage_state": "sparse",
+      "question": "Does traversal from the message reach the launch plan document?",
+      "expected_facts": [
+        {
+          "text": "ticket:COMP-101` -> `document:company-plan",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "documented_by",
+          "citation_prefix": "[graph_associations:"
+        }
+      ]
+    },
+    {
+      "key": "message:sparse-coverage",
+      "category": "sparse-coverage",
+      "source_coverage_state": "sparse",
+      "question": "Does sparse coverage block absence claims?",
+      "expected_facts": [
+        {
+          "text": "missing neighbors are unknown, not absent",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "no pull requests",
+        "no tickets",
+        "coverage is complete",
+        "WorkProgram",
+        "TPM",
+        "Flink"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "relationship_authority": {
+    "contains_message": {
+      "presence_sources": [
+        "slack"
+      ],
+      "presence_locator_kinds": {
+        "slack": [
+          "slack_channel_history"
+        ]
+      }
+    },
+    "links_to": {
+      "presence_sources": [
+        "slack"
+      ],
+      "presence_locator_kinds": {
+        "slack": [
+          "slack_message_link"
+        ]
+      }
+    }
+  }
+}

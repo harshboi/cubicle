@@ -1,0 +1,186 @@
+{
+  "name": "ai-first-mixed-minimum",
+  "required_categories": [
+    "auth-limited",
+    "dependency-topology",
+    "evidence-missing",
+    "forecast-gated",
+    "generated-summary",
+    "github-only",
+    "mixed-source",
+    "run-boundary",
+    "sparse-coverage",
+    "ticket-only"
+  ],
+  "required_source_coverage_states": [
+    "auth_limited",
+    "complete",
+    "sparse"
+  ],
+  "questions": [
+    {
+      "key": "github:typed-row",
+      "category": "github-only",
+      "source_coverage_state": "complete",
+      "question": "Can the answer cite a GitHub-only PR as a typed graph row?",
+      "expected_facts": [
+        {
+          "text": "GitHub PR 42 is present as a typed graph row",
+          "citation": "[work_program_items:work-program-item:github-pr-42]"
+        }
+      ],
+      "expected_citations": [
+        "[context:mixedctx]"
+      ],
+      "forbidden_phrases": [
+        "Flink"
+      ]
+    },
+    {
+      "key": "ticket:typed-row",
+      "category": "ticket-only",
+      "source_coverage_state": "complete",
+      "question": "Can the answer cite a ticket-only item without needing a PR?",
+      "expected_facts": [
+        {
+          "text": "Support ticket SUP-101 is present without a linked PR requirement",
+          "citation": "[work_program_items:work-program-item:support-ticket-101]"
+        }
+      ],
+      "forbidden_phrases": [
+        "linked PR is required"
+      ]
+    },
+    {
+      "key": "coverage:sparse",
+      "category": "sparse-coverage",
+      "source_coverage_state": "sparse",
+      "question": "Does sparse source coverage block absence claims?",
+      "expected_facts": [
+        {
+          "text": "Sparse coverage blocks absence claims",
+          "citation": "[source_coverage:workstream:support]"
+        }
+      ],
+      "forbidden_phrases": [
+        "no linked PRs",
+        "no blockers"
+      ]
+    },
+    {
+      "key": "coverage:auth-limited",
+      "category": "auth-limited",
+      "source_coverage_state": "auth_limited",
+      "question": "Does auth-limited coverage stay diagnostic instead of becoming product absence?",
+      "expected_facts": [
+        {
+          "text": "GitHub 403 and 429 results are coverage evidence only",
+          "citation": "[source_coverage:workstream:github-auth-limited]"
+        }
+      ],
+      "forbidden_phrases": [
+        "empty files",
+        "empty reviews",
+        "empty comments"
+      ]
+    },
+    {
+      "key": "mixed:ticket-pr-link",
+      "category": "mixed-source",
+      "source_coverage_state": "complete",
+      "question": "Can the answer keep source-proven ticket to PR links separate from inferred links?",
+      "expected_facts": [
+        {
+          "text": "Ticket TCK-7 links to GitHub PR 42 through a typed relationship",
+          "citation": "[ticket_pull_requests:ticket-pr:TCK-7:github-pr-42]"
+        }
+      ],
+      "forbidden_phrases": [
+        "inferred from missing rows"
+      ]
+    },
+    {
+      "key": "forecast:gated",
+      "category": "forecast-gated",
+      "source_coverage_state": "complete",
+      "question": "Does forecast output remain risk triage when ETA is not ready?",
+      "expected_facts": [
+        {
+          "text": "Forecast output is risk triage only",
+          "citation": "[analytics:tpm_forecast_summary]"
+        }
+      ],
+      "forbidden_phrases": [
+        "will merge by Friday",
+        "ETA commitment"
+      ]
+    },
+    {
+      "key": "generated:quarantine",
+      "category": "generated-summary",
+      "source_coverage_state": "complete",
+      "question": "Does generated summary evidence stay generated and avoid becoming source truth?",
+      "expected_facts": [
+        {
+          "text": "Generated graph briefs are generated evidence, not source truth",
+          "citation": "[guardrail:mixedctx]"
+        }
+      ],
+      "forbidden_phrases": [
+        "generated summary proves the source fact"
+      ]
+    },
+    {
+      "key": "run:packet-boundary",
+      "category": "run-boundary",
+      "source_coverage_state": "complete",
+      "question": "Does the answer preserve the packet-boundary caveat for runKey?",
+      "expected_facts": [
+        {
+          "text": "runKey bounds packet rows while graph rows are latest scoped rows",
+          "citation": "[context:mixedctx]"
+        }
+      ],
+      "forbidden_phrases": [
+        "immutable graph snapshot"
+      ]
+    },
+    {
+      "key": "evidence:missing",
+      "category": "evidence-missing",
+      "source_coverage_state": "sparse",
+      "question": "Does missing evidence become an evidence need instead of a product fact?",
+      "expected_facts": [
+        {
+          "text": "Reviewer approval is confirmed",
+          "citation": "[work_program_items:work-program-item:support-ticket-101]"
+        }
+      ],
+      "expected_no_answer": [
+        {
+          "text": "Missing reviewer evidence is an evidence need",
+          "citation": "[work_program_evidence_needs:evidence-need:reviewer-proof]"
+        }
+      ],
+      "forbidden_phrases": [
+        "reviewer definitely approved"
+      ]
+    },
+    {
+      "key": "dependency:topology",
+      "category": "dependency-topology",
+      "source_coverage_state": "complete",
+      "question": "Does derived topology avoid becoming a confirmed dependency truth?",
+      "expected_facts": [
+        {
+          "text": "Derived dependency edges are topology context, not product truth",
+          "citation": "[work_dependency_edges:work-dependency-edge:derived-42]"
+        }
+      ],
+      "forbidden_phrases": [
+        "confirmed dependency",
+        "confirmed blocker"
+      ]
+    }
+  ]
+}

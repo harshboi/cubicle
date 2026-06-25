@@ -1,0 +1,84 @@
+{
+  "boundedGraphContext": {
+    "contextHash": "authlimitedctx01",
+    "scopeMode": "bounded_graph_context",
+    "seed": {
+      "objectType": "document",
+      "key": "document:customer-rollout-note"
+    },
+    "depth": 2,
+    "limitPerObject": 4,
+    "coverage": {
+      "coverageState": "auth_limited",
+      "absenceClaimsAllowed": false,
+      "absenceClaimGateReason": "source_auth_or_rate_limit",
+      "summary": "Coverage is limited for document document:customer-rollout-note: 2 source sync issue(s), 2 auth/rate-limit issue(s). Raw sync issue bodies and source URLs are coverage evidence only, not prompt facts."
+    },
+    "guardrails": [
+      "Auth-limited coverage keeps missing neighbors unknown, not absent.",
+      "403 and 429 source responses are coverage evidence only; never normalize them as empty files, comments, reviews, or linked objects.",
+      "Do not expose raw source sync issue bodies, private URLs, tokens, or replay payload text."
+    ],
+    "objects": [
+      {
+        "objectType": "document",
+        "key": "document:customer-rollout-note",
+        "title": "Customer rollout note",
+        "source": "docs",
+        "sourceInstance": "customer-success",
+        "externalID": "customer-rollout-note.md",
+        "visibility": "public",
+        "freshnessState": "partial",
+        "sourceCoverageState": "auth_limited",
+        "proofState": "source_observed",
+        "claimAllowed": false,
+        "claimGateReason": "object_partial_requires_hydration"
+      },
+      {
+        "objectType": "ticket",
+        "key": "ticket:SUP-204",
+        "title": "Investigate rollout customer escalation",
+        "source": "ticketing",
+        "sourceInstance": "customer-success",
+        "externalID": "SUP-204",
+        "visibility": "public",
+        "freshnessState": "fresh",
+        "sourceCoverageState": "auth_limited",
+        "proofState": "source_observed",
+        "claimAllowed": true,
+        "claimGateReason": "typed_graph_object"
+      }
+    ],
+    "associations": [
+      {
+        "key": "assoc:ticket-doc-auth-limited",
+        "associationType": "documented_by",
+        "from": {
+          "objectType": "ticket",
+          "key": "ticket:SUP-204"
+        },
+        "to": {
+          "objectType": "document",
+          "key": "document:customer-rollout-note"
+        },
+        "evidenceKey": "evidence:ticket-doc-auth-limited",
+        "confidence": 1,
+        "visibility": "public",
+        "freshnessState": "fresh",
+        "proofState": "candidate",
+        "claimAllowed": false,
+        "claimGateReason": "relationship_endpoint_partial_requires_hydration"
+      }
+    ],
+    "evidence": [
+      {
+        "key": "evidence:ticket-doc-auth-limited",
+        "source": "ticketing",
+        "sourceInstance": "customer-success",
+        "visibility": "public",
+        "freshnessState": "fresh",
+        "confidence": 1
+      }
+    ]
+  }
+}

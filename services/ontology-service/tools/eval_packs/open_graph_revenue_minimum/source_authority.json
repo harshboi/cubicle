@@ -1,0 +1,44 @@
+{
+  "relationship_authority": {
+    "has_opportunity": {
+      "presence_sources": [
+        "crm"
+      ],
+      "presence_locator_kinds": {
+        "crm": [
+          "opportunity_link"
+        ]
+      }
+    },
+    "blocked_by": {
+      "presence_sources": [
+        "support"
+      ],
+      "presence_locator_kinds": {
+        "support": [
+          "case_link"
+        ]
+      }
+    },
+    "guided_by": {
+      "presence_sources": [
+        "docs"
+      ],
+      "presence_locator_kinds": {
+        "docs": [
+          "playbook_link"
+        ]
+      }
+    },
+    "updated_in": {
+      "presence_sources": [
+        "slack"
+      ],
+      "presence_locator_kinds": {
+        "slack": [
+          "slack_message"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "name": "company-ai-first-minimum-document",
+  "required_categories": [
+    "auth-limited-coverage",
+    "document-link",
+    "ticket-document",
+    "ticket-pr",
+    "generic-no-workprogram"
+  ],
+  "required_source_coverage_states": [
+    "limited"
+  ],
+  "questions": [
+    {
+      "key": "document:coverage-limited",
+      "category": "auth-limited-coverage",
+      "source_coverage_state": "limited",
+      "question": "Does the answer state that limited source coverage blocks absence claims?",
+      "expected_facts": [
+        {
+          "text": "Source coverage is `limited`; do not infer missing neighbors. Gate reason: `source_auth_or_rate_limit`",
+          "citation": "[source_coverage:document:company-plan]"
+        },
+        {
+          "text": "Raw sync issue bodies and source URLs are coverage evidence only",
+          "citation": "[source_coverage:document:company-plan]"
+        }
+      ],
+      "forbidden_phrases": [
+        "coverage is complete",
+        "absence claims are allowed",
+        "no linked objects"
+      ]
+    },
+    {
+      "key": "document:ticket-document",
+      "category": "ticket-document",
+      "source_coverage_state": "limited",
+      "question": "Does the answer cite the ticket-to-document relationship?",
+      "expected_facts": [
+        {
+          "text": "ticket:COMP-101` -> `document:company-plan",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "documented_by",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "inferred from missing rows"
+      ]
+    },
+    {
+      "key": "document:document-link",
+      "category": "document-link",
+      "source_coverage_state": "limited",
+      "question": "Does the answer cite the document-to-document link?",
+      "expected_facts": [
+        {
+          "text": "document:company-plan` -> `document:api-reference",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "links_to",
+          "citation_prefix": "[graph_associations:"
+        }
+      ]
+    },
+    {
+      "key": "document:ticket-pr",
+      "category": "ticket-pr",
+      "source_coverage_state": "limited",
+      "question": "Does the answer keep the ticket-to-PR relationship visible from the document seed?",
+      "expected_facts": [
+        {
+          "text": "ticket:COMP-101` -> `pull-request:company/app#42",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "implemented_by",
+          "citation_prefix": "[graph_associations:"
+        }
+      ]
+    },
+    {
+      "key": "document:no-workprogram",
+      "category": "generic-no-workprogram",
+      "source_coverage_state": "limited",
+      "question": "Does the generic answer avoid WorkProgram/TPM vocabulary?",
+      "expected_facts": [
+        {
+          "text": "missing neighbors are unknown, not absent",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "[analytics:"
+      ]
+    }
+  ]
+}

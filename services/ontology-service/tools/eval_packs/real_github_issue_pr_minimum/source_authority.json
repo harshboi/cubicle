@@ -1,0 +1,34 @@
+{
+  "relationship_authority": {
+    "authored_by": {
+      "presence_locator_kinds": {
+        "github": [
+          "pull_request_author"
+        ]
+      },
+      "presence_sources": [
+        "github"
+      ]
+    },
+    "closed_by": {
+      "presence_locator_kinds": {
+        "github": [
+          "closing_pull_request"
+        ]
+      },
+      "presence_sources": [
+        "github"
+      ]
+    },
+    "opened_by": {
+      "presence_locator_kinds": {
+        "github": [
+          "issue_author"
+        ]
+      },
+      "presence_sources": [
+        "github"
+      ]
+    }
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "real_acl_connector": {
+    "detail": "production-like Slack connector replay now writes source-backed private ACL metadata onto candidate graph rows and proves public/private traversal behavior without post-hoc mutation",
+    "evidence": [
+      "tools/bounded_graph_real_connector_inventory.py: scans product graph tables for non-public rows with acl_state=current, keeps evidence-table ACL snapshots separate from product-row ACL ingestion, and requires an explicit allowed production connector_kind for the hard real ACL gate",
+      "/tmp/real_connector_inventory_blockers_20260624/report.json: 25 real Flink/Jira/GitHub data-root DBs scanned, product_acl_current_nonpublic_database_count=0, passes_real_acl_ingestion_requirement=false",
+      "tools/eval_packs/real_connector_acl_probe/run_eval.sh: copies a real Flink/Jira/GitHub DB, marks one existing FLINK-36332 ticket-PR relationship and PR endpoint private/high-rank, leaves a public fallback, and verifies public-only traversal hides the private key while private-allowed traversal sees it",
+      "tools/eval_packs/real_connector_acl_probe/run_eval.sh: private authorized context remains non-promotable for public product claims with relationship_visibility_restricted and row-level promotion blockers",
+      "cmd/ontology-service/main.go: bounded-graph-context-export accepts principal-key and allowed-visibility-classes, then passes BoundedGraphPrincipalAccess into GraphQL boundedGraphContext",
+      "tools/eval_packs/bounded_graph_promotion_matrix/cases.json: real_connector_acl_probe covers derived-real-acl-runtime, real-connector, source-authority, and typed-vs-graph-promotion tags",
+      "tools/eval_packs/production_like_slack_acl_ingestion/run_eval.sh: loads a single-source Slack OpenGraph fixture with connectorKind=slack_api, private message/object ACL, private relationship ACL, and source-scope provenance",
+      "tools/eval_packs/production_like_slack_acl_ingestion/run_eval.sh: public-only traversal hides the high-rank private Slack edge and uses a public fallback; private-allowed traversal sees the private edge but promotion audit blocks it as relationship_visibility_restricted",
+      "tools/eval_packs/production_like_slack_acl_ingestion/run_eval.sh: inventory hard gate passes with production_acl_candidate_count=1 and passes_real_acl_ingestion_requirement=true",
+      "/Users/harsh/workspace/data/production-like-acl-ingestion-2026-06-24/slack_acl_ingestion/production_like_slack_acl.db: persisted DB contains SourceConnection(connector_kind=slack_api), source-backed private ACL metadata, and source_scope_state_id references on all OpenGraph rows",
+      "/tmp/real_connector_inventory_with_acl_and_registered_scope_20260624/report.json: real_acl_ingestion_database_count=1 and passes_real_acl_ingestion_requirement=true after including the Slack ACL ingestion DB"
+    ],
+    "satisfied": true,
+    "verification": [
+      ".venv/bin/python -m unittest tools.test_bounded_graph_real_connector_inventory",
+      "go test ./cmd/ontology-service -run TestOpenGraphFixtureLoadFeedsEntBoundedGraphExport -count=1",
+      "sh tools/eval_packs/real_connector_acl_probe/run_eval.sh",
+      "sh tools/eval_packs/production_like_slack_acl_ingestion/run_eval.sh",
+      ".venv/bin/python tools/bounded_graph_real_connector_inventory.py --database /Users/harsh/workspace/data/production-like-acl-ingestion-2026-06-24/slack_acl_ingestion/production_like_slack_acl.db --limit-per-db 5 --require-real-acl-ingestion --report-json /tmp/real_connector_inventory_with_acl_and_registered_scope_20260624/require_real_acl.json"
+    ]
+  },
+  "source_acl_product_row_ingestion": {
+    "detail": "OpenGraph connector-shaped loader now maps explicit source visibility into current product-row ACL metadata instead of leaving acl_state unknown",
+    "evidence": [
+      "internal/opengraphfixture/loader.go: explicit visibility values set acl_state=current, acl_policy_key, visibility_hash, and acl_checked_at on OpenGraph object, association, and evidence rows",
+      "internal/opengraphfixture/loader_test.go: TestOpenGraphFixtureLoadMapsExplicitVisibilityToCurrentACL proves private object, restricted association, and evidence ACL snapshot metadata are written while omitted visibility stays unknown",
+      "/Users/harsh/workspace/data/open-graph-acl-ingestion-2026-06-24/open_graph_incident_acl.db: replayable OpenGraph ACL ingestion DB contains private/current and public/current product rows",
+      "/tmp/open_graph_acl_ingestion_inventory_20260624/report.json: product_acl_current_nonpublic_database_count=1 and passes_product_acl_row_requirement=true for the OpenGraph ACL ingestion DB"
+    ],
+    "satisfied": true,
+    "verification": [
+      "go test ./internal/opengraphfixture -run TestOpenGraphFixtureLoadMapsExplicitVisibilityToCurrentACL -count=1",
+      ".venv/bin/python tools/bounded_graph_real_connector_inventory.py --database /Users/harsh/workspace/data/open-graph-acl-ingestion-2026-06-24/open_graph_incident_acl.db --limit-per-db 5 --require-product-acl-row --report-json /tmp/open_graph_acl_ingestion_inventory_20260624/report.json --report-md /tmp/open_graph_acl_ingestion_inventory_20260624/report.md",
+      "sqlite3 /Users/harsh/workspace/data/open-graph-acl-ingestion-2026-06-24/open_graph_incident_acl.db \"select 'objects', visibility, acl_state, count(*) from open_graph_objects group by visibility, acl_state union all select 'associations', visibility, acl_state, count(*) from open_graph_associations group by visibility, acl_state union all select 'evidence', visibility, acl_state, count(*) from evidences group by visibility, acl_state order by 1,2,3;\""
+    ]
+  },
+  "second_real_non_github_domain": {
+    "detail": "real public PyPI package metadata proves the generic OpenGraph bounded path on a non-GitHub, non-Jira, non-Flink source domain without product-specific schema or vocabulary",
+    "evidence": [
+      "tools/eval_packs/real_pypi_project_release_minimum: replayable PyPI requests fixture with pypi_project, pypi_release, pypi_distribution, and package_contact rows",
+      "tools/eval_packs/real_pypi_project_release_minimum/run_eval.sh: depth-2 bounded graph traversal scores 7/7 while seed-only and typed-row baselines score 2/7",
+      "tools/eval_packs/bounded_graph_promotion_matrix/cases.json: real_pypi_project_release_minimum covers real-non-github-domain, real-non-flink-connector, source-authority, and typed-vs-graph-promotion tags"
+    ],
+    "satisfied": true,
+    "verification": [
+      "sh tools/eval_packs/real_pypi_project_release_minimum/run_eval.sh",
+      ".venv/bin/python tools/bounded_graph_promotion_matrix.py --skip-run --out-dir /tmp/bounded_graph_promotion_matrix_with_real_github_llm_20260624 --report-json /tmp/bounded_graph_promotion_matrix_with_real_github_llm_20260624/report.with_pypi.json"
+    ]
+  },
+  "generated_summary_quarantine": {
+    "detail": "generated summaries are prevented from re-entering source/product truth across bounded graph context, WorkProgram graph context, and Python graph-brief context building",
+    "evidence": [
+      "internal/graphql/bounded_graph_context_query_test.go: TestBoundedGraphContextQuarantinesNonProductWriters blocks generated summary prompt leakage",
+      "internal/graphql/work_program_graph_context_query_test.go: TestWorkProgramGraphContextBuildsTypedLLMContext blocks ai_graph_brief and misclassified graph-brief rows from graph-context insights",
+      "internal/graphql/work_program_graph_context_query_test.go: TestWorkProgramGraphCitationEvidencePolicyDoesNotQuoteGeneratedEvidence disables excerpt/source URL exposure for generated evidence",
+      "tools/test_cubicle_graph_brief.py: CubicleGraphBriefTest.test_build_context_bundle_collects_cited_work_neighborhood filters ai_graph_brief and graph-brief producer metadata from WorkInsight context rows",
+      "tools/cubicle_graph_brief.py: work_insight_generated_summary_quarantine_clause filters insight_kind, source_system, external_kind, model_method, and cubicle://graph-brief source URLs"
+    ],
+    "satisfied": true,
+    "verification": [
+      "go test ./internal/graphql -run 'TestBoundedGraphContextQuarantinesNonProductWriters|TestWorkProgramGraphContextBuildsTypedLLMContext|TestWorkProgramGraphCitationEvidencePolicyDoesNotQuoteGeneratedEvidence'",
+      ".venv/bin/python -m unittest tools.test_cubicle_graph_brief.CubicleGraphBriefTest.test_build_context_bundle_collects_cited_work_neighborhood"
+    ]
+  },
+  "relationship_identity_conflict_cases": {
+    "detail": "duplicate, conflicting, and repeated relationship observations are either upserted idempotently or kept visible as validation context with claimAllowed=false until source-authority/merge policy is satisfied",
+    "evidence": [
+      "internal/graphcontext/bounded_context_test.go: TestBuildBoundedGraphContextGatesConflictingMultiEvidenceAssociation keeps current and stale evidence rows visible while gating both relationship claims",
+      "internal/graphcontext/bounded_context_test.go: TestBuildBoundedGraphContextGatesDuplicateCurrentAssociation keeps duplicate current logical relationships visible for merge audit while gating claims",
+      "internal/graphcontext/bounded_context_test.go: TestAssociationClaimPolicyChecksEvidenceMetadata gates raw multi-evidence and allows consolidated multi-evidence only when latest evidence passes source authority",
+      "internal/graphql/bounded_graph_context_query_test.go: TestBoundedGraphContextGatesLatestEvidenceWhenOlderEvidenceIsHidden prevents an Ent-backed latest-evidence projection from hiding stale sibling evidence and becoming claimable",
+      "internal/graphcontext/bounded_context_test.go: TestAssociationClaimPolicyChecksEvidenceMetadata proves source-authority can optionally require evidence source instance and rejects missing or wrong instances",
+      "internal/graphcontext/bounded_context_test.go: TestAssociationClaimPolicyChecksEvidenceMetadata proves source-authority can optionally require mapper/source version and rejects missing or wrong mapper versions",
+      "internal/flinkcubiclepoc/sourcegraph/load_test.go: TestLoadFixtureRepeatedReplayDoesNotInflateCreatedCounters proves repeated replay does not create duplicate tickets, PRs, ticket-PR rows, evidence, or created counters",
+      "internal/opengraphfixture/loader_test.go: TestOpenGraphFixtureLoadIsReplayIdempotent proves repeated OpenGraph fixture loads reuse object, association, and evidence identities while updating current fields",
+      "internal/opengraphfixture/loader_test.go: TestOpenGraphFixtureLoadTracksNewAssociationEvidenceOnce proves a new evidence key for the same OpenGraph association increments evidence_count once and does not inflate on replay",
+      "internal/opengraphfixture/loader_test.go: TestOpenGraphFixtureRelationshipIdentityIncludesAssociationType proves semantic association type is part of OpenGraph relationship identity",
+      "tools/test_bounded_graph_brief.py: test_promotion_audit_accepts_authoritative_relationship_source_instance and test_promotion_audit_rejects_unauthoritative_relationship_source_instance mirror source-instance authority in saved JSON promotion audits",
+      "tools/test_bounded_graph_brief.py: test_promotion_audit_accepts_authoritative_relationship_mapper_version and test_promotion_audit_rejects_unauthoritative_relationship_mapper_version mirror mapper-version authority in saved JSON promotion audits"
+    ],
+    "satisfied": true,
+    "verification": [
+      "go test ./internal/graphcontext -run 'TestBuildBoundedGraphContextGatesConflictingMultiEvidenceAssociation|TestBuildBoundedGraphContextGatesDuplicateCurrentAssociation|TestAssociationClaimPolicyChecksEvidenceMetadata'",
+      "go test ./internal/graphql -run 'TestBoundedGraphContextGatesLatestEvidenceWhenOlderEvidenceIsHidden'",
+      "go test ./internal/flinkcubiclepoc/sourcegraph -run 'TestLoadFixtureRepeatedReplayDoesNotInflateCreatedCounters'",
+      "go test ./internal/opengraphfixture -run 'TestOpenGraphFixtureLoadIsReplayIdempotent|TestOpenGraphFixtureLoadTracksNewAssociationEvidenceOnce|TestOpenGraphFixtureRelationshipIdentityIncludesAssociationType' -count=1",
+      ".venv/bin/python -m unittest tools.test_bounded_graph_brief.BoundedGraphBriefCLITest.test_promotion_audit_accepts_authoritative_relationship_source_instance tools.test_bounded_graph_brief.BoundedGraphBriefCLITest.test_promotion_audit_rejects_unauthoritative_relationship_source_instance tools.test_bounded_graph_brief.BoundedGraphBriefCLITest.test_promotion_audit_accepts_authoritative_relationship_mapper_version tools.test_bounded_graph_brief.BoundedGraphBriefCLITest.test_promotion_audit_rejects_unauthoritative_relationship_mapper_version"
+    ]
+  },
+  "absence_claim_principal_coverage": {
+    "detail": "bounded graph absence claims require complete relation, path, source, time-window, and principal coverage; missing relation scope, missing principal coverage, missing source window, auth/rate-limit source issues, broad traversal, and unsupported source/object relationships fail closed",
+    "evidence": [
+      "internal/graphcontext/bounded_context_test.go: TestBuildBoundedGraphContextRequiresRelationScopedCoverageForAbsenceClaims clamps absence claims unless coverage is complete, relation/path-scoped, source-scoped, and time-windowed",
+      "internal/graphql/bounded_graph_context_query_test.go: TestBoundedGraphContextUsesSourceScopeCoverageForAbsenceClaims allows absence only with exact source scope, relation coverage, run window, and CoverageCompleteForPrincipal",
+      "internal/graphql/bounded_graph_context_query_test.go: TestBoundedGraphContextKeepsAbsenceClaimsGatedWithoutPrincipalCoverage requires principal-aware source coverage",
+      "internal/graphql/bounded_graph_context_query_test.go: TestBoundedGraphContextKeepsAbsenceClaimsGatedWithoutRelationCoverage requires explicit relationship coverage policy",
+      "internal/graphql/bounded_graph_context_query_test.go: TestBoundedGraphContextKeepsAbsenceClaimsGatedForUnfilteredTraversal blocks broad traversal absence claims",
+      "internal/graphql/bounded_graph_context_query_test.go: TestBoundedGraphContextKeepsAbsenceClaimsGatedWithoutCoverageWindow requires source-time coverage windows",
+      "internal/graphql/bounded_graph_context_query_test.go: TestBoundedGraphContextSourceSyncIssueOverridesCompleteCoverage keeps 403/429 source issues as absence blockers",
+      "internal/graphql/bounded_graph_context_query_test.go: TestBoundedGraphContextSourceCoverageMatrixGatesAbsenceClaims covers source identity, freshness, exact-scope, relation policy, run window, principal, and source issue gates",
+      "internal/graphql/bounded_graph_context_query_test.go: TestBoundedGraphContextUsesSourceScopeCoverageForNonTicketStarts proves complete absence coverage for PR, document, and message starts without leaking source diagnostics",
+      "internal/graphql/bounded_graph_context_query_test.go: TestBoundedGraphContextDoesNotLetGitHubPRScopeProveJiraTicketLinks blocks wrong source/object-family absence proof",
+      "tools/test_bounded_graph_brief.py: BoundedGraphBriefCLITest.test_contract_rejects_absence_claims_without_relation_source_time_scope mirrors relation/source/time absence clamps for saved JSON"
+    ],
+    "satisfied": true,
+    "verification": [
+      "go test ./internal/graphcontext -run 'TestBuildBoundedGraphContextRequiresRelationScopedCoverageForAbsenceClaims'",
+      "go test ./internal/graphql -run 'TestBoundedGraphContextUsesSourceScopeCoverageForAbsenceClaims|TestBoundedGraphContextKeepsAbsenceClaimsGatedWithoutPrincipalCoverage|TestBoundedGraphContextKeepsAbsenceClaimsGatedWithoutRelationCoverage|TestBoundedGraphContextKeepsAbsenceClaimsGatedForUnfilteredTraversal|TestBoundedGraphContextKeepsAbsenceClaimsGatedWithoutCoverageWindow|TestBoundedGraphContextSourceSyncIssueOverridesCompleteCoverage|TestBoundedGraphContextSourceCoverageMatrixGatesAbsenceClaims|TestBoundedGraphContextUsesSourceScopeCoverageForNonTicketStarts|TestBoundedGraphContextDoesNotLetGitHubPRScopeProveJiraTicketLinks'",
+      ".venv/bin/python -m unittest tools.test_bounded_graph_brief.BoundedGraphBriefCLITest.test_contract_rejects_absence_claims_without_relation_source_time_scope"
+    ]
+  },
+  "negative_partial_real_connector_cases": {
+    "detail": "real connector-backed partial and source-issue cases prove partial PR endpoints, missing-auth/non-200 source issues, missing source snapshots, and partial source scope stay gated",
+    "evidence": [
+      "tools/bounded_graph_real_connector_inventory.py: scans source_scope_states for stale or not-attempted rows separately from fresh partial_scope rows",
+      "tools/eval_packs/real_connector_negative_partial/run_eval.sh: FLINK-32695 exports six partial PR endpoints; all PR objects and ticket-PR relationships are non-claimable",
+      "tools/eval_packs/real_connector_negative_partial/run_eval.sh: PR #998 has a real source_non_200 status 401 issue plus source_missing_snapshot on github_pull_request_files; bounded context reports limited coverage without raw source issue body or URL leakage, preserves two approver edges and one implemented_by edge, and gates one non-authoritative author edge",
+      "tools/eval_packs/real_connector_negative_partial/run_eval.sh: FLINK-36332 keeps four positive Jira remote-link relationships claimable while fresh partial_scope source states keep absence claims gated with source_scope_not_exact",
+      "tools/eval_packs/bounded_graph_promotion_matrix/cases.json: real_connector_negative_partial covers real-negative-partial-connector"
+    ],
+    "satisfied": true,
+    "verification": [
+      ".venv/bin/python -m unittest tools.test_bounded_graph_real_connector_inventory",
+      "sh tools/eval_packs/real_connector_negative_partial/run_eval.sh",
+      ".venv/bin/python tools/bounded_graph_promotion_matrix.py --skip-run --require-advisory-tags --out-dir /tmp/bounded_graph_promotion_matrix_with_real_github_llm_20260624 --report-json /tmp/bounded_graph_promotion_matrix_with_real_github_llm_20260624/report.with_pypi_negative_partial.require_advisory.json"
+    ]
+  },
+  "source_scope_not_attempted_lifecycle_state": {
+    "detail": "source-scope registration proves Cubicle can represent a planned but not-attempted source scope without post-hoc mutation or a fake sync run",
+    "evidence": [
+      "cmd/ontology-service/main.go: source-scope-register creates configured SourceConnection, SourceScope, and SourceScopeState rows with freshness_state=unknown, coverage_mode=unknown, no last_attempted_at, and no SourceSyncRun",
+      "cmd/ontology-service/main_test.go: TestRegisterSourceScopeCreatesNotAttemptedState proves registration writes unknown/unknown state, leaves last_attempted_at empty, and creates zero sync runs",
+      "/Users/harsh/workspace/data/real-source-scope-registration-2026-06-24/not-attempted-source-scope.db: replayable registration DB contains one not-attempted source_scope_state without synthetic mutation of a copied connector DB",
+      "/tmp/real_connector_inventory_with_registered_scope_20260624/report.json: source_scope_negative_row_database_count=1 and passes_source_scope_negative_row_requirement=true"
+    ],
+    "satisfied": true,
+    "verification": [
+      "go test ./cmd/ontology-service -run TestRegisterSourceScopeCreatesNotAttemptedState -count=1",
+      ".venv/bin/python tools/bounded_graph_real_connector_inventory.py --database /Users/harsh/workspace/data/real-source-scope-registration-2026-06-24/not-attempted-source-scope.db --limit-per-db 5 --require-source-scope-negative-row --report-json /tmp/real_connector_inventory_with_registered_scope_20260624/registration_row_only.json"
+    ]
+  },
+  "real_external_connector_source_scope_negative_capture": {
+    "detail": "public PyPI connector replay now proves a production-like external graph candidate can reference stale source-scope state without enabling OpenGraph absence claims",
+    "evidence": [
+      "tools/bounded_graph_real_connector_inventory.py: --require-real-source-scope-negative now requires stale/not-attempted source-scope rows referenced by a candidate relationship or endpoint through an explicit allowed production connector_kind, not merely a planner-only, vague, or fixture row",
+      "/tmp/real_connector_inventory_with_registered_scope_20260624/report.json: registration DB has source_scope_negative_row_database_count=1 but candidate_kind=no_promotable_candidate, so passes_real_source_scope_negative_requirement=false",
+      "tools/eval_packs/real_connector_source_scope_runtime/run_eval.sh: copies the real source-scope DB and derives stale exact-scope plus not-attempted unknown source-scope probes; this validates bounded-context behavior but is not a real external connector capture",
+      "tools/eval_packs/real_connector_source_scope_runtime/run_eval.sh: reports real_stale_or_not_attempted_source_scope_proven=false for the derived runtime probe",
+      "tools/eval_packs/real_pypi_source_scope_stale/run_eval.sh: replays the public PyPI OpenGraph fixture with connectorKind=pypi_json_api and SourceScopeState freshness_state=stale",
+      "tools/eval_packs/real_pypi_source_scope_stale/run_eval.sh: inventory hard gate passes with production_source_scope_negative_candidate_count=4 while OpenGraph coverage remains sparse and absenceClaimsAllowed=false",
+      "/Users/harsh/workspace/data/real-nonflink-open-graph-2026-06-24/real_pypi_source_scope_stale/real_pypi_source_scope_stale.db: persisted DB contains stale pypi_json_api source-scope state referenced by 5 OpenGraph objects, 4 associations, and 4 evidence rows",
+      "/tmp/real_connector_inventory_with_acl_and_registered_scope_20260624/report.json: source_scope_stale_or_not_attempted_database_count=1 and passes_real_source_scope_negative_requirement=true after including the PyPI stale source-scope DB"
+    ],
+    "satisfied": true,
+    "verification": [
+      ".venv/bin/python -m unittest tools.test_bounded_graph_real_connector_inventory",
+      ".venv/bin/python tools/bounded_graph_real_connector_inventory.py --database /Users/harsh/workspace/data/flink-pr-jira-1000-plus-500-jira-2026-06-22/ontology.source-scope-claimable-20260624.db --database /Users/harsh/workspace/data/real-nonflink-open-graph-2026-06-24/real_github_issue_pr_minimum/real_github_issue_pr.db --database /Users/harsh/workspace/data/real-nonflink-open-graph-2026-06-24/real_pypi_project_release_minimum/real_pypi_project_release.db --database /Users/harsh/workspace/data/real-nonflink-open-graph-2026-06-24/real_pypi_source_scope_stale/real_pypi_source_scope_stale.db --database /Users/harsh/workspace/data/real-source-scope-registration-2026-06-24/not-attempted-source-scope.db --limit-per-db 5 --require-real-source-scope-negative --report-json /tmp/real_connector_inventory_with_acl_and_registered_scope_20260624/require_real_source_scope.json",
+      "sh tools/eval_packs/real_connector_source_scope_runtime/run_eval.sh",
+      "sh tools/eval_packs/real_pypi_source_scope_stale/run_eval.sh",
+      ".venv/bin/python tools/bounded_graph_promotion_matrix.py --skip-run --require-advisory-tags --out-dir /tmp/bounded_graph_promotion_matrix_with_real_github_llm_20260624 --report-json /tmp/bounded_graph_promotion_matrix_with_real_github_llm_20260624/report.with_pypi_negative_partial.require_advisory.json"
+    ]
+  }
+}

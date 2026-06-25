@@ -1,0 +1,160 @@
+{
+  "sourceInstance": "workspace-revenue",
+  "observedAt": "2026-06-24T16:00:00Z",
+  "objects": [
+    {
+      "objectType": "customer_account",
+      "key": "customer:globex",
+      "title": "Globex Corp",
+      "sourceSystem": "crm",
+      "externalKind": "account",
+      "externalID": "acct-globex",
+      "sourceURL": "https://crm.example.test/accounts/globex",
+      "rankScore": 90,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "renewal_opportunity",
+      "key": "opportunity:globex-q3-renewal",
+      "title": "Globex Q3 renewal",
+      "sourceSystem": "crm",
+      "externalKind": "opportunity",
+      "externalID": "opp-globex-q3",
+      "sourceURL": "https://crm.example.test/opportunities/globex-q3-renewal",
+      "rankScore": 80,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "renewal_opportunity",
+      "key": "opportunity:hidden-private-renewal",
+      "title": "Private competitor renewal",
+      "sourceSystem": "crm",
+      "externalKind": "opportunity",
+      "externalID": "opp-private",
+      "sourceURL": "https://crm.example.test/private/opportunities/hidden-private-renewal",
+      "visibility": "private",
+      "rankScore": 100,
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "support_case",
+      "key": "case:data-export-latency",
+      "title": "Data export latency case",
+      "sourceSystem": "support",
+      "externalKind": "support_case",
+      "externalID": "case-412",
+      "sourceURL": "https://support.example.test/cases/412",
+      "rankScore": 70,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "playbook_document",
+      "key": "playbook:renewal-risk",
+      "title": "Renewal risk playbook",
+      "sourceSystem": "docs",
+      "externalKind": "playbook_document",
+      "externalID": "playbooks/renewal-risk",
+      "sourceURL": "https://docs.example.test/playbooks/renewal-risk",
+      "rankScore": 60,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "slack_message",
+      "key": "slack:renewal-update-1",
+      "title": "Renewal update 1",
+      "sourceSystem": "slack",
+      "externalKind": "slack_message",
+      "externalID": "C-revenue/T-renewal-1",
+      "sourceURL": "https://slack.example.test/archives/C-revenue/p-renewal-1",
+      "rankScore": 55,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    }
+  ],
+  "associations": [
+    {
+      "from": {
+        "objectType": "customer_account",
+        "key": "customer:globex"
+      },
+      "to": {
+        "objectType": "renewal_opportunity",
+        "key": "opportunity:hidden-private-renewal"
+      },
+      "associationType": "has_opportunity",
+      "sourceSystem": "crm",
+      "locatorKind": "opportunity_link",
+      "visibility": "private",
+      "rankScore": 100,
+      "freshnessState": "fresh"
+    },
+    {
+      "from": {
+        "objectType": "customer_account",
+        "key": "customer:globex"
+      },
+      "to": {
+        "objectType": "renewal_opportunity",
+        "key": "opportunity:globex-q3-renewal"
+      },
+      "associationType": "has_opportunity",
+      "sourceSystem": "crm",
+      "locatorKind": "opportunity_link",
+      "rankScore": 10,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "from": {
+        "objectType": "renewal_opportunity",
+        "key": "opportunity:globex-q3-renewal"
+      },
+      "to": {
+        "objectType": "support_case",
+        "key": "case:data-export-latency"
+      },
+      "associationType": "blocked_by",
+      "sourceSystem": "support",
+      "locatorKind": "case_link",
+      "rankScore": 9,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "from": {
+        "objectType": "renewal_opportunity",
+        "key": "opportunity:globex-q3-renewal"
+      },
+      "to": {
+        "objectType": "playbook_document",
+        "key": "playbook:renewal-risk"
+      },
+      "associationType": "guided_by",
+      "sourceSystem": "docs",
+      "locatorKind": "playbook_link",
+      "rankScore": 8,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "from": {
+        "objectType": "support_case",
+        "key": "case:data-export-latency"
+      },
+      "to": {
+        "objectType": "slack_message",
+        "key": "slack:renewal-update-1"
+      },
+      "associationType": "updated_in",
+      "sourceSystem": "slack",
+      "locatorKind": "slack_message",
+      "rankScore": 7,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    }
+  ]
+}

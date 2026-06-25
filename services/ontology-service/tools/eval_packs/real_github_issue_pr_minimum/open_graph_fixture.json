@@ -1,0 +1,130 @@
+{
+  "associations": [
+    {
+      "associationType": "closed_by",
+      "externalID": "13262->13523",
+      "externalKind": "closing_pull_request",
+      "from": {
+        "key": "github:issue:cli/cli#13262",
+        "objectType": "github_issue"
+      },
+      "locator": "Fixes https://github.com/cli/cli/issues/13262",
+      "locatorKind": "closing_pull_request",
+      "observedAt": "2026-06-15T08:36:33Z",
+      "rankScore": 20,
+      "sourceInstance": "github.com/cli/cli",
+      "sourceSystem": "github",
+      "sourceURL": "https://github.com/cli/cli/pull/13523",
+      "to": {
+        "key": "github:pr:cli/cli#13523",
+        "objectType": "github_pull_request"
+      },
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "associationType": "opened_by",
+      "externalID": "issue:13262:author:bewuethr",
+      "externalKind": "issue_author",
+      "from": {
+        "key": "github:issue:cli/cli#13262",
+        "objectType": "github_issue"
+      },
+      "locator": "bewuethr",
+      "locatorKind": "issue_author",
+      "observedAt": "2026-06-15T08:36:33Z",
+      "rankScore": 10,
+      "sourceInstance": "github.com/cli/cli",
+      "sourceSystem": "github",
+      "sourceURL": "https://github.com/cli/cli/issues/13262",
+      "to": {
+        "key": "github:user:bewuethr",
+        "objectType": "github_user"
+      },
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "associationType": "authored_by",
+      "externalID": "pr:13523:author:tommaso-moro",
+      "externalKind": "pull_request_author",
+      "from": {
+        "key": "github:pr:cli/cli#13523",
+        "objectType": "github_pull_request"
+      },
+      "locator": "tommaso-moro",
+      "locatorKind": "pull_request_author",
+      "observedAt": "2026-06-15T08:36:33Z",
+      "rankScore": 9,
+      "sourceInstance": "github.com/cli/cli",
+      "sourceSystem": "github",
+      "sourceURL": "https://github.com/cli/cli/pull/13523",
+      "to": {
+        "key": "github:user:tommaso-moro",
+        "objectType": "github_user"
+      },
+      "visibility": "public",
+      "freshnessState": "fresh"
+    }
+  ],
+  "objects": [
+    {
+      "externalID": "13262",
+      "externalKind": "issue",
+      "key": "github:issue:cli/cli#13262",
+      "objectType": "github_issue",
+      "observedAt": "2026-06-15T08:36:33Z",
+      "rankScore": 90,
+      "sourceInstance": "github.com/cli/cli",
+      "sourceSystem": "github",
+      "sourceURL": "https://github.com/cli/cli/issues/13262",
+      "title": "`gh skill` ignores CLAUDE_CONFIG_DIR",
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "externalID": "13523",
+      "externalKind": "pull_request",
+      "key": "github:pr:cli/cli#13523",
+      "objectType": "github_pull_request",
+      "observedAt": "2026-06-15T08:36:33Z",
+      "rankScore": 80,
+      "sourceInstance": "github.com/cli/cli",
+      "sourceSystem": "github",
+      "sourceURL": "https://github.com/cli/cli/pull/13523",
+      "title": "Support custom CLAUDE_CONFIG_DIR in install",
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "externalID": "bewuethr",
+      "externalKind": "user",
+      "key": "github:user:bewuethr",
+      "objectType": "github_user",
+      "observedAt": "2026-06-15T08:36:33Z",
+      "rankScore": 70,
+      "sourceInstance": "github.com",
+      "sourceSystem": "github",
+      "sourceURL": "https://github.com/bewuethr",
+      "title": "bewuethr",
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "externalID": "tommaso-moro",
+      "externalKind": "user",
+      "key": "github:user:tommaso-moro",
+      "objectType": "github_user",
+      "observedAt": "2026-06-15T08:36:33Z",
+      "rankScore": 69,
+      "sourceInstance": "github.com",
+      "sourceSystem": "github",
+      "sourceURL": "https://github.com/tommaso-moro",
+      "title": "tommaso-moro",
+      "visibility": "public",
+      "freshnessState": "fresh"
+    }
+  ],
+  "observedAt": "2026-06-15T08:36:33Z",
+  "sourceInstance": "github.com/cli/cli"
+}

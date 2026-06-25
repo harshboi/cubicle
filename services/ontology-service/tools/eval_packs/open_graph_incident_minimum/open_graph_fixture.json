@@ -1,0 +1,132 @@
+{
+  "sourceInstance": "workspace-a",
+  "observedAt": "2026-06-24T12:00:00Z",
+  "objects": [
+    {
+      "objectType": "customer_account",
+      "key": "customer:acme",
+      "title": "Acme Corp",
+      "sourceSystem": "crm",
+      "externalKind": "account",
+      "externalID": "acct-1",
+      "sourceURL": "https://crm.example.test/accounts/acme",
+      "rankScore": 90,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "incident",
+      "key": "incident:sev-42",
+      "title": "SEV-42 checkout outage",
+      "sourceSystem": "pagerduty",
+      "externalKind": "incident",
+      "externalID": "sev-42",
+      "sourceURL": "https://pagerduty.example.test/incidents/sev-42",
+      "rankScore": 80,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "incident",
+      "key": "incident:hidden-private",
+      "title": "Private payroll incident",
+      "sourceSystem": "pagerduty",
+      "externalKind": "incident",
+      "externalID": "private-1",
+      "sourceURL": "https://pagerduty.example.test/incidents/private-1",
+      "visibility": "private",
+      "rankScore": 100,
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "runbook_document",
+      "key": "runbook:failover",
+      "title": "Checkout failover runbook",
+      "sourceSystem": "docs",
+      "externalKind": "runbook_document",
+      "externalID": "runbook/failover",
+      "sourceURL": "https://docs.example.test/runbooks/failover",
+      "rankScore": 70,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "objectType": "slack_message",
+      "key": "slack:incident-update-1",
+      "title": "Incident update 1",
+      "sourceSystem": "slack",
+      "externalKind": "slack_message",
+      "externalID": "C1/T1",
+      "sourceURL": "https://slack.example.test/archives/C1/p1",
+      "rankScore": 65,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    }
+  ],
+  "associations": [
+    {
+      "from": {
+        "objectType": "customer_account",
+        "key": "customer:acme"
+      },
+      "to": {
+        "objectType": "incident",
+        "key": "incident:hidden-private"
+      },
+      "associationType": "affected_by",
+      "sourceSystem": "pagerduty",
+      "locatorKind": "incident_link",
+      "visibility": "private",
+      "rankScore": 100,
+      "freshnessState": "fresh"
+    },
+    {
+      "from": {
+        "objectType": "customer_account",
+        "key": "customer:acme"
+      },
+      "to": {
+        "objectType": "incident",
+        "key": "incident:sev-42"
+      },
+      "associationType": "affected_by",
+      "sourceSystem": "pagerduty",
+      "locatorKind": "incident_link",
+      "rankScore": 10,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "from": {
+        "objectType": "incident",
+        "key": "incident:sev-42"
+      },
+      "to": {
+        "objectType": "runbook_document",
+        "key": "runbook:failover"
+      },
+      "associationType": "mitigated_by",
+      "sourceSystem": "docs",
+      "locatorKind": "runbook_link",
+      "rankScore": 9,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    },
+    {
+      "from": {
+        "objectType": "incident",
+        "key": "incident:sev-42"
+      },
+      "to": {
+        "objectType": "slack_message",
+        "key": "slack:incident-update-1"
+      },
+      "associationType": "updated_in",
+      "sourceSystem": "slack",
+      "locatorKind": "slack_message",
+      "rankScore": 8,
+      "visibility": "public",
+      "freshnessState": "fresh"
+    }
+  ]
+}

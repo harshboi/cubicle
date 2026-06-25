@@ -1,0 +1,159 @@
+{
+  "name": "open-graph-incident-minimum",
+  "required_categories": [
+    "account-incident",
+    "generic-no-product-vocabulary",
+    "incident-runbook",
+    "incident-update",
+    "open-ent-proof",
+    "sparse-coverage",
+    "traversal-shape"
+  ],
+  "required_source_coverage_states": [
+    "sparse"
+  ],
+  "questions": [
+    {
+      "key": "open-graph:traversal-shape",
+      "category": "traversal-shape",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer describe the bounded open graph traversal shape?",
+      "expected_facts": [
+        {
+          "text": "4 object(s) and 3 association(s)",
+          "citation_prefix": "[context:"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "ticket:",
+        "pull-request:"
+      ]
+    },
+    {
+      "key": "open-graph:account-incident",
+      "category": "account-incident",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer cite the customer account to incident relationship?",
+      "expected_facts": [
+        {
+          "text": "customer:acme` -> `incident:sev-42",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "affected_by",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "implemented_by",
+        "documented_by",
+        "incident:hidden-private"
+      ]
+    },
+    {
+      "key": "open-graph:update-message",
+      "category": "incident-update",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer cite the incident update message relationship?",
+      "expected_facts": [
+        {
+          "text": "incident:sev-42` -> `slack:incident-update-1",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "updated_in",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "incident:hidden-private"
+      ]
+    },
+    {
+      "key": "open-graph:runbook",
+      "category": "incident-runbook",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer cite the incident runbook relationship?",
+      "expected_facts": [
+        {
+          "text": "incident:sev-42` -> `runbook:failover",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "mitigated_by",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "incident:hidden-private"
+      ]
+    },
+    {
+      "key": "open-graph:ent-proof",
+      "category": "open-ent-proof",
+      "source_coverage_state": "sparse",
+      "question": "Does the answer stay on the generic open graph instead of product ontology rows?",
+      "expected_facts": [
+        {
+          "text": "customer:acme` -> `incident:sev-42",
+          "citation_prefix": "[graph_associations:"
+        },
+        {
+          "text": "runbook:failover",
+          "citation_prefix": "[graph_associations:"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "TicketLensResult",
+        "PullRequestLensResult",
+        "TicketPullRequest"
+      ]
+    },
+    {
+      "key": "open-graph:sparse-coverage",
+      "category": "sparse-coverage",
+      "source_coverage_state": "sparse",
+      "question": "Does sparse source coverage keep missing neighbors unknown?",
+      "expected_facts": [
+        {
+          "text": "missing neighbors are unknown, not absent",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "no other incidents",
+        "no other runbooks",
+        "absence claims are allowed"
+      ]
+    },
+    {
+      "key": "open-graph:no-product-vocabulary",
+      "category": "generic-no-product-vocabulary",
+      "source_coverage_state": "sparse",
+      "question": "Does the generic graph answer avoid ticket, PR, TPM, and analytics vocabulary?",
+      "expected_facts": [
+        {
+          "text": "missing neighbors are unknown, not absent",
+          "citation_prefix": "[guardrail:"
+        }
+      ],
+      "forbidden_phrases": [
+        "WorkProgram",
+        "TPM",
+        "Flink",
+        "Jira",
+        "GitHub",
+        "ticket:",
+        "pull-request:",
+        "implemented_by",
+        "documented_by",
+        "[analytics:"
+      ]
+    }
+  ]
+}

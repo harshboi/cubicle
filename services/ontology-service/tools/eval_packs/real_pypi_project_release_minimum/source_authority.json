@@ -1,0 +1,34 @@
+{
+  "relationship_authority": {
+    "has_contact": {
+      "presence_locator_kinds": {
+        "pypi": [
+          "project_author_email_field"
+        ]
+      },
+      "presence_sources": [
+        "pypi"
+      ]
+    },
+    "has_distribution": {
+      "presence_locator_kinds": {
+        "pypi": [
+          "release_file_api"
+        ]
+      },
+      "presence_sources": [
+        "pypi"
+      ]
+    },
+    "has_release": {
+      "presence_locator_kinds": {
+        "pypi": [
+          "project_version_field"
+        ]
+      },
+      "presence_sources": [
+        "pypi"
+      ]
+    }
+  }
+}
