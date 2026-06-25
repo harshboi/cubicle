@@ -43,9 +43,47 @@ func (PullRequest) Fields() []ent.Field {
 				Values(pullRequestStateUnknown, pullRequestStateOpen, pullRequestStateMerged, pullRequestStateClosed).
 				Default(pullRequestStateUnknown).
 				Comment("Normalized pull-request state."),
+			field.Time("source_created_at").
+				Optional().
+				Comment("Source-reported pull-request creation time, used for age and cycle analysis."),
 			field.Time("merged_at").
 				Optional().
 				Comment("Time the pull request merged, when available."),
+			field.Time("closed_at").
+				Optional().
+				Comment("Time the pull request closed without necessarily merging, when available."),
+			field.Int("additions").
+				Optional().
+				Nillable().
+				Comment("Source-reported lines added in the pull request diff."),
+			field.Int("deletions").
+				Optional().
+				Nillable().
+				Comment("Source-reported lines deleted in the pull request diff."),
+			field.Int("changed_files_count").
+				Optional().
+				Nillable().
+				Comment("Source-reported number of files changed by the pull request."),
+			field.Int("commit_count").
+				Optional().
+				Nillable().
+				Comment("Source-reported number of commits in the pull request."),
+			field.Int("issue_comment_count").
+				Optional().
+				Nillable().
+				Comment("Source-reported number of issue-thread comments on the pull request."),
+			field.Int("review_comment_count").
+				Optional().
+				Nillable().
+				Comment("Source-reported number of code review comments on the pull request."),
+			field.Bool("is_draft").
+				Optional().
+				Nillable().
+				Comment("Whether the pull request is marked draft by the source."),
+			field.Bool("is_mergeable").
+				Optional().
+				Nillable().
+				Comment("Whether the source currently reports the pull request as mergeable; unset means unknown."),
 		},
 		textFields(),
 		sourceBackedFields(),
@@ -66,6 +104,21 @@ func (PullRequest) Edges() []ent.Edge {
 			Unique().
 			Field("latest_evidence_id").
 			Comment("Most recent evidence supporting this pull request state."),
+		edge.From("insights", WorkInsight.Type).
+			Ref("pull_request").
+			Comment("Generated TPM/product insights about this pull request."),
+		edge.From("actions", WorkAction.Type).
+			Ref("pull_request").
+			Comment("Gated TPM actions about this pull request."),
+		edge.From("state_snapshots", WorkItemStateSnapshot.Type).
+			Ref("pull_request").
+			Comment("Observed state snapshots for this pull request."),
+		edge.From("state_transitions", WorkItemStateTransition.Type).
+			Ref("pull_request").
+			Comment("Observed state transitions for this pull request."),
+		edge.From("milestones", WorkProgramMilestone.Type).
+			Ref("pull_request").
+			Comment("Source-backed milestone and date signals for this pull request."),
 	}
 }
 
