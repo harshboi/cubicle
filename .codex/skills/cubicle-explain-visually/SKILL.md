@@ -1,3 +1,9 @@
+<!--
+Association:
+cubicle-explain-visually skill -> diagram-first explanation ->
+side-by-side graph comparison -> Cubicle architecture review.
+-->
+
 ---
 name: cubicle-explain-visually
 description: Explain Cubicle architecture and code visually. Use when the user asks to understand Cubicle components, AppModel, local services, call flow, data flow, PR structure, or "what/why/how" explanations and prefers DAGs, side-by-side diagrams, starred important files, and fewer words.
@@ -41,11 +47,31 @@ Then add a short `What / Why / How` block only if useful.
 
 For comparisons:
 
+Represent comparisons side by side by default, not as sequential "current then
+proposed" sections. Use columns/tables for direct comparisons; only fall back to
+a flow diagram when temporal order is the point or the comparison has more than
+three dimensions.
+
 ```text
-Current                         Proposed
+Current / Option A              Proposed / Option B
  |                               |
  +-- file A -> role              +-- package A -> role
  +-- file B -> role              +-- package B -> role
+```
+
+For architecture improvements:
+
+Always include a diagram that explicitly shows why the proposed graph is better
+than the current architecture. Use this shape before or beside the new
+architecture diagram:
+
+```text
+Current Architecture              Better Architecture
+ |                                |
+ +-- current node/edge            +-- improved node/edge
+ |   -> limitation                |   -> why it fixes the limitation
+ +-- current query path           +-- improved query path
+     -> bottleneck                    -> better bounded traversal/search
 ```
 
 For call flow:
